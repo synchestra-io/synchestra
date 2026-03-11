@@ -18,51 +18,51 @@ Synchestra started as a personal tool to scratch a very specific itch. The plan 
 ```mermaid
 gantt
     title Synchestra Roadmap
-    dateFormat  YYYY-Q[Q]
-    axisFormat  %Y Q%q
+    dateFormat  YYYY-MM-DD
+    axisFormat  %Y-%m
 
     section Foundation
-    CLI MVP            :done,    cli,    2024-Q1, 2024-Q2
-    HTTP API server    :done,    api,    2024-Q2, 2024-Q3
-    MCP server         :active,  mcp,    2024-Q3, 2024-Q4
+    CLI MVP            :cli,    2024-01-01, 2024-04-01
+    HTTP API server    :api,    2024-04-01, 2024-07-01
+    MCP server         :mcp,    2024-07-01, 2024-10-01
 
     section Visibility
-    Web UI (read-only) :         webui,  2024-Q4, 2025-Q1
-    Notifications      :active,  notif,  2024-Q3, 2024-Q4
+    Web UI (read-only) :webui,  2024-10-01, 2025-01-01
+    Notifications      :notif,  2024-07-01, 2024-10-01
 
     section Scale
-    Public SaaS        :         saas,   2025-Q1, 2025-Q2
-    Paid plans         :         paid,   2025-Q2, 2025-Q3
+    Public SaaS        :saas,   2025-01-01, 2025-04-01
+    Paid plans         :paid,   2025-04-01, 2025-07-01
 ```
 
 ---
 
-## Phase 1 — CLI MVP ✅
+## Phase 1 — CLI MVP
 
 The baseline: a working CLI and local server that an agent can actually use.
 
-- [x] `synchestra task` — create, list, update, complete, fail, log
-- [x] `synchestra agent` — register, heartbeat, deregister
-- [x] `synchestra project` — create, list, get
-- [x] `synchestra repo` — add, list, link
-- [x] `synchestra skill` — create, list
-- [x] `synchestra rule` — create, list
-- [x] `synchestra status` — system and task view
-- [x] SQLite backend for zero-config local use
-- [x] Config file and env var support
+- [ ] `synchestra task` — create, list, update, complete, fail, log
+- [ ] `synchestra agent` — register, heartbeat, deregister
+- [ ] `synchestra project` — create, list, get
+- [ ] `synchestra repo` — add, list, link
+- [ ] `synchestra skill` — create, list
+- [ ] `synchestra rule` — create, list
+- [ ] `synchestra status` — system and task view
+- [ ] SQLite backend for zero-config local use
+- [ ] Config file and env var support
 
 ---
 
-## Phase 2 — HTTP API Server ✅
+## Phase 2 — HTTP API Server
 
 Make Synchestra accessible to agents written in any language, running anywhere.
 
-- [x] Full REST API for all resources (`/api/v1/`)
-- [x] Bearer token authentication with scoped access
-- [x] Token management via CLI and API
-- [x] Pagination on list endpoints
-- [x] Optimistic locking to prevent race conditions
-- [x] Structured error responses
+- [ ] Full REST API for all resources (`/api/v1/`)
+- [ ] Bearer token authentication with scoped access
+- [ ] Token management via CLI and API
+- [ ] Pagination on list endpoints
+- [ ] Optimistic locking to prevent race conditions
+- [ ] Structured error responses
 
 ---
 
@@ -70,7 +70,7 @@ Make Synchestra accessible to agents written in any language, running anywhere.
 
 First-class support for AI models that speak MCP (Claude, and growing).
 
-- [x] MCP server bundled in the `synchestra server` binary
+- [ ] MCP server bundled in the `synchestra server` binary
 - [ ] Full tool coverage: all task and agent operations
 - [ ] MCP authentication integration
 - [ ] Claude integration guide and examples
@@ -97,8 +97,8 @@ A real-time dashboard for humans to watch, steer, and understand what their agen
 
 Get notified when things go wrong (or right) without polling.
 
-- [x] Telegram notifications (task_failed, task_blocked, agent_offline)
-- [x] Webhook push for external system integration
+- [ ] Telegram notifications (task_failed, task_blocked, agent_offline)
+- [ ] Webhook push for external system integration
 - [ ] Email notifications
 - [ ] Configurable per-project notification rules
 - [ ] Notification history and replay
