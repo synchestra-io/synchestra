@@ -198,7 +198,7 @@ Synchestra's own development is managed by Synchestra. We build the tool with th
 
 **Synchestra-managed projects:**
 
-- [synchestra/projects/synchestra](synchestra/projects/synchestra) — Synchestra's own development project (this repo)
+- [synchestra-project](https://github.com/synchestra-io/synchestra-project) — Synchestra's own development project (specs, tasks, project state)
 - [synchestra-go](https://github.com/synchestra-io/synchestra-go) — CLI, daemon, server, HTTP API, and task runner (Go)
 - [synchestra-app](https://github.com/synchestra-io/synchestra-app) — Web UI frontend (TypeScript, Angular, Ionic)
 
