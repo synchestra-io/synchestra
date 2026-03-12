@@ -8,7 +8,7 @@ When a task requires changes across multiple repositories (e.g., updating an API
 
 ## Problem
 
-Multi-repo changes are one of the hardest coordination problems in software development -- even for humans. For AI agents, it's worse: each agent session is scoped to one repo, has no awareness of the other repo's state, and has no protocol for synchronizing changes that must land together.
+Multi-repo changes are one of the hardest coordination problems in software development —even for humans. For AI agents, it's worse: each agent session is scoped to one repo, has no awareness of the other repo's state, and has no protocol for synchronizing changes that must land together.
 
 The typical failure mode: backend merges first, frontend hasn't started, and now there's a broken API contract in production.
 
@@ -22,10 +22,10 @@ When Synchestra detects or is told that a task spans multiple repositories, it d
 
 Synchestra creates:
 
-1. **Update interface/API specification** -- Modify the shared API spec (OpenAPI, protobuf, or shared types) to include the new field. A branch name is reserved: `synchestra/add-avatar-url-to-user-profile`.
-2. **Update backend** -- Implement the change in the backend repo using the reserved branch name.
-3. **Update frontend** -- Implement the change in the frontend repo using the reserved branch name.
-4. **Integration testing and merge** -- Run integration tests across both branches, merge both into main, and update all task statuses.
+1. **Update interface/API specification** —Modify the shared API spec (OpenAPI, protobuf, or shared types) to include the new field. A branch name is reserved: `synchestra/add-avatar-url-to-user-profile`.
+2. **Update backend** —Implement the change in the backend repo using the reserved branch name.
+3. **Update frontend** —Implement the change in the frontend repo using the reserved branch name.
+4. **Integration testing and merge** —Run integration tests across both branches, merge both into main, and update all task statuses.
 
 ```
 Parent Task: Add avatar_url to user profile
@@ -54,7 +54,7 @@ The same branch name is used across all affected repositories, making it easy to
 
 The integration sub-task is responsible for:
 1. Running cross-repo integration tests (if configured)
-2. Merging branches in the correct order (spec first, then backend, then frontend -- or as configured)
+2. Merging branches in the correct order (spec first, then backend, then frontend —or as configured)
 3. Updating task statuses across all sub-tasks and the parent task
 4. Cleaning up branches
 
@@ -63,7 +63,7 @@ The integration sub-task is responsible for:
 A cross-repo sync specification file defines which repositories are involved and how they relate:
 
 ```yaml
-# To be designed -- this is a placeholder structure
+# To be designed —this is a placeholder structure
 repos:
   api-spec:
     url: github.com/org/api-spec

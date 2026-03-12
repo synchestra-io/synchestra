@@ -1,6 +1,6 @@
 # Synchestra Meta
 
-This is the hardcoded `synchestra/` directory -- the orchestration layer for all projects managed by this repository.
+This is the hardcoded `synchestra/` directory —the orchestration layer for all projects managed by this repository.
 
 ## Structure
 

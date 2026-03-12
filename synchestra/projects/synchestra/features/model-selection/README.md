@@ -4,11 +4,11 @@
 
 ## Summary
 
-Not every task needs the most powerful (and expensive) model. Synchestra routes tasks to the minimal viable model -- either through explicit configuration, rule-based routing, or dynamic complexity assessment using a smaller model as a classifier.
+Not every task needs the most powerful (and expensive) model. Synchestra routes tasks to the minimal viable model —either through explicit configuration, rule-based routing, or dynamic complexity assessment using a smaller model as a classifier.
 
 ## Problem
 
-Running every task on the largest available model is wasteful. Formatting a markdown file doesn't need Opus. Updating a cross-reference link doesn't need any LLM at all. But without a routing layer, every agent session defaults to whatever model the platform is configured with -- usually the most capable (and expensive) one.
+Running every task on the largest available model is wasteful. Formatting a markdown file doesn't need Opus. Updating a cross-reference link doesn't need any LLM at all. But without a routing layer, every agent session defaults to whatever model the platform is configured with —usually the most capable (and expensive) one.
 
 Over hundreds of micro-tasks per day, this adds up to significant unnecessary cost and latency.
 
@@ -38,7 +38,7 @@ Model classes map to platform-specific models:
 
 | Class | Claude | OpenAI | Description |
 |---|---|---|---|
-| `none` | -- | -- | No LLM needed; pure CLI/script execution |
+| `none` | —| —| No LLM needed; pure CLI/script execution |
 | `small` | Haiku 4.5 | GPT-4o-mini | Fast, cheap. Formatting, classification, simple edits. |
 | `medium` | Sonnet 4.5 | GPT-4o | Balanced. Most implementation tasks. |
 | `large` | Opus 4 | o1/o3 | Maximum capability. Architecture, complex reasoning. |
