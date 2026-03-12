@@ -74,6 +74,40 @@ title: Synchestra
 repo: https://github.com/synchestra-io/synchestra
 ```
 
+## Project README
+
+The root `README.md` of a dedicated project repository follows this template:
+
+```markdown
+# Synchestra Project: {project_title}
+
+[Open in Synchestra](https://synchestra.io/app/project?id={project_repo_id})
+
+Operational repository for synchronisation and status management of the [{project_title}]({project_repo_url}) project.
+
+This repo is managed by [Synchestra](https://github.com/synchestra-io/synchestra) — it tracks task status, coordination state, and sync artifacts. For feature specifications, architecture, and documentation, see the [{project_title}]({project_repo_url}) repository.
+```
+
+### Template variables
+
+| Variable | Source | Example |
+|---|---|---|
+| `{project_title}` | `title` field from `synchestra-project.yaml` | `Synchestra` |
+| `{project_repo_url}` | `repo` field from `synchestra-project.yaml` | `https://github.com/synchestra-io/synchestra` |
+| `{project_repo_id}` | GitHub identifier of the project repo (org/repo format from the URL hosting this README) | `github.com/synchestra-io/synchestra-project` |
+
+### Example (for synchestra-project)
+
+```markdown
+# Synchestra Project: Synchestra
+
+[Open in Synchestra](https://synchestra.io/app/project?id=github.com/synchestra-io/synchestra-project)
+
+Operational repository for synchronisation and status management of the [Synchestra](https://github.com/synchestra-io/synchestra) project.
+
+This repo is managed by [Synchestra](https://github.com/synchestra-io/synchestra) — it tracks task status, coordination state, and sync artifacts. For feature specifications, architecture, and documentation, see the [Synchestra](https://github.com/synchestra-io/synchestra) repository.
+```
+
 ### How Synchestra determines the layout
 
 Synchestra checks for a `synchestra-project.yaml` at the repository root. If found, the repository is treated as a dedicated project repo. Otherwise, it looks under `synchestra/projects/` for the multi-project layout.
