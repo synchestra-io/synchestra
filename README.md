@@ -25,7 +25,8 @@ At its core, Synchestra is a chain of small, automatable steps and background ch
 
 ### The tools
 
-- **CLI and MCP server.** Agents call Synchestra to create, search, validate, and update project state. Humans use the same CLI for manual operations.
+- **CLI and MCP server.** Agents call Synchestra to create, search, validate, and update project state. Humans use the same CLI for manual operations. See [CLI spec](spec/features/cli/README.md).
+- **[Skills.](#skills)** Pre-built, agent-ready instructions that wrap CLI commands with trigger conditions, parameters, and error handling. Any agent platform can use them — with or without the full Synchestra runtime.
 - **Daemon.** Runs as a background process that spawns agents when new tasks are queued, manages headless agent sessions in highly focused mode, and runs pre/post micro-task chains around each prompt.
 - **Web UI and HTTP API.** Remote access to everything — edit projects, queue tasks from your phone, monitor progress. Users authenticate via GitHub OAuth or Firebase; their identity is used to sign prompt commits and co-author output artifact commits.
 - **Git hooks and CI guards.** Pre-commit, pre-push, and GitHub Actions workflows validate the structure and consistency of Synchestra project files on every change.
@@ -107,7 +108,7 @@ Synchestra's philosophy is **commit often**. When an agent starts work, it must:
 1. Claim an unclaimed task by updating its status to "claimed/wip"
 2. Commit and push immediately
 
-If the push fails due to a merge conflict, another agent already claimed the task. The agent moves on to the next available task or exits. This is standard distributed locking — implemented through git, requiring zero additional infrastructure.
+If the push fails due to a merge conflict, another agent already claimed the task. The agent moves on to the next available task or exits. This is standard distributed locking — implemented through git, requiring zero additional infrastructure. The [synchestra-claim-task](skills/synchestra-claim-task/README.md) skill handles this entire flow for agents automatically.
 
 ### Resolution: AI-powered merge handling
 
@@ -116,6 +117,33 @@ When conflicts do occur (e.g., two agents working on different tasks update the 
 1. Analyzes the merge conflict
 2. Merges changes automatically if possible
 3. Flags the issue and queues it for rework or human resolution if not
+
+## Skills
+
+Synchestra ships with a library of [skills](skills/README.md) — focused, self-contained instructions that teach AI agents how to perform specific Synchestra operations. Each skill wraps a single [CLI command](spec/features/cli/README.md) and tells the agent exactly when to use it, what parameters to pass, and how to handle every exit code.
+
+**Skills work with any orchestrator.** While skills are designed for the integrated Synchestra workflow, they don't require it. Any agent platform that supports custom instructions — Claude Code, Cursor, Windsurf, GPT, custom scripts — can load Synchestra skills and use them independently. An agent doesn't need the Synchestra daemon, web UI, or even a Synchestra-managed project to benefit from skills. If the agent has access to the CLI, it can use the skills.
+
+This makes skills the lowest-friction entry point to Synchestra: add a few skills to your agent's configuration and it gains structured task management, even if the rest of your workflow is entirely custom.
+
+### Available skills
+
+| Skill | What it does |
+|---|---|
+| [synchestra-claim-task](skills/synchestra-claim-task/README.md) | Claim a task before starting work |
+| [synchestra-task-start](skills/synchestra-task-start/README.md) | Begin work on a claimed task |
+| [synchestra-task-status](skills/synchestra-task-status/README.md) | Query or update task status |
+| [synchestra-task-complete](skills/synchestra-task-complete/README.md) | Mark a task as completed |
+| [synchestra-task-fail](skills/synchestra-task-fail/README.md) | Mark a task as failed |
+| [synchestra-task-block](skills/synchestra-task-block/README.md) | Mark a task as blocked |
+| [synchestra-task-unblock](skills/synchestra-task-unblock/README.md) | Resume a blocked task |
+| [synchestra-task-release](skills/synchestra-task-release/README.md) | Release a claimed task back to the queue |
+| [synchestra-task-abort](skills/synchestra-task-abort/README.md) | Request abortion of a task |
+| [synchestra-task-aborted](skills/synchestra-task-aborted/README.md) | Report a task has been aborted |
+| [synchestra-task-list](skills/synchestra-task-list/README.md) | List tasks with filtering |
+| [synchestra-task-info](skills/synchestra-task-info/README.md) | Show full task details and context |
+
+See the [agent-skills feature spec](spec/features/agent-skills/README.md) for design principles — one skill per action, consistent exit codes, and why skills wrap the CLI rather than replacing it.
 
 ## Multi-Repository Projects
 
@@ -140,7 +168,7 @@ Synchestra adapts to how your project is organized:
 
 ### Compared to agent frameworks (LangChain, CrewAI, AutoGen)
 
-These are runtimes — they execute agents, manage prompts, and chain tool calls. Synchestra doesn't replace them. It sits beneath them as the shared state and coordination layer. Your CrewAI agents and your Claude Code session can coordinate through the same repo.
+These are runtimes — they execute agents, manage prompts, and chain tool calls. Synchestra doesn't replace them. It sits beneath them as the shared state and coordination layer. Your CrewAI agents and your Claude Code session can coordinate through the same repo. Load [Synchestra skills](#skills) into any of these frameworks and agents gain structured task claiming, status reporting, and conflict-safe coordination without changing their runtime.
 
 ### Compared to project management tools (Linear, Jira)
 
@@ -174,14 +202,16 @@ Core features driving Synchestra's development:
 
 | Feature | Status | Description |
 |---|---|---|
-| [Micro-tasks](synchestra/projects/synchestra/features/micro-tasks/README.md) | Conceptual | Pre/post prompt micro-task chains and background automation |
-| [Cross-repo sync](synchestra/projects/synchestra/features/cross-repo-sync/README.md) | Conceptual | Cross-repository branching, task coordination, and merge strategy |
-| [Model selection](synchestra/projects/synchestra/features/model-selection/README.md) | Conceptual | Smart model routing based on task complexity and configuration |
-| [Conflict resolution](synchestra/projects/synchestra/features/conflict-resolution/README.md) | Conceptual | AI-powered merge conflict detection and resolution |
-| [Outstanding questions](synchestra/projects/synchestra/features/outstanding-questions/README.md) | Conceptual | Question lifecycle management linked to tasks and features |
-| [Claim-and-push](synchestra/projects/synchestra/features/claim-and-push/README.md) | Conceptual | Distributed task claiming via git push-based optimistic locking |
+| [Micro-tasks](spec/features/micro-tasks/README.md) | Conceptual | Pre/post prompt micro-task chains and background automation |
+| [Cross-repo sync](spec/features/cross-repo-sync/README.md) | Conceptual | Cross-repository branching, task coordination, and merge strategy |
+| [Model selection](spec/features/model-selection/README.md) | Conceptual | Smart model routing based on task complexity and configuration |
+| [Conflict resolution](spec/features/conflict-resolution/README.md) | Conceptual | AI-powered merge conflict detection and resolution |
+| [Outstanding questions](spec/features/outstanding-questions/README.md) | Conceptual | Question lifecycle management linked to tasks and features |
+| [Claim-and-push](spec/features/claim-and-push/README.md) | Conceptual | Distributed task claiming via git push-based optimistic locking |
+| [Agent skills](spec/features/agent-skills/README.md) | In Progress | Focused skills that teach AI agents to use Synchestra |
+| [CLI](spec/features/cli/README.md) | In Progress | The `synchestra` command-line interface |
 
-See [Synchestra project features](synchestra/projects/synchestra/features/README.md) for detailed specifications and dependency graph.
+See [feature specifications](spec/features/README.md) for detailed specs and dependency graph.
 
 ## Getting Started
 
@@ -208,21 +238,23 @@ Synchestra is in active development. The conventions, module structure, and CLI 
 
 ## Outstanding Questions
 
-- What is the full lifecycle of a cross-repo task — from branch reservation through integration testing to merge? (Early vision exists; dedicated specification pending. See [Cross-Repo Sync](synchestra/projects/synchestra/features/cross-repo-sync/README.md).)
-- What is the configuration format for micro-task chains? (Conceptual stage; GitHub Actions-inspired YAML being explored. See [Micro-Tasks](synchestra/projects/synchestra/features/micro-tasks/README.md).)
+- What is the full lifecycle of a cross-repo task — from branch reservation through integration testing to merge? (Early vision exists; dedicated specification pending. See [Cross-Repo Sync](spec/features/cross-repo-sync/README.md).)
+- What is the configuration format for micro-task chains? (Conceptual stage; GitHub Actions-inspired YAML being explored. See [Micro-Tasks](spec/features/micro-tasks/README.md).)
 - How does Synchestra interact with agent platform settings when it's not the direct model caller? (Configurable: Synchestra can decide, or the user can override via UI/CLI/API. Hints or arguments are passed to the underlying platform.)
 
 ### Children with outstanding questions:
 
-- [synchestra/](synchestra/README.md): 0 outstanding questions
-  - [projects/synchestra](synchestra/projects/synchestra/README.md): 4 outstanding questions
-    - [features/](synchestra/projects/synchestra/features/README.md): 3 outstanding questions
-      - [micro-tasks](synchestra/projects/synchestra/features/micro-tasks/README.md): 4 outstanding questions
-      - [cross-repo-sync](synchestra/projects/synchestra/features/cross-repo-sync/README.md): 4 outstanding questions
-      - [model-selection](synchestra/projects/synchestra/features/model-selection/README.md): 4 outstanding questions
-      - [conflict-resolution](synchestra/projects/synchestra/features/conflict-resolution/README.md): 3 outstanding questions
-      - [outstanding-questions](synchestra/projects/synchestra/features/outstanding-questions/README.md): 3 outstanding questions
-      - [claim-and-push](synchestra/projects/synchestra/features/claim-and-push/README.md): 3 outstanding questions
+- [spec/](spec/README.md)
+  - [features/](spec/features/README.md): 3 outstanding questions
+    - [micro-tasks](spec/features/micro-tasks/README.md): 4 outstanding questions
+    - [cross-repo-sync](spec/features/cross-repo-sync/README.md): 4 outstanding questions
+    - [model-selection](spec/features/model-selection/README.md): 4 outstanding questions
+    - [conflict-resolution](spec/features/conflict-resolution/README.md): 3 outstanding questions
+    - [outstanding-questions](spec/features/outstanding-questions/README.md): 3 outstanding questions
+    - [claim-and-push](spec/features/claim-and-push/README.md): 3 outstanding questions
+    - [agent-skills](spec/features/agent-skills/README.md): 3 outstanding questions
+    - [cli](spec/features/cli/README.md): 3 outstanding questions
+  - [project-definition/](spec/project-definition/README.md): 2 outstanding questions
 
 ## License
 
@@ -232,6 +264,8 @@ Apache License 2.0. See [LICENSE](LICENSE) for details.
 
 - [Vision](docs/vision.md)
 - [Roadmap](docs/roadmap.md)
-- [Features](docs/features/README.md)
+- [Features](spec/features/README.md)
+- [Skills](skills/README.md)
+- [CLI Spec](spec/features/cli/README.md)
 - [Self-Hosting](docs/self-hosting.md)
 - [inGitDB](https://ingitdb.com)
