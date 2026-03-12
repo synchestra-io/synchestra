@@ -30,7 +30,6 @@ outstanding-questions (independent)
 ## Outstanding Questions
 
 - Are there features missing from this list that are already described in `docs/features/` but not yet tracked here?
-- Should features from `docs/features/` (the product-facing documentation) be linked or reconciled with these internal feature specs?
 - **Suggested build order:** claim-and-push first (foundational), then outstanding-questions and model-selection (independent, high value), then conflict-resolution (depends on claim-and-push), then micro-tasks and cross-repo-sync. Does this align with project priorities?
 
 ### Features with outstanding questions:
