@@ -128,8 +128,7 @@ The board doubles as the claim mechanism — no separate lock protocol needed. T
 3. On that branch, agent updates the board row: status → `in_progress`, fills in Branch, Agent, Time.
 4. Agent attempts to merge/push to main.
 5. **If the push succeeds** — the task is claimed. Agent proceeds with the work.
-6. **If the push fails due to a merge conflict on that task's row** — another agent claimed it first. Agent discards the branch and moves to the next available task (or exits if none).
-7. If the conflict is on a *different* row (e.g., another agent claimed a different task in the same board), the merge can proceed normally — only same-row conflicts indicate a claim collision.
+6. **If the push fails** — CLI parses the git diff to check whether the conflict involves the claimed task's row (identified by task ID). See [Conflict Resolution on Claim](#conflict-resolution-on-claim).
 
 ```
 Agent A                          Agent B
@@ -143,6 +142,15 @@ Agent A                          Agent B
    ├─ start working                 ├─ discard branch
    │                                ├─ pick next task or exit
 ```
+
+### Conflict Resolution on Claim
+
+When a push fails, the CLI parses the git diff and checks whether the conflict involves the row for the task being claimed (matched by task ID):
+
+- **Task row is conflicted** — another agent claimed the same task. Discard the branch, move to the next available task or exit.
+- **Task row is NOT conflicted** — the conflict is from a different change (another agent claiming a different task, a formatter run, etc.). The CLI auto-resolves the merge and retries the push.
+
+In practice, a claim attempt only changes a single row, so conflicts should almost exclusively come from another agent claiming the same task. But the check is valuable as a safety net — for example, if a formatter ran and reformatted the table, the row may be in conflict even though the task is still claimable. The CLI can auto-resolve formatting-only conflicts and proceed with the claim.
 
 ### Why the board is source of truth
 
@@ -159,7 +167,7 @@ Table cells use `<br>` for line breaks where needed (e.g., timestamps, dependenc
 
 - Should completed/aborted/failed tasks be automatically moved to a "Recently completed" section below the active board to reduce clutter?
 - Should there be a maximum number of visible rows before older terminal tasks are archived?
-- How should the agent distinguish between a same-row conflict (claim collision → discard) and a different-row conflict (safe to merge)?
+
 
 ## Outstanding Questions
 
