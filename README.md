@@ -205,7 +205,7 @@ Synchestra is in active development. The conventions, module structure, and CLI 
 
 ## License
 
-[TBD]
+Apache License 2.0. See [LICENSE](LICENSE) for details.
 
 ## Links
 
