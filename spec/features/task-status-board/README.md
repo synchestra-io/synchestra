@@ -115,13 +115,26 @@ depends_on: https://github.com/org/repo/synchestra/projects/project-id/tasks/tas
 
 ## Updating the Board
 
-The board should be updated via **Synchestra CLI or API** — not manually edited. Manual edits are possible but not advisable as they may break micro-task workflows that depend on board state transitions.
+The board should be updated via the [Synchestra CLI](../cli/README.md) or API — not manually edited. Manual edits are possible but not advisable as they may break micro-task workflows that depend on board state transitions.
+
+The [`synchestra task` commands](../cli/task/README.md) handle board updates atomically as part of their commit-and-push flow:
+
+| Board transition | CLI command | Skill |
+|---|---|---|
+| → `queued` | (task creation — future command) | — |
+| `queued` → `in_progress` | [`task claim`](../cli/task/claim/README.md) + [`task start`](../cli/task/start/README.md) | [synchestra-claim-task](../../../skills/synchestra-claim-task/README.md), [synchestra-task-start](../../../skills/synchestra-task-start/README.md) |
+| `in_progress` → `complete` | [`task complete`](../cli/task/complete/README.md) | [synchestra-task-complete](../../../skills/synchestra-task-complete/README.md) |
+| `in_progress` → `failed` | [`task fail`](../cli/task/fail/README.md) | [synchestra-task-fail](../../../skills/synchestra-task-fail/README.md) |
+| `in_progress` → `blocked` | [`task block`](../cli/task/block/README.md) | [synchestra-task-block](../../../skills/synchestra-task-block/README.md) |
+| `blocked` → `in_progress` | [`task unblock`](../cli/task/unblock/README.md) | [synchestra-task-unblock](../../../skills/synchestra-task-unblock/README.md) |
+| → `aborted` | [`task aborted`](../cli/task/aborted/README.md) | [synchestra-task-aborted](../../../skills/synchestra-task-aborted/README.md) |
+| (query) | [`task status`](../cli/task/status/README.md), [`task list`](../cli/task/list/README.md) | [synchestra-task-status](../../../skills/synchestra-task-status/README.md), [synchestra-task-list](../../../skills/synchestra-task-list/README.md) |
 
 The board in the parent README is the **source of truth**. A task may duplicate its own status in its own README for convenience, but on conflict the parent board wins.
 
 ## Claiming a Task (Optimistic Locking)
 
-The board doubles as the claim mechanism — no separate lock protocol needed. The flow:
+The board doubles as the claim mechanism — no separate lock protocol needed. Agents use the [`synchestra-claim-task`](../../../skills/synchestra-claim-task/README.md) skill (which wraps [`task claim`](../cli/task/claim/README.md)) to handle this flow automatically. The underlying protocol:
 
 1. Agent pulls latest main, scans the board for `queued` tasks with fulfilled `depends_on`.
 2. Agent creates a new branch.
@@ -173,4 +186,4 @@ Table cells use `<br>` for line breaks where needed (e.g., timestamps, dependenc
 
 - What is the exact task directory structure? (e.g., `tasks/{task-slug}/README.md` with YAML frontmatter for machine-readable status?)
 - Should the `Requester` field support teams/groups or only individual humans?
-- Is there a `synchestra tasks list` CLI command that renders this board to the terminal?
+- How should [`task list`](../cli/task/list/README.md) render the board in the terminal — same markdown table format, or a simplified view?
