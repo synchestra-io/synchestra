@@ -12,6 +12,7 @@ Feature specifications for the Synchestra project, managed by Synchestra.
 | [conflict-resolution](conflict-resolution/README.md) | Conceptual | AI-powered merge conflict detection and resolution |
 | [outstanding-questions](outstanding-questions/README.md) | Conceptual | Question lifecycle management linked to tasks and features |
 | [claim-and-push](claim-and-push/README.md) | Conceptual | Distributed task claiming via git push-based optimistic locking |
+| [task-status-board](task-status-board/README.md) | Conceptual | Markdown task board in task directory READMEs for at-a-glance status visibility |
 
 ## Feature dependency graph
 
@@ -40,3 +41,4 @@ outstanding-questions (independent)
 - [conflict-resolution](conflict-resolution/README.md): 3 outstanding questions
 - [outstanding-questions](outstanding-questions/README.md): 3 outstanding questions
 - [claim-and-push](claim-and-push/README.md): 3 outstanding questions
+- [task-status-board](task-status-board/README.md): 4 outstanding questions

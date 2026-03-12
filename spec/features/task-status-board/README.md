@@ -1,0 +1,168 @@
+# Feature: Task Status Board
+
+**Status:** Conceptual
+
+## Summary
+
+A markdown table embedded in task directory READMEs that provides at-a-glance visibility into task status, ownership, and progress. The board is the source of truth for task state within a Synchestra project.
+
+## Problem
+
+When multiple agents and humans work on a project concurrently, there's no single place to see what's happening. Task state is scattered across git branches, commit messages, and individual task documents. Without a board, answering "what's in progress right now?" requires traversing the entire task tree.
+
+## Location
+
+The board appears in any task directory that contains sub-tasks:
+
+- `synchestra/projects/{project}/tasks/README.md` — root task board
+- `synchestra/projects/{project}/tasks/{task}/README.md` — sub-task board (when a task has its own sub-tasks)
+
+The `synchestra/projects/{project}/tasks/` tree is the **source of truth** for task state. Boards may appear elsewhere (e.g., `spec/features/`) for convenience, but those are not authoritative.
+
+## Board Format
+
+### Columns
+
+| Column | Description |
+|---|---|
+| Task | Title with link to the task directory |
+| Status | Emoji + text status (see statuses below) |
+| Depends&nbsp;on | Task references that must complete before this task can start (see [Task References](#task-references-depends_on)) |
+| Branch | Branch name and/or worktree path |
+| Agent | Model name (details like run_id, machine in the task's own README) |
+| Requester | Human who requested or is responsible for the task |
+| Time | Start timestamp for in-progress; start + duration for terminal states |
+
+### Statuses
+
+| Emoji | Status | Description |
+|---|---|---|
+| 📋 | `planning` | Task is being defined, requirements are being gathered |
+| ⏳ | `queued` | Task is fully defined and ready for an agent to pick up |
+| 🔵 | `in_progress` | An agent has claimed and is actively working on the task |
+| 🟡 | `blocked` | Was in progress but hit a wall — waiting on human input, external dependency, or other non-task blocker |
+| ✅ | `complete` | Task finished successfully |
+| ❌ | `failed` | Agent attempted the task but encountered an unrecoverable error |
+| ⛔ | `aborted` | Task was deliberately stopped by a human or system decision |
+
+### Status lifecycle
+
+```
+planning → queued → in_progress → complete
+                        ↓
+                      blocked → in_progress  (when unblocked)
+                        ↓
+                      aborted
+
+              in_progress → failed
+              in_progress → aborted
+```
+
+Note: `queued` tasks with unfulfilled `depends_on` cannot be claimed — they are implicitly waiting, but their status remains `queued` (not `blocked`). `blocked` is reserved for tasks that were in progress and got stuck for reasons beyond task dependencies.
+
+## Example
+
+### Root board (`tasks/README.md`)
+
+| Task | Status | Depends&nbsp;on | Branch | Agent | Requester | Time |
+|---|---|---|---|---|---|---|
+| [setup-db](setup-db/) | ✅&nbsp;`complete` | — | `synchestra/setup-db` | Sonnet&nbsp;4.5 | @alex | 2026-03-12<br>10:15 (4m32s) |
+| [implement-api](implement-api/) | 🔵&nbsp;`in_progress` | setup-db | `synchestra/implement-api` | Opus&nbsp;4 | @alex | 2026-03-12<br>10:22 |
+| [write-tests](write-tests/) | ⏳&nbsp;`queued` | implement-api | — | — | @alex | — |
+| [deploy-staging](deploy-staging/) | ⏳&nbsp;`queued` | implement-api,<br>write-tests | — | — | @alex | — |
+
+### Sub-task board (`tasks/implement-api/README.md`)
+
+| Task | Status | Depends&nbsp;on | Branch | Agent | Requester | Time |
+|---|---|---|---|---|---|---|
+| [define-schema](define-schema/) | ✅&nbsp;`complete` | — | `synchestra/implement-api` | Sonnet&nbsp;4.5 | @alex | 2026-03-12<br>10:22 (2m10s) |
+| [endpoints](endpoints/) | 🔵&nbsp;`in_progress` | define-schema | `synchestra/implement-api` | Opus&nbsp;4 | @alex | 2026-03-12<br>10:25 |
+| [validation](validation/) | ⏳&nbsp;`queued` | define-schema | — | — | @alex | — |
+
+## Task References (`depends_on`)
+
+Task references in `depends_on` follow a relative-path model — like file paths. Resolution depends on the referencing context:
+
+### Sibling reference (same parent)
+
+A task can reference a sibling by its slug alone:
+
+```
+subtask-2 references subtask-1 → depends_on: subtask-1
+```
+
+### Cousin reference (different parent, same project)
+
+Use a relative path from the referencing task's parent:
+
+```
+task-2/subtask-1 references task-1/subtask-2 → depends_on: task-1/subtask-2
+```
+
+### Cross-project reference (external)
+
+Use the fully qualified URL to the task directory in the external project's repo:
+
+```
+depends_on: https://github.com/org/repo/synchestra/projects/project-id/tasks/task-1/subtask-2
+```
+
+### Resolution rules
+
+1. A bare slug (no `/`) resolves against siblings in the same parent directory.
+2. A relative path (contains `/`) resolves from the project's `tasks/` root.
+3. A URL resolves as an external cross-project reference.
+
+## Updating the Board
+
+The board should be updated via **Synchestra CLI or API** — not manually edited. Manual edits are possible but not advisable as they may break micro-task workflows that depend on board state transitions.
+
+The board in the parent README is the **source of truth**. A task may duplicate its own status in its own README for convenience, but on conflict the parent board wins.
+
+## Claiming a Task (Optimistic Locking)
+
+The board doubles as the claim mechanism — no separate lock protocol needed. The flow:
+
+1. Agent pulls latest main, scans the board for `queued` tasks with fulfilled `depends_on`.
+2. Agent creates a new branch.
+3. On that branch, agent updates the board row: status → `in_progress`, fills in Branch, Agent, Time.
+4. Agent attempts to merge/push to main.
+5. **If the push succeeds** — the task is claimed. Agent proceeds with the work.
+6. **If the push fails due to a merge conflict on that task's row** — another agent claimed it first. Agent discards the branch and moves to the next available task (or exits if none).
+7. If the conflict is on a *different* row (e.g., another agent claimed a different task in the same board), the merge can proceed normally — only same-row conflicts indicate a claim collision.
+
+```
+Agent A                          Agent B
+   │                                │
+   ├─ pull main                     ├─ pull main
+   ├─ see task-X queued             ├─ see task-X queued
+   ├─ branch: claim-task-X          ├─ branch: claim-task-X
+   ├─ update row → in_progress      ├─ update row → in_progress
+   ├─ push → SUCCESS ✓              │
+   │                                ├─ push → CONFLICT ✗
+   ├─ start working                 ├─ discard branch
+   │                                ├─ pick next task or exit
+```
+
+### Why the board is source of truth
+
+Using the parent board as the single claim point means:
+- Conflict detection is automatic via git — no external lock service needed.
+- All state transitions are visible in one place — humans and agents read the same board.
+- The claim-and-push protocol reduces to "edit a markdown table row and push."
+
+## Multi-line cells
+
+Table cells use `<br>` for line breaks where needed (e.g., timestamps, dependency lists). This is supported in GitHub-flavored markdown.
+
+## Open Design Decisions
+
+- Should completed/aborted/failed tasks be automatically moved to a "Recently completed" section below the active board to reduce clutter?
+- Should there be a maximum number of visible rows before older terminal tasks are archived?
+- How should the agent distinguish between a same-row conflict (claim collision → discard) and a different-row conflict (safe to merge)?
+
+## Outstanding Questions
+
+- What is the exact task directory structure? (e.g., `tasks/{task-slug}/README.md` with YAML frontmatter for machine-readable status?)
+- Should the `Requester` field support teams/groups or only individual humans?
+- Is there a `synchestra tasks list` CLI command that renders this board to the terminal?
