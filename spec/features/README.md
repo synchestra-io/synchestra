@@ -13,6 +13,8 @@ Feature specifications for the Synchestra project, managed by Synchestra.
 | [outstanding-questions](outstanding-questions/README.md) | Conceptual | Question lifecycle management linked to tasks and features |
 | [claim-and-push](claim-and-push/README.md) | Conceptual | Distributed task claiming via git push-based optimistic locking |
 | [task-status-board](task-status-board/README.md) | Conceptual | Markdown task board in task directory READMEs for at-a-glance status visibility |
+| [agent-skills](agent-skills/README.md) | In Progress | Dedicated, focused skills that AI agents use to interact with Synchestra |
+| [cli](cli/README.md) | In Progress | The `synchestra` CLI — primary interface for agents and humans |
 
 ## Feature Summaries
 
@@ -44,6 +46,14 @@ Distributed task claiming through git's push semantics. Agents claim tasks by co
 
 A markdown table in task directory READMEs that serves as both the visibility layer and the claim mechanism. The board is the source of truth for task state — agents claim tasks by updating a row and pushing. Conflicts on the same row indicate a claim collision; the CLI parses diffs by task ID to distinguish collisions from unrelated changes.
 
+### [Agent Skills](agent-skills/README.md)
+
+A set of dedicated, focused skills that AI agents use to interact with Synchestra — claiming tasks, reporting status, updating progress. Each skill wraps a single CLI command with clear trigger conditions, parameters, and exit code handling. Skills are distributed via CLI, MCP server, or direct file access.
+
+### [CLI](cli/README.md)
+
+The `synchestra` command-line interface. Follows a `synchestra <resource> <action>` pattern with consistent exit codes, atomic git commit-and-push for mutations, and both query and update modes. Defines the task status model, valid transitions, and the `abort_requested` flag. Commands are organized as `cli/task/claim/`, `cli/task/status/`, etc.
+
 ## Feature dependency graph
 
 ```
@@ -72,3 +82,5 @@ outstanding-questions (independent)
 - [outstanding-questions](outstanding-questions/README.md): 3 outstanding questions
 - [claim-and-push](claim-and-push/README.md): 3 outstanding questions
 - [task-status-board](task-status-board/README.md): 4 outstanding questions
+- [agent-skills](agent-skills/README.md): 3 outstanding questions
+- [cli](cli/README.md): 3 outstanding questions
