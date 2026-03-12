@@ -194,7 +194,13 @@ Install Synchestra on your own VM for persistent daemon mode, headless agent man
 
 ## Dogfooding
 
-Synchestra's own development is managed by Synchestra. The inGitDB project uses Synchestra to manage its development. We build the tool with the tool -- which means every rough edge gets felt immediately and fixed quickly.
+Synchestra's own development is managed by Synchestra. We build the tool with the tool -- which means every rough edge gets felt immediately and fixed quickly.
+
+**Synchestra-managed projects:**
+
+- [synchestra/projects/synchestra](synchestra/projects/synchestra) -- Synchestra's own development project (this repo)
+- [synchestra-go](https://github.com/synchestra-io/synchestra-go) -- CLI, daemon, server, HTTP API, and task runner (Go)
+- [synchestra-app](https://github.com/synchestra-io/synchestra-app) -- Web UI frontend (TypeScript, Angular, Ionic)
 
 ## Current Status
 
