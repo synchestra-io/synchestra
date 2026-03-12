@@ -191,6 +191,18 @@ Synchestra is in active development. The conventions, module structure, and CLI 
 - What is the configuration format for micro-task chains? (Conceptual stage; GitHub Actions-inspired YAML being explored. See [Micro-Tasks](synchestra/projects/synchestra/features/micro-tasks/README.md).)
 - How does Synchestra interact with agent platform settings when it's not the direct model caller? (Configurable: Synchestra can decide, or the user can override via UI/CLI/API. Hints or arguments are passed to the underlying platform.)
 
+### Children with outstanding questions:
+
+- [synchestra/](synchestra/README.md): 0 outstanding questions
+  - [projects/synchestra](synchestra/projects/synchestra/README.md): 4 outstanding questions
+    - [features/](synchestra/projects/synchestra/features/README.md): 3 outstanding questions
+      - [micro-tasks](synchestra/projects/synchestra/features/micro-tasks/README.md): 4 outstanding questions
+      - [cross-repo-sync](synchestra/projects/synchestra/features/cross-repo-sync/README.md): 4 outstanding questions
+      - [model-selection](synchestra/projects/synchestra/features/model-selection/README.md): 4 outstanding questions
+      - [conflict-resolution](synchestra/projects/synchestra/features/conflict-resolution/README.md): 3 outstanding questions
+      - [outstanding-questions](synchestra/projects/synchestra/features/outstanding-questions/README.md): 3 outstanding questions
+      - [claim-and-push](synchestra/projects/synchestra/features/claim-and-push/README.md): 3 outstanding questions
+
 ## License
 
 [TBD]
