@@ -46,7 +46,7 @@ Proposals attach non-normative change requests directly to a feature without cha
 
 ### [UI](ui/README.md)
 
-UI defines the human-facing product surfaces for Synchestra. It starts from a project list, then provides project-level navigation into Features, Tasks, and Workers, with MVP flows for feature proposal creation and task creation/enqueueing across both the web app and terminal UI.
+The human-facing product surfaces for Synchestra. Defines a shared information architecture (home → project menu → Features / Tasks / Workers) with MVP flows for proposal creation and task creation/enqueueing. Two delivery surfaces: a progressive [web app](ui/web-app/README.md) communicating via the HTTP API, and a [TUI](ui/tui/README.md) delivered through the CLI operating on local git state. Introduces the Workers concept at the UI level; a dedicated workers feature spec is needed before going beyond visibility.
 
 ### [Claim-and-Push](claim-and-push/README.md)
 
@@ -75,7 +75,7 @@ micro-tasks (independent)
 model-selection (independent)
 outstanding-questions (independent)
 proposals (independent)
-proposals ← ui → cli
+ui → proposals, cli, task-status-board, agent-skills
 ```
 
 `claim-and-push` is foundational — most concurrent features depend on it.
@@ -96,3 +96,6 @@ proposals ← ui → cli
 - [task-status-board](task-status-board/README.md): 4 outstanding questions
 - [agent-skills](agent-skills/README.md): 3 outstanding questions
 - [cli](cli/README.md): 3 outstanding questions
+- [ui](ui/README.md): 5 outstanding questions
+- [ui/web-app](ui/web-app/README.md): 5 outstanding questions
+- [ui/tui](ui/tui/README.md): 5 outstanding questions

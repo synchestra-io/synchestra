@@ -4,83 +4,85 @@
 
 ## Summary
 
-The web app is Synchestra's progressive web application for human users. It provides project navigation, feature browsing, proposal creation, task creation/enqueueing, and worker visibility in a browser-accessible interface built with TypeScript, Nx, Angular, and Ionic.
+The web app is Synchestra's browser-based progressive web application. It implements the [shared information architecture](../README.md#information-architecture) defined in the parent UI feature spec, delivered as an installable PWA that communicates with the Synchestra backend via the [HTTP API](../../../../docs/api/README.md).
+
+This document covers what is **unique to the web surface** — technology, API integration, authentication, and PWA behavior. For the screens and navigation tree, see the [parent UI spec](../README.md#proposed-behavior).
 
 ## Problem
 
-Users need a graphical interface for Synchestra that works well in browsers, can behave like an installable app, and supports the most important project-management flows without dropping to raw repository files or low-level CLI commands.
+Terminal-first users have the [TUI](../tui/README.md), but many Synchestra users — especially non-developers reviewing features or approving proposals — need a graphical interface accessible from any browser or mobile device without installing tooling or cloning a repository.
 
 ## Proposed Behavior
 
-### Delivery model
+### Technology stack
 
-The web app is a progressive web app.
+| Layer | Choice |
+|---|---|
+| Language | TypeScript |
+| Monorepo | Nx |
+| Framework | Angular |
+| UI toolkit | Ionic |
+| Delivery | Progressive Web App (PWA) |
 
-Its implementation stack is:
+### Implementation repository
 
-- TypeScript
-- Nx
-- Angular
-- Ionic
+The web app is implemented in the [synchestra-app](https://github.com/synchestra-io/synchestra-app) repository. This spec defines what the web app must do; `synchestra-app` is where the code lives.
 
-### Home page
+### Backend communication
 
-The app starts at a home page showing the list of projects the current user is working with.
+All data flows through the [HTTP API](../../../../docs/api/README.md) (`/api/v1/`). The web app does not read the git repository directly.
 
-Each project entry opens the selected project's menu.
+Key API surfaces the web app consumes:
 
-### Project menu
+| Flow | API resource group |
+|---|---|
+| Project list | `/projects` |
+| Feature browsing | `/projects/:id/features` |
+| Proposal creation | `/projects/:id/proposals` |
+| Task list / create / enqueue | `/tasks` |
+| Worker visibility | `/workers` (future) |
+| Authentication | `/auth` — see [Auth API](../../../../docs/api/auth.md) |
 
-The initial project menu contains:
+### Authentication
 
-- `Features`
-- `Tasks`
-- `Workers`
+The web app authenticates users before any project access. The [API](../../../../docs/api/README.md) requires a Bearer token in the `Authorization` header.
 
-This menu is the starting point for all MVP flows in the web app.
+For MVP, the web app supports:
 
-### Features flow
+- **GitHub OAuth** — primary flow; the user's GitHub identity is used to sign prompt commits and co-author artifact commits (per root README).
+- **Firebase Auth** — alternative provider for environments where GitHub OAuth is not available.
 
-The `Features` screen shows the root features of the selected project.
+The authenticated user identity determines which projects appear on the home screen and which actions are permitted (e.g., submitting a proposal, creating a task).
 
-Selecting a feature opens that feature's screen. The feature screen must include:
+### PWA capabilities
 
-- The feature content
-- The feature's proposals list
-- A button or action to open the `New proposal` screen
+As a progressive web app, the web surface should support:
 
-The `New proposal` screen creates a proposal for that feature and may also create and link a GitHub issue for MVP.
+- **Installability** — users can add it to their home screen / app launcher
+- **Offline access** — cached project and feature data remains browsable when offline; mutations queue and sync when connectivity returns
+- **Responsive layout** — usable on desktop, tablet, and phone form factors
 
-### Tasks flow
+### Content rendering
 
-The `Tasks` screen shows the root tasks of the selected project.
+Feature specifications and proposals are stored as Markdown (`README.md` files). The web app must render this content faithfully.
 
-For MVP, the screen supports:
+Options:
 
-- Viewing root tasks
-- Creating a task
-- Enqueueing a task
+1. The API returns pre-rendered HTML
+2. The web app receives raw Markdown and renders client-side
 
-Task creation and enqueueing must respect the canonical task rules already defined elsewhere in Synchestra's specifications.
+The choice affects offline behavior and rendering fidelity. This is an open question.
 
-### Workers flow
+### Surface-specific interaction notes
 
-The `Workers` screen shows workers available to execute tasks and run project validation.
-
-Examples include:
-
-- VMs
-- Docker-based workers
-- Cloud workers
-- Local workers
-
-For MVP, this screen is a visibility and selection surface. Provisioning and advanced worker orchestration are outside this subfeature's initial scope.
-
-## Additional Rules
-
-- The web app must clearly preserve the distinction between current feature specification and non-normative proposals.
-- The web app should present proposals and task actions at the feature/project level where the user already has relevant context.
+- The **New proposal** button appears on the feature detail screen alongside the proposals list (per [Proposals UI behavior](../../proposals/README.md#synchestra-ui-behavior)).
+- Task creation uses a form that maps to the fields accepted by [`synchestra task create`](../../cli/task/create/README.md).
+- The proposals list on the feature screen must visually distinguish proposals from the feature's normative specification content.
 
 ## Outstanding Questions
 
-None at this time.
+- Should the web app render Markdown client-side or receive pre-rendered HTML from the API?
+- What is the offline mutation strategy — optimistic local writes with background sync, or explicit "you are offline" gating?
+- Should the web app support real-time updates (WebSocket / SSE) for task board changes, or is polling sufficient for MVP?
+- What Ionic components map to the project menu and feature detail screens? Should these be defined in a design system before implementation begins?
+- How does GitHub OAuth token refresh work in the context of long-lived PWA sessions?
