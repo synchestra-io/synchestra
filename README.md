@@ -168,6 +168,21 @@ Through the same mechanism distributed systems have used for decades: optimistic
 
 Synchestra started small -- one developer, a few projects, a $10/month VM. But the architecture scales naturally: git already handles distributed collaboration, inGitDB's schema validation works regardless of team size, and the claim-and-push protocol handles concurrency without a central coordinator. The same conventions that keep a solo developer organized keep a team aligned.
 
+## Features
+
+Core features driving Synchestra's development:
+
+| Feature | Status | Description |
+|---|---|---|
+| [Micro-tasks](synchestra/projects/synchestra/features/micro-tasks/README.md) | Conceptual | Pre/post prompt micro-task chains and background automation |
+| [Cross-repo sync](synchestra/projects/synchestra/features/cross-repo-sync/README.md) | Conceptual | Cross-repository branching, task coordination, and merge strategy |
+| [Model selection](synchestra/projects/synchestra/features/model-selection/README.md) | Conceptual | Smart model routing based on task complexity and configuration |
+| [Conflict resolution](synchestra/projects/synchestra/features/conflict-resolution/README.md) | Conceptual | AI-powered merge conflict detection and resolution |
+| [Outstanding questions](synchestra/projects/synchestra/features/outstanding-questions/README.md) | Conceptual | Question lifecycle management linked to tasks and features |
+| [Claim-and-push](synchestra/projects/synchestra/features/claim-and-push/README.md) | Conceptual | Distributed task claiming via git push-based optimistic locking |
+
+See [Synchestra project features](synchestra/projects/synchestra/features/README.md) for detailed specifications and dependency graph.
+
 ## Getting Started
 
 **Try it instantly:**
