@@ -14,6 +14,36 @@ Feature specifications for the Synchestra project, managed by Synchestra.
 | [claim-and-push](claim-and-push/README.md) | Conceptual | Distributed task claiming via git push-based optimistic locking |
 | [task-status-board](task-status-board/README.md) | Conceptual | Markdown task board in task directory READMEs for at-a-glance status visibility |
 
+## Feature Summaries
+
+### [Micro-Tasks](micro-tasks/README.md)
+
+Small, automated steps that run before, after, or in the background of a user's prompt — formatting, validation, cross-reference updates, link checks. They keep the project consistent without burning tokens from the main task's context window. Configured per-project or per-module as pre/post/background chains, modeled after GitHub Actions workflow jobs.
+
+### [Cross-Repo Sync](cross-repo-sync/README.md)
+
+Coordinates changes that span multiple repositories. When a task requires edits across repos (e.g., API spec + backend + frontend), Synchestra decomposes the work into sub-tasks, reserves matching branch names across all affected repos, manages dependency order, and handles the integration merge lifecycle.
+
+### [Model Selection](model-selection/README.md)
+
+Routes tasks to the minimal viable model to avoid wasting expensive tokens on mechanical work. Three levels of precedence: user override (CLI/API/UI), configuration rules (`model_class` mapping to platform-specific models), and dynamic assessment where a small model classifies task complexity before routing.
+
+### [Conflict Resolution](conflict-resolution/README.md)
+
+When git merge conflicts occur between concurrent agent operations, Synchestra launches a specialized sub-agent to analyze and resolve the conflict. Three tiers: auto-merge via git rebase, AI-assisted merge that understands change intent from task descriptions, and human escalation with a confidence threshold for ambiguous cases.
+
+### [Outstanding Questions](outstanding-questions/README.md)
+
+Every document maintains a structural "Outstanding Questions" section with a full lifecycle: open → linked (to a task) → resolved → recently resolved → archived. When a linked task completes, a sub-agent evaluates whether the output actually answers the question and resolves it automatically.
+
+### [Claim-and-Push](claim-and-push/README.md)
+
+Distributed task claiming through git's push semantics. Agents claim tasks by committing a status change and pushing — if the push fails, another agent got there first. No central lock server needed. The protocol relies on frequent commits to minimize conflict windows and provide granular audit trail.
+
+### [Task Status Board](task-status-board/README.md)
+
+A markdown table in task directory READMEs that serves as both the visibility layer and the claim mechanism. The board is the source of truth for task state — agents claim tasks by updating a row and pushing. Conflicts on the same row indicate a claim collision; the CLI parses diffs by task ID to distinguish collisions from unrelated changes.
+
 ## Feature dependency graph
 
 ```
