@@ -25,7 +25,7 @@ model-selection (independent)
 outstanding-questions (independent)
 ```
 
-`claim-and-push` is foundational —most concurrent features depend on it.
+`claim-and-push` is foundational — most concurrent features depend on it.
 
 ## Outstanding Questions
 

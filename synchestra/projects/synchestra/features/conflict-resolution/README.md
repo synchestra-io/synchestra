@@ -4,7 +4,7 @@
 
 ## Summary
 
-When git merge conflicts occur between concurrent agent operations, Synchestra launches a specialized AI sub-agent to analyze, resolve, or escalate the conflict —reducing human intervention for the mechanical cases while preserving human judgment for the ambiguous ones.
+When git merge conflicts occur between concurrent agent operations, Synchestra launches a specialized AI sub-agent to analyze, resolve, or escalate the conflict — reducing human intervention for the mechanical cases while preserving human judgment for the ambiguous ones.
 
 ## Problem
 
@@ -40,7 +40,7 @@ The AI merge sub-agent assigns a confidence score to its resolution. Below a con
 
 ## Open Design Decisions
 
-- What model should the conflict resolution sub-agent use? (Needs to understand code and intent —probably `medium` or `large`.)
+- What model should the conflict resolution sub-agent use? (Needs to understand code and intent — probably `medium` or `large`.)
 - Should the resolution sub-agent have access to the full task context of both conflicting tasks, or just the diff?
 - How is the confidence threshold configured and calibrated?
 - Should there be a "dry-run" mode where the sub-agent proposes a resolution but always waits for human approval?

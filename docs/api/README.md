@@ -21,7 +21,7 @@ All requests require a Bearer token in the `Authorization` header:
 Authorization: Bearer tok_your_token_here
 ```
 
-Create tokens with: `synchestra auth token create` — see [Auth CLI](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/auth.md) or [Auth API](auth.md).
+Create tokens with: `synchestra auth token create` —  see [Auth CLI](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/auth.md) or [Auth API](auth.md).
 
 Unauthenticated local access can be enabled on self-hosted instances: see [Self-Hosting](../self-hosting.md).
 
@@ -112,11 +112,11 @@ Unauthenticated local access can be enabled on self-hosted instances: see [Self-
 |---|---|
 | `200` | Success |
 | `201` | Created |
-| `400` | Bad request — missing or invalid fields |
-| `401` | Unauthorized — missing or invalid token |
-| `403` | Forbidden — token lacks required scope |
+| `400` | Bad request —  missing or invalid fields |
+| `401` | Unauthorized —  missing or invalid token |
+| `403` | Forbidden —  token lacks required scope |
 | `404` | Not found |
-| `409` | Conflict — optimistic lock violation (stale `updated_at`) |
+| `409` | Conflict —  optimistic lock violation (stale `updated_at`) |
 | `500` | Internal server error |
 
 ---

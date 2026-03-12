@@ -1,19 +1,19 @@
 # Synchestra
 
-**Synchestra** —as in *synch*ronized *orchestra* —is a modular, opinionated platform for orchestrating multi-platform AI agents asynchronously. It manages the **I/O** of AI-driven development: the **inputs** (prompts, specifications, task queues) and the **outputs** (code, documents, artifacts) —keeping token usage minimal, output velocity high, and humans in the loop.
+**Synchestra** — as in *synch*ronized *orchestra* — is a modular, opinionated platform for orchestrating multi-platform AI agents asynchronously. It manages the **I/O** of AI-driven development: the **inputs** (prompts, specifications, task queues) and the **outputs** (code, documents, artifacts) — keeping token usage minimal, output velocity high, and humans in the loop.
 
 ## Why Synchestra Exists
 
-AI agents are getting powerful. Running a single agent on a single task works. But real work isn't a single task —it's a tree of tasks, features, sub-features, dependencies, and decisions that unfold over time.
+AI agents are getting powerful. Running a single agent on a single task works. But real work isn't a single task — it's a tree of tasks, features, sub-features, dependencies, and decisions that unfold over time.
 
-The moment you try to coordinate multiple agents —or even one agent across multiple sessions —you hit the same problems:
+The moment you try to coordinate multiple agents — or even one agent across multiple sessions — you hit the same problems:
 
 - **Context is expensive.** Every time an agent starts, it needs to understand what's going on. Loading the full project context burns tokens and loses focus. Most of that context is irrelevant to the current task.
 - **State is scattered.** What's been done? What's left? What's blocked? The answers live in chat logs, git history, your head, and nowhere canonical.
-- **Agents can't find each other's work.** Agent A finishes a sub-task. Agent B needs the output. Without a shared protocol, you're the glue —copying context between sessions, platforms, and tools.
+- **Agents can't find each other's work.** Agent A finishes a sub-task. Agent B needs the output. Without a shared protocol, you're the glue — copying context between sessions, platforms, and tools.
 - **Humans can't see what's happening.** When agents work asynchronously across platforms (Claude Code, Cursor, GPT, custom scripts), there's no dashboard, no progress bar, no single place to look and understand: *where are we?*
 
-Existing tools solve the *agent runtime* problem well —how to call tools, chain reasoning, manage prompts. They haven't solved the *coordination* problem: how do agents share state, minimize redundant work, and keep humans in the loop?
+Existing tools solve the *agent runtime* problem well — how to call tools, chain reasoning, manage prompts. They haven't solved the *coordination* problem: how do agents share state, minimize redundant work, and keep humans in the loop?
 
 Synchestra is that coordination layer.
 
@@ -21,21 +21,21 @@ Synchestra is that coordination layer.
 
 Synchestra is a **mental framework, a set of tools, and a runtime** that turns a git repository into a coordination protocol for AI agents.
 
-At its core, Synchestra is a chain of small, automatable steps and background checks that anyone *could* do manually —but nobody has time to do consistently. Think of it as a disciplined workflow engine tuned to one mission: envisioning, planning, and managing the development of software projects with AI agents.
+At its core, Synchestra is a chain of small, automatable steps and background checks that anyone *could* do manually — but nobody has time to do consistently. Think of it as a disciplined workflow engine tuned to one mission: envisioning, planning, and managing the development of software projects with AI agents.
 
 ### The tools
 
 - **CLI and MCP server.** Agents call Synchestra to create, search, validate, and update project state. Humans use the same CLI for manual operations.
 - **Daemon.** Runs as a background process that spawns agents when new tasks are queued, manages headless agent sessions in highly focused mode, and runs pre/post micro-task chains around each prompt.
-- **Web UI and HTTP API.** Remote access to everything —edit projects, queue tasks from your phone, monitor progress. Users authenticate via GitHub OAuth or Firebase; their identity is used to sign prompt commits and co-author output artifact commits.
+- **Web UI and HTTP API.** Remote access to everything — edit projects, queue tasks from your phone, monitor progress. Users authenticate via GitHub OAuth or Firebase; their identity is used to sign prompt commits and co-author output artifact commits.
 - **Git hooks and CI guards.** Pre-commit, pre-push, and GitHub Actions workflows validate the structure and consistency of Synchestra project files on every change.
 
 ### The key properties
 
-- **Hierarchical and nested.** Features have sub-features. Tasks have sub-tasks. The directory tree mirrors the work breakdown structure. This isn't a flat backlog —it's a tree that reflects how work actually decomposes.
+- **Hierarchical and nested.** Features have sub-features. Tasks have sub-tasks. The directory tree mirrors the work breakdown structure. This isn't a flat backlog — it's a tree that reflects how work actually decomposes.
 - **Modular but opinionated.** Modules are flexible and composable, but they communicate through enforced naming conventions at the top level (e.g., tasks live in `tasks/`) with configurable details (e.g., max nesting depth, source code location). A `README.md` in every directory. A predictable structure that agents can navigate without custom tooling.
 - **Multi-platform.** Agents running in Claude Code, Cursor, Windsurf, GPT, or a custom script can all participate. The shared state is the repo, not a proprietary runtime.
-- **Token-efficient by design.** Not just structurally —Synchestra actively minimizes token usage through automatic context generation, model selection, and micro-task decomposition (see [How Token Efficiency Works](#how-token-efficiency-works)).
+- **Token-efficient by design.** Not just structurally — Synchestra actively minimizes token usage through automatic context generation, model selection, and micro-task decomposition (see [How Token Efficiency Works](#how-token-efficiency-works)).
 - **Async-first.** Agents work independently and asynchronously. Coordination happens through the repo state, not real-time messaging.
 
 ## Repository Structure
@@ -67,11 +67,11 @@ project/
           README.md
 ```
 
-**Every directory has a `README.md`.** This is the atomic unit of Synchestra. Each README contains the context an agent needs to understand that node: what it is, what's expected, what's done, what's blocked —and what questions remain open.
+**Every directory has a `README.md`.** This is the atomic unit of Synchestra. Each README contains the context an agent needs to understand that node: what it is, what's expected, what's done, what's blocked — and what questions remain open.
 
 **The directory tree is the work breakdown structure.** Nesting means decomposition. A feature directory contains its sub-features. A task directory contains its sub-tasks. The hierarchy is both organizational and navigational.
 
-**Naming conventions are the API.** Core modules (spec, docs, tasks) are discovered by name. An agent looking for work checks `tasks/`. An agent needing requirements checks `spec/features/`. No registration, no discovery protocol —just filesystem semantics enforced by schema validation.
+**Naming conventions are the API.** Core modules (spec, docs, tasks) are discovered by name. An agent looking for work checks `tasks/`. An agent needing requirements checks `spec/features/`. No registration, no discovery protocol — just filesystem semantics enforced by schema validation.
 
 **Everything is human-readable text.** State is stored as YAML, JSON, or Markdown. Task status lives in the task's parent document alongside a list of sub-tasks and their statuses. Agents read and update state through the Synchestra CLI, which validates changes against the project schema.
 
@@ -88,13 +88,13 @@ This means:
 
 Token efficiency isn't just about loading fewer files. Synchestra optimizes at multiple levels:
 
-**Minimal context generation.** For each micro-task, Synchestra automatically generates the minimum context an agent needs —the task description, the parent chain for broader context, sibling tasks for awareness of parallel work, and outstanding questions from prior attempts. Everything else stays unloaded.
+**Minimal context generation.** For each micro-task, Synchestra automatically generates the minimum context an agent needs — the task description, the parent chain for broader context, sibling tasks for awareness of parallel work, and outstanding questions from prior attempts. Everything else stays unloaded.
 
-**Smart model selection.** Not every task needs the most powerful (and expensive) model. Synchestra can select the minimal viable model for each task —either by configuration rules or by using a smaller model to assess task complexity before routing to the right tier.
+**Smart model selection.** Not every task needs the most powerful (and expensive) model. Synchestra can select the minimal viable model for each task — either by configuration rules or by using a smaller model to assess task complexity before routing to the right tier.
 
 **Micro-task chains.** Because Synchestra knows the workflow structure, it can run configured chains of specialized micro-tasks before and after processing a user's prompt. Some run sequentially (e.g., validation before submission), others in the background (e.g., updating cross-reference links, running consistency checks).
 
-**Persistent outstanding questions.** Every document maintains an "Outstanding questions" section. When a task is restarted or a new agent picks up related work, it inherits awareness of known pitfalls and pending decisions —avoiding wasted tokens rediscovering known issues. Questions can be linked to sub-tasks; when the sub-task completes, a specialized sub-agent can automatically resolve and remove the question.
+**Persistent outstanding questions.** Every document maintains an "Outstanding questions" section. When a task is restarted or a new agent picks up related work, it inherits awareness of known pitfalls and pending decisions — avoiding wasted tokens rediscovering known issues. Questions can be linked to sub-tasks; when the sub-task completes, a specialized sub-agent can automatically resolve and remove the question.
 
 ## Concurrent Work and Conflict Resolution
 
@@ -107,7 +107,7 @@ Synchestra's philosophy is **commit often**. When an agent starts work, it must:
 1. Claim an unclaimed task by updating its status to "claimed/wip"
 2. Commit and push immediately
 
-If the push fails due to a merge conflict, another agent already claimed the task. The agent moves on to the next available task or exits. This is standard distributed locking —implemented through git, requiring zero additional infrastructure.
+If the push fails due to a merge conflict, another agent already claimed the task. The agent moves on to the next available task or exits. This is standard distributed locking — implemented through git, requiring zero additional infrastructure.
 
 ### Resolution: AI-powered merge handling
 
@@ -140,11 +140,11 @@ Synchestra adapts to how your project is organized:
 
 ### Compared to agent frameworks (LangChain, CrewAI, AutoGen)
 
-These are runtimes —they execute agents, manage prompts, and chain tool calls. Synchestra doesn't replace them. It sits beneath them as the shared state and coordination layer. Your CrewAI agents and your Claude Code session can coordinate through the same repo.
+These are runtimes — they execute agents, manage prompts, and chain tool calls. Synchestra doesn't replace them. It sits beneath them as the shared state and coordination layer. Your CrewAI agents and your Claude Code session can coordinate through the same repo.
 
 ### Compared to project management tools (Linear, Jira)
 
-These track work for humans. Synchestra tracks work for agents *and* humans. The directory structure is both machine-navigable and human-readable. An agent doesn't need an API client to check task status —but it gets validation and consistency guarantees when it uses one.
+These track work for humans. Synchestra tracks work for agents *and* humans. The directory structure is both machine-navigable and human-readable. An agent doesn't need an API client to check task status — but it gets validation and consistency guarantees when it uses one.
 
 ### Compared to CI/CD systems
 
@@ -154,7 +154,7 @@ CI/CD pipelines are linear and event-driven. Synchestra workflows are hierarchic
 
 **"Isn't this just a well-organized repo?"**
 
-You can absolutely do what Synchestra does manually. You could also deploy software without CI/CD, manage infrastructure without Terraform, and track bugs without an issue tracker. Synchestra is the automation and discipline layer that makes the "well-organized repo" approach sustainable. It's the chain of small steps and background checks that anyone could do but nobody has time to do consistently —schema validation, context generation, model selection, conflict resolution, cross-reference updates, progress tracking. The value isn't in any single convention. It's in the system that enforces and automates all of them together.
+You can absolutely do what Synchestra does manually. You could also deploy software without CI/CD, manage infrastructure without Terraform, and track bugs without an issue tracker. Synchestra is the automation and discipline layer that makes the "well-organized repo" approach sustainable. It's the chain of small steps and background checks that anyone could do but nobody has time to do consistently — schema validation, context generation, model selection, conflict resolution, cross-reference updates, progress tracking. The value isn't in any single convention. It's in the system that enforces and automates all of them together.
 
 **"Naming conventions are fragile. What happens when they break?"**
 
@@ -162,11 +162,11 @@ They don't break silently. Synchestra enforces conventions at multiple checkpoin
 
 **"How does async coordination work without conflicts?"**
 
-Through the same mechanism distributed systems have used for decades: optimistic locking. Agents claim tasks by committing a status change and pushing. If the push fails, someone else got there first. For the remaining edge cases —two agents editing different parts of the same file —Synchestra provides AI-powered merge resolution that either handles it automatically or escalates to a human. The "commit often" philosophy minimizes the window for conflicts in the first place.
+Through the same mechanism distributed systems have used for decades: optimistic locking. Agents claim tasks by committing a status change and pushing. If the push fails, someone else got there first. For the remaining edge cases — two agents editing different parts of the same file — Synchestra provides AI-powered merge resolution that either handles it automatically or escalates to a human. The "commit often" philosophy minimizes the window for conflicts in the first place.
 
 **"Does this actually scale beyond a solo developer?"**
 
-Synchestra started small —one developer, a few projects, a $10/month VM. But the architecture scales naturally: git already handles distributed collaboration, inGitDB's schema validation works regardless of team size, and the claim-and-push protocol handles concurrency without a central coordinator. The same conventions that keep a solo developer organized keep a team aligned.
+Synchestra started small — one developer, a few projects, a $10/month VM. But the architecture scales naturally: git already handles distributed collaboration, inGitDB's schema validation works regardless of team size, and the claim-and-push protocol handles concurrency without a central coordinator. The same conventions that keep a solo developer organized keep a team aligned.
 
 ## Features
 
@@ -194,13 +194,13 @@ Install Synchestra on your own VM for persistent daemon mode, headless agent man
 
 ## Dogfooding
 
-Synchestra's own development is managed by Synchestra. We build the tool with the tool —which means every rough edge gets felt immediately and fixed quickly.
+Synchestra's own development is managed by Synchestra. We build the tool with the tool — which means every rough edge gets felt immediately and fixed quickly.
 
 **Synchestra-managed projects:**
 
-- [synchestra/projects/synchestra](synchestra/projects/synchestra) —Synchestra's own development project (this repo)
-- [synchestra-go](https://github.com/synchestra-io/synchestra-go) —CLI, daemon, server, HTTP API, and task runner (Go)
-- [synchestra-app](https://github.com/synchestra-io/synchestra-app) —Web UI frontend (TypeScript, Angular, Ionic)
+- [synchestra/projects/synchestra](synchestra/projects/synchestra) — Synchestra's own development project (this repo)
+- [synchestra-go](https://github.com/synchestra-io/synchestra-go) — CLI, daemon, server, HTTP API, and task runner (Go)
+- [synchestra-app](https://github.com/synchestra-io/synchestra-app) — Web UI frontend (TypeScript, Angular, Ionic)
 
 ## Current Status
 
@@ -208,7 +208,7 @@ Synchestra is in active development. The conventions, module structure, and CLI 
 
 ## Outstanding Questions
 
-- What is the full lifecycle of a cross-repo task —from branch reservation through integration testing to merge? (Early vision exists; dedicated specification pending. See [Cross-Repo Sync](synchestra/projects/synchestra/features/cross-repo-sync/README.md).)
+- What is the full lifecycle of a cross-repo task — from branch reservation through integration testing to merge? (Early vision exists; dedicated specification pending. See [Cross-Repo Sync](synchestra/projects/synchestra/features/cross-repo-sync/README.md).)
 - What is the configuration format for micro-task chains? (Conceptual stage; GitHub Actions-inspired YAML being explored. See [Micro-Tasks](synchestra/projects/synchestra/features/micro-tasks/README.md).)
 - How does Synchestra interact with agent platform settings when it's not the direct model caller? (Configurable: Synchestra can decide, or the user can override via UI/CLI/API. Hints or arguments are passed to the underlying platform.)
 

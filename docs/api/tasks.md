@@ -1,6 +1,6 @@
 # API: Tasks
 
-Manage tasks — the core unit of work in Synchestra.
+Manage tasks —  the core unit of work in Synchestra.
 
 **See also:** [CLI: `synchestra task`](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/task.md)
 

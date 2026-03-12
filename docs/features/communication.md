@@ -1,6 +1,6 @@
 # Communication Interfaces
 
-**Summary:** Agents communicate with Synchestra in three ways — CLI, HTTP API, and MCP server. Pick the interface that fits your agent's runtime environment.
+**Summary:** Agents communicate with Synchestra in three ways —  CLI, HTTP API, and MCP server. Pick the interface that fits your agent's runtime environment.
 
 ---
 
@@ -155,7 +155,7 @@ Add to your Claude MCP config:
 }
 ```
 
-Once configured, Claude can call `synchestra_task_log` mid-reasoning to report what it's working on — giving you real-time visibility into what the model is doing.
+Once configured, Claude can call `synchestra_task_log` mid-reasoning to report what it's working on —  giving you real-time visibility into what the model is doing.
 
 ---
 

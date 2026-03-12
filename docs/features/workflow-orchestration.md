@@ -6,7 +6,7 @@
 
 ## Overview
 
-A *workflow* in Synchestra is not a YAML file or a graph DSL — it's a tree of tasks, each assigned to an agent, each with a well-defined status that gates the next step. This keeps things simple: every agent just needs to know how to pick up a task and report back.
+A *workflow* in Synchestra is not a YAML file or a graph DSL —  it's a tree of tasks, each assigned to an agent, each with a well-defined status that gates the next step. This keeps things simple: every agent just needs to know how to pick up a task and report back.
 
 ```mermaid
 graph LR

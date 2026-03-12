@@ -34,7 +34,7 @@ Create and query rules that shape agent behaviour within a scope.
 | Field | Required | Description |
 |---|---|---|
 | `name` | ✅ | Short rule name |
-| `content` | ✅ | Rule content — a clear, actionable instruction |
+| `content` | ✅ | Rule content —  a clear, actionable instruction |
 | `scope` | ✅ | `human`, `org`, `project`, or `repo` |
 | `scope_id` | ✅ | ID of the scoped resource |
 

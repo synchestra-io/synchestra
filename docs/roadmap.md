@@ -9,7 +9,7 @@ Synchestra started as a personal tool to scratch a very specific itch. The plan 
 - Ship working software, not roadmap theatre
 - Self-hosted must always be free and fully featured
 - The CLI and API should be stable; don't break agent integrations
-- The web UI is a layer on top — not a dependency
+- The web UI is a layer on top —  not a dependency
 
 ---
 
@@ -37,23 +37,23 @@ gantt
 
 ---
 
-## Phase 1 — CLI MVP
+## Phase 1 —  CLI MVP
 
 The baseline: a working CLI and local server that an agent can actually use.
 
-- [ ] `synchestra task` — create, list, update, complete, fail, log
-- [ ] `synchestra agent` — register, heartbeat, deregister
-- [ ] `synchestra project` — create, list, get
-- [ ] `synchestra repo` — add, list, link
-- [ ] `synchestra skill` — create, list
-- [ ] `synchestra rule` — create, list
-- [ ] `synchestra status` — system and task view
+- [ ] `synchestra task` —  create, list, update, complete, fail, log
+- [ ] `synchestra agent` —  register, heartbeat, deregister
+- [ ] `synchestra project` —  create, list, get
+- [ ] `synchestra repo` —  add, list, link
+- [ ] `synchestra skill` —  create, list
+- [ ] `synchestra rule` —  create, list
+- [ ] `synchestra status` —  system and task view
 - [ ] SQLite backend for zero-config local use
 - [ ] Config file and env var support
 
 ---
 
-## Phase 2 — HTTP API Server
+## Phase 2 —  HTTP API Server
 
 Make Synchestra accessible to agents written in any language, running anywhere.
 
@@ -66,7 +66,7 @@ Make Synchestra accessible to agents written in any language, running anywhere.
 
 ---
 
-## Phase 3 — MCP Server 🔄 In Progress
+## Phase 3 —  MCP Server 🔄 In Progress
 
 First-class support for AI models that speak MCP (Claude, and growing).
 
@@ -78,7 +78,7 @@ First-class support for AI models that speak MCP (Claude, and growing).
 
 ---
 
-## Phase 4 — Web UI 🗓 Planned
+## Phase 4 —  Web UI 🗓 Planned
 
 A real-time dashboard for humans to watch, steer, and understand what their agents are doing.
 
@@ -93,7 +93,7 @@ A real-time dashboard for humans to watch, steer, and understand what their agen
 
 ---
 
-## Phase 5 — Notifications 🔄 In Progress
+## Phase 5 —  Notifications 🔄 In Progress
 
 Get notified when things go wrong (or right) without polling.
 
@@ -105,7 +105,7 @@ Get notified when things go wrong (or right) without polling.
 
 ---
 
-## Phase 6 — Public SaaS 🗓 Planned
+## Phase 6 —  Public SaaS 🗓 Planned
 
 A hosted version for people who don't want to run their own server.
 
@@ -117,14 +117,14 @@ A hosted version for people who don't want to run their own server.
 
 ---
 
-## Phase 7 — Paid Plans 🗓 Planned
+## Phase 7 —  Paid Plans 🗓 Planned
 
 When teams and businesses want more.
 
 - [ ] Team plan: multiple users, shared orgs, audit logs
 - [ ] Pro plan: higher limits, priority support, SLA
 - [ ] Enterprise: custom retention, SSO, dedicated infra
-- [ ] Usage-based billing for API calls (not tasks — tasks are always free)
+- [ ] Usage-based billing for API calls (not tasks —  tasks are always free)
 
 ---
 
@@ -132,7 +132,7 @@ When teams and businesses want more.
 
 Explicitly **not** planned:
 
-- **Our own agent runtime.** We're a coordination layer, not a framework. Use LangChain, Autogen, CrewAI, raw API calls — whatever works. Synchestra is the glue, not the glue factory.
+- **Our own agent runtime.** We're a coordination layer, not a framework. Use LangChain, Autogen, CrewAI, raw API calls —  whatever works. Synchestra is the glue, not the glue factory.
 - **Visual workflow builder.** Workflows are code. YAML-based pipeline builders have their place but Synchestra workflows are just tasks + agents + code.
 - **Built-in LLM calls.** No prompts, no model APIs, no vendor lock-in from our side.
 

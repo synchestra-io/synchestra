@@ -6,9 +6,9 @@
 
 ## Overview
 
-The problem with AI pipelines isn't that they're autonomous — it's that they're *opaque*. Things happen, decisions get made, mistakes propagate, and by the time a human looks, the damage is done.
+The problem with AI pipelines isn't that they're autonomous —  it's that they're *opaque*. Things happen, decisions get made, mistakes propagate, and by the time a human looks, the damage is done.
 
-Synchestra inverts this. Agents report continuously; humans can look in at any time. And when you want to step in — approve a risky step, redirect an agent, update a task's acceptance criteria mid-flight — you can.
+Synchestra inverts this. Agents report continuously; humans can look in at any time. And when you want to step in —  approve a risky step, redirect an agent, update a task's acceptance criteria mid-flight —  you can.
 
 ---
 
@@ -35,9 +35,9 @@ Active tasks: 7
   task_abc2  [in_progress]  tester-agent    "Write auth tests"           (12m)
   task_abc3  [blocked]      coder-agent-2   "Refactor DB layer"          (2h)
   task_abc4  [in_progress]  reviewer-agent  "Review PR #42"              (8m)
-  task_abc5  [pending]      —               "Deploy to staging"          
+  task_abc5  [pending]      —                "Deploy to staging"          
   task_abc6  [in_progress]  deployer-agent  "Update CI config"           (5m)
-  task_abc7  [pending]      —               "Run smoke tests"            
+  task_abc7  [pending]      —                "Run smoke tests"            
 
 Recent failures: 0
 ```
@@ -69,7 +69,7 @@ notifications:
       - task_failed
       - task_blocked
       - agent_offline
-      - task_complete  # optional — can be noisy
+      - task_complete  # optional —  can be noisy
 ```
 
 ### Webhooks
@@ -182,7 +182,7 @@ synchestra task update task_approval_abc --status complete
 
 ## Audit Trail
 
-Every change — who made it, when, what changed — is stored in the event log. This includes human interventions, not just agent actions.
+Every change —  who made it, when, what changed —  is stored in the event log. This includes human interventions, not just agent actions.
 
 ```bash
 synchestra status task task_abc3

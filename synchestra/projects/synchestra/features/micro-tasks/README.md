@@ -4,7 +4,7 @@
 
 ## Summary
 
-Micro-tasks are small, automated steps that Synchestra runs before, after, or in the background relative to a user's prompt. They handle the routine work that keeps a project consistent —formatting, validation, cross-reference updates, link checks —without burning tokens from the main task's context window.
+Micro-tasks are small, automated steps that Synchestra runs before, after, or in the background relative to a user's prompt. They handle the routine work that keeps a project consistent — formatting, validation, cross-reference updates, link checks — without burning tokens from the main task's context window.
 
 ## Problem
 
@@ -74,10 +74,10 @@ micro-tasks:
 ### Configuration inheritance
 
 Micro-task configs can be defined at multiple levels:
-1. **Global** —applies to all projects in this Synchestra instance
-2. **Project** —applies to all tasks in a specific project
-3. **Module** —applies to tasks within a specific module (e.g., `spec/`, `tasks/`)
-4. **Task** —applies to a specific task only
+1. **Global** — applies to all projects in this Synchestra instance
+2. **Project** — applies to all tasks in a specific project
+3. **Module** — applies to tasks within a specific module (e.g., `spec/`, `tasks/`)
+4. **Task** — applies to a specific task only
 
 Lower levels override higher levels. A task-level config replaces (not merges with) the module-level config for the same phase.
 
@@ -124,6 +124,6 @@ micro-tasks:
 ## Outstanding Questions
 
 - What is the config file name and location? (e.g., `.synchestra/micro-tasks.yaml`, or inline in the project config?)
-- How are custom `cmd` values resolved —PATH lookup, relative to project root, or registered scripts?
+- How are custom `cmd` values resolved — PATH lookup, relative to project root, or registered scripts?
 - What is the logging/observability story for micro-task execution? Are results stored as documents?
-- How does `model_class` interact with the model-selection feature —does micro-task config feed into the same routing logic?
+- How does `model_class` interact with the model-selection feature — does micro-task config feed into the same routing logic?

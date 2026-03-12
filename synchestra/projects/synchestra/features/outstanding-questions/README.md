@@ -14,7 +14,7 @@ When AI agents work on tasks, they frequently encounter ambiguities, unknowns, a
 
 ### Every document has an "Outstanding questions" section
 
-This is a structural requirement enforced by the project schema. If the section is empty, it explicitly states "None at this time." —not omitted, so its absence is always a schema violation.
+This is a structural requirement enforced by the project schema. If the section is empty, it explicitly states "None at this time." — not omitted, so its absence is always a schema violation.
 
 ### Question lifecycle
 
@@ -39,7 +39,7 @@ Open → Linked (optional) → Resolved → Recently Resolved → Archived/Remov
 synchestra question add --doc spec/features/auth/README.md \
   --text "Which OAuth provider should we use?"
 
-# Or manually —just add to the "Outstanding questions" section
+# Or manually — just add to the "Outstanding questions" section
 ```
 
 ### Linking to tasks

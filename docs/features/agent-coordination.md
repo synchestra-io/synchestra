@@ -30,7 +30,7 @@ sequenceDiagram
 
 ## Agent Registration
 
-Agents register on startup and deregister on shutdown. Registration is idempotent — re-registering with the same name updates the existing record.
+Agents register on startup and deregister on shutdown. Registration is idempotent —  re-registering with the same name updates the existing record.
 
 ### CLI
 
@@ -125,9 +125,9 @@ An `offline` agent's in-progress tasks are flagged for review. Depending on your
 
 Synchestra is well-suited to patterns like:
 
-- **Specialist pipeline** — Coder → Reviewer → Tester → Deployer, each as a separate agent
-- **Fan-out** — One orchestrator agent creates sub-tasks and assigns them to specialist agents
-- **Redundant pool** — Multiple identical agents registered for the same skill; work is distributed
+- **Specialist pipeline** —  Coder → Reviewer → Tester → Deployer, each as a separate agent
+- **Fan-out** —  One orchestrator agent creates sub-tasks and assigns them to specialist agents
+- **Redundant pool** —  Multiple identical agents registered for the same skill; work is distributed
 
 See also: [Workflow Orchestration](workflow-orchestration.md) for pipeline patterns.
 

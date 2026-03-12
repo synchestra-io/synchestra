@@ -20,7 +20,7 @@ Create and manage API tokens.
 
 `POST /api/v1/auth/tokens`
 
-Creates a new API token. The `token` value is returned once only — it is never retrievable after creation.
+Creates a new API token. The `token` value is returned once only —  it is never retrievable after creation.
 
 ### Request
 
