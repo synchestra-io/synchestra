@@ -177,14 +177,35 @@ Using the parent board as the single claim point means:
 
 Table cells use `<br>` for line breaks where needed (e.g., timestamps, dependency lists). This is supported in GitHub-flavored markdown.
 
-## Open Design Decisions
+## Recently Finished
 
-- Should completed/aborted/failed tasks be automatically moved to a "Recently completed" section below the active board to reduce clutter?
-- Should there be a maximum number of visible rows before older terminal tasks are archived?
+Tasks that reach a terminal status (`completed`, `failed`, `aborted`) are automatically moved from the active board to a **Recently Finished** sub-section below it. This keeps the active board focused on work that needs attention.
 
+### Format
+
+The "Recently Finished" section uses the same table columns as the active board:
+
+```markdown
+### Recently Finished
+
+| Task | Status | Depends&nbsp;on | Branch | Agent | Requester | Time |
+|---|---|---|---|---|---|---|
+| [setup-db](setup-db/) | ✅&nbsp;`complete` | — | `synchestra/setup-db` | Sonnet&nbsp;4.5 | @alex | 2026-03-12<br>10:15 (4m32s) |
+| [fix-typo](fix-typo/) | ❌&nbsp;`failed` | — | `synchestra/fix-typo` | Haiku&nbsp;4.5 | @alex | 2026-03-12<br>10:20 (1m05s) |
+```
+
+### Retention
+
+The number of tasks shown in "Recently Finished" is configurable in project settings. Options:
+
+| Setting | Description | Default |
+|---|---|---|
+| `board.recently_finished.limit` | Maximum number of tasks to show | `10` |
+| `board.recently_finished.hours` | Alternative: show tasks finished within the last N hours | — |
+
+If both are set, `limit` takes precedence. When a task exceeds the retention window, it is removed from the "Recently Finished" section entirely — it remains accessible via its task directory and through [`task list`](../cli/task/list/README.md) / [`task info`](../cli/task/info/README.md).
 
 ## Outstanding Questions
 
 - What is the exact task directory structure? (e.g., `tasks/{task-slug}/README.md` with YAML frontmatter for machine-readable status?)
 - Should the `Requester` field support teams/groups or only individual humans?
-- How should [`task list`](../cli/task/list/README.md) render the board in the terminal — same markdown table format, or a simplified view?

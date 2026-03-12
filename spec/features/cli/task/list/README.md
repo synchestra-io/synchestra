@@ -6,12 +6,12 @@
 ## Synopsis
 
 ```
-synchestra task list --project <project_id> [--status <status>] [--format <format>]
+synchestra task list --project <project_id> [--status <status>] [--format <format>] [--fields <fields>]
 ```
 
 ## Description
 
-Lists tasks in a project. By default, all tasks are shown in table format. Use `--status` to filter by task status and `--format` to control the output format.
+Lists tasks in a project. By default, all tasks are shown in YAML format with all fields. Use `--status` to filter by task status, `--format` to control the output format, and `--fields` to select specific fields.
 
 This is a read-only command. It pulls the latest state from the project repo but does not mutate anything.
 
@@ -20,8 +20,9 @@ This is a read-only command. It pulls the latest state from the project repo but
 | Parameter | Required | Description |
 |---|---|---|
 | `--project` | Yes | Project identifier (e.g., `synchestra`, `my-service`) |
-| `--status` | No | Filter by task status (e.g., `pending`, `in_progress`, `claimed`, `completed`, `failed`, `blocked`, `aborted`) |
-| `--format` | No | Output format: `table` (default), `json`, `yaml` |
+| `--status` | No | Filter by task status (e.g., `planning`, `queued`, `claimed`, `in_progress`, `completed`, `failed`, `blocked`, `aborted`) |
+| `--format` | No | Output format: `yaml` (default), `json`, `md`, `csv` |
+| `--fields` | No | Comma-separated list of fields to include (e.g., `path,status,model`). Defaults to all fields |
 
 ## Exit codes
 
@@ -38,20 +39,56 @@ This is a read-only command. It pulls the latest state from the project repo but
 3. If `--status` is provided, filter tasks to only those matching the given status
 4. Output the task list in the requested format
 
-### Table output
+### Available fields
+
+`path`, `status`, `title`, `run`, `model`, `requester`, `depends_on`, `branch`, `claimed_at`, `updated_at`, `abort_requested`
+
+### YAML output (default)
+
+```yaml
+- path: implement-cli
+  status: in_progress
+  title: Implement CLI
+  run: 4821
+  model: sonnet
+  updated_at: 2026-03-12T10:45:00Z
+- path: implement-cli/parse-arguments
+  status: completed
+  title: Parse arguments
+  run: 4821
+  model: sonnet
+  updated_at: 2026-03-12T11:02:00Z
+- path: fix-auth-bug
+  status: claimed
+  title: Fix auth bug
+  run: 9933
+  model: opus
+  updated_at: 2026-03-12T12:15:00Z
+```
+
+### JSON output
+
+Same structure as YAML, rendered as a JSON array.
+
+### Markdown output (`md`)
+
+Renders a markdown table matching the [task status board](../../task-status-board/README.md) format, suitable for embedding in READMEs.
+
+### CSV output
+
+Flat comma-separated values with a header row. Useful for external tooling and spreadsheets.
+
+### Selective fields
 
 ```
-PATH                              STATUS        RUN    MODEL    UPDATED_AT
-implement-cli                     in_progress   4821   sonnet   2026-03-12T10:45:00Z
-implement-cli/parse-arguments     completed     4821   sonnet   2026-03-12T11:02:00Z
-implement-cli/validate-config     pending        —      —       2026-03-12T09:00:00Z
-fix-auth-bug                      claimed       9933   opus     2026-03-12T12:15:00Z
-write-tests                       blocked       5501   haiku    2026-03-12T11:30:00Z
+synchestra task list --project synchestra --status queued --fields path,title,depends_on --format csv
 ```
 
-### JSON / YAML output
-
-Structured output includes the same fields: `path`, `status`, `run`, `model`, and `updated_at`. Null values are used when a field is not set (e.g., `run` and `model` for a `pending` task).
+```csv
+path,title,depends_on
+write-tests,Write tests,implement-api
+deploy-staging,Deploy staging,"implement-api,write-tests"
+```
 
 ## Outstanding Questions
 

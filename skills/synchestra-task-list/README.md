@@ -6,10 +6,10 @@ List tasks in a project to find available work, check what's in progress, or rev
 
 ## When to use
 
-- **Finding available work:** List `pending` tasks to pick one to claim
+- **Finding available work:** List `queued` tasks to pick one to claim
 - **Checking progress:** See which tasks are `in_progress`, `completed`, or `blocked`
 - **Surveying a project:** Get an overview of all tasks and their current states
-- **Machine-readable output:** Use `--format json` or `--format yaml` when you need to parse the results programmatically
+- **Selective output:** Use `--fields` to get only the data you need, `--format` to control structure
 
 ## Command
 
@@ -17,7 +17,8 @@ List tasks in a project to find available work, check what's in progress, or rev
 synchestra task list \
   --project <project_id> \
   [--status <status>] \
-  [--format <format>]
+  [--format <format>] \
+  [--fields <fields>]
 ```
 
 ## Parameters
@@ -25,8 +26,9 @@ synchestra task list \
 | Parameter | Required | Description |
 |---|---|---|
 | `--project` | Yes | Project identifier (e.g., `synchestra`, `my-service`) |
-| `--status` | No | Filter by task status (e.g., `pending`, `in_progress`, `claimed`, `completed`, `failed`, `blocked`, `aborted`) |
-| `--format` | No | Output format: `table` (default), `json`, `yaml` |
+| `--status` | No | Filter by task status (e.g., `planning`, `queued`, `claimed`, `in_progress`, `completed`, `failed`, `blocked`, `aborted`) |
+| `--format` | No | Output format: `yaml` (default), `json`, `md`, `csv` |
+| `--fields` | No | Comma-separated list of fields to include (e.g., `path,status,model`). Defaults to all fields |
 
 ## Exit codes
 
@@ -39,41 +41,56 @@ synchestra task list \
 
 ## Examples
 
-### List all tasks in a project
+### List all tasks (default YAML)
 
 ```bash
 synchestra task list --project synchestra
-# PATH                              STATUS        RUN    MODEL    UPDATED_AT
-# implement-cli                     in_progress   4821   sonnet   2026-03-12T10:45:00Z
-# implement-cli/parse-arguments     completed     4821   sonnet   2026-03-12T11:02:00Z
-# implement-cli/validate-config     pending        —      —       2026-03-12T09:00:00Z
-# fix-auth-bug                      claimed       9933   opus     2026-03-12T12:15:00Z
-# write-tests                       blocked       5501   haiku    2026-03-12T11:30:00Z
+# - path: implement-cli
+#   status: in_progress
+#   title: Implement CLI
+#   run: 4821
+#   model: sonnet
+#   updated_at: 2026-03-12T10:45:00Z
+# - path: fix-auth-bug
+#   status: claimed
+#   title: Fix auth bug
+#   run: 9933
+#   model: opus
+#   updated_at: 2026-03-12T12:15:00Z
+# ...
 ```
 
-### Find pending tasks to claim
+### Find queued tasks to claim
 
 ```bash
-synchestra task list --project synchestra --status pending
-# PATH                              STATUS    RUN    MODEL    UPDATED_AT
-# implement-cli/validate-config     pending    —      —       2026-03-12T09:00:00Z
+synchestra task list --project synchestra --status queued
 ```
 
-### Get task list as JSON for programmatic use
+### Get specific fields as CSV
 
 ```bash
-synchestra task list --project synchestra --format json
+synchestra task list --project synchestra --status queued --fields path,title,depends_on --format csv
+# path,title,depends_on
+# write-tests,Write tests,implement-api
+# deploy-staging,Deploy staging,"implement-api,write-tests"
 ```
 
-### Check what's currently in progress
+### JSON for programmatic use
 
 ```bash
-synchestra task list --project my-service --status in_progress
+synchestra task list --project synchestra --format json --fields path,status
+```
+
+### Markdown table for embedding
+
+```bash
+synchestra task list --project synchestra --format md
 ```
 
 ## Notes
 
 - This is a read-only command. It pulls latest state but does not modify anything.
-- The output includes task path, status, assigned run, model, and `updated_at` for each task.
-- Use `--format json` or `--format yaml` when piping output to other tools or parsing results in a script.
-- To get detailed information about a single task, use `synchestra task status` instead.
+- Default format is YAML — structured and easy for both agents and humans to parse.
+- Use `--fields` to reduce output to only what you need, especially when piping to other tools.
+- The `md` format renders a markdown table matching the [task status board](../../spec/features/task-status-board/README.md) format.
+- To get detailed information about a single task (description, parent chain, context), use [`task info`](../../spec/features/cli/task/info/README.md) instead.
