@@ -218,6 +218,7 @@ Core features driving Synchestra's development:
 | [Conflict resolution](spec/features/conflict-resolution/README.md) | Conceptual | AI-powered merge conflict detection and resolution |
 | [Outstanding questions](spec/features/outstanding-questions/README.md) | Conceptual | Question lifecycle management linked to tasks and features |
 | [Proposals](spec/features/proposals/README.md) | Conceptual | Non-normative change requests attached to features with review status and optional issue linkage |
+| [UI](spec/features/ui/README.md) | Conceptual | Human-facing web and terminal interfaces for projects, features, tasks, proposals, and workers |
 | [Claim-and-push](spec/features/claim-and-push/README.md) | Conceptual | Distributed task claiming via git push-based optimistic locking |
 | [Agent skills](spec/features/agent-skills/README.md) | In Progress | Focused skills that teach AI agents to use Synchestra |
 | [CLI](spec/features/cli/README.md) | In Progress | The `synchestra` command-line interface |

@@ -12,6 +12,7 @@ Feature specifications for the Synchestra project, managed by Synchestra.
 | [conflict-resolution](conflict-resolution/README.md) | Conceptual | AI-powered merge conflict detection and resolution |
 | [outstanding-questions](outstanding-questions/README.md) | Conceptual | Question lifecycle management linked to tasks and features |
 | [proposals](proposals/README.md) | Conceptual | Non-normative change requests attached to features with review status and optional tracker linkage |
+| [ui](ui/README.md) | Conceptual | Human-facing interfaces for project navigation, proposals, tasks, and workers across web and terminal surfaces |
 | [claim-and-push](claim-and-push/README.md) | Conceptual | Distributed task claiming via git push-based optimistic locking |
 | [task-status-board](task-status-board/README.md) | Conceptual | Markdown task board in task directory READMEs for at-a-glance status visibility |
 | [agent-skills](agent-skills/README.md) | In Progress | Dedicated, focused skills that AI agents use to interact with Synchestra |
@@ -43,6 +44,10 @@ Every document maintains a structural "Outstanding Questions" section with a ful
 
 Proposals attach non-normative change requests directly to a feature without changing the feature's current specification. Each proposal has its own status lifecycle, can link to a GitHub issue for MVP, and is excluded from default current-state understanding unless explicitly requested.
 
+### [UI](ui/README.md)
+
+UI defines the human-facing product surfaces for Synchestra. It starts from a project list, then provides project-level navigation into Features, Tasks, and Workers, with MVP flows for feature proposal creation and task creation/enqueueing across both the web app and terminal UI.
+
 ### [Claim-and-Push](claim-and-push/README.md)
 
 Distributed task claiming through git's push semantics. Agents claim tasks by committing a status change and pushing — if the push fails, another agent got there first. No central lock server needed. The protocol relies on frequent commits to minimize conflict windows and provide granular audit trail.
@@ -70,6 +75,7 @@ micro-tasks (independent)
 model-selection (independent)
 outstanding-questions (independent)
 proposals (independent)
+proposals ← ui → cli
 ```
 
 `claim-and-push` is foundational — most concurrent features depend on it.
@@ -77,7 +83,7 @@ proposals (independent)
 ## Outstanding Questions
 
 - Are there features missing from this list that are already described in `docs/features/` but not yet tracked here?
-- **Suggested build order:** claim-and-push first (foundational), then outstanding-questions and model-selection (independent, high value), then conflict-resolution (depends on claim-and-push), then micro-tasks and cross-repo-sync. Does this align with project priorities?
+- **Suggested build order:** claim-and-push first (foundational), then outstanding-questions and model-selection (independent, high value), then proposals, then UI once CLI and proposal flows are ready enough to expose, then conflict-resolution, then micro-tasks and cross-repo-sync. Does this align with project priorities?
 
 ### Features with outstanding questions:
 
