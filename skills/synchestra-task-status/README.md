@@ -2,7 +2,7 @@
 
 Query or update the status of a task. Use this to check task state, report progress, mark completion, or handle failures.
 
-**CLI reference:** [synchestra task status](../../spec/features/cli/task-status/README.md)
+**CLI reference:** [synchestra task status](../../spec/features/cli/task/status/README.md)
 
 ## When to use
 

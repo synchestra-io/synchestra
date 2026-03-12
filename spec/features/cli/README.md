@@ -49,7 +49,8 @@ Commands that only read state (list, status query) do a pull first to ensure fre
 
 | Status | Description |
 |---|---|
-| `pending` | Task is available for claiming |
+| `planning` | Task is being defined, requirements are being gathered |
+| `queued` | Task is fully defined and ready for an agent to claim |
 | `claimed` | An agent has claimed the task but not yet started work |
 | `in_progress` | Agent is actively working on the task |
 | `completed` | Task finished successfully |
@@ -60,12 +61,12 @@ Commands that only read state (list, status query) do a pull first to ensure fre
 ### Status transitions
 
 ```
-pending → claimed → in_progress → completed
-                                → failed
-                                → blocked → in_progress (when unblocked)
-                                → aborted
-                  → aborted (claimed but aborted before starting)
-         → blocked (pending but blocked on a dependency)
+planning → queued → claimed → in_progress → completed
+                                           → failed
+                                           → blocked → in_progress (when unblocked)
+                                           → aborted
+                             → aborted (claimed but aborted before starting)
+                   → blocked (queued but blocked on a dependency)
 ```
 
 ### The `abort_requested` flag
@@ -89,6 +90,5 @@ See each command group for its subcommands and linked skills.
 
 ## Outstanding Questions
 
-- Should there be a `synchestra task abort` command that sets the `abort_requested` flag, or should that go through `synchestra task status --abort-request`?
 - How does the CLI discover which project repo to operate on — current directory, explicit flag, or config file?
 - Should the CLI support `--dry-run` for mutation commands?

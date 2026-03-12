@@ -33,7 +33,7 @@ Queries or updates the status of a task.
 
 ## Valid status values
 
-`pending`, `claimed`, `in_progress`, `completed`, `failed`, `blocked`, `aborted`
+`planning`, `queued`, `claimed`, `in_progress`, `completed`, `failed`, `blocked`, `aborted`
 
 See [CLI feature spec](../../README.md#task-statuses) for the full transition diagram.
 
@@ -45,7 +45,7 @@ See [CLI feature spec](../../README.md#task-statuses) for the full transition di
 | `1` | Status mismatch — actual status doesn't match `--current` (someone changed it) |
 | `2` | Invalid arguments |
 | `3` | Task not found |
-| `4` | Invalid state transition (e.g., `pending` → `completed`) |
+| `4` | Invalid state transition (e.g., `planning` → `completed`) |
 
 ## Query output
 
@@ -72,7 +72,7 @@ When `abort_requested` is `true`, agents should wrap up current work and transit
 1. Pull latest state from the project repo
 2. Read current task status
 3. If actual status != `--current`, exit `1` with message showing actual status
-4. Validate the transition (e.g., `pending` → `completed` is invalid)
+4. Validate the transition (e.g., `planning` → `completed` is invalid)
 5. Update status, record reason and timestamp
 6. Commit and push
 7. On push conflict: pull, re-check `--current` guard, retry or fail

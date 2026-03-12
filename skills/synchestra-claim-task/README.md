@@ -37,7 +37,7 @@ synchestra task claim \
 | `1` | Claim conflict — another agent claimed this task | Pick a different task or exit |
 | `2` | Invalid arguments | Check parameter values and retry |
 | `3` | Task not found | Verify the project and task path |
-| `4` | Invalid state transition (task is not in a claimable state) | The task may already be in progress, completed, or blocked — pick a different task |
+| `4` | Invalid state transition (task is not `queued`) | The task may still be in `planning`, already in progress, completed, or blocked — pick a different task |
 | `10+` | Unexpected error | Log the error and escalate |
 
 ## Examples
