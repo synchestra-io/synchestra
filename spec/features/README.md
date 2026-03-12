@@ -11,6 +11,7 @@ Feature specifications for the Synchestra project, managed by Synchestra.
 | [model-selection](model-selection/README.md) | Conceptual | Smart model routing based on task complexity and configuration |
 | [conflict-resolution](conflict-resolution/README.md) | Conceptual | AI-powered merge conflict detection and resolution |
 | [outstanding-questions](outstanding-questions/README.md) | Conceptual | Question lifecycle management linked to tasks and features |
+| [proposals](proposals/README.md) | Conceptual | Non-normative change requests attached to features with review status and optional tracker linkage |
 | [claim-and-push](claim-and-push/README.md) | Conceptual | Distributed task claiming via git push-based optimistic locking |
 | [task-status-board](task-status-board/README.md) | Conceptual | Markdown task board in task directory READMEs for at-a-glance status visibility |
 | [agent-skills](agent-skills/README.md) | In Progress | Dedicated, focused skills that AI agents use to interact with Synchestra |
@@ -38,6 +39,10 @@ When git merge conflicts occur between concurrent agent operations, Synchestra l
 
 Every document maintains a structural "Outstanding Questions" section with a full lifecycle: open → linked (to a task) → resolved → recently resolved → archived. When a linked task completes, a sub-agent evaluates whether the output actually answers the question and resolves it automatically.
 
+### [Proposals](proposals/README.md)
+
+Proposals attach non-normative change requests directly to a feature without changing the feature's current specification. Each proposal has its own status lifecycle, can link to a GitHub issue for MVP, and is excluded from default current-state understanding unless explicitly requested.
+
 ### [Claim-and-Push](claim-and-push/README.md)
 
 Distributed task claiming through git's push semantics. Agents claim tasks by committing a status change and pushing — if the push fails, another agent got there first. No central lock server needed. The protocol relies on frequent commits to minimize conflict windows and provide granular audit trail.
@@ -64,6 +69,7 @@ cross-repo-sync ────────┘
 micro-tasks (independent)
 model-selection (independent)
 outstanding-questions (independent)
+proposals (independent)
 ```
 
 `claim-and-push` is foundational — most concurrent features depend on it.
