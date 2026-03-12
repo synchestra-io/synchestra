@@ -44,37 +44,45 @@ At its core, Synchestra is a chain of small, automatable steps and background ch
 A Synchestra-managed repository follows this structure:
 
 ```
-project/
-  README.md                    # Project overview and status
+repo/
+  README.md                          # Repository overview
 
-  spec/                        # Product specification
+  spec/                              # Product specifications (configurable per project)
     features/
-      feature_1/
-        README.md              # Feature description, acceptance criteria
-        sub_feature_1/
+      feature-1/
+        README.md                    # Feature description, acceptance criteria
+        sub-feature-1/
           README.md
-        sub_feature_2/
+        sub-feature-2/
           README.md
 
-  docs/                        # Product documentation
+  docs/                              # Product documentation (configurable per project)
     ...
 
-  tasks/                       # Task queue
-    root_task_1/
-      README.md                # Task description, status, assignment
-      sub_task_1_1/
-        README.md
-        sub_task_1_1_1/
-          README.md
+  synchestra/                        # Orchestration layer (hardcoded name)
+    projects/
+      my-project/
+        synchestra-project.yaml      # Project configuration
+        tasks/                       # Task queue
+          task-1/
+            README.md                # Task description, status, assignment
+            subtask-1/
+              README.md
+            subtask-2/
+              README.md
+          task-2/
+            README.md
 ```
+
+`spec/` and `docs/` live at the repository root — they are the product's specification and documentation. `synchestra/` is the orchestration layer that manages projects, each with its own task tree. The locations of `spec/` and `docs/` are configurable per project via [`synchestra-project.yaml`](spec/project-definition/README.md).
 
 **Every directory has a `README.md`.** This is the atomic unit of Synchestra. Each README contains the context an agent needs to understand that node: what it is, what's expected, what's done, what's blocked — and what questions remain open.
 
 **The directory tree is the work breakdown structure.** Nesting means decomposition. A feature directory contains its sub-features. A task directory contains its sub-tasks. The hierarchy is both organizational and navigational.
 
-**Naming conventions are the API.** Core modules (spec, docs, tasks) are discovered by name. An agent looking for work checks `tasks/`. An agent needing requirements checks `spec/features/`. No registration, no discovery protocol — just filesystem semantics enforced by schema validation.
+**Naming conventions are the API.** Agents looking for work check `synchestra/projects/{project}/tasks/`. Agents needing requirements check `spec/features/`. No registration, no discovery protocol — just filesystem semantics enforced by schema validation.
 
-**Everything is human-readable text.** State is stored as YAML, JSON, or Markdown. Task status lives in the task's parent document alongside a list of sub-tasks and their statuses. Agents read and update state through the Synchestra CLI, which validates changes against the project schema.
+**Everything is human-readable text.** State is stored as YAML, JSON, or Markdown. Task status lives in the task's parent document alongside a list of sub-tasks and their statuses. Agents read and update state through the [Synchestra CLI](spec/features/cli/README.md), which validates changes against the project schema.
 
 ## Storage: Git as a Database
 
