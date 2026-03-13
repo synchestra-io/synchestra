@@ -4,17 +4,13 @@ How Synchestra discovers and configures projects.
 
 ## Repository Types
 
-Synchestra operates with three kinds of repositories. Each has a distinct role:
+Synchestra operates with three kinds of repositories — spec, state, and code. See [Repository Types](../../architecture/repository-types.md) for the full description of each type, why they're separate, and how they connect.
 
 | Repository type | What it holds | Naming convention | Example |
 |---|---|---|---|
-| **State repository** | Tasks, claims, coordination state, workflow artifacts | `{project}-synchestra` | `acme-synchestra` |
 | **Spec repository** | Requirements, architecture, documentation, `synchestra-project.yaml` | User's choice | `acme`, `acme-spec` |
+| **State repository** | Tasks, claims, coordination state, workflow artifacts | `{project}-synchestra` | `acme-synchestra` |
 | **Code repository** (one or more) | Implementation and source code | User's choice | `acme-api`, `acme-web` |
-
-The **spec repository** and **code repositories** can be combined into a single repo (common for smaller projects), but the **state repository** should always be a dedicated, separate repo. The state repo has a very different commit cadence — high-frequency machine commits from agents claiming tasks, updating statuses, and pushing coordination artifacts — and keeping it separate avoids polluting the project's code history.
-
-The naming convention `{project}-synchestra` (suffix style) groups the state repo alongside its sibling repos in alphabetical listings (e.g., `acme-api`, `acme-synchestra`, `acme-web`).
 
 ## Project File
 

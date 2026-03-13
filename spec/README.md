@@ -8,8 +8,13 @@ These are internal artifacts for developers and AI agents building the product. 
 
 | Directory | Description |
 |---|---|
+| [architecture/](architecture/README.md) | Architectural documents and foundational design decisions |
 | [features/](features/README.md) | Feature specifications |
 | [api/](api/README.md) | OpenAPI specifications for the REST API |
+
+### architecture
+
+Architectural documents describing Synchestra's foundational design decisions and structural concepts — repository types, storage model, and other cross-cutting concerns that features build upon.
 
 ### features
 
