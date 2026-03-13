@@ -14,16 +14,18 @@ var (
 	version = "dev"
 	commit  = "none"
 	date    = "unknown"
-	exit    = os.Exit
 )
 
 func Run(
 	args []string,
-	homeDir func() (string, error),
-	getWd func() (string, error),
+	osUserHomeDir func() (string, error),
+	osGetwd func() (string, error),
 	fatal func(error),
 	logf func(...any),
 ) {
+	_ = osUserHomeDir
+	_ = osGetwd
+	_ = logf
 	rootCmd := &cobra.Command{
 		Use:           "synchestra",
 		Short:         "Synchestra CLI",
