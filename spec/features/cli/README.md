@@ -122,6 +122,9 @@ All CLI command READMEs and skill READMEs link to the canonical `_args` document
 |---|---|
 | [_args](_args/README.md) | Global CLI arguments |
 | [task](task/README.md) | Task management — claiming, status, progress |
+| [serve](serve/README.md) | Foreground dev server — HTTP, HTTPS, MCP |
+| [server](server/README.md) | Background daemon management |
+| [mcp](mcp/README.md) | stdio MCP server for AI agents |
 
 ### `_args`
 
@@ -130,6 +133,18 @@ Global arguments available to all `synchestra` commands. Currently contains `--p
 ### `task`
 
 See each command group for its subcommands and linked skills.
+
+### `serve`
+
+Starts a foreground Synchestra server exposing API over HTTP, HTTPS, and/or MCP. Designed for interactive development — logs stream to stdout, Ctrl+C to stop. See [serve/README.md](serve/README.md).
+
+### `server`
+
+Background daemon management — start, stop, restart, status, and project configuration. All settings come from `synchestra-server.yaml`. See [server/README.md](server/README.md).
+
+### `mcp`
+
+Starts a stdio-based MCP server for AI agent tools (Claude Code, Cursor, etc.). Designed to be launched as a subprocess. See [mcp/README.md](mcp/README.md).
 
 ## Outstanding Questions
 
