@@ -67,7 +67,7 @@ synchestra task aborted --project synchestra --task fix-auth-bug \
 - This is a **shorthand** — the typical flow is: `task abort` (by human/orchestrator) -> agent detects `abort_requested` via `task status` -> agent wraps up -> agent calls `task aborted`.
 - The `claimed` / `in_progress` guard is applied implicitly — you do not need to pass `--current`.
 - The command also clears the `abort_requested` flag since the task is now in a terminal state.
-- The transition is atomic — it commits the status change and pushes to the project repo.
+- The transition is atomic — it commits the status change and pushes to the state repository.
 - Use the `--reason` parameter to describe what cleanup was performed before aborting. This helps other agents and humans understand what state the work was left in.
 
 ## Outstanding Questions

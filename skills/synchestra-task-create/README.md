@@ -88,7 +88,7 @@ synchestra task create \
 
 ## Notes
 
-- Creation is atomic -- it commits the new task files and pushes to the project repo. If the push fails due to a conflict, the creation fails.
+- Creation is atomic -- it commits the new task files and pushes to the state repository. If the push fails due to a conflict, the creation fails.
 - The parent task must already exist when creating a nested subtask. If it does not, the command exits with code `3`.
 - The default status is `planning`. Use `--enqueue` to skip planning and place the task directly in `queued` status.
 - The task directory and `README.md` are created automatically; do not create them manually before running this command.

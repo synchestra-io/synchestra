@@ -37,7 +37,7 @@ The `--reason` parameter is optional but recommended — it tells the working ag
 
 ## Behaviour
 
-1. Pull latest state from the project repo
+1. Pull latest state from the state repository
 2. Verify the task exists and is in `claimed` or `in_progress` status
 3. Set the `abort_requested` flag to `true`, with optional reason and timestamp
 4. Commit and push

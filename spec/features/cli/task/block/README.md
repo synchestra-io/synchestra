@@ -15,7 +15,7 @@ Transitions a task from `in_progress` to `blocked`, recording why the agent cann
 
 This command is used when an agent discovers it cannot continue due to a dependency on another task, missing information, or a decision that needs to be made by a human or another agent. The reason must be specific enough for someone else to understand what is needed to unblock the task.
 
-The transition is atomic: the CLI commits the status change and pushes to the project repo.
+The transition is atomic: the CLI commits the status change and pushes to the state repository.
 
 ## Parameters
 
@@ -37,7 +37,7 @@ The transition is atomic: the CLI commits the status change and pushes to the pr
 
 ## Behaviour
 
-1. Pull latest state from the project repo
+1. Pull latest state from the state repository
 2. Verify the task exists and is in `in_progress` status
 3. Update the task status to `blocked` with the reason and timestamp
 4. Commit and push

@@ -24,7 +24,7 @@ Feature specifications for the Synchestra project, managed by Synchestra.
 
 ### [Project Definition](project-definition/README.md)
 
-Defines the `synchestra-project.yaml` format, mandatory and optional fields, and the two supported repository layouts: multi-project (under `synchestra/projects/`) and dedicated project repos (project files at root). Synchestra auto-detects the layout by checking for a project file at the repository root.
+Defines the `synchestra-project.yaml` format, mandatory and optional fields, the three repository types (state, spec, code), and the two supported layouts for spec repositories: multi-project (under `synchestra/projects/`) and dedicated (project files at root). Synchestra auto-detects the layout by checking for a project file at the repository root.
 
 ### [Micro-Tasks](micro-tasks/README.md)
 

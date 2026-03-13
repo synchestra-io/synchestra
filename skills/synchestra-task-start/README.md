@@ -60,7 +60,7 @@ synchestra task start --project my-service --task fix-auth-bug
 
 ## Notes
 
-- Starting is atomic — it commits a status change and pushes to the project repo. If the push fails due to a conflict, the start fails.
+- Starting is atomic — it commits a status change and pushes to the state repository. If the push fails due to a conflict, the start fails.
 - The command implicitly uses a `--current claimed` guard. Only tasks in `claimed` status can be started.
 - This command does not require `--run` or `--model` parameters — those were already recorded during the claim step.
 

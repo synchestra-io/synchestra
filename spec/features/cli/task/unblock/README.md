@@ -35,7 +35,7 @@ Implicitly uses `--current blocked` as a guard — fails if the task is not curr
 
 ## Behaviour
 
-1. Pull latest state from the project repo
+1. Pull latest state from the state repository
 2. Verify the task exists and is in `blocked` status
 3. Update status to `in_progress`, record reason and timestamp
 4. Commit and push

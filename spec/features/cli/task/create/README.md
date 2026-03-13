@@ -17,7 +17,7 @@ If the `--enqueue` flag is passed, the task is created directly in `queued` stat
 
 The `--task` parameter accepts nested paths using `/` as a separator (e.g., `parent-task/new-subtask`), which creates the task as a subtask of the specified parent. The parent task must already exist; if it does not, the command fails with exit code `3`.
 
-Like all mutation commands, `task create` is atomic: the CLI commits the new task files and pushes to the project repo. If the push fails due to a remote conflict, the CLI pulls and checks whether the task can still be created. If yes, it retries. If no, it exits with code `1`.
+Like all mutation commands, `task create` is atomic: the CLI commits the new task files and pushes to the state repository. If the push fails due to a remote conflict, the CLI pulls and checks whether the task can still be created. If yes, it retries. If no, it exits with code `1`.
 
 ## Parameters
 
@@ -42,7 +42,7 @@ Like all mutation commands, `task create` is atomic: the CLI commits the new tas
 
 ## Behaviour
 
-1. Pull latest state from the project repo
+1. Pull latest state from the state repository
 2. Validate that the parent task exists (if the task path is nested)
 3. Verify that no task with the given path already exists
 4. Create the task directory and `README.md` with the title and description

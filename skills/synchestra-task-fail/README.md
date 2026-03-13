@@ -68,5 +68,5 @@ synchestra task fail --project synchestra --task fix-bug \
 
 - The `--reason` parameter is required. Include enough detail for another agent or human to understand what went wrong and what was tried.
 - This command implicitly guards on `--current in_progress`. You can only fail a task that is currently in progress.
-- The transition is atomic — it commits the status change and pushes to the project repo.
+- The transition is atomic — it commits the status change and pushes to the state repository.
 - If you are blocked but believe the task can be completed once the blocker is resolved, consider using `synchestra task status --current in_progress --new blocked --reason <text>` instead.

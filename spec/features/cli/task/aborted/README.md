@@ -42,7 +42,7 @@ The command implicitly guards that the current status is `claimed` or `in_progre
 
 ## Behaviour
 
-1. Pull latest state from the project repo
+1. Pull latest state from the state repository
 2. Verify the task exists and is in `claimed` or `in_progress` status
 3. Update the task status to `aborted` with timestamp and optional reason
 4. Clear the `abort_requested` flag

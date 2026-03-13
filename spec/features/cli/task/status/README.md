@@ -64,12 +64,12 @@ When `abort_requested` is `true`, agents should wrap up current work and transit
 
 ### Query mode
 
-1. Pull latest state from the project repo
+1. Pull latest state from the state repository
 2. Read and print task status
 
 ### Update mode
 
-1. Pull latest state from the project repo
+1. Pull latest state from the state repository
 2. Read current task status
 3. If actual status != `--current`, exit `1` with message showing actual status
 4. Validate the transition (e.g., `planning` → `completed` is invalid)

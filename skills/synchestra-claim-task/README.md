@@ -64,6 +64,6 @@ synchestra task claim --project my-service --task fix-auth-bug --run 9933 --mode
 
 ## Notes
 
-- Claiming is atomic — it commits a status change and pushes to the project repo. If the push fails due to a conflict, the claim fails.
+- Claiming is atomic — it commits a status change and pushes to the state repository. If the push fails due to a conflict, the claim fails.
 - A claimed task must be followed by work. If you claim a task and cannot complete it, use `synchestra task release` to return it to the queue.
 - The `--run` and `--model` parameters are recorded in the task status for auditability and debugging.

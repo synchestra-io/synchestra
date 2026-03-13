@@ -39,13 +39,26 @@ At its core, Synchestra is a chain of small, automatable steps and background ch
 - **Token-efficient by design.** Not just structurally — Synchestra actively minimizes token usage through automatic context generation, model selection, and micro-task decomposition (see [How Token Efficiency Works](#how-token-efficiency-works)).
 - **Async-first.** Agents work independently and asynchronously. Coordination happens through the repo state, not real-time messaging.
 
-## Repository Structure
+## Repository Types
 
-A Synchestra-managed repository follows this structure:
+Synchestra operates with three kinds of repositories, each with a distinct role. See [Project Definition](spec/features/project-definition/README.md) for full details.
+
+| Repository type | What it holds | Naming convention |
+|---|---|---|
+| **State repository** | Tasks, claims, coordination state, workflow artifacts | `{project}-synchestra` |
+| **Spec repository** | Requirements, architecture, documentation, `synchestra-project.yaml` | User's choice |
+| **Code repository** (one or more) | Implementation and source code | User's choice |
+
+The spec and code repos can be combined into a single repo. The state repository should always be separate — its high-frequency machine commits (task claims, status updates) would pollute the project's code history.
+
+### Spec repository structure
+
+A spec repository (or combined spec+code repo) follows this structure:
 
 ```
 repo/
   README.md                          # Repository overview
+  synchestra-project.yaml            # Project configuration (references the state repo)
 
   spec/                              # Product specifications (configurable per project)
     features/
@@ -58,29 +71,35 @@ repo/
 
   docs/                              # Product documentation (configurable per project)
     ...
-
-  synchestra/                        # Orchestration layer (hardcoded name)
-    projects/
-      my-project/
-        synchestra-project.yaml      # Project configuration
-        tasks/                       # Task queue
-          task-1/
-            README.md                # Task description, status, assignment
-            subtask-1/
-              README.md
-            subtask-2/
-              README.md
-          task-2/
-            README.md
 ```
 
-`spec/` and `docs/` live at the repository root — they are the product's specification and documentation. `synchestra/` is the orchestration layer that manages projects, each with its own task tree. The locations of `spec/` and `docs/` are configurable per project via [`synchestra-project.yaml`](spec/features/project-definition/README.md).
+`spec/` and `docs/` live at the repository root — they are the product's specification and documentation. The locations of `spec/` and `docs/` are configurable per project via [`synchestra-project.yaml`](spec/features/project-definition/README.md).
+
+### State repository structure
+
+A state repository (`{project}-synchestra`) contains only Synchestra operational data:
+
+```
+{project}-synchestra/
+  README.md                          # Auto-generated project overview
+  tasks/                             # Task queue
+    task-1/
+      README.md                      # Task description, status, assignment
+      subtask-1/
+        README.md
+      subtask-2/
+        README.md
+    task-2/
+      README.md
+```
+
+### Key structural principles
 
 **Every directory has a `README.md`.** This is the atomic unit of Synchestra. Each README contains the context an agent needs to understand that node: what it is, what's expected, what's done, what's blocked — and what questions remain open.
 
 **The directory tree is the work breakdown structure.** Nesting means decomposition. A feature directory contains its sub-features. A task directory contains its sub-tasks. The hierarchy is both organizational and navigational.
 
-**Naming conventions are the API.** Agents looking for work check `synchestra/projects/{project}/tasks/`. Agents needing requirements check `spec/features/`. No registration, no discovery protocol — just filesystem semantics enforced by schema validation.
+**Naming conventions are the API.** Agents looking for work check `tasks/` in the state repo. Agents needing requirements check `spec/features/` in the spec repo. No registration, no discovery protocol — just filesystem semantics enforced by schema validation.
 
 **Everything is human-readable text.** State is stored as YAML, JSON, or Markdown. Task status lives in the task's parent document alongside a list of sub-tasks and their statuses. Agents read and update state through the [Synchestra CLI](spec/features/cli/README.md), which validates changes against the project schema.
 
@@ -157,10 +176,10 @@ See the [agent-skills feature spec](spec/features/agent-skills/README.md) for de
 
 ## Multi-Repository Projects
 
-Synchestra adapts to how your project is organized:
+Every project has a dedicated **state repository** (`{project}-synchestra`) that holds tasks and coordination state. Beyond that, Synchestra adapts to how your project is organized:
 
-- **Single repo.** Synchestra lives alongside your code in the same repository. Simple and self-contained.
-- **Multi-repo projects.** If your project spans multiple repositories (frontend, backend, infrastructure), create a dedicated Synchestra repository for the orchestration layer. This repo holds the specs, tasks, and project state, and can create and update files in your project repositories. The branching strategy and cross-repo synchronization are defined in a dedicated specification file.
+- **Simple project.** One spec+code repo and one state repo. The spec repo contains `synchestra-project.yaml` pointing to the state repo.
+- **Multi-repo projects.** If your project spans multiple repositories (frontend, backend, infrastructure), the spec repo references all target code repos. The state repo coordinates work across all of them. The branching strategy and cross-repo synchronization are defined in a dedicated specification file.
 - **Multiple projects.** For developers or teams working across multiple projects in parallel, a dedicated Synchestra org provides a single control plane across all of them.
 
 ## How It's Different

@@ -14,7 +14,7 @@ Most `synchestra` commands. Not required by `serve` and other commands that oper
 
 ## Description
 
-Tells the CLI which project repo to read from or write to. The value matches the project's `project_id` as defined in `synchestra-project.yaml` or the project directory name under `synchestra/projects/` in a control repo.
+Tells the CLI which project to read from or write to. The value matches the project's `project_id` as defined in `synchestra-project.yaml` or the project directory name under `synchestra/projects/` in a multi-project spec repo.
 
 ### Autodetection
 

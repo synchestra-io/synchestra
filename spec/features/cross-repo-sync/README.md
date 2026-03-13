@@ -85,7 +85,7 @@ branch_prefix: synchestra/
 
 ## Open Design Decisions
 
-- Where does the cross-repo spec file live? In the Synchestra project repo? Per-project config?
+- Where does the cross-repo spec file live? In the state repository? In the spec repo? Per-project config?
 - How does Synchestra get write access to multiple repos? GitHub App installation? User's OAuth token?
 - What happens when one repo's branch merges successfully but another fails? Rollback? Block?
 - How are cross-repo integration tests configured and where do they run?

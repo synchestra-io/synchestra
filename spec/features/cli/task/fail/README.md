@@ -37,7 +37,7 @@ The command implicitly uses a `--current in_progress` guard — it will fail wit
 
 ## Behaviour
 
-1. Pull latest state from the project repo
+1. Pull latest state from the state repository
 2. Verify the task exists and is in `in_progress` status
 3. Update the task status to `failed` with reason and timestamp
 4. Commit and push

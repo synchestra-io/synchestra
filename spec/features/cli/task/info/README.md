@@ -13,7 +13,7 @@ synchestra task info --project <project_id> --task <task_path> [--format <text|j
 
 Displays the full context for a task — everything an agent needs to understand what the task requires before starting work.
 
-This is a **read-only** command. It pulls the latest state from the project repo but does not mutate anything.
+This is a **read-only** command. It pulls the latest state from the state repository but does not mutate anything.
 
 Includes:
 - **Task description** — the full task README content
@@ -43,7 +43,7 @@ More detailed than `task status`, which only shows status fields. Use `task info
 
 ## Behaviour
 
-1. Pull latest state from the project repo
+1. Pull latest state from the state repository
 2. Locate the task by path
 3. Read the task README, status, parent chain, siblings, and linked feature spec
 4. Render the assembled context in the requested format

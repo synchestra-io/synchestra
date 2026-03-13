@@ -37,7 +37,7 @@ The command implicitly uses a `--current claimed` guard — it will fail with ex
 
 ## Behaviour
 
-1. Pull latest state from the project repo
+1. Pull latest state from the state repository
 2. Verify the task exists and is in `claimed` status
 3. Update the task status to `queued`, clearing the assignee, with optional reason and timestamp
 4. Commit and push

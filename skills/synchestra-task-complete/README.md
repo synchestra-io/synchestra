@@ -64,5 +64,5 @@ synchestra task complete --project synchestra --task fix-auth-bug
 ## Notes
 
 - The `in_progress` guard is applied implicitly — you do not need to pass `--current in_progress`.
-- Completion is atomic — it commits a status change and pushes to the project repo. If the push fails due to a conflict, the command retries or fails.
+- Completion is atomic — it commits a status change and pushes to the state repository. If the push fails due to a conflict, the command retries or fails.
 - Use the `--summary` parameter to leave a brief record of what was accomplished. This helps other agents and humans understand what was done without reading the full diff.

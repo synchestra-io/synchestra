@@ -66,5 +66,5 @@ synchestra task block --project my-service --task integrate-api \
 
 - The task must be `in_progress` to be blocked. The command implicitly uses a `--current in_progress` guard.
 - The `--reason` parameter is required and should be actionable. A vague reason like "stuck" is not helpful — explain what is needed to unblock.
-- Blocking is atomic — it commits the status change and pushes to the project repo.
+- Blocking is atomic — it commits the status change and pushes to the state repository.
 - After blocking a task, the agent should stop working on it and pick up another task or exit.

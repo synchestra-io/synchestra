@@ -15,7 +15,7 @@ Transitions a claimed task to `in_progress`, signalling that the agent is beginn
 
 The command implicitly guards on `--current claimed` — if the task is not in `claimed` status, the command fails with exit code `4`.
 
-Like all mutation commands, `task start` is atomic: the CLI commits the status change and pushes to the project repo. If the push fails due to a remote conflict, the CLI pulls and checks whether the task is still startable. If yes, it retries. If no, it exits with code `1`.
+Like all mutation commands, `task start` is atomic: the CLI commits the status change and pushes to the state repository. If the push fails due to a remote conflict, the CLI pulls and checks whether the task is still startable. If yes, it retries. If no, it exits with code `1`.
 
 ## Parameters
 
@@ -36,7 +36,7 @@ Like all mutation commands, `task start` is atomic: the CLI commits the status c
 
 ## Behaviour
 
-1. Pull latest state from the project repo
+1. Pull latest state from the state repository
 2. Verify the task exists and is in `claimed` status
 3. Update the task status to `in_progress` with timestamp
 4. Commit and push

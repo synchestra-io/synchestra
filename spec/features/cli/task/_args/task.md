@@ -16,7 +16,7 @@ All `synchestra task` subcommands except [`list`](../list/README.md).
 
 A `/`-separated path that identifies a task within a project's task hierarchy. Top-level tasks are a single segment (e.g., `implement-cli`); subtasks use nested paths (e.g., `implement-cli/parse-arguments`).
 
-The path corresponds to the task's directory within the project repo. Each segment must be a valid directory name — lowercase, kebab-case is conventional.
+The path corresponds to the task's directory within the state repository. Each segment must be a valid directory name — lowercase, kebab-case is conventional.
 
 ## Examples
 

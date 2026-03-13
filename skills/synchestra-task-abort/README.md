@@ -68,7 +68,7 @@ synchestra task abort --project synchestra --task fix-bug \
 - This command sets the `abort_requested` flag — it does NOT change the task's status. The working agent is responsible for seeing the flag and calling `synchestra task aborted` to complete the transition.
 - This command is for humans and the orchestrator, not for the working agent. If you are the agent working on the task, check for `abort_requested: true` via `synchestra task status` and then call `synchestra task aborted` to finalize.
 - The task must be in `claimed` or `in_progress` status. If the task has already completed, failed, or been aborted, this command will fail with exit code `4`.
-- The transition is atomic — it commits the flag change and pushes to the project repo.
+- The transition is atomic — it commits the flag change and pushes to the state repository.
 - The `--reason` parameter is optional but recommended. It gives the working agent context about why the abort was requested.
 
 ## Outstanding Questions

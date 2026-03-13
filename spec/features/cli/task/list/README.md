@@ -13,7 +13,7 @@ synchestra task list --project <project_id> [--status <status>] [--format <forma
 
 Lists tasks in a project. By default, all tasks are shown in YAML format with all fields. Use `--status` to filter by task status, `--format` to control the output format, and `--fields` to select specific fields.
 
-This is a read-only command. It pulls the latest state from the project repo but does not mutate anything.
+This is a read-only command. It pulls the latest state from the state repository but does not mutate anything.
 
 ## Parameters
 
@@ -34,7 +34,7 @@ This is a read-only command. It pulls the latest state from the project repo but
 
 ## Behaviour
 
-1. Pull latest state from the project repo
+1. Pull latest state from the state repository
 2. Read all tasks in the project
 3. If `--status` is provided, filter tasks to only those matching the given status
 4. Output the task list in the requested format

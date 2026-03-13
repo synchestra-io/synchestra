@@ -15,7 +15,7 @@ Marks a task as completed. The command transitions the task from `in_progress` t
 
 This is what an agent calls when it finishes work successfully. The `--current in_progress` guard is applied implicitly — the command fails with exit code `1` if the task is not currently `in_progress`.
 
-Completion is atomic: the CLI commits the status change and pushes to the project repo. If the push fails due to a remote conflict, the CLI pulls and checks whether the task is still in `in_progress`. If yes, it retries. If no (the status changed), it exits with code `1`.
+Completion is atomic: the CLI commits the status change and pushes to the state repository. If the push fails due to a remote conflict, the CLI pulls and checks whether the task is still in `in_progress`. If yes, it retries. If no (the status changed), it exits with code `1`.
 
 ## Parameters
 
@@ -37,7 +37,7 @@ Completion is atomic: the CLI commits the status change and pushes to the projec
 
 ## Behaviour
 
-1. Pull latest state from the project repo
+1. Pull latest state from the state repository
 2. Verify the task exists and is in `in_progress` status
 3. Update the task status to `completed` with timestamp and optional summary
 4. Commit and push
