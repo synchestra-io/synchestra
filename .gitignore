@@ -3,3 +3,6 @@ synchestra
 
 ## IDE
 .idea
+
+## AI agents
+.claude/settings.local.json
