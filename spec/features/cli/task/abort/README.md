@@ -21,9 +21,9 @@ The `--reason` parameter is optional but recommended — it tells the working ag
 
 | Parameter | Required | Description |
 |---|---|---|
-| `--project` | Yes | Project identifier |
-| `--task` | Yes | Task path using `/` as separator (e.g., `task1/subtask2`) |
-| `--reason` | No | Why the abort is being requested — helps the working agent understand context when wrapping up |
+| [`--project`](../../$args/project.md) | Yes | Project identifier |
+| [`--task`](../$args/task.md) | Yes | Task path using `/` as separator (e.g., `task1/subtask2`) |
+| [`--reason`](../$args/reason.md) | No | Why the abort is being requested — helps the working agent understand context when wrapping up |
 
 ## Exit codes
 

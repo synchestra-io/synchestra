@@ -80,11 +80,54 @@ Why a flag and not a status:
 
 The `synchestra task status` command includes the `abort_requested` flag in its output when set.
 
+## The `$args` Directory Convention
+
+CLI arguments are documented in `$args/` directories at the level where the argument applies:
+
+- **Global arguments** — `spec/features/cli/$args/` — available to all commands (e.g., `--project`)
+- **Command-group arguments** — `spec/features/cli/task/$args/` — shared across subcommands (e.g., `--task`, `--reason`, `--format`)
+- **Command-specific arguments** — `spec/features/cli/task/create/$args/` — unique to one command (e.g., `--title`, `--enqueue`)
+
+### File format
+
+Each argument has its own `.md` file named after the flag (without `--`). For example, `--project` is documented in `project.md`. Every `$args/` directory also has a `README.md` with an argument index table and a brief summary per argument.
+
+Each argument document contains:
+
+1. **Heading** — `# --<flag-name>`
+2. **Summary line** — one-sentence description
+3. **Details table** — Type, Required, Default
+4. **Supported by** — which commands use this argument
+5. **Description** — full explanation
+6. **Examples** — usage examples
+7. **Outstanding Questions** — required section (use "None at this time." if empty)
+
+### Placement rules
+
+Place an argument at the **highest level where it is consistently meaningful**:
+
+- If used by all CLI commands → `spec/features/cli/$args/`
+- If used by multiple subcommands in a group → `spec/features/cli/task/$args/`
+- If unique to one command → `spec/features/cli/task/<command>/$args/`
+
+Arguments used by several (but not all) subcommands still go at the group level with a "Supported by" table listing the applicable commands.
+
+### Linking
+
+All CLI command READMEs and skill READMEs link to the canonical `$args` document when mentioning an argument. This ensures a single source of truth per argument.
+
 ## Command Groups
 
-| Group | Description |
+| Entry | Description |
 |---|---|
+| [$args]($args/README.md) | Global CLI arguments |
 | [task](task/README.md) | Task management — claiming, status, progress |
+
+### `$args`
+
+Global arguments available to all `synchestra` commands. Currently contains `--project`.
+
+### `task`
 
 See each command group for its subcommands and linked skills.
 

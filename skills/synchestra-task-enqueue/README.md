@@ -18,8 +18,8 @@ synchestra task enqueue --project <project> --task <task>
 
 | Parameter   | Required | Description                |
 |-------------|----------|----------------------------|
-| `--project` | Yes      | Project identifier         |
-| `--task`    | Yes      | Task identifier to enqueue |
+| [`--project`](../../spec/features/cli/$args/project.md) | Yes      | Project identifier         |
+| [`--task`](../../spec/features/cli/task/$args/task.md)    | Yes      | Task identifier to enqueue |
 
 The command implicitly guards on `--current planning` -- it will only succeed
 if the task is currently in `planning` status.

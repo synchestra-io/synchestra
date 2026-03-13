@@ -26,12 +26,12 @@ synchestra task create \
 
 | Parameter | Required | Description |
 |---|---|---|
-| `--project` | Yes | Project identifier (e.g., `synchestra`, `my-service`) |
-| `--task` | Yes | Task path using `/` as separator (e.g., `new-task`, `parent-task/new-subtask`) |
-| `--title` | Yes | Human-readable title for the task |
-| `--description` | No | Task description; written into the task's `README.md` |
-| `--depends-on` | No | Comma-separated list of task paths this task depends on (e.g., `setup-db,create-schema`) |
-| `--enqueue` | No | Flag; creates the task in `queued` status instead of `planning` |
+| [`--project`](../../spec/features/cli/$args/project.md) | Yes | Project identifier (e.g., `synchestra`, `my-service`) |
+| [`--task`](../../spec/features/cli/task/$args/task.md) | Yes | Task path using `/` as separator (e.g., `new-task`, `parent-task/new-subtask`) |
+| [`--title`](../../spec/features/cli/task/create/$args/title.md) | Yes | Human-readable title for the task |
+| [`--description`](../../spec/features/cli/task/create/$args/description.md) | No | Task description; written into the task's `README.md` |
+| [`--depends-on`](../../spec/features/cli/task/create/$args/depends-on.md) | No | Comma-separated list of task paths this task depends on (e.g., `setup-db,create-schema`) |
+| [`--enqueue`](../../spec/features/cli/task/create/$args/enqueue.md) | No | Flag; creates the task in `queued` status instead of `planning` |
 
 ## Exit codes
 

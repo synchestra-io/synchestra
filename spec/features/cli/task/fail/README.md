@@ -21,9 +21,9 @@ The command implicitly uses a `--current in_progress` guard — it will fail wit
 
 | Parameter | Required | Description |
 |---|---|---|
-| `--project` | Yes | Project identifier |
-| `--task` | Yes | Task path using `/` as separator (e.g., `task1/subtask2`) |
-| `--reason` | Yes | Why the task failed — must include enough detail for another agent or human to understand what happened |
+| [`--project`](../../$args/project.md) | Yes | Project identifier |
+| [`--task`](../$args/task.md) | Yes | Task path using `/` as separator (e.g., `task1/subtask2`) |
+| [`--reason`](../$args/reason.md) | Yes | Why the task failed — must include enough detail for another agent or human to understand what happened |
 
 ## Exit codes
 

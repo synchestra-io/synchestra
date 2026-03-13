@@ -23,12 +23,12 @@ Like all mutation commands, `task create` is atomic: the CLI commits the new tas
 
 | Parameter | Required | Description |
 |---|---|---|
-| `--project` | Yes | Project identifier |
-| `--task` | Yes | Task path using `/` as separator (e.g., `new-task` or `parent-task/new-subtask`) |
-| `--title` | Yes | Human-readable title for the task |
-| `--description` | No | Task description; included in the generated `README.md` |
-| `--depends-on` | No | Comma-separated list of task paths this task depends on |
-| `--enqueue` | No | Flag; if passed, creates the task in `queued` status instead of `planning` |
+| [`--project`](../../$args/project.md) | Yes | Project identifier |
+| [`--task`](../$args/task.md) | Yes | Task path using `/` as separator (e.g., `new-task` or `parent-task/new-subtask`) |
+| [`--title`]($args/title.md) | Yes | Human-readable title for the task |
+| [`--description`]($args/description.md) | No | Task description; included in the generated `README.md` |
+| [`--depends-on`]($args/depends-on.md) | No | Comma-separated list of task paths this task depends on |
+| [`--enqueue`]($args/enqueue.md) | No | Flag; if passed, creates the task in `queued` status instead of `planning` |
 
 ## Exit codes
 

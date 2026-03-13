@@ -4,6 +4,10 @@
 
 Commands for managing tasks — claiming, querying status, updating progress, and more.
 
+## Arguments
+
+Shared arguments for `synchestra task` subcommands are documented in the [$args]($args/README.md) directory: [`--task`]($args/task.md), [`--reason`]($args/reason.md), and [`--format`]($args/format.md).
+
 ## Commands
 
 | Command | Description | Skill |

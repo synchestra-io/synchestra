@@ -23,9 +23,9 @@ synchestra task aborted \
 
 | Parameter | Required | Description |
 |---|---|---|
-| `--project` | Yes | Project identifier (e.g., `synchestra`, `my-service`) |
-| `--task` | Yes | Task path using `/` as separator (e.g., `task1`, `task1/subtask2`, `task1/subtask2/subtask3`) |
-| `--reason` | No | Explain what was done before aborting (e.g., `"Reverted partial schema migration and restored backup"`) |
+| [`--project`](../../spec/features/cli/$args/project.md) | Yes | Project identifier (e.g., `synchestra`, `my-service`) |
+| [`--task`](../../spec/features/cli/task/$args/task.md) | Yes | Task path using `/` as separator (e.g., `task1`, `task1/subtask2`, `task1/subtask2/subtask3`) |
+| [`--reason`](../../spec/features/cli/task/$args/reason.md) | No | Explain what was done before aborting (e.g., `"Reverted partial schema migration and restored backup"`) |
 
 ## Exit codes
 

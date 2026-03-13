@@ -24,9 +24,9 @@ synchestra task unblock \
 
 | Parameter | Required | Description |
 |---|---|---|
-| `--project` | Yes | Project identifier (e.g., `synchestra`, `my-service`) |
-| `--task` | Yes | Task path using `/` as separator (e.g., `task1/subtask2`) |
-| `--reason` | No | What resolved the blocker |
+| [`--project`](../../spec/features/cli/$args/project.md) | Yes | Project identifier (e.g., `synchestra`, `my-service`) |
+| [`--task`](../../spec/features/cli/task/$args/task.md) | Yes | Task path using `/` as separator (e.g., `task1/subtask2`) |
+| [`--reason`](../../spec/features/cli/task/$args/reason.md) | No | What resolved the blocker |
 
 ## Exit codes
 

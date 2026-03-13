@@ -24,9 +24,9 @@ synchestra task info \
 
 | Parameter | Required | Description |
 |---|---|---|
-| `--project` | Yes | Project identifier (e.g., `synchestra`, `my-service`) |
-| `--task` | Yes | Task path using `/` as separator (e.g., `implement-cli/parse-arguments`) |
-| `--format` | No | Output format: `text` (default), `json`, `yaml` |
+| [`--project`](../../spec/features/cli/$args/project.md) | Yes | Project identifier (e.g., `synchestra`, `my-service`) |
+| [`--task`](../../spec/features/cli/task/$args/task.md) | Yes | Task path using `/` as separator (e.g., `implement-cli/parse-arguments`) |
+| [`--format`](../../spec/features/cli/task/$args/format.md) | No | Output format: `text` (default), `json`, `yaml` |
 
 ## Exit codes
 

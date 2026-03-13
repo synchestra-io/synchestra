@@ -21,9 +21,9 @@ The transition is atomic: the CLI commits the status change and pushes to the pr
 
 | Parameter | Required | Description |
 |---|---|---|
-| `--project` | Yes | Project identifier |
-| `--task` | Yes | Task path using `/` as separator (e.g., `task1/subtask2`) |
-| `--reason` | Yes | Explanation of what is blocking the task — must be specific enough for another agent or human to unblock it |
+| [`--project`](../../$args/project.md) | Yes | Project identifier |
+| [`--task`](../$args/task.md) | Yes | Task path using `/` as separator (e.g., `task1/subtask2`) |
+| [`--reason`](../$args/reason.md) | Yes | Explanation of what is blocking the task — must be specific enough for another agent or human to unblock it |
 
 ## Exit codes
 

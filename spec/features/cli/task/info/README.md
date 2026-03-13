@@ -29,9 +29,9 @@ More detailed than `task status`, which only shows status fields. Use `task info
 
 | Parameter | Required | Description |
 |---|---|---|
-| `--project` | Yes | Project identifier |
-| `--task` | Yes | Task path using `/` as separator |
-| `--format` | No | Output format: `text` (default), `json`, `yaml` |
+| [`--project`](../../$args/project.md) | Yes | Project identifier |
+| [`--task`](../$args/task.md) | Yes | Task path using `/` as separator |
+| [`--format`](../$args/format.md) | No | Output format: `text` (default), `json`, `yaml` |
 
 ## Exit codes
 

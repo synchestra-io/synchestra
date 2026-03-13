@@ -24,9 +24,9 @@ synchestra task release \
 
 | Parameter | Required | Description |
 |---|---|---|
-| `--project` | Yes | Project identifier (e.g., `synchestra`, `my-service`) |
-| `--task` | Yes | Task path using `/` as separator (e.g., `task1`, `task1/subtask2`, `task1/subtask2/subtask3`) |
-| `--reason` | No | Why you are releasing the task — helps other agents or humans understand context |
+| [`--project`](../../spec/features/cli/$args/project.md) | Yes | Project identifier (e.g., `synchestra`, `my-service`) |
+| [`--task`](../../spec/features/cli/task/$args/task.md) | Yes | Task path using `/` as separator (e.g., `task1`, `task1/subtask2`, `task1/subtask2/subtask3`) |
+| [`--reason`](../../spec/features/cli/task/$args/reason.md) | No | Why you are releasing the task — helps other agents or humans understand context |
 
 ## Exit codes
 

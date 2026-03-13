@@ -21,9 +21,9 @@ The command implicitly uses a `--current claimed` guard — it will fail with ex
 
 | Parameter | Required | Description |
 |---|---|---|
-| `--project` | Yes | Project identifier |
-| `--task` | Yes | Task path using `/` as separator (e.g., `task1/subtask2`) |
-| `--reason` | No | Why the task is being released — helps other agents or humans understand context |
+| [`--project`](../../$args/project.md) | Yes | Project identifier |
+| [`--task`](../$args/task.md) | Yes | Task path using `/` as separator (e.g., `task1/subtask2`) |
+| [`--reason`](../$args/reason.md) | No | Why the task is being released — helps other agents or humans understand context |
 
 ## Exit codes
 
