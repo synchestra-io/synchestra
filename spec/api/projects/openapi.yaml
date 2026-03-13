@@ -1,0 +1,168 @@
+openapi: 3.1.0
+info:
+  title: Synchestra Projects API
+  description: |
+    REST API for server project management in Synchestra.
+
+    Endpoints map to `synchestra server projects` CLI commands.
+    See the [CLI server projects spec](../../features/cli/server/projects/README.md) for full behavioral details.
+
+    ## Authentication
+    All requests require a Bearer token in the `Authorization` header.
+  version: 0.1.0
+  license:
+    name: MIT
+
+servers:
+  - url: /api/v1
+    description: API v1
+
+tags:
+  - name: projects-read
+    description: Read-only project operations
+  - name: projects-management
+    description: Project management operations
+
+security:
+  - bearerAuth: []
+
+paths:
+  /projects/list:
+    get:
+      operationId: projectList
+      summary: List projects
+      description: |
+        List all projects configured on this server.
+
+        **CLI equivalent:** `synchestra server projects [--format <format>]`
+        — see [spec](../../features/cli/server/projects/README.md)
+      tags: [projects-read]
+      responses:
+        '200':
+          description: List of projects
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Project'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /projects/add:
+    post:
+      operationId: projectAdd
+      summary: Add a project
+      description: |
+        Add a new project to the server configuration.
+
+        **CLI equivalent:** `synchestra server projects add --spec <path> --state <path>`
+        — see [spec](../../features/cli/server/projects/add/README.md)
+      tags: [projects-management]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [spec, state]
+              properties:
+                spec:
+                  type: string
+                  description: Path or URL to the spec repository
+                  example: /home/user/projects/my-project
+                state:
+                  type: string
+                  description: Path or URL to the state repository
+                  example: /home/user/state/my-project
+      responses:
+        '201':
+          description: Project added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+components:
+  schemas:
+    Project:
+      type: object
+      required: [id, spec, state]
+      properties:
+        id:
+          type: string
+          description: Project identifier (derived from spec repo)
+          example: my-project
+        spec:
+          type: string
+          description: Path or URL to the spec repository
+          example: /home/user/projects/my-project
+        state:
+          type: string
+          description: Path or URL to the state repository
+          example: /home/user/state/my-project
+
+    Error:
+      type: object
+      required: [error, code]
+      properties:
+        error:
+          type: string
+          description: Human-readable error message
+        code:
+          type: string
+          description: Machine-readable error code
+          enum: [invalid_arguments, conflict, internal_error]
+        request_id:
+          type: string
+          description: Unique request identifier
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: Bearer token authentication
+
+  responses:
+    BadRequest:
+      description: Invalid arguments
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Missing required field: spec"
+            code: invalid_arguments
+            request_id: req_abc123
+
+    Conflict:
+      description: Project already exists
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Project 'my-project' already exists"
+            code: conflict
+            request_id: req_abc123
+
+    InternalError:
+      description: Unexpected failure
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Internal server error
+            code: internal_error
+            request_id: req_abc123

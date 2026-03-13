@@ -21,6 +21,7 @@ The normative API specification lives in [`spec/api/`](../../api/README.md) as O
 | Resource | Spec | Status |
 |---|---|---|
 | [Task](../../api/task/README.md) | [`spec/api/task/openapi.yaml`](../../api/task/openapi.yaml) | In Progress |
+| [Projects](../../api/projects/README.md) | [`spec/api/projects/openapi.yaml`](../../api/projects/openapi.yaml) | In Progress |
 
 ## Design Principles
 

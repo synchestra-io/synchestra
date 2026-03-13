@@ -9,12 +9,12 @@ The feature description and design principles live in [`spec/features/api/`](../
 | Directory | Resource | Status |
 |---|---|---|
 | [task/](task/README.md) | Task lifecycle operations | In Progress |
+| [projects/](projects/README.md) | Server project management | In Progress |
 
 Future resources (not yet specified):
 
 | Directory | Resource | Status |
 |---|---|---|
-| `project/` | Project management | Planned |
 | `agent/` | Agent registration and heartbeat | Planned |
 | `auth/` | Token management | Planned |
 | `skill/` | Skill registry | Planned |
@@ -23,6 +23,10 @@ Future resources (not yet specified):
 ### task
 
 Task lifecycle operations — create, query, and transition tasks through the status model. Every endpoint maps 1:1 to a `synchestra task <action>` CLI command. See [`task/README.md`](task/README.md).
+
+### projects
+
+Server project management — list and add projects to a running server or server configuration. Endpoints map to `synchestra server projects` CLI commands. See [`projects/README.md`](projects/README.md).
 
 ## Common Conventions
 
