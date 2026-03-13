@@ -93,7 +93,7 @@ This layout is appropriate when the entire repository exists to specify one proj
 
 ```yaml
 title: Synchestra
-state_repo: https://github.com/synchestra-io/synchestra-synchestra
+state_repo: https://github.com/synchestra-io/synchestra-state
 repos:
   - https://github.com/synchestra-io/synchestra-go
   - https://github.com/synchestra-io/synchestra-app
@@ -135,14 +135,14 @@ This repo is managed by [Synchestra](https://github.com/synchestra-io/synchestra
 |---|---|---|
 | `{project_title}` | `title` field from `synchestra-project.yaml` | `Synchestra` |
 | `{spec_repo_url}` | URL of the spec repository hosting this project's `synchestra-project.yaml` | `https://github.com/synchestra-io/synchestra` |
-| `{state_repo_id}` | GitHub identifier of the state repo (org/repo format) | `github.com/synchestra-io/synchestra-synchestra` |
+| `{state_repo_id}` | GitHub identifier of the state repo (org/repo format) | `github.com/synchestra-io/synchestra-state` |
 
 ### Example (for Synchestra itself)
 
 ```markdown
 # Synchestra — Synchestra State
 
-[Open in Synchestra](https://synchestra.io/app/project?id=github.com/synchestra-io/synchestra-synchestra)
+[Open in Synchestra](https://synchestra.io/app/project?id=github.com/synchestra-io/synchestra-state)
 
 State repository for the [Synchestra](https://github.com/synchestra-io/synchestra) project.
 
