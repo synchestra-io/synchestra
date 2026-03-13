@@ -24,8 +24,8 @@ Determines how command output is structured. Useful for both human readability a
 - **`yaml`** — Structured, readable by both humans and machines. Default for `list`.
 - **`json`** — Machine-readable, useful for piping to other tools.
 - **`text`** — Human-readable plain text. Default for `info`.
-- **`md`** — Markdown table format, suitable for embedding in READMEs. Only for `list`.
-- **`csv`** — Flat comma-separated values with a header row. Only for `list`.
+- **`md`** — Markdown table format, suitable for embedding in READMEs. Supported by `list` and `server projects`.
+- **`csv`** — Flat comma-separated values with a header row. Supported by `list` and `server projects`.
 
 ## Examples
 

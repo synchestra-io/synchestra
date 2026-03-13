@@ -128,7 +128,7 @@ All CLI command READMEs and skill READMEs link to the canonical `_args` document
 
 ### `_args`
 
-Global arguments available to all `synchestra` commands. Currently contains `--project`.
+Global arguments available to all `synchestra` commands. Contains `--project`, `--path`, and `--format`.
 
 ### `task`
 

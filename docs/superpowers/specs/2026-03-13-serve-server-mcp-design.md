@@ -160,12 +160,14 @@ synchestra mcp [--path <dir>]
 
 ## API Endpoints
 
-### `GET /api/v1/projects`
+### `GET /api/v1/projects/list`
 
 List projects served by the server. Cross-linked with `synchestra server projects`.
 
+Note: Uses action-oriented path (`/projects/list`) for consistency with the task API pattern (`/task/list`). See implementation plan for rationale.
+
 ```yaml
-/projects:
+/projects/list:
   get:
     operationId: projectList
     summary: List projects served by this server
@@ -196,12 +198,12 @@ In single-project mode, returns a list with one item.
 
 In multi-project mode, all other API endpoints (e.g., task operations) use the existing `?project=` query parameter to select which project to operate on, consistent with the `--project` CLI arg.
 
-### `POST /api/v1/projects`
+### `POST /api/v1/projects/add`
 
 Add a project. Cross-linked with `synchestra server projects add`.
 
 ```yaml
-/projects:
+/projects/add:
   post:
     operationId: projectAdd
     summary: Add a project to the server
@@ -300,4 +302,4 @@ spec/api/
 - Should `synchestra mcp` support multi-project if run in a server dir, or always single-project?
 - How should a running server handle spec/state repo updates pushed by other agents? (Poll, file watch, or re-read on each request?)
 - Should `server restart` drain active connections before stopping (graceful) or stop immediately (hard)?
-- API endpoint style: task API uses action-oriented paths (`/task/list`), projects API uses RESTful (`/projects`). Should projects follow the action-oriented pattern (`/projects/list`, `/projects/add`) for consistency?
+- ~~API endpoint style~~ — **Resolved:** projects API uses action-oriented paths (`/projects/list`, `/projects/add`) for consistency with the task API. See implementation plan for rationale.
