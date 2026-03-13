@@ -18,6 +18,7 @@ Feature specifications for the Synchestra project, managed by Synchestra.
 | [task-status-board](task-status-board/README.md) | Conceptual | Markdown task board in task directory READMEs for at-a-glance status visibility |
 | [agent-skills](agent-skills/README.md) | In Progress | Dedicated, focused skills that AI agents use to interact with Synchestra |
 | [cli](cli/README.md) | In Progress | The `synchestra` CLI — primary interface for agents and humans |
+| [api](api/README.md) | In Progress | REST API exposing Synchestra operations over HTTP |
 
 ## Feature Summaries
 
@@ -69,6 +70,10 @@ A set of dedicated, focused skills that AI agents use to interact with Synchestr
 
 The `synchestra` command-line interface. Follows a `synchestra <resource> <action>` pattern with consistent exit codes, atomic git commit-and-push for mutations, and both query and update modes. Defines the task status model, valid transitions, and the `abort_requested` flag. Commands are organized as `cli/task/claim/`, `cli/task/status/`, etc.
 
+### [API](api/README.md)
+
+The REST API layer that exposes Synchestra's coordination capabilities over HTTP. Every mutation endpoint maps 1:1 to a CLI command, using the same atomic git semantics. Task and project identifiers are query parameters matching CLI flag conventions. The normative OpenAPI specs live in [`spec/api/`](../api/README.md).
+
 ## Feature dependency graph
 
 ```
@@ -81,6 +86,7 @@ model-selection (independent)
 outstanding-questions (independent)
 proposals (independent)
 ui → proposals, cli, task-status-board, agent-skills
+api → cli (api mirrors cli contract)
 ```
 
 `claim-and-push` is foundational — most concurrent features depend on it.
@@ -102,6 +108,7 @@ ui → proposals, cli, task-status-board, agent-skills
 - [task-status-board](task-status-board/README.md): 4 outstanding questions
 - [agent-skills](agent-skills/README.md): 3 outstanding questions
 - [cli](cli/README.md): 3 outstanding questions
+- [api](api/README.md): 3 outstanding questions
 - [ui](ui/README.md): 5 outstanding questions
 - [ui/web-app](ui/web-app/README.md): 5 outstanding questions
 - [ui/tui](ui/tui/README.md): 5 outstanding questions

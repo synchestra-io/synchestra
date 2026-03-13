@@ -1,0 +1,909 @@
+openapi: 3.1.0
+info:
+  title: Synchestra Task API
+  description: |
+    REST API for task lifecycle operations in Synchestra.
+
+    Every endpoint maps 1:1 to a `synchestra task <action>` CLI command.
+    See the [CLI task spec](../../features/cli/task/README.md) for full behavioral details.
+
+    ## Authentication
+    All requests require a Bearer token in the `Authorization` header.
+
+    ## Concurrency
+    Mutation endpoints perform atomic git commit-and-push operations.
+    On push conflict, the server returns `409 Conflict` with the current task state.
+  version: 0.1.0
+  license:
+    name: MIT
+
+servers:
+  - url: /api/v1
+    description: API v1
+
+tags:
+  - name: task-read
+    description: Read-only task operations
+  - name: task-lifecycle
+    description: Task creation and status transitions
+
+paths:
+  # ---------------------------------------------------------------------------
+  # Read Operations
+  # ---------------------------------------------------------------------------
+
+  /task/list:
+    get:
+      operationId: taskList
+      summary: List tasks
+      description: |
+        List all tasks in a project, optionally filtered by status.
+
+        **CLI equivalent:** `synchestra task list --project <id> [--status <status>]`
+        — see [spec](../../features/cli/task/list/README.md)
+      tags: [task-read]
+      parameters:
+        - $ref: '#/components/parameters/ProjectParam'
+        - name: status
+          in: query
+          description: Filter by task status.
+          schema:
+            $ref: '#/components/schemas/TaskStatus'
+        - name: fields
+          in: query
+          description: Comma-separated list of fields to include in the response.
+          schema:
+            type: string
+            example: path,status,title,run,model
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/CursorParam'
+      responses:
+        '200':
+          description: Task list retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, has_more]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TaskSummary'
+                  next_cursor:
+                    type: string
+                  has_more:
+                    type: boolean
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /task/info:
+    get:
+      operationId: taskInfo
+      summary: Get full task details
+      description: |
+        Retrieve the full context for a task including description, status fields,
+        parent chain, siblings, outstanding questions, and linked feature spec.
+
+        **CLI equivalent:** `synchestra task info --project <id> --task <path>`
+        — see [spec](../../features/cli/task/info/README.md)
+      tags: [task-read]
+      parameters:
+        - $ref: '#/components/parameters/ProjectParam'
+        - $ref: '#/components/parameters/TaskParam'
+      responses:
+        '200':
+          description: Task details retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskInfo'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /task/status:
+    get:
+      operationId: taskStatusGet
+      summary: Get task status
+      description: |
+        Query the current status of a task. Returns status fields, run info,
+        timestamps, and the `abort_requested` flag.
+
+        **CLI equivalent:** `synchestra task status --project <id> --task <path>`
+        — see [spec](../../features/cli/task/status/README.md)
+      tags: [task-read]
+      parameters:
+        - $ref: '#/components/parameters/ProjectParam'
+        - $ref: '#/components/parameters/TaskParam'
+      responses:
+        '200':
+          description: Task status retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskStatusResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    post:
+      operationId: taskStatusUpdate
+      summary: Generic status transition
+      description: |
+        Atomically transition a task between statuses using optimistic locking.
+        The `current` field acts as a guard — if the task's actual status doesn't
+        match, the server returns `409 Conflict`.
+
+        Prefer the dedicated action endpoints (e.g., `/task/claim`, `/task/complete`)
+        over this generic endpoint when a specific action applies.
+
+        **CLI equivalent:** `synchestra task status --project <id> --task <path> --current <status> --new <status>`
+        — see [spec](../../features/cli/task/status/README.md)
+      tags: [task-lifecycle]
+      parameters:
+        - $ref: '#/components/parameters/ProjectParam'
+        - $ref: '#/components/parameters/TaskParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [current, new]
+              properties:
+                current:
+                  $ref: '#/components/schemas/TaskStatus'
+                  description: Expected current status (optimistic lock guard).
+                new:
+                  $ref: '#/components/schemas/TaskStatus'
+                  description: Target status.
+                reason:
+                  type: string
+                  description: Reason for the transition.
+      responses:
+        '200':
+          description: Status transition successful.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskStatusResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/InvalidStateTransition'
+
+  # ---------------------------------------------------------------------------
+  # Lifecycle Operations
+  # ---------------------------------------------------------------------------
+
+  /task/create:
+    post:
+      operationId: taskCreate
+      summary: Create a new task
+      description: |
+        Create a task in `planning` status (or `queued` if `enqueue` is true).
+        Creates the task directory and README in the project repository.
+
+        **CLI equivalent:** `synchestra task create --project <id> --task <path> --title <title> [--description <desc>] [--depends-on <deps>] [--enqueue]`
+        — see [spec](../../features/cli/task/create/README.md)
+      tags: [task-lifecycle]
+      parameters:
+        - $ref: '#/components/parameters/ProjectParam'
+        - $ref: '#/components/parameters/TaskParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title]
+              properties:
+                title:
+                  type: string
+                  description: Human-readable task title.
+                  example: Implement user authentication
+                description:
+                  type: string
+                  description: Detailed task description (written to README).
+                depends_on:
+                  type: array
+                  items:
+                    type: string
+                  description: List of task paths this task depends on.
+                  example: [auth/setup, auth/schema]
+                enqueue:
+                  type: boolean
+                  default: false
+                  description: If true, create directly in `queued` status instead of `planning`.
+      responses:
+        '201':
+          description: Task created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskInfo'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          description: Parent task not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Task already exists.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /task/enqueue:
+    post:
+      operationId: taskEnqueue
+      summary: Move task to queued
+      description: |
+        Transition a task from `planning` to `queued`, marking it ready for claiming.
+
+        **CLI equivalent:** `synchestra task enqueue --project <id> --task <path>`
+        — see [spec](../../features/cli/task/enqueue/README.md)
+      tags: [task-lifecycle]
+      parameters:
+        - $ref: '#/components/parameters/ProjectParam'
+        - $ref: '#/components/parameters/TaskParam'
+      responses:
+        '200':
+          description: Task enqueued successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskStatusResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/InvalidStateTransition'
+
+  /task/claim:
+    post:
+      operationId: taskClaim
+      summary: Claim a queued task
+      description: |
+        Claim a `queued` task for work, transitioning it to `claimed`.
+        Records the run ID and model performing the work.
+
+        On claim conflict (another agent claimed first), returns `409 Conflict`.
+
+        **CLI equivalent:** `synchestra task claim --project <id> --task <path> --run <run_id> --model <model_id>`
+        — see [spec](../../features/cli/task/claim/README.md)
+      tags: [task-lifecycle]
+      parameters:
+        - $ref: '#/components/parameters/ProjectParam'
+        - $ref: '#/components/parameters/TaskParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [run, model]
+              properties:
+                run:
+                  type: string
+                  description: Run identifier for the claiming agent session.
+                  example: run_abc123
+                model:
+                  type: string
+                  description: Model identifier performing the work.
+                  example: claude-sonnet-4
+      responses:
+        '200':
+          description: Task claimed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskStatusResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/InvalidStateTransition'
+
+  /task/start:
+    post:
+      operationId: taskStart
+      summary: Start work on a claimed task
+      description: |
+        Transition a `claimed` task to `in_progress`, signaling that the agent
+        has begun actual work.
+
+        **CLI equivalent:** `synchestra task start --project <id> --task <path>`
+        — see [spec](../../features/cli/task/start/README.md)
+      tags: [task-lifecycle]
+      parameters:
+        - $ref: '#/components/parameters/ProjectParam'
+        - $ref: '#/components/parameters/TaskParam'
+      responses:
+        '200':
+          description: Task started successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskStatusResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/InvalidStateTransition'
+
+  /task/complete:
+    post:
+      operationId: taskComplete
+      summary: Mark task as completed
+      description: |
+        Transition an `in_progress` task to `completed` with an optional summary
+        of what was accomplished.
+
+        **CLI equivalent:** `synchestra task complete --project <id> --task <path> [--summary <text>]`
+        — see [spec](../../features/cli/task/complete/README.md)
+      tags: [task-lifecycle]
+      parameters:
+        - $ref: '#/components/parameters/ProjectParam'
+        - $ref: '#/components/parameters/TaskParam'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                summary:
+                  type: string
+                  description: Summary of what was accomplished.
+      responses:
+        '200':
+          description: Task completed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskStatusResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/InvalidStateTransition'
+
+  /task/fail:
+    post:
+      operationId: taskFail
+      summary: Mark task as failed
+      description: |
+        Transition an `in_progress` task to `failed` with a detailed reason.
+        The reason should be descriptive enough for another agent or human to
+        understand and act on.
+
+        **CLI equivalent:** `synchestra task fail --project <id> --task <path> --reason <text>`
+        — see [spec](../../features/cli/task/fail/README.md)
+      tags: [task-lifecycle]
+      parameters:
+        - $ref: '#/components/parameters/ProjectParam'
+        - $ref: '#/components/parameters/TaskParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason:
+                  type: string
+                  description: Detailed failure reason.
+      responses:
+        '200':
+          description: Task marked as failed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskStatusResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/InvalidStateTransition'
+
+  /task/block:
+    post:
+      operationId: taskBlock
+      summary: Mark task as blocked
+      description: |
+        Transition an `in_progress` task to `blocked` with a required reason
+        describing the blocking condition (missing dependency, awaiting decision, etc.).
+
+        **CLI equivalent:** `synchestra task block --project <id> --task <path> --reason <text>`
+        — see [spec](../../features/cli/task/block/README.md)
+      tags: [task-lifecycle]
+      parameters:
+        - $ref: '#/components/parameters/ProjectParam'
+        - $ref: '#/components/parameters/TaskParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason:
+                  type: string
+                  description: Description of the blocking condition.
+      responses:
+        '200':
+          description: Task marked as blocked.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskStatusResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/InvalidStateTransition'
+
+  /task/unblock:
+    post:
+      operationId: taskUnblock
+      summary: Resume a blocked task
+      description: |
+        Transition a `blocked` task back to `in_progress` when the blocking
+        condition has been resolved.
+
+        **CLI equivalent:** `synchestra task unblock --project <id> --task <path> [--reason <text>]`
+        — see [spec](../../features/cli/task/unblock/README.md)
+      tags: [task-lifecycle]
+      parameters:
+        - $ref: '#/components/parameters/ProjectParam'
+        - $ref: '#/components/parameters/TaskParam'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  description: What resolved the blocking condition.
+      responses:
+        '200':
+          description: Task unblocked successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskStatusResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/InvalidStateTransition'
+
+  /task/release:
+    post:
+      operationId: taskRelease
+      summary: Release a claimed task
+      description: |
+        Release a `claimed` task back to `queued` so another agent can claim it.
+        Used when an agent decides it cannot or should not work on the task.
+
+        **CLI equivalent:** `synchestra task release --project <id> --task <path> [--reason <text>]`
+        — see [spec](../../features/cli/task/release/README.md)
+      tags: [task-lifecycle]
+      parameters:
+        - $ref: '#/components/parameters/ProjectParam'
+        - $ref: '#/components/parameters/TaskParam'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  description: Why the task is being released.
+      responses:
+        '200':
+          description: Task released successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskStatusResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/InvalidStateTransition'
+
+  /task/abort:
+    post:
+      operationId: taskAbort
+      summary: Request task abortion
+      description: |
+        Set the `abort_requested` flag on a `claimed` or `in_progress` task.
+        This does **not** change the task's status — it signals to the working
+        agent that it should wrap up and call `/task/aborted`.
+
+        **CLI equivalent:** `synchestra task abort --project <id> --task <path> [--reason <text>]`
+        — see [spec](../../features/cli/task/abort/README.md)
+      tags: [task-lifecycle]
+      parameters:
+        - $ref: '#/components/parameters/ProjectParam'
+        - $ref: '#/components/parameters/TaskParam'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  description: Why abortion is being requested.
+      responses:
+        '200':
+          description: Abort flag set successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskStatusResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/InvalidStateTransition'
+
+  /task/aborted:
+    post:
+      operationId: taskAborted
+      summary: Confirm task was aborted
+      description: |
+        Confirm that a task has been successfully aborted. Transitions a `claimed`
+        or `in_progress` task to `aborted` and clears the `abort_requested` flag.
+
+        Typically called by the agent after it sees the `abort_requested` flag
+        (via `/task/status`) and finishes winding down.
+
+        **CLI equivalent:** `synchestra task aborted --project <id> --task <path> [--reason <text>]`
+        — see [spec](../../features/cli/task/aborted/README.md)
+      tags: [task-lifecycle]
+      parameters:
+        - $ref: '#/components/parameters/ProjectParam'
+        - $ref: '#/components/parameters/TaskParam'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  description: Summary of abort outcome.
+      responses:
+        '200':
+          description: Task marked as aborted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskStatusResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/InvalidStateTransition'
+
+# =============================================================================
+# Components
+# =============================================================================
+
+components:
+  # ---------------------------------------------------------------------------
+  # Parameters
+  # ---------------------------------------------------------------------------
+  parameters:
+    ProjectParam:
+      name: project
+      in: query
+      required: true
+      description: |
+        Project identifier. Maps to CLI `--project`.
+      schema:
+        type: string
+      example: my-project
+
+    TaskParam:
+      name: task
+      in: query
+      required: true
+      description: |
+        Hierarchical task path (e.g., `parent-task/subtask`). Maps to CLI `--task`.
+        Use forward slashes for nesting; no URL encoding required for the slashes.
+      schema:
+        type: string
+      example: auth/implement-jwt
+
+    LimitParam:
+      name: limit
+      in: query
+      description: Maximum number of items to return (default 20, max 100).
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+
+    CursorParam:
+      name: cursor
+      in: query
+      description: Pagination cursor from a previous response's `next_cursor`.
+      schema:
+        type: string
+
+  # ---------------------------------------------------------------------------
+  # Schemas
+  # ---------------------------------------------------------------------------
+  schemas:
+    TaskStatus:
+      type: string
+      enum:
+        - planning
+        - queued
+        - claimed
+        - in_progress
+        - completed
+        - failed
+        - blocked
+        - aborted
+
+    TaskSummary:
+      type: object
+      required: [path, status, title]
+      properties:
+        path:
+          type: string
+          description: Hierarchical task path.
+          example: auth/implement-jwt
+        status:
+          $ref: '#/components/schemas/TaskStatus'
+        title:
+          type: string
+          example: Implement JWT authentication
+        run:
+          type: string
+          description: Run ID of the claiming agent (if claimed/in_progress).
+        model:
+          type: string
+          description: Model ID of the claiming agent (if claimed/in_progress).
+        abort_requested:
+          type: boolean
+          description: Whether abortion has been requested.
+        claimed_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    TaskInfo:
+      type: object
+      required: [path, status, title]
+      properties:
+        path:
+          type: string
+          example: auth/implement-jwt
+        status:
+          $ref: '#/components/schemas/TaskStatus'
+        title:
+          type: string
+        description:
+          type: string
+          description: Full task description (from README).
+        depends_on:
+          type: array
+          items:
+            type: string
+          description: Task paths this task depends on.
+        parent:
+          type: string
+          description: Parent task path (if nested).
+        siblings:
+          type: array
+          items:
+            type: string
+          description: Sibling task paths.
+        run:
+          type: string
+        model:
+          type: string
+        requester:
+          type: string
+        abort_requested:
+          type: boolean
+        reason:
+          type: string
+          description: Reason for current status (block/fail/abort).
+        summary:
+          type: string
+          description: Completion summary (if completed).
+        branch:
+          type: string
+          description: Git branch associated with the task.
+        claimed_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+
+    TaskStatusResponse:
+      type: object
+      required: [path, status]
+      properties:
+        path:
+          type: string
+          example: auth/implement-jwt
+        status:
+          $ref: '#/components/schemas/TaskStatus'
+        run:
+          type: string
+        model:
+          type: string
+        abort_requested:
+          type: boolean
+        reason:
+          type: string
+        claimed_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Error:
+      type: object
+      required: [error, code]
+      properties:
+        error:
+          type: string
+          description: Human-readable error message.
+        code:
+          type: string
+          description: Machine-readable error code.
+          enum:
+            - invalid_arguments
+            - not_found
+            - conflict
+            - invalid_state_transition
+            - internal_error
+        request_id:
+          type: string
+          description: Unique request identifier for debugging.
+          example: req_abc123
+
+  # ---------------------------------------------------------------------------
+  # Responses
+  # ---------------------------------------------------------------------------
+  responses:
+    BadRequest:
+      description: Invalid or missing parameters.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "missing required parameter: task"
+            code: invalid_arguments
+            request_id: req_abc123
+
+    NotFound:
+      description: Task or project not found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "task 'auth/implement-jwt' not found in project 'my-project'"
+            code: not_found
+            request_id: req_abc123
+
+    Conflict:
+      description: |
+        Push conflict or claim race condition. The response includes the
+        current task state so the client can decide whether to retry.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Error'
+              - type: object
+                properties:
+                  current_state:
+                    $ref: '#/components/schemas/TaskStatusResponse'
+          example:
+            error: "task already claimed by another agent"
+            code: conflict
+            request_id: req_abc123
+            current_state:
+              path: auth/implement-jwt
+              status: claimed
+              run: run_other456
+              model: gpt-4
+              abort_requested: false
+              claimed_at: "2026-03-13T10:00:00Z"
+              updated_at: "2026-03-13T10:00:00Z"
+
+    InvalidStateTransition:
+      description: |
+        The requested status transition is not valid from the task's current state.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Error'
+              - type: object
+                properties:
+                  current_state:
+                    $ref: '#/components/schemas/TaskStatusResponse'
+          example:
+            error: "cannot transition from 'planning' to 'in_progress'"
+            code: invalid_state_transition
+            request_id: req_abc123
+            current_state:
+              path: auth/implement-jwt
+              status: planning
+              abort_requested: false
+              updated_at: "2026-03-13T09:00:00Z"
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+
+security:
+  - bearerAuth: []
