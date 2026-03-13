@@ -74,7 +74,7 @@ repo/
             README.md
 ```
 
-`spec/` and `docs/` live at the repository root — they are the product's specification and documentation. `synchestra/` is the orchestration layer that manages projects, each with its own task tree. The locations of `spec/` and `docs/` are configurable per project via [`synchestra-project.yaml`](spec/project-definition/README.md).
+`spec/` and `docs/` live at the repository root — they are the product's specification and documentation. `synchestra/` is the orchestration layer that manages projects, each with its own task tree. The locations of `spec/` and `docs/` are configurable per project via [`synchestra-project.yaml`](spec/features/project-definition/README.md).
 
 **Every directory has a `README.md`.** This is the atomic unit of Synchestra. Each README contains the context an agent needs to understand that node: what it is, what's expected, what's done, what's blocked — and what questions remain open.
 
@@ -258,6 +258,7 @@ Synchestra is in active development. The conventions, module structure, and CLI 
 
 - [spec/](spec/README.md)
   - [features/](spec/features/README.md): 3 outstanding questions
+    - [project-definition](spec/features/project-definition/README.md): 2 outstanding questions
     - [micro-tasks](spec/features/micro-tasks/README.md): 4 outstanding questions
     - [cross-repo-sync](spec/features/cross-repo-sync/README.md): 4 outstanding questions
     - [model-selection](spec/features/model-selection/README.md): 4 outstanding questions
@@ -266,7 +267,6 @@ Synchestra is in active development. The conventions, module structure, and CLI 
     - [claim-and-push](spec/features/claim-and-push/README.md): 3 outstanding questions
     - [agent-skills](spec/features/agent-skills/README.md): 3 outstanding questions
     - [cli](spec/features/cli/README.md): 3 outstanding questions
-  - [project-definition/](spec/project-definition/README.md): 2 outstanding questions
 
 ## License
 

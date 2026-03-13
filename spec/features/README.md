@@ -6,6 +6,7 @@ Feature specifications for the Synchestra project, managed by Synchestra.
 
 | Feature | Status | Description |
 |---|---|---|
+| [project-definition](project-definition/README.md) | Conceptual | `synchestra-project.yaml` format and supported repository layouts |
 | [micro-tasks](micro-tasks/README.md) | Conceptual | Pre/post prompt micro-task chains and background automation |
 | [cross-repo-sync](cross-repo-sync/README.md) | Conceptual | Cross-repository branching, task coordination, and merge strategy |
 | [model-selection](model-selection/README.md) | Conceptual | Smart model routing based on task complexity and configuration |
@@ -19,6 +20,10 @@ Feature specifications for the Synchestra project, managed by Synchestra.
 | [cli](cli/README.md) | In Progress | The `synchestra` CLI — primary interface for agents and humans |
 
 ## Feature Summaries
+
+### [Project Definition](project-definition/README.md)
+
+Defines the `synchestra-project.yaml` format, mandatory and optional fields, and the two supported repository layouts: multi-project (under `synchestra/projects/`) and dedicated project repos (project files at root). Synchestra auto-detects the layout by checking for a project file at the repository root.
 
 ### [Micro-Tasks](micro-tasks/README.md)
 
@@ -87,6 +92,7 @@ ui → proposals, cli, task-status-board, agent-skills
 
 ### Features with outstanding questions:
 
+- [project-definition](project-definition/README.md): 2 outstanding questions
 - [micro-tasks](micro-tasks/README.md): 4 outstanding questions
 - [cross-repo-sync](cross-repo-sync/README.md): 4 outstanding questions
 - [model-selection](model-selection/README.md): 4 outstanding questions

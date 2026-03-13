@@ -22,7 +22,7 @@ This repository describes Synchestra more than it implements it. Read it as a la
 Within that structure, a few files anchor the big picture:
 
 - `README.md` explains Synchestra as a git-backed coordination layer for multi-platform AI agents. It also defines the key ideas: hierarchical task trees, naming conventions as API, git as the database, token-efficient context loading, and claim-and-push concurrency.
-- `spec/project-definition/README.md` defines the two supported repository layouts: a dedicated project repo with `synchestra-project.yaml` at the root, or a multi-project control repo with project files under `synchestra/projects/{project_id}/`.
+- `spec/features/project-definition/README.md` defines the two supported repository layouts: a dedicated project repo with `synchestra-project.yaml` at the root, or a multi-project control repo with project files under `synchestra/projects/{project_id}/`.
 - `spec/features/cli/README.md` defines the canonical CLI contract. The `synchestra` CLI is the shared interface for both agents and humans, and mutation commands are expected to perform atomic commit-and-push operations.
 - `spec/features/agent-skills/README.md` defines how skills are structured and distributed. Skills do not replace the CLI; they standardize when to call it, which parameters to pass, and how to interpret exit codes.
 - `docs/features/README.md` captures the conceptual feature stack: state synchronization at the base, then agent coordination and progress reporting, then workflow orchestration, with human steering on top.
