@@ -21,8 +21,8 @@ Like all mutation commands, `task start` is atomic: the CLI commits the status c
 
 | Parameter | Required | Description |
 |---|---|---|
-| [`--project`](../../$args/project.md) | Yes | Project identifier |
-| [`--task`](../$args/task.md) | Yes | Task path using `/` as separator (e.g., `task1/subtask2`) |
+| [`--project`](../../_args/project.md) | Yes | Project identifier |
+| [`--task`](../_args/task.md) | Yes | Task path using `/` as separator (e.g., `task1/subtask2`) |
 
 ## Exit codes
 

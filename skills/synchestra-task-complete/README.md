@@ -23,9 +23,9 @@ synchestra task complete \
 
 | Parameter | Required | Description |
 |---|---|---|
-| [`--project`](../../spec/features/cli/$args/project.md) | Yes | Project identifier (e.g., `synchestra`, `my-service`) |
-| [`--task`](../../spec/features/cli/task/$args/task.md) | Yes | Task path using `/` as separator (e.g., `task1`, `task1/subtask2`, `task1/subtask2/subtask3`) |
-| [`--summary`](../../spec/features/cli/task/complete/$args/summary.md) | No | Brief description of what was accomplished (e.g., `"Implemented argument parser with validation"`) |
+| [`--project`](../../spec/features/cli/_args/project.md) | Yes | Project identifier (e.g., `synchestra`, `my-service`) |
+| [`--task`](../../spec/features/cli/task/_args/task.md) | Yes | Task path using `/` as separator (e.g., `task1`, `task1/subtask2`, `task1/subtask2/subtask3`) |
+| [`--summary`](../../spec/features/cli/task/complete/_args/summary.md) | No | Brief description of what was accomplished (e.g., `"Implemented argument parser with validation"`) |
 
 ## Exit codes
 

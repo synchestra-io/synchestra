@@ -19,9 +19,9 @@ Implicitly uses `--current blocked` as a guard — fails if the task is not curr
 
 | Parameter | Required | Description |
 |---|---|---|
-| [`--project`](../../$args/project.md) | Yes | Project identifier |
-| [`--task`](../$args/task.md) | Yes | Task path using `/` as separator |
-| [`--reason`](../$args/reason.md) | No | What resolved the blocker |
+| [`--project`](../../_args/project.md) | Yes | Project identifier |
+| [`--task`](../_args/task.md) | Yes | Task path using `/` as separator |
+| [`--reason`](../_args/reason.md) | No | What resolved the blocker |
 
 ## Exit codes
 

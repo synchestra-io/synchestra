@@ -28,8 +28,8 @@ The status change is performed as an atomic commit-and-push.
 
 | Parameter   | Required | Description                          |
 |-------------|----------|--------------------------------------|
-| [`--project`](../../$args/project.md) | Yes      | Project identifier                   |
-| [`--task`](../$args/task.md)    | Yes      | Task identifier to enqueue           |
+| [`--project`](../../_args/project.md) | Yes      | Project identifier                   |
+| [`--task`](../_args/task.md)    | Yes      | Task identifier to enqueue           |
 
 The `--current planning` guard is applied implicitly and cannot be overridden.
 

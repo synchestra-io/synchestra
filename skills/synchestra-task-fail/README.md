@@ -24,9 +24,9 @@ synchestra task fail \
 
 | Parameter | Required | Description |
 |---|---|---|
-| [`--project`](../../spec/features/cli/$args/project.md) | Yes | Project identifier (e.g., `synchestra`, `my-service`) |
-| [`--task`](../../spec/features/cli/task/$args/task.md) | Yes | Task path using `/` as separator (e.g., `task1`, `task1/subtask2`, `task1/subtask2/subtask3`) |
-| [`--reason`](../../spec/features/cli/task/$args/reason.md) | Yes | Why the task failed — include enough detail for another agent or human to understand what happened |
+| [`--project`](../../spec/features/cli/_args/project.md) | Yes | Project identifier (e.g., `synchestra`, `my-service`) |
+| [`--task`](../../spec/features/cli/task/_args/task.md) | Yes | Task path using `/` as separator (e.g., `task1`, `task1/subtask2`, `task1/subtask2/subtask3`) |
+| [`--reason`](../../spec/features/cli/task/_args/reason.md) | Yes | Why the task failed — include enough detail for another agent or human to understand what happened |
 
 ## Exit codes
 

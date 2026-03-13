@@ -13,7 +13,7 @@ Arguments specific to the `synchestra task create` command.
 | [`--depends-on`](depends-on.md) | String | No | Comma-separated list of dependency task paths |
 | [`--enqueue`](enqueue.md) | Flag | No | Create in `queued` status instead of `planning` |
 
-Also uses [`--project`](../../../$args/project.md) and [`--task`](../../$args/task.md).
+Also uses [`--project`](../../../_args/project.md) and [`--task`](../../_args/task.md).
 
 ### `--title`
 

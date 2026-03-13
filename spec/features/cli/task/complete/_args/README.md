@@ -10,7 +10,7 @@ Arguments specific to the `synchestra task complete` command.
 |---|---|---|---|
 | [`--summary`](summary.md) | String | No | Brief description of what was accomplished |
 
-Also uses [`--project`](../../../$args/project.md) and [`--task`](../../$args/task.md).
+Also uses [`--project`](../../../_args/project.md) and [`--task`](../../_args/task.md).
 
 ### `--summary`
 

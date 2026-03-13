@@ -11,7 +11,7 @@ Arguments specific to the `synchestra task claim` command.
 | [`--run`](run.md) | String | Yes | Unique identifier for this agent run |
 | [`--model`](model.md) | String | Yes | Model being used for this work |
 
-Also uses [`--project`](../../../$args/project.md) and [`--task`](../../$args/task.md).
+Also uses [`--project`](../../../_args/project.md) and [`--task`](../../_args/task.md).
 
 ### `--run`
 

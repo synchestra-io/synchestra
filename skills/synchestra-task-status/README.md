@@ -38,11 +38,11 @@ synchestra task status \
 
 | Parameter | Required | Description |
 |---|---|---|
-| [`--project`](../../spec/features/cli/$args/project.md) | Yes | Project identifier (e.g., `synchestra`, `my-service`) |
-| [`--task`](../../spec/features/cli/task/$args/task.md) | Yes | Task path using `/` as separator (e.g., `task1/subtask2`) |
-| [`--current`](../../spec/features/cli/task/status/$args/current.md) | For update | Expected current status — fails if actual status differs |
-| [`--new`](../../spec/features/cli/task/status/$args/new.md) | For update | Target status to transition to |
-| [`--reason`](../../spec/features/cli/task/$args/reason.md) | For `failed`/`blocked` | Why the task failed or what's blocking it |
+| [`--project`](../../spec/features/cli/_args/project.md) | Yes | Project identifier (e.g., `synchestra`, `my-service`) |
+| [`--task`](../../spec/features/cli/task/_args/task.md) | Yes | Task path using `/` as separator (e.g., `task1/subtask2`) |
+| [`--current`](../../spec/features/cli/task/status/_args/current.md) | For update | Expected current status — fails if actual status differs |
+| [`--new`](../../spec/features/cli/task/status/_args/new.md) | For update | Target status to transition to |
+| [`--reason`](../../spec/features/cli/task/_args/reason.md) | For `failed`/`blocked` | Why the task failed or what's blocking it |
 
 ## Exit codes
 

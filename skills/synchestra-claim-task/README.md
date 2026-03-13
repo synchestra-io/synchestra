@@ -24,10 +24,10 @@ synchestra task claim \
 
 | Parameter | Required | Description |
 |---|---|---|
-| [`--project`](../../spec/features/cli/$args/project.md) | Yes | Project identifier (e.g., `synchestra`, `my-service`) |
-| [`--task`](../../spec/features/cli/task/$args/task.md) | Yes | Task path using `/` as separator (e.g., `task1`, `task1/subtask2`, `task1/subtask2/subtask3`) |
-| [`--run`](../../spec/features/cli/task/claim/$args/run.md) | Yes | Unique identifier for this agent run (provided by the orchestrator or generated) |
-| [`--model`](../../spec/features/cli/task/claim/$args/model.md) | Yes | Model being used for this work (e.g., `haiku`, `sonnet`, `opus`) |
+| [`--project`](../../spec/features/cli/_args/project.md) | Yes | Project identifier (e.g., `synchestra`, `my-service`) |
+| [`--task`](../../spec/features/cli/task/_args/task.md) | Yes | Task path using `/` as separator (e.g., `task1`, `task1/subtask2`, `task1/subtask2/subtask3`) |
+| [`--run`](../../spec/features/cli/task/claim/_args/run.md) | Yes | Unique identifier for this agent run (provided by the orchestrator or generated) |
+| [`--model`](../../spec/features/cli/task/claim/_args/model.md) | Yes | Model being used for this work (e.g., `haiku`, `sonnet`, `opus`) |
 
 ## Exit codes
 

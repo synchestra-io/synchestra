@@ -26,9 +26,9 @@ The command implicitly guards that the current status is `claimed` or `in_progre
 
 | Parameter | Required | Description |
 |---|---|---|
-| [`--project`](../../$args/project.md) | Yes | Project identifier |
-| [`--task`](../$args/task.md) | Yes | Task path using `/` as separator (e.g., `task1/subtask2`) |
-| [`--reason`](../$args/reason.md) | No | Explain what was done before aborting (e.g., `"Reverted partial schema migration and restored backup"`) |
+| [`--project`](../../_args/project.md) | Yes | Project identifier |
+| [`--task`](../_args/task.md) | Yes | Task path using `/` as separator (e.g., `task1/subtask2`) |
+| [`--reason`](../_args/reason.md) | No | Explain what was done before aborting (e.g., `"Reverted partial schema migration and restored backup"`) |
 
 ## Exit codes
 

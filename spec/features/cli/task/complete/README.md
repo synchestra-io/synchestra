@@ -21,9 +21,9 @@ Completion is atomic: the CLI commits the status change and pushes to the projec
 
 | Parameter | Required | Description |
 |---|---|---|
-| [`--project`](../../$args/project.md) | Yes | Project identifier |
-| [`--task`](../$args/task.md) | Yes | Task path using `/` as separator (e.g., `task1/subtask2`) |
-| [`--summary`]($args/summary.md) | No | Brief description of what was accomplished |
+| [`--project`](../../_args/project.md) | Yes | Project identifier |
+| [`--task`](../_args/task.md) | Yes | Task path using `/` as separator (e.g., `task1/subtask2`) |
+| [`--summary`](_args/summary.md) | No | Brief description of what was accomplished |
 
 ## Exit codes
 

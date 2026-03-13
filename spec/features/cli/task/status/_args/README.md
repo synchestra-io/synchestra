@@ -11,7 +11,7 @@ Arguments specific to the `synchestra task status` command (update mode).
 | [`--current`](current.md) | String | For update | Expected current status (guard) |
 | [`--new`](new.md) | String | For update | Target status to transition to |
 
-Also uses [`--project`](../../../$args/project.md), [`--task`](../../$args/task.md), and [`--reason`](../../$args/reason.md).
+Also uses [`--project`](../../../_args/project.md), [`--task`](../../_args/task.md), and [`--reason`](../../_args/reason.md).
 
 ### `--current`
 

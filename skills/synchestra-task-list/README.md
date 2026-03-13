@@ -25,10 +25,10 @@ synchestra task list \
 
 | Parameter | Required | Description |
 |---|---|---|
-| [`--project`](../../spec/features/cli/$args/project.md) | Yes | Project identifier (e.g., `synchestra`, `my-service`) |
-| [`--status`](../../spec/features/cli/task/list/$args/status.md) | No | Filter by task status (e.g., `planning`, `queued`, `claimed`, `in_progress`, `completed`, `failed`, `blocked`, `aborted`) |
-| [`--format`](../../spec/features/cli/task/$args/format.md) | No | Output format: `yaml` (default), `json`, `md`, `csv` |
-| [`--fields`](../../spec/features/cli/task/list/$args/fields.md) | No | Comma-separated list of fields to include (e.g., `path,status,model`). Defaults to all fields |
+| [`--project`](../../spec/features/cli/_args/project.md) | Yes | Project identifier (e.g., `synchestra`, `my-service`) |
+| [`--status`](../../spec/features/cli/task/list/_args/status.md) | No | Filter by task status (e.g., `planning`, `queued`, `claimed`, `in_progress`, `completed`, `failed`, `blocked`, `aborted`) |
+| [`--format`](../../spec/features/cli/task/_args/format.md) | No | Output format: `yaml` (default), `json`, `md`, `csv` |
+| [`--fields`](../../spec/features/cli/task/list/_args/fields.md) | No | Comma-separated list of fields to include (e.g., `path,status,model`). Defaults to all fields |
 
 ## Exit codes
 

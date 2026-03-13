@@ -11,7 +11,7 @@ Arguments specific to the `synchestra task list` command.
 | [`--status`](status.md) | String | No | Filter tasks by status |
 | [`--fields`](fields.md) | String | No | Select specific output fields |
 
-Also uses [`--project`](../../../$args/project.md) and [`--format`](../../$args/format.md).
+Also uses [`--project`](../../../_args/project.md) and [`--format`](../../_args/format.md).
 
 ### `--status`
 

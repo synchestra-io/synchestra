@@ -19,10 +19,10 @@ Claiming is atomic: the CLI commits the status change and pushes to the project 
 
 | Parameter | Required | Description |
 |---|---|---|
-| [`--project`](../../$args/project.md) | Yes | Project identifier |
-| [`--task`](../$args/task.md) | Yes | Task path using `/` as separator (e.g., `task1/subtask2`) |
-| [`--run`]($args/run.md) | Yes | Unique identifier for this agent run |
-| [`--model`]($args/model.md) | Yes | Model being used (e.g., `haiku`, `sonnet`, `opus`) |
+| [`--project`](../../_args/project.md) | Yes | Project identifier |
+| [`--task`](../_args/task.md) | Yes | Task path using `/` as separator (e.g., `task1/subtask2`) |
+| [`--run`](_args/run.md) | Yes | Unique identifier for this agent run |
+| [`--model`](_args/model.md) | Yes | Model being used (e.g., `haiku`, `sonnet`, `opus`) |
 
 ## Exit codes
 

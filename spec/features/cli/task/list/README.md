@@ -19,10 +19,10 @@ This is a read-only command. It pulls the latest state from the project repo but
 
 | Parameter | Required | Description |
 |---|---|---|
-| [`--project`](../../$args/project.md) | Yes | Project identifier (e.g., `synchestra`, `my-service`) |
-| [`--status`]($args/status.md) | No | Filter by task status (e.g., `planning`, `queued`, `claimed`, `in_progress`, `completed`, `failed`, `blocked`, `aborted`) |
-| [`--format`](../$args/format.md) | No | Output format: `yaml` (default), `json`, `md`, `csv` |
-| [`--fields`]($args/fields.md) | No | Comma-separated list of fields to include (e.g., `path,status,model`). Defaults to all fields |
+| [`--project`](../../_args/project.md) | Yes | Project identifier (e.g., `synchestra`, `my-service`) |
+| [`--status`](_args/status.md) | No | Filter by task status (e.g., `planning`, `queued`, `claimed`, `in_progress`, `completed`, `failed`, `blocked`, `aborted`) |
+| [`--format`](../_args/format.md) | No | Output format: `yaml` (default), `json`, `md`, `csv` |
+| [`--fields`](_args/fields.md) | No | Comma-separated list of fields to include (e.g., `path,status,model`). Defaults to all fields |
 
 ## Exit codes
 

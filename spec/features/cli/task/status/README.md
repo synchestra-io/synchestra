@@ -25,11 +25,11 @@ Queries or updates the status of a task.
 
 | Parameter | Required | Description |
 |---|---|---|
-| [`--project`](../../$args/project.md) | Yes | Project identifier |
-| [`--task`](../$args/task.md) | Yes | Task path using `/` as separator |
-| [`--current`]($args/current.md) | For update | Expected current status (guard against stale state) |
-| [`--new`]($args/new.md) | For update | Target status to transition to |
-| [`--reason`](../$args/reason.md) | No | Reason for the transition (required for `failed` and `blocked`, optional otherwise) |
+| [`--project`](../../_args/project.md) | Yes | Project identifier |
+| [`--task`](../_args/task.md) | Yes | Task path using `/` as separator |
+| [`--current`](_args/current.md) | For update | Expected current status (guard against stale state) |
+| [`--new`](_args/new.md) | For update | Target status to transition to |
+| [`--reason`](../_args/reason.md) | No | Reason for the transition (required for `failed` and `blocked`, optional otherwise) |
 
 ## Valid status values
 
