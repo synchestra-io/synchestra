@@ -1,18 +1,18 @@
-# Command: `synchestra server projects add`
+# Command: `synchestra server project add`
 
-**Parent:** [projects](../README.md)
+**Parent:** [project](../README.md)
 
 ## Synopsis
 
 ```
-synchestra server projects add --spec <path> --state <path> [--path <dir>]
+synchestra server project add --spec <path> --state <path> [--path <dir>]
 ```
 
 ## Description
 
 Adds a new project to `synchestra-server.yaml` by appending a spec/state repo pair to the `projects` list.
 
-Cross-linked with the API endpoint [`POST /api/v1/projects/add`](../../../../../api/projects/README.md).
+Cross-linked with the API endpoint [`POST /api/v1/project/add`](../../../../../api/project/README.md).
 
 ## Parameters
 

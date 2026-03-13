@@ -1,6 +1,6 @@
-# Projects API
+# Project API
 
-REST API endpoints for server project management. Maps to [`synchestra server projects`](../../features/cli/server/projects/README.md) CLI commands.
+REST API endpoints for server project management. Maps to [`synchestra server project`](../../features/cli/server/project/README.md) CLI commands.
 
 ## Specification
 
@@ -8,19 +8,19 @@ Full OpenAPI 3.1 specification: [`openapi.yaml`](openapi.yaml)
 
 ## Endpoints
 
-All endpoints are under `/api/v1/projects/`.
+All endpoints are under `/api/v1/project/`.
 
 ### Read Operations
 
 | Method | Path | CLI Equivalent | Description |
 |---|---|---|---|
-| `GET` | `/projects/list` | [`synchestra server projects`](../../features/cli/server/projects/README.md) | List configured projects |
+| `GET` | `/project/list` | [`synchestra server project list`](../../features/cli/server/project/list/README.md) | List configured projects |
 
 ### Mutation Operations
 
 | Method | Path | CLI Equivalent | Description |
 |---|---|---|---|
-| `POST` | `/projects/add` | [`synchestra server projects add`](../../features/cli/server/projects/add/README.md) | Add a project to the server |
+| `POST` | `/project/add` | [`synchestra server project add`](../../features/cli/server/project/add/README.md) | Add a project to the server |
 
 ## Error Codes
 

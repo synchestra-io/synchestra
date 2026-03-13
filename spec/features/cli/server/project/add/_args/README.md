@@ -1,8 +1,8 @@
-# Projects Add Arguments
+# Project Add Arguments
 
-**Parent:** [projects add](../README.md)
+**Parent:** [project add](../README.md)
 
-Arguments specific to the `synchestra server projects add` command.
+Arguments specific to the `synchestra server project add` command.
 
 ## Arguments
 

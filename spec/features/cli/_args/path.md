@@ -17,8 +17,8 @@ Specifies the working directory for commands that resolve a Synchestra context.
 | [`server stop`](../server/stop/README.md) | Background daemon stop |
 | [`server restart`](../server/restart/README.md) | Background daemon restart |
 | [`server status`](../server/status/README.md) | Background daemon status |
-| [`server projects`](../server/projects/README.md) | List projects from config |
-| [`server projects add`](../server/projects/add/README.md) | Add project to config |
+| [`server project list`](../server/project/list/README.md) | List projects from config |
+| [`server project add`](../server/project/add/README.md) | Add project to config |
 | [`mcp`](../mcp/README.md) | stdio MCP server |
 
 ## Description

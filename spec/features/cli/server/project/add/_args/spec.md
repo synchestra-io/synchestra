@@ -12,7 +12,7 @@ Path to the project's spec repository.
 
 | Command |
 |---|
-| [`server projects add`](../README.md) |
+| [`server project add`](../README.md) |
 
 ## Description
 
@@ -25,10 +25,10 @@ The corresponding field in [`synchestra-server.yaml`](../../../synchestra-server
 ## Examples
 
 ```bash
-synchestra server projects add --spec /home/user/projects/my-project --state /home/user/state/my-project
+synchestra server project add --spec /home/user/projects/my-project --state /home/user/state/my-project
 
 # Relative path
-synchestra server projects add --spec ../specs/my-project --state ../state/my-project
+synchestra server project add --spec ../specs/my-project --state ../state/my-project
 ```
 
 ## Outstanding Questions

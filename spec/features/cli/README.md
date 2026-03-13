@@ -10,17 +10,24 @@ The Synchestra CLI (`synchestra`) is the primary interface for agents and humans
 
 ### Command hierarchy
 
-Commands follow a `synchestra <resource> <action>` pattern:
+Commands follow a `synchestra <resource> <action>` pattern using **singular nouns** and **verb subcommands**:
 
 ```
 synchestra task claim
 synchestra task status
 synchestra task release
 synchestra task list
-synchestra skills list
-synchestra skills show
-...
+synchestra skill list
+synchestra skill show
+synchestra server project list
+synchestra server project add
 ```
+
+**Singular nouns** — resource names are always singular (`task`, `skill`, `project`), never plural. This matches the convention used by `gh` (`gh repo list`, `gh issue create`), `kubectl` (`kubectl pod list`), and most modern CLIs. The resource name identifies the *type*, not a collection.
+
+**Verb subcommands** — every action is an explicit subcommand. A bare resource name (e.g., `synchestra task`) shows help, never performs an implicit action like listing. Common verbs: `list`, `create`, `show`, `delete`, `update`.
+
+**Nesting** — sub-resources nest under their parent: `synchestra server project add`. Limit nesting to three levels (`<group> <resource> <action>`) to keep commands ergonomic.
 
 ### Exit code contract
 

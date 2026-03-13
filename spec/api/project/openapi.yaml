@@ -4,8 +4,8 @@ info:
   description: |
     REST API for server project management in Synchestra.
 
-    Endpoints map to `synchestra server projects` CLI commands.
-    See the [CLI server projects spec](../../features/cli/server/projects/README.md) for full behavioral details.
+    Endpoints map to `synchestra server project` CLI commands.
+    See the [CLI server project spec](../../features/cli/server/project/README.md) for full behavioral details.
 
     ## Authentication
     All requests require a Bearer token in the `Authorization` header.
@@ -18,25 +18,25 @@ servers:
     description: API v1
 
 tags:
-  - name: projects-read
+  - name: project-read
     description: Read-only project operations
-  - name: projects-management
+  - name: project-management
     description: Project management operations
 
 security:
   - bearerAuth: []
 
 paths:
-  /projects/list:
+  /project/list:
     get:
       operationId: projectList
       summary: List projects
       description: |
         List all projects configured on this server.
 
-        **CLI equivalent:** `synchestra server projects [--format <format>]`
-        — see [spec](../../features/cli/server/projects/README.md)
-      tags: [projects-read]
+        **CLI equivalent:** `synchestra server project list [--format <format>]`
+        — see [spec](../../features/cli/server/project/list/README.md)
+      tags: [project-read]
       responses:
         '200':
           description: List of projects
@@ -53,16 +53,16 @@ paths:
         '500':
           $ref: '#/components/responses/InternalError'
 
-  /projects/add:
+  /project/add:
     post:
       operationId: projectAdd
       summary: Add a project
       description: |
         Add a new project to the server configuration.
 
-        **CLI equivalent:** `synchestra server projects add --spec <path> --state <path>`
-        — see [spec](../../features/cli/server/projects/add/README.md)
-      tags: [projects-management]
+        **CLI equivalent:** `synchestra server project add --spec <path> --state <path>`
+        — see [spec](../../features/cli/server/project/add/README.md)
+      tags: [project-management]
       requestBody:
         required: true
         content:

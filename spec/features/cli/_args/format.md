@@ -15,7 +15,7 @@ Controls the output format of read commands.
 | [`list`](../task/list/README.md) | `yaml`, `json`, `md`, `csv` | `yaml` |
 | [`info`](../task/info/README.md) | `text`, `json`, `yaml` | `text` |
 | [`server status`](../server/status/README.md) | `text`, `json`, `yaml` | `text` |
-| [`server projects`](../server/projects/README.md) | `yaml`, `json`, `md`, `csv` | `yaml` |
+| [`server project list`](../server/project/list/README.md) | `yaml`, `json`, `md`, `csv` | `yaml` |
 
 ## Description
 
@@ -24,8 +24,8 @@ Determines how command output is structured. Useful for both human readability a
 - **`yaml`** — Structured, readable by both humans and machines. Default for `list`.
 - **`json`** — Machine-readable, useful for piping to other tools.
 - **`text`** — Human-readable plain text. Default for `info`.
-- **`md`** — Markdown table format, suitable for embedding in READMEs. Supported by `list` and `server projects`.
-- **`csv`** — Flat comma-separated values with a header row. Supported by `list` and `server projects`.
+- **`md`** — Markdown table format, suitable for embedding in READMEs. Supported by `list` and `server project list`.
+- **`csv`** — Flat comma-separated values with a header row. Supported by `list` and `server project list`.
 
 ## Examples
 
