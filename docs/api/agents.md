@@ -2,7 +2,7 @@
 
 Register and manage AI agents.
 
-**See also:** [CLI: `synchestra agent`](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/agent.md)
+**See also:** [CLI: `synchestra agent`](../cli/agent.md)
 
 ---
 
@@ -56,7 +56,7 @@ Register a new agent, or update an existing one with the same name (idempotent).
 }
 ```
 
-**See also:** [CLI: agent register](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/agent.md#register)
+**See also:** [CLI: agent register](../cli/agent.md#register)
 
 ---
 
@@ -99,7 +99,7 @@ curl "http://localhost:8080/api/v1/agents?skill=go&status=active" \
 }
 ```
 
-**See also:** [CLI: agent list](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/agent.md#list)
+**See also:** [CLI: agent list](../cli/agent.md#list)
 
 ---
 
@@ -130,7 +130,7 @@ curl http://localhost:8080/api/v1/agents/agent_abc123 \
 }
 ```
 
-**See also:** [CLI: agent get](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/agent.md#get)
+**See also:** [CLI: agent get](../cli/agent.md#get)
 
 ---
 
@@ -153,7 +153,7 @@ Update agent properties. All fields are optional.
 
 Returns the updated agent object.
 
-**See also:** [CLI: agent register](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/agent.md#register) (re-register to update)
+**See also:** [CLI: agent register](../cli/agent.md#register) (re-register to update)
 
 ---
 
@@ -167,7 +167,7 @@ Remove an agent from the registry. Call on graceful shutdown. In-progress tasks 
 
 No content.
 
-**See also:** [CLI: agent deregister](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/agent.md#deregister)
+**See also:** [CLI: agent deregister](../cli/agent.md#deregister)
 
 ---
 
@@ -202,4 +202,4 @@ Signal that an agent is alive and report current status. Call every 30–60 seco
 }
 ```
 
-**See also:** [CLI: agent heartbeat](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/agent.md#heartbeat) | [Feature: Agent Coordination](../features/agent-coordination.md)
+**See also:** [CLI: agent heartbeat](../cli/agent.md#heartbeat) | [Feature: Agent Coordination](../features/agent-coordination.md)

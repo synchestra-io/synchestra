@@ -6,7 +6,7 @@
 
 ## Overview
 
-Progress reporting solves the visibility problem: when an AI agent is working on a task, what's it actually doing right now? With Synchestra, the agent tells you —  continuously, in a queryable log.
+Progress reporting solves the visibility problem: when an AI agent is working on a task, what's it actually doing right now? With Synchestra, the agent tells you — continuously, in a queryable log.
 
 A progress log entry is a timestamped record with a human-readable message and optional structured data. Entries are immutable; the log is append-only.
 
@@ -34,7 +34,7 @@ POST /api/v1/tasks/task_abc123/log
 }
 ```
 
-See: [CLI task log](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/task.md#log) | [API task log](../api/tasks.md#append-log)
+See: [CLI task log](../cli/task.md#log) | [API task log](../api/tasks.md#append-log)
 
 ---
 
@@ -46,7 +46,7 @@ See: [CLI task log](https://github.com/synchestra-io/synchestra-go/blob/main/doc
 | `task_id` | string | The task this log belongs to |
 | `agent_id` | string | The agent that wrote this entry (if applicable) |
 | `message` | string | Human-readable description of what happened |
-| `data` | object | Optional structured payload —  anything your agent wants to record |
+| `data` | object | Optional structured payload — anything your agent wants to record |
 | `created_at` | string | ISO 8601 timestamp |
 
 ---
@@ -138,8 +138,8 @@ synchestra task fail task_abc123 \
 
 ## Related
 
-- [CLI: `synchestra task log`](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/task.md#log)
-- [CLI: `synchestra status`](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/status.md)
+- [CLI: `synchestra task log`](../cli/task.md#log)
+- [CLI: `synchestra status`](../cli/status.md)
 - [API: Append log entry](../api/tasks.md#append-log)
 - [API: Get task history](../api/tasks.md#get-task-history)
 - [Feature: State Synchronization](state-synchronization.md)

@@ -2,7 +2,7 @@
 
 Add and manage repositories linked to projects.
 
-**See also:** [CLI: `synchestra repo`](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/repo.md)
+**See also:** [CLI: `synchestra repo`](../cli/repo.md)
 
 ---
 
@@ -50,7 +50,7 @@ Add and manage repositories linked to projects.
 }
 ```
 
-**See also:** [CLI: repo add](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/repo.md#add)
+**See also:** [CLI: repo add](../cli/repo.md#add)
 
 ---
 
@@ -84,7 +84,7 @@ Add and manage repositories linked to projects.
 }
 ```
 
-**See also:** [CLI: repo list](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/repo.md#list)
+**See also:** [CLI: repo list](../cli/repo.md#list)
 
 ---
 
@@ -105,7 +105,7 @@ Add and manage repositories linked to projects.
 }
 ```
 
-**See also:** [CLI: repo get](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/repo.md#get)
+**See also:** [CLI: repo get](../cli/repo.md#get)
 
 ---
 
@@ -139,4 +139,4 @@ Link an existing repo to an additional project. A repo can be linked to multiple
 }
 ```
 
-**See also:** [CLI: repo link](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/repo.md#link)
+**See also:** [CLI: repo link](../cli/repo.md#link)

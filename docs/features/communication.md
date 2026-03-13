@@ -1,6 +1,6 @@
 # Communication Interfaces
 
-**Summary:** Agents communicate with Synchestra in three ways —  CLI, HTTP API, and MCP server. Pick the interface that fits your agent's runtime environment.
+**Summary:** Agents communicate with Synchestra in three ways — CLI, HTTP API, and MCP server. Pick the interface that fits your agent's runtime environment.
 
 ---
 
@@ -61,7 +61,7 @@ The CLI is designed to work cleanly in CI environments:
       --data "{\"run_id\": \"${{ github.run_id }}\"}"
 ```
 
-Full CLI reference: [docs/cli/README.md](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/README.md)
+Full CLI reference: [docs/cli/README.md](../cli/README.md)
 
 ---
 
@@ -155,7 +155,7 @@ Add to your Claude MCP config:
 }
 ```
 
-Once configured, Claude can call `synchestra_task_log` mid-reasoning to report what it's working on —  giving you real-time visibility into what the model is doing.
+Once configured, Claude can call `synchestra_task_log` mid-reasoning to report what it's working on — giving you real-time visibility into what the model is doing.
 
 ---
 
@@ -173,8 +173,8 @@ This is useful for local agent development where you don't want to manage tokens
 
 ## Related
 
-- [CLI Reference](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/README.md)
+- [CLI Reference](../cli/README.md)
 - [API Reference](../api/README.md)
-- [Auth & Tokens](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/auth.md)
+- [Auth & Tokens](../cli/auth.md)
 - [API Auth](../api/auth.md)
 - [Self-Hosting](../self-hosting.md)

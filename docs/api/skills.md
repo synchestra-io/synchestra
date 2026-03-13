@@ -2,7 +2,7 @@
 
 Define and query skill definitions.
 
-**See also:** [CLI: `synchestra skill`](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/skill.md) | [Feature: Agent Coordination](../features/agent-coordination.md)
+**See also:** [CLI: `synchestra skill`](../cli/skill.md) | [Feature: Agent Coordination](../features/agent-coordination.md)
 
 ---
 
@@ -74,7 +74,7 @@ Define and query skill definitions.
 }
 ```
 
-**See also:** [CLI: skill create](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/skill.md#create)
+**See also:** [CLI: skill create](../cli/skill.md#create)
 
 ---
 
@@ -105,7 +105,7 @@ Define and query skill definitions.
 }
 ```
 
-**See also:** [CLI: skill list](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/skill.md#list)
+**See also:** [CLI: skill list](../cli/skill.md#list)
 
 ---
 
@@ -141,4 +141,4 @@ Define and query skill definitions.
 }
 ```
 
-**See also:** [CLI: skill get](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/skill.md#get)
+**See also:** [CLI: skill get](../cli/skill.md#get)

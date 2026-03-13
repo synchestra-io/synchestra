@@ -1,8 +1,8 @@
 # API: Tasks
 
-Manage tasks —  the core unit of work in Synchestra.
+Manage tasks — the core unit of work in Synchestra.
 
-**See also:** [CLI: `synchestra task`](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/task.md)
+**See also:** [CLI: `synchestra task`](../cli/task.md)
 
 ---
 
@@ -66,7 +66,7 @@ Manage tasks —  the core unit of work in Synchestra.
 }
 ```
 
-**See also:** [CLI: task create](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/task.md#create)
+**See also:** [CLI: task create](../cli/task.md#create)
 
 ---
 
@@ -111,7 +111,7 @@ curl "http://localhost:8080/api/v1/tasks?agent_id=agent_coder1&status=pending" \
 }
 ```
 
-**See also:** [CLI: task list](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/task.md#list)
+**See also:** [CLI: task list](../cli/task.md#list)
 
 ---
 
@@ -143,7 +143,7 @@ curl http://localhost:8080/api/v1/tasks/task_def456 \
 }
 ```
 
-**See also:** [CLI: task get](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/task.md#get)
+**See also:** [CLI: task get](../cli/task.md#get)
 
 ---
 
@@ -167,7 +167,7 @@ All fields are optional. Only provided fields are updated.
 
 Returns the updated task object.
 
-**See also:** [CLI: task update](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/task.md#update)
+**See also:** [CLI: task update](../cli/task.md#update)
 
 ---
 
@@ -213,7 +213,7 @@ Mark a task as complete. Transitions status to `complete`.
 }
 ```
 
-**See also:** [CLI: task complete](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/task.md#complete)
+**See also:** [CLI: task complete](../cli/task.md#complete)
 
 ---
 
@@ -247,7 +247,7 @@ Mark a task as failed. Transitions status to `failed`.
 }
 ```
 
-**See also:** [CLI: task fail](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/task.md#fail)
+**See also:** [CLI: task fail](../cli/task.md#fail)
 
 ---
 
@@ -290,7 +290,7 @@ Append a progress log entry to a task. Log entries are immutable.
 }
 ```
 
-**See also:** [CLI: task log](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/task.md#log)
+**See also:** [CLI: task log](../cli/task.md#log)
 
 ---
 
@@ -332,7 +332,7 @@ Returns the full chronological history for a task: status transitions interleave
 }
 ```
 
-**See also:** [CLI: status task](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/status.md#task) | [Feature: Progress Reporting](../features/progress-reporting.md)
+**See also:** [CLI: status task](../cli/status.md#task) | [Feature: Progress Reporting](../features/progress-reporting.md)
 
 ---
 
@@ -364,4 +364,4 @@ List all direct sub-tasks of a task.
 }
 ```
 
-**See also:** [CLI: task subtasks](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/task.md#subtasks)
+**See also:** [CLI: task subtasks](../cli/task.md#subtasks)

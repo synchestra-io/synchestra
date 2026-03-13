@@ -2,7 +2,7 @@
 
 Get a high-level view of the Synchestra system.
 
-**See also:** [CLI: `synchestra status`](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/status.md) | [Feature: Human Steering](../features/human-steering.md)
+**See also:** [CLI: `synchestra status`](../cli/status.md) | [Feature: Human Steering](../features/human-steering.md)
 
 ---
 
@@ -90,4 +90,4 @@ curl http://localhost:8080/api/v1/status \
 | `tasks.failed_today` | Tasks failed in the last 24 hours |
 | `recent_activity` | Last 10 notable events |
 
-**See also:** [CLI: status](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/status.md)
+**See also:** [CLI: status](../cli/status.md)

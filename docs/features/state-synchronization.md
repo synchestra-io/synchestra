@@ -19,7 +19,7 @@ Synchestra solves this by centralising all state in a single server that agents 
 
 ## State Model
 
-Every resource in Synchestra has a `status` field managed by the server. Transitions are validated —  you can't move a task from `complete` back to `pending` without an explicit override.
+Every resource in Synchestra has a `status` field managed by the server. Transitions are validated — you can't move a task from `complete` back to `pending` without an explicit override.
 
 ### Task States
 
@@ -45,8 +45,8 @@ All update operations include an `updated_at` timestamp. If two agents try to up
 ```bash
 # Agent A reads task, gets updated_at: "2024-01-15T10:00:00Z"
 # Agent B reads task, gets updated_at: "2024-01-15T10:00:00Z"
-# Agent A updates task —  succeeds, updated_at becomes "2024-01-15T10:01:00Z"
-# Agent B tries to update with old updated_at —  409 Conflict
+# Agent A updates task — succeeds, updated_at becomes "2024-01-15T10:01:00Z"
+# Agent B tries to update with old updated_at — 409 Conflict
 ```
 
 ---
@@ -83,9 +83,9 @@ Response:
 
 ## Consistency Guarantees
 
-- **Read-your-writes** —  An agent that writes a state change will immediately see that change on subsequent reads
-- **Monotonic reads** —  State only moves forward; an agent will never read an older version than one it previously read
-- **No phantom updates** —  An update to a resource that doesn't exist returns `404`, not a silent no-op
+- **Read-your-writes** — An agent that writes a state change will immediately see that change on subsequent reads
+- **Monotonic reads** — State only moves forward; an agent will never read an older version than one it previously read
+- **No phantom updates** — An update to a resource that doesn't exist returns `404`, not a silent no-op
 
 ---
 
@@ -121,5 +121,5 @@ See: [Communication Interfaces](communication.md)
 ## Related
 
 - [Feature: Progress Reporting](progress-reporting.md)
-- [CLI: `synchestra status`](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/status.md)
+- [CLI: `synchestra status`](../cli/status.md)
 - [API: Tasks history](../api/tasks.md#get-task-history)

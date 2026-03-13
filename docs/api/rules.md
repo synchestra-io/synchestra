@@ -2,7 +2,7 @@
 
 Create and query rules that shape agent behaviour within a scope.
 
-**See also:** [CLI: `synchestra rule`](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/rule.md) | [Feature: Human Steering](../features/human-steering.md)
+**See also:** [CLI: `synchestra rule`](../cli/rule.md) | [Feature: Human Steering](../features/human-steering.md)
 
 ---
 
@@ -34,7 +34,7 @@ Create and query rules that shape agent behaviour within a scope.
 | Field | Required | Description |
 |---|---|---|
 | `name` | ✅ | Short rule name |
-| `content` | ✅ | Rule content —  a clear, actionable instruction |
+| `content` | ✅ | Rule content — a clear, actionable instruction |
 | `scope` | ✅ | `human`, `org`, `project`, or `repo` |
 | `scope_id` | ✅ | ID of the scoped resource |
 
@@ -52,7 +52,7 @@ Create and query rules that shape agent behaviour within a scope.
 }
 ```
 
-**See also:** [CLI: rule create](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/rule.md#create)
+**See also:** [CLI: rule create](../cli/rule.md#create)
 
 ---
 
@@ -104,7 +104,7 @@ curl "http://localhost:8080/api/v1/rules?scope=project&scope_id=proj_abc123" \
 }
 ```
 
-**See also:** [CLI: rule list](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/rule.md#list)
+**See also:** [CLI: rule list](../cli/rule.md#list)
 
 ---
 
@@ -126,4 +126,4 @@ curl "http://localhost:8080/api/v1/rules?scope=project&scope_id=proj_abc123" \
 }
 ```
 
-**See also:** [CLI: rule get](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/rule.md#get)
+**See also:** [CLI: rule get](../cli/rule.md#get)

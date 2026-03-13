@@ -6,7 +6,7 @@
 
 ## Overview
 
-A *workflow* in Synchestra is not a YAML file or a graph DSL —  it's a tree of tasks, each assigned to an agent, each with a well-defined status that gates the next step. This keeps things simple: every agent just needs to know how to pick up a task and report back.
+A *workflow* in Synchestra is not a YAML file or a graph DSL — it's a tree of tasks, each assigned to an agent, each with a well-defined status that gates the next step. This keeps things simple: every agent just needs to know how to pick up a task and report back.
 
 ```mermaid
 graph LR
@@ -169,7 +169,7 @@ done
 
 ## Rules and Constraints
 
-[Rules](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/rule.md) can be attached at any level (human, org, project, repo) and are surfaced to agents when they pick up tasks. Rules shape behaviour without hardcoding it into the workflow:
+[Rules](../cli/rule.md) can be attached at any level (human, org, project, repo) and are surfaced to agents when they pick up tasks. Rules shape behaviour without hardcoding it into the workflow:
 
 ```bash
 synchestra rule create \
@@ -183,7 +183,7 @@ synchestra rule create \
 
 ## Related
 
-- [CLI: `synchestra task`](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/task.md)
+- [CLI: `synchestra task`](../cli/task.md)
 - [API: Tasks](../api/tasks.md)
 - [Feature: Agent Coordination](agent-coordination.md)
 - [Feature: Human Steering](human-steering.md)

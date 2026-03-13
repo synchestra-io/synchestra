@@ -90,8 +90,8 @@ All config options map to env vars with the `SYNCHESTRA_` prefix:
 | `SYNCHESTRA_MCP_PORT` | `server.mcp_port` | `8081` |
 | `SYNCHESTRA_DB` | `database.url` | `./synchestra.db` |
 | `SYNCHESTRA_LOG_LEVEL` | `server.log_level` | `info` |
-| `SYNCHESTRA_BOOTSTRAP_TOKEN` | `auth.bootstrap_token` | —  |
-| `SYNCHESTRA_CONFIG` | —  | `./synchestra.yaml` |
+| `SYNCHESTRA_BOOTSTRAP_TOKEN` | `auth.bootstrap_token` | — |
+| `SYNCHESTRA_CONFIG` | — | `./synchestra.yaml` |
 
 ---
 
@@ -158,7 +158,7 @@ synchestra auth token list
 synchestra auth token revoke tok_abc123
 ```
 
-See: [Auth CLI](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/auth.md) | [Auth API](api/auth.md)
+See: [Auth CLI](cli/auth.md) | [Auth API](api/auth.md)
 
 ---
 
@@ -276,7 +276,7 @@ server {
 ### SQLite
 
 ```bash
-# Simple file copy (safe while server is running —  SQLite WAL mode)
+# Simple file copy (safe while server is running — SQLite WAL mode)
 cp /data/synchestra.db /backups/synchestra-$(date +%Y%m%d).db
 
 # Or use sqlite3 online backup
@@ -320,6 +320,6 @@ Use this endpoint for load balancer and container health checks.
 
 ## Related
 
-- [Server CLI reference](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/server.md)
-- [Auth CLI reference](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/auth.md)
+- [Server CLI reference](cli/server.md)
+- [Auth CLI reference](cli/auth.md)
 - [API Reference](api/README.md)

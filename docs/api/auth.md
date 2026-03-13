@@ -2,7 +2,7 @@
 
 Create and manage API tokens.
 
-**See also:** [CLI: `synchestra auth`](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/auth.md)
+**See also:** [CLI: `synchestra auth`](../cli/auth.md)
 
 ---
 
@@ -20,7 +20,7 @@ Create and manage API tokens.
 
 `POST /api/v1/auth/tokens`
 
-Creates a new API token. The `token` value is returned once only —  it is never retrievable after creation.
+Creates a new API token. The `token` value is returned once only — it is never retrievable after creation.
 
 ### Request
 
@@ -69,7 +69,7 @@ Creates a new API token. The `token` value is returned once only —  it is neve
 
 > ⚠️ The `token` field is only present in this response. Store it securely.
 
-**See also:** [CLI: auth token create](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/auth.md#token-create)
+**See also:** [CLI: auth token create](../cli/auth.md#token-create)
 
 ---
 
@@ -102,7 +102,7 @@ Lists all tokens. Token values are never returned.
 }
 ```
 
-**See also:** [CLI: auth token list](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/auth.md#token-list)
+**See also:** [CLI: auth token list](../cli/auth.md#token-list)
 
 ---
 
@@ -116,4 +116,4 @@ Revokes a token. All subsequent requests using this token will be rejected with 
 
 No content.
 
-**See also:** [CLI: auth token revoke](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/auth.md#token-revoke)
+**See also:** [CLI: auth token revoke](../cli/auth.md#token-revoke)

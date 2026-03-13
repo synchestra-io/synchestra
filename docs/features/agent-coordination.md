@@ -30,7 +30,7 @@ sequenceDiagram
 
 ## Agent Registration
 
-Agents register on startup and deregister on shutdown. Registration is idempotent —  re-registering with the same name updates the existing record.
+Agents register on startup and deregister on shutdown. Registration is idempotent — re-registering with the same name updates the existing record.
 
 ### CLI
 
@@ -52,13 +52,13 @@ POST /api/v1/agents
 }
 ```
 
-See: [CLI agent docs](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/agent.md) | [API agent docs](../api/agents.md)
+See: [CLI agent docs](../cli/agent.md) | [API agent docs](../api/agents.md)
 
 ---
 
 ## Skills
 
-Skills are named capability definitions. They're strings at their simplest (`"go"`, `"typescript"`) but can reference a full [Skill](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/skill.md) record with input/output schemas.
+Skills are named capability definitions. They're strings at their simplest (`"go"`, `"typescript"`) but can reference a full [Skill](../cli/skill.md) record with input/output schemas.
 
 A task can be created with an `--agent` flag (direct assignment) or with a `--skill` hint to let Synchestra find a capable agent.
 
@@ -125,9 +125,9 @@ An `offline` agent's in-progress tasks are flagged for review. Depending on your
 
 Synchestra is well-suited to patterns like:
 
-- **Specialist pipeline** —  Coder → Reviewer → Tester → Deployer, each as a separate agent
-- **Fan-out** —  One orchestrator agent creates sub-tasks and assigns them to specialist agents
-- **Redundant pool** —  Multiple identical agents registered for the same skill; work is distributed
+- **Specialist pipeline** — Coder → Reviewer → Tester → Deployer, each as a separate agent
+- **Fan-out** — One orchestrator agent creates sub-tasks and assigns them to specialist agents
+- **Redundant pool** — Multiple identical agents registered for the same skill; work is distributed
 
 See also: [Workflow Orchestration](workflow-orchestration.md) for pipeline patterns.
 
@@ -135,7 +135,7 @@ See also: [Workflow Orchestration](workflow-orchestration.md) for pipeline patte
 
 ## Related
 
-- [CLI: `synchestra agent`](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/agent.md)
+- [CLI: `synchestra agent`](../cli/agent.md)
 - [API: Agents](../api/agents.md)
 - [API: Skills](../api/skills.md)
 - [Feature: Workflow Orchestration](workflow-orchestration.md)

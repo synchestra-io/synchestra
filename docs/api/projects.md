@@ -2,7 +2,7 @@
 
 Create and manage projects.
 
-**See also:** [CLI: `synchestra project`](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/project.md)
+**See also:** [CLI: `synchestra project`](../cli/project.md)
 
 ---
 
@@ -51,7 +51,7 @@ Create and manage projects.
 }
 ```
 
-**See also:** [CLI: project create](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/project.md#create)
+**See also:** [CLI: project create](../cli/project.md#create)
 
 ---
 
@@ -85,7 +85,7 @@ Create and manage projects.
 }
 ```
 
-**See also:** [CLI: project list](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/project.md#list)
+**See also:** [CLI: project list](../cli/project.md#list)
 
 ---
 
@@ -106,7 +106,7 @@ Create and manage projects.
 }
 ```
 
-**See also:** [CLI: project get](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/project.md#get)
+**See also:** [CLI: project get](../cli/project.md#get)
 
 ---
 
@@ -129,7 +129,7 @@ All fields optional. Only provided fields are updated.
 
 Returns the updated project object.
 
-**See also:** [CLI: project update](https://github.com/synchestra-io/synchestra-go/blob/main/docs/cli/project.md#update)
+**See also:** [CLI: project update](../cli/project.md#update)
 
 ---
 
