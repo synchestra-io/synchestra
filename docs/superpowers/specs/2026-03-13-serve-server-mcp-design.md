@@ -55,13 +55,19 @@ Required when `--https` is used.
 | Exit code | Meaning |
 |---|---|
 | `0` | Clean shutdown |
-| `2` | Invalid arguments |
+| `2` | Invalid arguments (e.g., `--https` without `--tls-cert`) |
 | `3` | Not a synchestra directory |
 | `10+` | Unexpected error |
+
+Note: exit codes `1` (Conflict) and `4` (Invalid state transition) do not apply — `serve` is a long-running process, not a state mutation command.
 
 ## Command Group: `synchestra server`
 
 **Purpose:** Background daemon management. Similar to `nginx` or `systemctl`. All configuration comes from `synchestra-server.yaml` — no protocol/port/TLS CLI args. Only `--path` is accepted to locate the config directory.
+
+Note: `server` deviates from the `<resource> <action>` pattern used by commands like `task claim`. The lifecycle subcommands (`start`, `stop`, `restart`, `status`) manage a daemon process, not a domain resource. The `projects` sub-group nests a resource under this namespace, creating a three-level command (`synchestra server projects add`), which is justified by the tight coupling between project management and server configuration.
+
+The `start`, `stop`, `restart`, and `status` subcommands have no API equivalents — they are local-only operations. The daemon itself *is* the API server, so managing it over HTTP would be circular.
 
 ### Subcommands
 
@@ -73,6 +79,8 @@ Required when `--https` is used.
 | `status [--path <dir>]` | Report if running, PID, uptime, listening addresses |
 | `projects [--path <dir>]` | List projects from config |
 | `projects add --spec <path> --state <path> [--path <dir>]` | Add a project to config |
+
+Read subcommands (`status`, `projects`) support `--format` (yaml/json/md/csv) for structured output, consistent with other read commands like `task list`.
 
 ### `synchestra-server.yaml` Config
 
@@ -97,8 +105,8 @@ projects:
     state: "/path/to/another-state"
 
 # Daemon
-pid_file: "/var/run/synchestra.pid"     # default
-log_file: "/var/log/synchestra.log"     # default
+pid_file: "./synchestra.pid"              # default: relative to config dir
+log_file: "./synchestra.log"              # default: relative to config dir
 ```
 
 ### Exit Codes
@@ -106,6 +114,7 @@ log_file: "/var/log/synchestra.log"     # default
 | Exit code | Meaning |
 |---|---|
 | `0` | Success |
+| `1` | Conflict (e.g., `projects add` for an already-configured project) |
 | `2` | Invalid config |
 | `3` | Config not found |
 | `10+` | Unexpected error |
@@ -145,6 +154,7 @@ synchestra mcp [--path <dir>]
 | Exit code | Meaning |
 |---|---|
 | `0` | Clean shutdown |
+| `2` | Invalid arguments |
 | `3` | Not a synchestra directory |
 | `10+` | Unexpected error |
 
@@ -183,6 +193,8 @@ List projects served by the server. Cross-linked with `synchestra server project
 ```
 
 In single-project mode, returns a list with one item.
+
+In multi-project mode, all other API endpoints (e.g., task operations) use the existing `?project=` query parameter to select which project to operate on, consistent with the `--project` CLI arg.
 
 ### `POST /api/v1/projects`
 
@@ -275,7 +287,7 @@ spec/api/
 3. **`serve` in a server dir loads config as base, CLI args override** — allows quick dev overrides.
 4. **`--mcp` without value piggybacks on HTTP/HTTPS** at `/mcp/` prefix — avoids extra port allocation for simple setups.
 5. **`synchestra mcp` is stdio-only** — designed for AI agent subprocess integration, no host/port needed.
-6. **`--path` is a global arg** — shared across all three commands, same traversal logic.
+6. **`--path` is shared across `serve`, `server`, and `mcp`** — same traversal logic. Placed at the global `_args/` level since it may apply to future commands; the `Supported by` section in the arg doc limits its scope.
 7. **`server projects` reads config directly** — does not require the server to be running.
 
 ## Outstanding Questions
@@ -286,3 +298,6 @@ spec/api/
 - Should `server projects remove` be specced now or deferred?
 - What MCP tools/resources should be exposed? (Presumably mirrors the CLI commands as MCP tools.)
 - Should `synchestra mcp` support multi-project if run in a server dir, or always single-project?
+- How should a running server handle spec/state repo updates pushed by other agents? (Poll, file watch, or re-read on each request?)
+- Should `server restart` drain active connections before stopping (graceful) or stop immediately (hard)?
+- API endpoint style: task API uses action-oriented paths (`/task/list`), projects API uses RESTful (`/projects`). Should projects follow the action-oriented pattern (`/projects/list`, `/projects/add`) for consistency?
