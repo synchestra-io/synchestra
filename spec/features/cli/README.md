@@ -133,5 +133,4 @@ See each command group for its subcommands and linked skills.
 
 ## Outstanding Questions
 
-- How does the CLI discover which project repo to operate on — current directory, explicit flag, or config file?
 - Should the CLI support `--dry-run` for mutation commands?
