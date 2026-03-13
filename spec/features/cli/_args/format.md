@@ -12,8 +12,10 @@ Controls the output format of read commands.
 
 | Command | Allowed values | Default |
 |---|---|---|
-| [`list`](../list/README.md) | `yaml`, `json`, `md`, `csv` | `yaml` |
-| [`info`](../info/README.md) | `text`, `json`, `yaml` | `text` |
+| [`list`](../task/list/README.md) | `yaml`, `json`, `md`, `csv` | `yaml` |
+| [`info`](../task/info/README.md) | `text`, `json`, `yaml` | `text` |
+| [`server status`](../server/status/README.md) | `text`, `json`, `yaml` | `text` |
+| [`server projects`](../server/projects/README.md) | `yaml`, `json`, `md`, `csv` | `yaml` |
 
 ## Description
 

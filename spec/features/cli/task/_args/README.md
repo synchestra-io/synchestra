@@ -10,7 +10,7 @@ Arguments shared across `synchestra task` subcommands.
 |---|---|---|---|
 | [`--task`](task.md) | String | Yes | All task subcommands except `list` |
 | [`--reason`](reason.md) | String | Varies | `status`, `fail`, `block`, `unblock`, `release`, `abort`, `aborted` |
-| [`--format`](format.md) | String | No | `list`, `info` |
+| [`--format`](../../_args/format.md) | String | No | `list`, `info` |
 
 ### `--task`
 
@@ -22,7 +22,7 @@ Records why a transition is happening. Required for `fail` and `block`, optional
 
 ### `--format`
 
-Controls the output format of read commands. Supported formats vary by command. See [format.md](format.md).
+Controls the output format of read commands. Supported formats vary by command. See [format.md](../../_args/format.md).
 
 ## Outstanding Questions
 
