@@ -20,6 +20,7 @@ Feature specifications for the Synchestra project, managed by Synchestra.
 | [development-plan](development-plan/README.md) | Conceptual | Immutable planning documents that bridge feature specs and change requests to executable tasks |
 | [agent-skills](agent-skills/README.md) | In Progress | Dedicated, focused skills that AI agents use to interact with Synchestra |
 | [cli](cli/README.md) | In Progress | The `synchestra` CLI — primary interface for agents and humans |
+| [chat](chat/README.md) | Conceptual | Guided conversational interface that produces Synchestra artifacts (proposals, features, issues, PRs) through AI-assisted workflows |
 | [api](api/README.md) | In Progress | REST API exposing Synchestra operations over HTTP |
 
 ## Feature Summaries
@@ -72,6 +73,10 @@ A markdown table in task directory READMEs that serves as both the visibility la
 
 An immutable planning document that bridges feature specifications and change requests to executable tasks. The plan captures the approach, rationale, acceptance criteria, and step-by-step decomposition in a flat, reviewable format (max two levels of nesting). Once approved, the plan is frozen — tasks generated from it evolve freely during execution while the plan remains a fixed reference for review gates and retrospective comparison.
 
+### [Chat](chat/README.md)
+
+A server-managed, goal-oriented conversational interface between humans and AI agents. Chats are the implementation layer behind user-facing actions like "Create a Proposal," "Raise an Issue," "New Feature," and "Tweak Document." Users never interact with chats directly — they interact with workflows that use chats under the hood. Each workflow is a declarative YAML recipe that defines what context to load, what AI steps to follow, and what artifacts to produce. Chats support two execution paths: a standard path where conversations produce documents that enter the normal Synchestra pipeline (proposal, plan, tasks), and a fast path for maintainers where the system implements changes during the conversation.
+
 ### [Agent Skills](agent-skills/README.md)
 
 A set of dedicated, focused skills that AI agents use to interact with Synchestra — claiming tasks, reporting status, updating progress. Each skill wraps a single CLI command with clear trigger conditions, parameters, and exit code handling. Skills are distributed via CLI, MCP server, or direct file access.
@@ -97,7 +102,8 @@ model-selection (independent)
 outstanding-questions (independent)
 proposals → development-plan (proposals trigger plans)
 development-plan → task-status-board, cli (plans generate tasks)
-ui → proposals, cli, task-status-board, agent-skills, development-plan
+chat → feature, proposals, development-plan, task-status-board, agent-skills, ui, api
+ui → proposals, cli, task-status-board, agent-skills, development-plan, chat
 api → cli (api mirrors cli contract)
 ```
 
@@ -125,6 +131,12 @@ api → cli (api mirrors cli contract)
 - [agent-skills](agent-skills/README.md): 3 outstanding questions
 - [cli](cli/README.md): 3 outstanding questions
 - [api](api/README.md): 3 outstanding questions
+- [chat](chat/README.md): 4 outstanding questions
+- [chat/workflow](chat/workflow/README.md): 4 outstanding questions
+- [chat/workflow/create-proposal](chat/workflow/create-proposal/README.md): 3 outstanding questions
+- [chat/workflow/create-feature](chat/workflow/create-feature/README.md): 3 outstanding questions
+- [chat/workflow/raise-issue](chat/workflow/raise-issue/README.md): 3 outstanding questions
+- [chat/workflow/tweak-document](chat/workflow/tweak-document/README.md): 3 outstanding questions
 - [ui](ui/README.md): 5 outstanding questions
 - [ui/web-app](ui/web-app/README.md): 5 outstanding questions
 - [ui/tui](ui/tui/README.md): 5 outstanding questions
