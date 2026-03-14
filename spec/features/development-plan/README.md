@@ -320,9 +320,9 @@ Each affected feature's README includes a **Plans** section linking to plans tha
 ```markdown
 ## Plans
 
-| Plan                                    | Status    | Author | Approved   |
-|----------------------------------------|-----------|--------|------------|
-| [user-auth](../../plans/user-auth/)    | approved  | @alex  | 2026-03-15 |
+| Plan                                          | Status    | Author | Approved   |
+|-----------------------------------------------|-----------|--------|------------|
+| [user-auth](../../plans/user-auth/)           | approved  | @alex  | 2026-03-15 |
 | [add-batch-mode](../../plans/add-batch-mode/) | in_review | @alex  | —          |
 ```
 
