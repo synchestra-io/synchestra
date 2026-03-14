@@ -190,7 +190,7 @@ When a plan is triggered by a change request (proposal), the **Source** field li
 | Field  | Value                                             |
 |--------|---------------------------------------------------|
 | Status | `approved`                                        |
-| Plan   | [migrate-to-v2](../../../plans/migrate-to-v2/)      |
+| Plan   | [migrate-to-v2](../../../plans/migrate-to-v2/)    |
 ```
 
 ### Acceptance criteria
@@ -229,16 +229,6 @@ Steps that do not declare a `Depends on` field may execute in parallel. The depe
 
 For complex plans, an optional **Dependency graph** section visualizes the parallelism:
 
-```markdown
-## Dependency graph
-
-Step 1 ──→ Step 2 ──→ Step 3
-              │
-              └──→ Step 4
-
-Step 5 (independent)
-```
-
 ```mermaid
 graph LR
     A["Step 1"]
@@ -276,14 +266,6 @@ Plans do not have `completed` or `failed` statuses — those are task concerns. 
 
 ### Status transitions
 
-```text
-draft ──→ in_review ──→ approved
-              │
-              └──→ draft  (revisions requested)
-
-approved ──→ superseded
-```
-
 ```mermaid
 graph LR
     A["draft"]
@@ -316,10 +298,10 @@ planning:
 ```markdown
 # Plans
 
-| Plan                           | Status     | Progress   | Features        | Author | Approved   |
-|--------------------------------|------------|------------|-----------------|--------|------------|
-| [user-auth](user-auth/)        | approved   | 2/4 steps  | api, ui/web-app | @alex  | 2026-03-15 |
-| [add-batch-mode](add-batch-mode/) | in_review  | —          | cli             | @alex  | —          |
+| Plan                                | Status     | Progress   | Features        | Author | Approved   |
+|-------------------------------------|------------|------------|-----------------|--------|------------|
+| [user-auth](user-auth/)             | approved   | 2/4 steps  | api, ui/web-app | @alex  | 2026-03-15 |
+| [add-batch-mode](add-batch-mode/)   | in_review  | —          | cli             | @alex  | —          |
 | [refactor-output](refactor-output/) | superseded | —          | cli             | @alex  | —          |
 
 ## Recently Closed
@@ -353,13 +335,6 @@ Each affected feature's README includes a **Plans** section linking to plans tha
 ## Workflow
 
 The pipeline has five stages. Each can be performed by a human, an external AI agent, or Synchestra itself.
-
-```
-┌────────┐     ┌─────────┐     ┌──────────┐     ┌────────────┐     ┌───────────┐
-│ Trigger│────→│ Author  │────→│  Review  │────→│  Generate  │────→│  Execute  │
-│        │     │  plan   │     │ & approve│     │   tasks    │     │           │
-└────────┘     └─────────┘     └──────────┘     └────────────┘     └───────────┘
-```
 
 ```mermaid
 graph LR
@@ -418,12 +393,6 @@ This creates the plan directory and template README, adds the plan to the `spec/
 - Project conventions
 
 ### Stage 3: Review and approve
-
-```text
-draft ──→ in_review ──→ approved
-              │
-              └──→ draft  (revisions requested)
-```
 
 ```mermaid
 graph LR
@@ -488,34 +457,6 @@ This is the existing Synchestra flow — no changes needed:
 **The plan's role during execution:** None, actively. The plan is a frozen reference. Agents read it for context (via `task info` which includes the plan step reference), but they do not update it. If execution reveals that the plan was wrong — a step needs splitting, a new parallel track is needed — that is fine. Tasks mutate freely. The plan stays as-is, documenting the original intent.
 
 ### The full lifecycle
-
-```
-Feature spec / Change request
-         │
-         │ approved
-         ▼
-    ┌────────┐  auto_create    ┌─────────┐
-    │ Trigger│ ──────────────→ │  Draft  │
-    │        │  (or manual)    │  plan   │
-    └────────┘                 └────┬────┘
-                                    │ submit
-                                    ▼
-                               ┌──────────┐
-                               │In review │
-                               └────┬─────┘
-                                    │ approve (+ freeze)
-                                    ▼
-                               ┌──────────┐  auto_generate    ┌───────────┐
-                               │ Approved │ ────────────────→ │  Tasks    │
-                               │ (frozen) │  (or manual)      │ generated │
-                               └──────────┘                   └─────┬─────┘
-                                                                    │
-                                                       queued tasks claimable
-                                                                    ▼
-                                                              ┌───────────┐
-                                                              │ Execution │
-                                                              └───────────┘
-```
 
 ```mermaid
 graph LR
@@ -676,19 +617,6 @@ planning:
 When enabled, `synchestra task complete` checks that all `Produces` artifacts from the corresponding plan step exist in the task's `artifacts/` directory. This is a lightweight contract — it checks existence, not content quality. Content quality is the acceptance criteria's job.
 
 ### How artifacts flow through the dependency graph
-
-```
-Task A                    Task B                    Task C
-(define schema)           (implement API)           (build UI)
-     │                         │                         │
-     ├─ produces:              ├─ inputs:                ├─ inputs:
-     │  schema.json            │  A/artifacts/schema     │  A/artifacts/schema
-     │  migration.md           │                         │  B/artifacts/openapi
-     │                         ├─ produces:              │
-     └─────────────────────→   │  openapi-snippet.yaml   └─────────────────────→
-           depends_on          └──────────────────────→        depends_on
-                                      depends_on
-```
 
 ```mermaid
 graph LR
