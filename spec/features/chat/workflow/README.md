@@ -85,8 +85,8 @@ steps:
     description: Write the proposal document
     produces: [proposal]
   - name: review
-    prompt: self-review
-    description: Review the draft for completeness
+    prompt: self-review-proposal
+    description: Review the draft for completeness and clarity
     optional: true
 ```
 
@@ -101,7 +101,8 @@ steps:
 | `description` | yes | — | Short description shown in UI tooltips or action menus |
 | `anchor-types` | yes | — | Document types this workflow can attach to (e.g., `feature`, `feature-section`, `code-file`) |
 | `prompt` | conditional | — | AI prompt/skill name (required if no `steps` defined) |
-| `produces` | yes | — | Artifact types this workflow can create |
+| `produces` | yes | — | Primary artifact types this workflow can create. Lists the standard-path outputs. Step-level `produces` fields may declare additional artifacts for specific steps. The union of all step-level `produces` values represents the full set of possible outputs. |
+| `allow-create` | no | `false` | Whether this workflow can create new entities (e.g., new features). When `true`, the UI renders a creation button on index pages for the relevant entity type. |
 | `roles` | yes | — | Who can use this workflow (`["*"]` = everyone) |
 | `context.load` | no | `[anchor-document]` | Additional context documents to load alongside the anchor |
 | `retention` | no | project default | What happens to chat on finalize: `archive`, `summarize`, `dispose` |

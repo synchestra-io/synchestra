@@ -77,12 +77,13 @@ name: create-feature
 title: New Feature
 description: Create a new feature specification
 anchor-types: [feature-index, feature]
-produces: [feature]
+produces: [feature, pull-request]
 roles: ["*"]
+allow-create: true
 context:
   load:
     - anchor-document
-    - feature-conventions
+    - feature-conventions    # resolves to the Feature spec (spec/features/feature/README.md) and project conventions (CLAUDE.md)
 retention: archive
 ui:
   icon: plus-circle

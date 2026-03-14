@@ -92,7 +92,7 @@ name: raise-issue
 title: Raise an Issue
 description: Report a problem or suggest an improvement
 anchor-types: [feature, feature-section, proposal, code-file]
-produces: [issue]
+produces: [issue, issue-tracker-entry]
 roles: ["*"]
 context:
   load:
