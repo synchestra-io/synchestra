@@ -14,7 +14,7 @@ These are internal artifacts for developers and AI agents building the product. 
 
 ### architecture
 
-Architectural documents describing Synchestra's foundational design decisions and structural concepts — repository types, storage model, and other cross-cutting concerns that features build upon.
+Architectural documents describing Synchestra's foundational design decisions and structural concepts — repository types, the [spec-to-execution pipeline](architecture/spec-to-execution.md), and other cross-cutting concerns that features build upon.
 
 ### features
 

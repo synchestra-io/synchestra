@@ -21,7 +21,7 @@ Without a formal definition, new features are created inconsistently, AI agents 
 
 ## Design Philosophy
 
-Features are the **"what"** layer of Synchestra. They describe desired product behavior — not how to build it (that is the [development plan](../development-plan/README.md)'s job) and not who is building it right now (that is [tasks](../task-status-board/README.md)' job).
+Features are the **"what"** layer of Synchestra. They describe desired product behavior — not how to build it (that is the [development plan](../development-plan/README.md)'s job) and not who is building it right now (that is [tasks](../task-status-board/README.md)' job). See [Spec-to-Execution Pipeline](../../architecture/spec-to-execution.md) for how these three layers connect across repository boundaries.
 
 ```mermaid
 graph LR

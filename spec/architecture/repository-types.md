@@ -137,6 +137,8 @@ The **state repository** contains a minimal `synchestra-project.yaml` with a bac
 
 ### Typical workflow
 
+See [Spec-to-Execution Pipeline](spec-to-execution.md) for the full lifecycle with diagrams.
+
 1. Human or agent reads a **spec** from the spec repo to understand what to build
 2. Agent claims a **task** in the state repo via `synchestra task claim`
 3. Agent creates a `synchestra/{task-slug}` branch in the relevant **code repo(s)**

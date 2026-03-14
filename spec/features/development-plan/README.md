@@ -18,7 +18,7 @@ Today that decomposition happens ad hoc — a human or AI agent reads a feature 
 
 ## Design Philosophy
 
-Synchestra separates **intent** from **execution** by design, with distinct artifacts for each stage of the workflow.
+Synchestra separates **intent** from **execution** by design, with distinct artifacts for each stage of the workflow. See [Spec-to-Execution Pipeline](../../architecture/spec-to-execution.md) for the full architectural view of how these layers connect.
 
 | Artifact | Question it answers | Audience | Mutability | Lives in |
 |---|---|---|---|---|
