@@ -40,6 +40,18 @@ Feature spec ──────┐
 Change request ────┘
 ```
 
+```mermaid
+graph LR
+    A["Feature spec"]
+    B["Development<br/>plan"]
+    C["Tasks"]
+    D["Change request<br/>(proposal)"]
+
+    A --> B
+    D --> B
+    B --> C
+```
+
 **Why not use the task tree as the plan?** Tasks are designed to be fluid. Agents add sub-tasks when they discover complexity. Humans cancel tasks when priorities shift. Parallel work gets restructured on the fly. This fluidity is a feature — it is how real development works. But fluidity is the enemy of reviewability. A human reviewer needs a stable, scannable document to approve before work begins. And after work completes, you need a fixed reference point to compare against.
 
 **No duplicated status tracking.** The plan does not track completion — tasks do. Synchestra derives a progress view by mapping plan steps to their linked tasks and looking up live status. One source of truth, two views: the flat plan view for humans, the deep task tree for agents.
