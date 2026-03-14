@@ -316,17 +316,17 @@ planning:
 ```markdown
 # Plans
 
-| Plan                                          | Status      | Progress   | Features        | Author | Approved    |
-|-----------------------------------------------|-------------|------------|-----------------|--------|-------------|
-| [user-auth](user-auth/)                      | approved    | 2/4 steps  | api, ui/web-app | @alex  | 2026-03-15  |
-| [add-batch-mode](add-batch-mode/)            | in_review   | —          | cli             | @alex  | —           |
-| [refactor-output](refactor-output/)          | superseded  | —          | cli             | @alex  | —           |
+| Plan                      | Status     | Progress   | Features        | Author | Approved   |
+|---------------------------|------------|------------|-----------------|--------|------------|
+| [user-auth](user-auth/)   | approved   | 2/4 steps  | api, ui/web-app | @alex  | 2026-03-15 |
+| [add-batch-mode](add-batch-mode/) | in_review  | —          | cli             | @alex  | —          |
+| [refactor-output](refactor-output/) | superseded | —          | cli             | @alex  | —          |
 
 ## Recently Closed
 
-| Plan                                         | Status      | Completed  |
-|----------------------------------------------|-------------|------------|
-| [old-auth](old-auth/)                       | superseded  | 2026-03-10 |
+| Plan                | Status     | Completed  |
+|---------------------|------------|------------|
+| [old-auth](old-auth/) | superseded | 2026-03-10 |
 
 ## Outstanding Questions
 
