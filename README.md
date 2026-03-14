@@ -68,6 +68,9 @@ repo/
           README.md
         sub-feature-2/
           README.md
+    plans/                           # Development plans (bridge specs → tasks)
+      plan-1/
+        README.md                    # Immutable plan: approach, steps, acceptance criteria
 
   docs/                              # Product documentation (configurable per project)
     ...
@@ -237,6 +240,7 @@ Core features driving Synchestra's development:
 | [Conflict resolution](spec/features/conflict-resolution/README.md) | Conceptual | AI-powered merge conflict detection and resolution |
 | [Outstanding questions](spec/features/outstanding-questions/README.md) | Conceptual | Question lifecycle management linked to tasks and features |
 | [Proposals](spec/features/proposals/README.md) | Conceptual | Non-normative change requests attached to features with review status and optional issue linkage |
+| [Development plan](spec/features/development-plan/README.md) | Conceptual | Immutable planning documents that bridge feature specs and change requests to executable tasks |
 | [UI](spec/features/ui/README.md) | Conceptual | Human-facing web and terminal interfaces for projects, features, tasks, proposals, and workers |
 | [Claim-and-push](spec/features/claim-and-push/README.md) | Conceptual | Distributed task claiming via git push-based optimistic locking |
 | [Agent skills](spec/features/agent-skills/README.md) | In Progress | Focused skills that teach AI agents to use Synchestra |
@@ -284,6 +288,7 @@ Synchestra is in active development. The conventions, module structure, and CLI 
     - [conflict-resolution](spec/features/conflict-resolution/README.md): 3 outstanding questions
     - [outstanding-questions](spec/features/outstanding-questions/README.md): 3 outstanding questions
     - [claim-and-push](spec/features/claim-and-push/README.md): 3 outstanding questions
+    - [development-plan](spec/features/development-plan/README.md): 4 outstanding questions
     - [agent-skills](spec/features/agent-skills/README.md): 3 outstanding questions
     - [cli](spec/features/cli/README.md): 3 outstanding questions
 

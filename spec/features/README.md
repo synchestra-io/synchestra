@@ -16,6 +16,7 @@ Feature specifications for the Synchestra project, managed by Synchestra.
 | [ui](ui/README.md) | Conceptual | Human-facing interfaces for project navigation, proposals, tasks, and workers across web and terminal surfaces |
 | [claim-and-push](claim-and-push/README.md) | Conceptual | Distributed task claiming via git push-based optimistic locking |
 | [task-status-board](task-status-board/README.md) | Conceptual | Markdown task board in task directory READMEs for at-a-glance status visibility |
+| [development-plan](development-plan/README.md) | Conceptual | Immutable planning documents that bridge feature specs and change requests to executable tasks |
 | [agent-skills](agent-skills/README.md) | In Progress | Dedicated, focused skills that AI agents use to interact with Synchestra |
 | [cli](cli/README.md) | In Progress | The `synchestra` CLI — primary interface for agents and humans |
 | [api](api/README.md) | In Progress | REST API exposing Synchestra operations over HTTP |
@@ -62,6 +63,10 @@ Distributed task claiming through git's push semantics. Agents claim tasks by co
 
 A markdown table in task directory READMEs that serves as both the visibility layer and the claim mechanism. The board is the source of truth for task state — agents claim tasks by updating a row and pushing. Conflicts on the same row indicate a claim collision; the CLI parses diffs by task ID to distinguish collisions from unrelated changes.
 
+### [Development Plan](development-plan/README.md)
+
+An immutable planning document that bridges feature specifications and change requests to executable tasks. The plan captures the approach, rationale, acceptance criteria, and step-by-step decomposition in a flat, reviewable format (max two levels of nesting). Once approved, the plan is frozen — tasks generated from it evolve freely during execution while the plan remains a fixed reference for review gates and retrospective comparison.
+
 ### [Agent Skills](agent-skills/README.md)
 
 A set of dedicated, focused skills that AI agents use to interact with Synchestra — claiming tasks, reporting status, updating progress. Each skill wraps a single CLI command with clear trigger conditions, parameters, and exit code handling. Skills are distributed via CLI, MCP server, or direct file access.
@@ -84,12 +89,14 @@ cross-repo-sync ────────┘
 micro-tasks (independent)
 model-selection (independent)
 outstanding-questions (independent)
-proposals (independent)
-ui → proposals, cli, task-status-board, agent-skills
+proposals → development-plan (proposals trigger plans)
+development-plan → task-status-board, cli (plans generate tasks)
+ui → proposals, cli, task-status-board, agent-skills, development-plan
 api → cli (api mirrors cli contract)
 ```
 
 `claim-and-push` is foundational — most concurrent features depend on it.
+`development-plan` bridges the spec-to-execution gap — proposals and feature specs flow through it to become tasks.
 
 ## Outstanding Questions
 
@@ -106,6 +113,7 @@ api → cli (api mirrors cli contract)
 - [outstanding-questions](outstanding-questions/README.md): 3 outstanding questions
 - [claim-and-push](claim-and-push/README.md): 3 outstanding questions
 - [task-status-board](task-status-board/README.md): 4 outstanding questions
+- [development-plan](development-plan/README.md): 4 outstanding questions
 - [agent-skills](agent-skills/README.md): 3 outstanding questions
 - [cli](cli/README.md): 3 outstanding questions
 - [api](api/README.md): 3 outstanding questions

@@ -250,6 +250,24 @@ Proposal content is included only when:
 - A workflow is operating on proposal review or proposal implementation
 - A proposal is being incorporated into the main feature spec
 
+## Interaction with Development Plans
+
+An approved proposal is a trigger for [development plan](../development-plan/README.md) creation. When a plan is created from a proposal:
+
+- The plan's **Source type** is `change-request` and its **Source** field links to the proposal.
+- The proposal gains a **Plan** field linking forward to the plan.
+
+This creates a bidirectional, traceable chain: **proposal → plan → tasks**.
+
+```markdown
+# Proposal: Deprecate v1 endpoints
+
+| Field | Value |
+|---|---|
+| Status | `approved` |
+| Plan | [migrate-to-v2](../../../plans/migrate-to-v2/) |
+```
+
 ## Additional Rules
 
 - The parent feature's compact `Proposals` table includes proposals regardless of status, including `draft` and `rejected`, subject to the configured row limit.

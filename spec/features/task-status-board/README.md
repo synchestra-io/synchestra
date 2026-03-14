@@ -205,6 +205,12 @@ The number of tasks shown in "Recently Finished" is configurable in project sett
 
 If both are set, `limit` takes precedence. When a task exceeds the retention window, it is removed from the "Recently Finished" section entirely — it remains accessible via its task directory and through [`task list`](../cli/task/list/README.md) / [`task info`](../cli/task/info/README.md).
 
+## Interaction with Development Plans
+
+Tasks generated from a [development plan](../development-plan/README.md) appear on the board like any other task. Each task's README carries a back-reference to its plan and plan step, but the board itself is unaware of plans — it tracks task status regardless of how tasks were created.
+
+The development plan feature provides a derived status view (`synchestra plan status`) that reads plan step references from tasks and aggregates board status into a flat, plan-oriented progress report. See [Development Plan: Derived status view](../development-plan/README.md#derived-status-view).
+
 ## Outstanding Questions
 
 - What is the exact task directory structure? (e.g., `tasks/{task-slug}/README.md` with YAML frontmatter for machine-readable status?)
