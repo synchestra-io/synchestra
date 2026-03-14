@@ -489,7 +489,35 @@ Tasks evolve during execution. The linkage rules:
 | Task cancelled | Task moves to `aborted`. Plan step shows as aborted in derived view. |
 | Task restructured (moved in tree) | Plan step reference stays — it is by plan slug + step number, not by task path. |
 
-### Derived status view
+### Derived status: no duplication
+
+Plans do not track task status. Instead, Synchestra derives a progress view on the fly by mapping plan steps to their linked tasks:
+
+```mermaid
+graph LR
+    subgraph "Plan (frozen, in spec repo)"
+        S1["Step 1"]
+        S2["Step 2"]
+        S3["Step 3"]
+    end
+
+    subgraph "Tasks (live, in state repo)"
+        T1["Task 1 ✅"]
+        T2["Task 2 🔵"]
+        T2a["Task 2a ✅"]
+        T2b["Task 2b ⏳"]
+        T3["Task 3 ⏳"]
+        TX["Task X 🔵<br/>(unplanned)"]
+    end
+
+    S1 -.->|task mapping| T1
+    S2 -.->|task mapping| T2
+    T2 --- T2a
+    T2 --- T2b
+    S3 -.->|task mapping| T3
+```
+
+One source of truth (tasks), two views: the flat plan progress for humans, the deep task tree for agents. See [Spec-to-Execution Pipeline](../../architecture/spec-to-execution.md#derived-status-no-duplication) for the full architectural context.
 
 `synchestra plan status --plan user-auth` reads the plan, finds all tasks with matching plan step references, and renders a combined view:
 
