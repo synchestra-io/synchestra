@@ -425,6 +425,17 @@ draft ──→ in_review ──→ approved
               └──→ draft  (revisions requested)
 ```
 
+```mermaid
+graph LR
+    A["draft"]
+    B["in_review"]
+    C["approved"]
+
+    A -->|submit| B
+    B -->|revisions<br/>requested| A
+    B -->|approve| C
+```
+
 CLI support:
 
 ```
