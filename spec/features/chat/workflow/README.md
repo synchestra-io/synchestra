@@ -204,6 +204,12 @@ workflows:
 | `prompts.additional-questions` | Questions the AI must ask during conversational steps. The AI weaves them naturally into the conversation, not as a checklist dump. |
 | `prompts.rules` | Constraints the AI enforces during drafting and review steps. The AI validates these before allowing finalization. |
 
+## Plans
+
+| Plan | Status | Author | Approved |
+|---|---|---|---|
+| [chat-workflow-engine](../../../plans/chat-workflow-engine/) | draft | @alex | — |
+
 ## Interaction with Other Features
 
 | Feature | Interaction |

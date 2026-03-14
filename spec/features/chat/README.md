@@ -183,6 +183,14 @@ chat:
 
 Workflow-specific configuration is documented in the [Workflow](workflow/README.md) feature spec.
 
+## Plans
+
+| Plan | Status | Author | Approved |
+|---|---|---|---|
+| [chat-feature](../../plans/chat-feature/) | draft | @alex | — |
+| [chat-infrastructure](../../plans/chat-infrastructure/) | draft | @alex | — |
+| [chat-workflow-engine](../../plans/chat-workflow-engine/) | draft | @alex | — |
+
 ## Interaction with Other Features
 
 | Feature | Interaction |
