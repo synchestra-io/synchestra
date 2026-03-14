@@ -13,6 +13,13 @@ The Synchestra CLI (`synchestra`) is the primary interface for agents and humans
 Commands follow a `synchestra <resource> <action>` pattern using **singular nouns** and **verb subcommands**:
 
 ```
+synchestra config show
+synchestra config set
+synchestra config clear
+synchestra project new
+synchestra project info
+synchestra project set
+synchestra project target add
 synchestra task claim
 synchestra task status
 synchestra task release
@@ -128,6 +135,8 @@ All CLI command READMEs and skill READMEs link to the canonical `_args` document
 | Entry | Description |
 |---|---|
 | [_args](_args/README.md) | Global CLI arguments |
+| [config](config/README.md) | Global user configuration management |
+| [project](project/README.md) | Project creation and management |
 | [task](task/README.md) | Task management — claiming, status, progress |
 | [serve](serve/README.md) | Foreground dev server — HTTP, HTTPS, MCP |
 | [server](server/README.md) | Background daemon management |
@@ -136,6 +145,14 @@ All CLI command READMEs and skill READMEs link to the canonical `_args` document
 ### `_args`
 
 Global arguments available to all `synchestra` commands. Contains `--project`, `--path`, and `--format`.
+
+### `config`
+
+Manages the global user configuration at `~/.synchestra.yaml` — show effective config with defaults, set values, and clear values back to defaults. See [config/README.md](config/README.md).
+
+### `project`
+
+Project creation and management — creating projects, viewing configuration, updating settings, and managing target repositories. See [project/README.md](project/README.md).
 
 ### `task`
 

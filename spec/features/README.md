@@ -21,6 +21,7 @@ Feature specifications for the Synchestra project, managed by Synchestra.
 | [agent-skills](agent-skills/README.md) | In Progress | Dedicated, focused skills that AI agents use to interact with Synchestra |
 | [cli](cli/README.md) | In Progress | The `synchestra` CLI — primary interface for agents and humans |
 | [chat](chat/README.md) | Conceptual | Guided conversational interface that produces Synchestra artifacts (proposals, features, issues, PRs) through AI-assisted workflows |
+| [global-config](global-config/README.md) | Conceptual | User-level `~/.synchestra.yaml` — repos directory and machine-local settings |
 | [api](api/README.md) | In Progress | REST API exposing Synchestra operations over HTTP |
 
 ## Feature Summaries
@@ -77,6 +78,10 @@ An immutable planning document that bridges feature specifications and change re
 
 A server-managed, goal-oriented conversational interface between humans and AI agents. Chats are the implementation layer behind user-facing actions like "Create a Proposal," "Raise an Issue," "New Feature," and "Tweak Document." Users never interact with chats directly — they interact with workflows that use chats under the hood. Each workflow is a declarative YAML recipe that defines what context to load, what AI steps to follow, and what artifacts to produce. Chats support two execution paths: a standard path where conversations produce documents that enter the normal Synchestra pipeline (proposal, plan, tasks), and a fast path for maintainers where the system implements changes during the conversation.
 
+### [Global Config](global-config/README.md)
+
+The user-level configuration file at `~/.synchestra.yaml`. Stores machine-local settings that apply across all projects, starting with `repos_dir` — the root directory where cloned repositories are stored on disk (default: `~/synchestra/repos`). Repo references resolve to `{repos_dir}/{hosting}/{org}/{repo}`. The file is optional; all settings have defaults.
+
 ### [Agent Skills](agent-skills/README.md)
 
 A set of dedicated, focused skills that AI agents use to interact with Synchestra — claiming tasks, reporting status, updating progress. Each skill wraps a single CLI command with clear trigger conditions, parameters, and exit code handling. Skills are distributed via CLI, MCP server, or direct file access.
@@ -105,6 +110,7 @@ development-plan → task-status-board, cli (plans generate tasks)
 chat → feature, proposals, development-plan, task-status-board, agent-skills, ui, api
 ui → proposals, cli, task-status-board, agent-skills, development-plan, chat
 api → cli (api mirrors cli contract)
+global-config ← cli (cli reads ~/.synchestra.yaml for repo resolution)
 ```
 
 `feature` is the foundational spec-layer concept — proposals, plans, and outstanding questions all attach to features.
