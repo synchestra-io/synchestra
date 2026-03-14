@@ -34,12 +34,6 @@ A **feature spec** defines something new. A **change request** (implemented as a
 
 From the planning pipeline's perspective, both converge to the same output — a development plan that produces tasks:
 
-```
-Feature spec ──────┐
-                   ├──→ Development plan ──→ Tasks
-Change request ────┘
-```
-
 ```mermaid
 graph LR
     A["Feature spec"]
