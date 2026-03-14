@@ -518,25 +518,23 @@ Feature spec / Change request
 ```
 
 ```mermaid
-graph TD
-    A["Feature spec /<br/>Change request"]
-    B["approved"]
-    C["Trigger"]
-    D["Draft plan"]
-    E["In review"]
-    F["Approved<br/>(frozen)"]
-    G["Tasks<br/>generated"]
-    H["Queued tasks<br/>claimable"]
-    I["Execution"]
+graph LR
+    A["Spec/<br/>Request<br/>approved"]
+    B["Trigger"]
+    C["Draft<br/>plan"]
+    D["In<br/>review"]
+    E["Approved<br/>frozen"]
+    F["Tasks<br/>generated"]
+    G["Execution"]
 
-    A -->|approved| B
-    B -->|auto_create<br/>or manual| C
-    C -->|auto_create<br/>or manual| D
-    D -->|submit| E
-    E -->|approve +<br/>freeze| F
-    F -->|auto_generate<br/>or manual| G
-    G -->|queued| H
-    H --> I
+    A --> B
+    B -->|manual| C
+    B -->|auto_create| C
+    C -->|submit| D
+    D -->|approve| E
+    E -->|manual| F
+    E -->|auto_generate| F
+    F --> G
 ```
 
 ## Plan-to-Task Linkage
