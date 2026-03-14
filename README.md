@@ -234,6 +234,7 @@ Core features driving Synchestra's development:
 
 | Feature | Status | Description |
 |---|---|---|
+| [Feature](spec/features/feature/README.md) | Conceptual | Feature structure, metadata, lifecycle, and conventions — the atomic unit of product specification |
 | [Micro-tasks](spec/features/micro-tasks/README.md) | Conceptual | Pre/post prompt micro-task chains and background automation |
 | [Cross-repo sync](spec/features/cross-repo-sync/README.md) | Conceptual | Cross-repository branching, task coordination, and merge strategy |
 | [Model selection](spec/features/model-selection/README.md) | Conceptual | Smart model routing based on task complexity and configuration |
@@ -281,6 +282,7 @@ Synchestra is in active development. The conventions, module structure, and CLI 
 
 - [spec/](spec/README.md)
   - [features/](spec/features/README.md): 3 outstanding questions
+    - [feature](spec/features/feature/README.md): 4 outstanding questions
     - [project-definition](spec/features/project-definition/README.md): 2 outstanding questions
     - [micro-tasks](spec/features/micro-tasks/README.md): 4 outstanding questions
     - [cross-repo-sync](spec/features/cross-repo-sync/README.md): 4 outstanding questions

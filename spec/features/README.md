@@ -6,6 +6,7 @@ Feature specifications for the Synchestra project, managed by Synchestra.
 
 | Feature | Status | Description |
 |---|---|---|
+| [feature](feature/README.md) | Conceptual | Feature structure, metadata, lifecycle, and conventions — the atomic unit of product specification |
 | [project-definition](project-definition/README.md) | Conceptual | `synchestra-project.yaml` format and supported repository layouts |
 | [micro-tasks](micro-tasks/README.md) | Conceptual | Pre/post prompt micro-task chains and background automation |
 | [cross-repo-sync](cross-repo-sync/README.md) | Conceptual | Cross-repository branching, task coordination, and merge strategy |
@@ -22,6 +23,10 @@ Feature specifications for the Synchestra project, managed by Synchestra.
 | [api](api/README.md) | In Progress | REST API exposing Synchestra operations over HTTP |
 
 ## Feature Summaries
+
+### [Feature](feature/README.md)
+
+Defines the atomic unit of product specification in Synchestra — a feature is a directory under `spec/features/` with a mandatory README. The spec formalizes the structure every feature must follow (title, status, summary, problem, behavior, outstanding questions), the feature lifecycle (Conceptual → In Progress → Stable → Deprecated), nesting rules for sub-features, and how features relate to proposals, development plans, and tasks.
 
 ### [Project Definition](project-definition/README.md)
 
@@ -82,6 +87,7 @@ The REST API layer that exposes Synchestra's coordination capabilities over HTTP
 ## Feature dependency graph
 
 ```
+feature → proposals, development-plan, outstanding-questions (features are the spec unit)
 claim-and-push ← conflict-resolution
        ↑                ↑
 cross-repo-sync ────────┘
@@ -95,7 +101,8 @@ ui → proposals, cli, task-status-board, agent-skills, development-plan
 api → cli (api mirrors cli contract)
 ```
 
-`claim-and-push` is foundational — most concurrent features depend on it.
+`feature` is the foundational spec-layer concept — proposals, plans, and outstanding questions all attach to features.
+`claim-and-push` is foundational for execution — most concurrent features depend on it.
 `development-plan` bridges the spec-to-execution gap — proposals and feature specs flow through it to become tasks.
 
 ## Outstanding Questions
@@ -105,6 +112,7 @@ api → cli (api mirrors cli contract)
 
 ### Features with outstanding questions:
 
+- [feature](feature/README.md): 4 outstanding questions
 - [project-definition](project-definition/README.md): 2 outstanding questions
 - [micro-tasks](micro-tasks/README.md): 4 outstanding questions
 - [cross-repo-sync](cross-repo-sync/README.md): 4 outstanding questions

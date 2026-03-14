@@ -685,6 +685,7 @@ planning:
 
 | Feature | Interaction |
 |---|---|
+| [Feature](../feature/README.md) | Features are the source artifacts that trigger plans. Plans list affected features; features back-reference active plans in their README. |
 | [Proposals](../proposals/README.md) | A proposal (change request) is a trigger for plan creation. Approved proposals link forward to their plan; plans link back to their source proposal. |
 | [Task Status Board](../task-status-board/README.md) | Tasks generated from a plan appear on the board like any other task. The plan adds a back-reference in each task README but does not change board behavior. |
 | [Claim-and-Push](../claim-and-push/README.md) | No change. Generated tasks are claimed via the existing protocol. |
