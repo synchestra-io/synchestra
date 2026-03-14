@@ -190,7 +190,7 @@ When a plan is triggered by a change request (proposal), the **Source** field li
 | Field  | Value                                             |
 |--------|---------------------------------------------------|
 | Status | `approved`                                        |
-| Plan   | [migrate-to-v2](../../../plans/migrate-to-v2/)   |
+| Plan   | [migrate-to-v2](../../../plans/migrate-to-v2/)      |
 ```
 
 ### Acceptance criteria
