@@ -187,10 +187,10 @@ When a plan is triggered by a change request (proposal), the **Source** field li
 ```markdown
 # Proposal: Deprecate v1 endpoints
 
-| Field | Value |
-|---|---|
-| Status | `approved` |
-| Plan | [migrate-to-v2](../../../plans/migrate-to-v2/) |
+| Field  | Value                                             |
+|--------|---------------------------------------------------|
+| Status | `approved`                                        |
+| Plan   | [migrate-to-v2](../../../plans/migrate-to-v2/)   |
 ```
 
 ### Acceptance criteria
