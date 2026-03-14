@@ -519,31 +519,6 @@ graph LR
 
 One source of truth (tasks), two views: the flat plan progress for humans, the deep task tree for agents. See [Spec-to-Execution Pipeline](../../architecture/spec-to-execution.md#derived-status-no-duplication) for the full architectural context.
 
-`synchestra plan status --plan user-auth` reads the plan, finds all tasks with matching plan step references, and renders a combined view:
-
-```
-Plan: User authentication (end-to-end)
-Status: approved | 2 of 4 steps complete
-
-  Step 1: Define auth data model (API)          ✅ complete (4m32s)
-    └─ task: user-auth/define-data-model
-
-  Step 2: Implement auth endpoints (API)        🔵 in_progress
-    └─ task: user-auth/implement-endpoints
-       ├─ user-auth/implement-endpoints/signup     ✅ complete
-       ├─ user-auth/implement-endpoints/login      🔵 in_progress
-       └─ user-auth/implement-endpoints/logout     ⏳ queued
-
-  Step 3: Build login/signup UI (Web)            ⏳ queued
-    └─ task: user-auth/build-auth-ui
-
-  Step 4: Add auth guard middleware (API)        ⏳ queued
-    └─ task: user-auth/auth-guard
-
-  Unplanned tasks:                               1 task
-    └─ user-auth/add-rate-limiting               🔵 in_progress
-```
-
 **Step-level status is derived** from the mapped task's status. If a task has sub-tasks, the step status reflects the aggregate: all complete means complete, any in_progress means in_progress, and so on.
 
 **Unplanned tasks** are tasks under the plan's task tree that do not have a plan step reference. They appear separately — this is valuable signal for retrospectives.
