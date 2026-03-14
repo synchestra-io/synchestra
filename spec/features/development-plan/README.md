@@ -36,7 +36,7 @@ From the planning pipeline's perspective, both converge to the same output — a
 
 ```
 Feature spec ──────┐
-                    ├──→ Development plan ──→ Tasks
+                   ├──→ Development plan ──→ Tasks
 Change request ────┘
 ```
 
@@ -44,7 +44,7 @@ Change request ────┘
 
 **No duplicated status tracking.** The plan does not track completion — tasks do. Synchestra derives a progress view by mapping plan steps to their linked tasks and looking up live status. One source of truth, two views: the flat plan view for humans, the deep task tree for agents.
 
-## Proposed Behavior
+## Behavior
 
 ### Plan location
 
@@ -181,6 +181,30 @@ When a plan is triggered by a change request (proposal), the **Source** field li
 | Plan | [migrate-to-v2](../../../plans/migrate-to-v2/) |
 ```
 
+### Acceptance criteria
+
+Acceptance criteria can be specified in two ways:
+
+**Inline (simple).** Include them directly in the plan as bullet points. Suitable for straightforward criteria that fit in a line or two.
+
+**Subdirectory (complex).** For criteria that require scripts, multiple test cases, or extensive documentation, create `spec/plans/{plan-slug}/acs/{ac-slug}/` directories:
+
+```
+spec/plans/user-auth/
+  README.md
+  acs/
+    end-to-end-test/
+      README.md          # Describes the test
+      script.sh          # Test implementation
+      fixtures/
+        ...
+    security-audit/
+      README.md
+      checklist.md
+```
+
+This allows criteria to be as simple or as complex as needed without cluttering the plan document.
+
 ### Nesting limit
 
 Plans support a maximum of **two levels** of nesting: steps (level 1) and sub-steps (level 2, e.g., "2.1"). Anything deeper is execution detail that belongs in task decomposition, not the plan.
@@ -254,11 +278,17 @@ planning:
 ```markdown
 # Plans
 
-| Plan | Status | Progress | Features | Author | Approved |
-|---|---|---|---|---|---|
-| [user-auth](user-auth/) | approved | 2/4 steps | api, ui/web-app | @alex | 2026-03-15 |
-| [add-batch-mode](add-batch-mode/) | in_review | — | cli | @alex | — |
-| [refactor-output](refactor-output/) | superseded | — | cli | @alex | — |
+| Plan                                          | Status      | Progress   | Features        | Author | Approved    |
+|-----------------------------------------------|-------------|------------|-----------------|--------|-------------|
+| [user-auth](user-auth/)                      | approved    | 2/4 steps  | api, ui/web-app | @alex  | 2026-03-15  |
+| [add-batch-mode](add-batch-mode/)            | in_review   | —          | cli             | @alex  | —           |
+| [refactor-output](refactor-output/)          | superseded  | —          | cli             | @alex  | —           |
+
+## Recently Closed
+
+| Plan                                         | Status      | Completed  |
+|----------------------------------------------|-------------|------------|
+| [old-auth](old-auth/)                       | superseded  | 2026-03-10 |
 
 ## Outstanding Questions
 
@@ -267,6 +297,8 @@ None at this time.
 
 The **Progress** column shows derived status (see [Derived status view](#derived-status-view)) for approved plans that have generated tasks. Plans in `draft` or `in_review` show `—`.
 
+The **Recently Closed** section shows completed, failed, or superseded plans from the last N (configurable per project, default: 5) plans.
+
 ### Feature README back-reference
 
 Each affected feature's README includes a **Plans** section linking to plans that touch it:
@@ -274,10 +306,10 @@ Each affected feature's README includes a **Plans** section linking to plans tha
 ```markdown
 ## Plans
 
-| Plan | Status | Author | Approved |
-|---|---|---|---|
-| [user-auth](../../plans/user-auth/) | approved | @alex | 2026-03-15 |
-| [add-batch-mode](../../plans/add-batch-mode/) | in_review | @alex | — |
+| Plan                                            | Status     | Author | Approved   |
+|-------------------------------------------------|------------|--------|------------|
+| [user-auth](../../plans/user-auth/)            | approved   | @alex  | 2026-03-15 |
+| [add-batch-mode](../../plans/add-batch-mode/)  | in_review  | @alex  | —          |
 ```
 
 ## Workflow
@@ -285,10 +317,25 @@ Each affected feature's README includes a **Plans** section linking to plans tha
 The pipeline has five stages. Each can be performed by a human, an external AI agent, or Synchestra itself.
 
 ```
-┌─────────┐     ┌─────────┐     ┌──────────┐     ┌────────────┐     ┌───────────┐
-│ Trigger  │────→│ Author  │────→│  Review  │────→│  Generate  │────→│  Execute  │
-│          │     │  plan   │     │ & approve│     │   tasks    │     │           │
-└─────────┘     └─────────┘     └──────────┘     └────────────┘     └───────────┘
+┌────────┐     ┌─────────┐     ┌──────────┐     ┌────────────┐     ┌───────────┐
+│ Trigger│────→│ Author  │────→│  Review  │────→│  Generate  │────→│  Execute  │
+│        │     │  plan   │     │ & approve│     │   tasks    │     │           │
+└────────┘     └─────────┘     └──────────┘     └────────────┘     └───────────┘
+```
+
+```mermaid
+graph LR
+    A["Trigger<br/>(spec approved)"]
+    B["Author<br/>plan"]
+    C["Review &<br/>approve"]
+    D["Generate<br/>tasks"]
+    E["Execute"]
+
+    A -->|human,<br/>external AI,<br/>or auto| B
+    B -->|submit| C
+    C -->|approve| D
+    D -->|manual| E
+    D -->|or auto| E
 ```
 
 ### Stage 1: Trigger
@@ -395,30 +442,52 @@ This is the existing Synchestra flow — no changes needed:
 
 ```
 Feature spec / Change request
-        │
-        │ approved
-        ▼
-   ┌─────────┐  auto_create    ┌─────────┐
-   │ Trigger  │ ──────────────→ │  Draft  │
-   └─────────┘   (or manual)   │  plan   │
-                                └────┬────┘
-                                     │ submit
-                                     ▼
-                                ┌─────────┐
-                                │In review│
-                                └────┬────┘
-                                     │ approve (+ freeze)
-                                     ▼
-                                ┌──────────┐  auto_generate    ┌───────────┐
-                                │ Approved │ ────────────────→ │  Tasks    │
-                                │  (frozen)│   (or manual)     │ generated │
-                                └──────────┘                   └─────┬─────┘
-                                                                     │
-                                                        queued tasks claimable
-                                                                     ▼
-                                                               ┌───────────┐
-                                                               │ Execution │
-                                                               └───────────┘
+         │
+         │ approved
+         ▼
+    ┌────────┐  auto_create    ┌─────────┐
+    │ Trigger│ ──────────────→ │  Draft  │
+    │        │  (or manual)    │  plan   │
+    └────────┘                 └────┬────┘
+                                    │ submit
+                                    ▼
+                               ┌──────────┐
+                               │In review │
+                               └────┬─────┘
+                                    │ approve (+ freeze)
+                                    ▼
+                               ┌──────────┐  auto_generate    ┌───────────┐
+                               │ Approved │ ────────────────→ │  Tasks    │
+                               │ (frozen) │  (or manual)      │ generated │
+                               └──────────┘                   └─────┬─────┘
+                                                                    │
+                                                       queued tasks claimable
+                                                                    ▼
+                                                              ┌───────────┐
+                                                              │ Execution │
+                                                              └───────────┘
+```
+
+```mermaid
+graph TD
+    A["Feature spec /<br/>Change request"]
+    B["approved"]
+    C["Trigger"]
+    D["Draft plan"]
+    E["In review"]
+    F["Approved<br/>(frozen)"]
+    G["Tasks<br/>generated"]
+    H["Queued tasks<br/>claimable"]
+    I["Execution"]
+
+    A -->|approved| B
+    B -->|auto_create<br/>or manual| C
+    C -->|auto_create<br/>or manual| D
+    D -->|submit| E
+    E -->|approve +<br/>freeze| F
+    F -->|auto_generate<br/>or manual| G
+    G -->|queued| H
+    H --> I
 ```
 
 ## Plan-to-Task Linkage
