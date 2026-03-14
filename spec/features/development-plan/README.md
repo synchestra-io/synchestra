@@ -690,6 +690,26 @@ Task A                    Task B                    Task C
                                       depends_on
 ```
 
+```mermaid
+graph LR
+    A["Task A<br/>define schema"]
+    B["Task B<br/>implement API"]
+    C["Task C<br/>build UI"]
+
+    ArtifactA1["📄 schema.json"]
+    ArtifactA2["📄 migration.md"]
+    ArtifactB["📄 openapi-snippet.yaml"]
+
+    A --> ArtifactA1
+    A --> ArtifactA2
+    ArtifactA1 --> B
+    ArtifactA1 --> C
+    B --> ArtifactB
+    ArtifactB --> C
+    A -->|depends_on| B
+    B -->|depends_on| C
+```
+
 Artifacts make the data flow between tasks explicit and traceable. Instead of an agent needing to figure out "what did the previous task produce that I need?" — it is declared in the task description. This is especially important for AI agents, which benefit enormously from explicit context rather than implicit assumptions.
 
 ### Artifacts vs. code
