@@ -239,6 +239,19 @@ Step 1 ──→ Step 2 ──→ Step 3
 Step 5 (independent)
 ```
 
+```mermaid
+graph LR
+    A["Step 1"]
+    B["Step 2"]
+    C["Step 3"]
+    D["Step 4"]
+    E["Step 5<br/>(independent)"]
+
+    A --> B
+    B --> C
+    B --> D
+```
+
 This section is optional — useful for complex plans, noise for simple sequential ones.
 
 ### Acceptance criteria
@@ -269,6 +282,19 @@ draft ──→ in_review ──→ approved
               └──→ draft  (revisions requested)
 
 approved ──→ superseded
+```
+
+```mermaid
+graph LR
+    A["draft"]
+    B["in_review"]
+    C["approved"]
+    D["superseded"]
+
+    A -->|submit| B
+    B -->|revisions<br/>requested| A
+    B -->|approve| C
+    C -->|superseded| D
 ```
 
 ### Immutability after approval
