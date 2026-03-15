@@ -46,6 +46,7 @@ func Run(
 		commands.Watch(),
 		commands.Find(),
 		commands.Migrate(),
+		ProjectCommand(osUserHomeDir),
 	)
 
 	rootCmd.SetArgs(args[1:])
