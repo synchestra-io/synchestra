@@ -23,6 +23,8 @@ Feature specifications for the Synchestra project, managed by Synchestra.
 | [chat](chat/README.md) | Conceptual | Guided conversational interface that produces Synchestra artifacts (proposals, features, issues, PRs) through AI-assisted workflows |
 | [global-config](global-config/README.md) | Conceptual | User-level `~/.synchestra.yaml` — repos directory and machine-local settings |
 | [api](api/README.md) | In Progress | REST API exposing Synchestra operations over HTTP |
+| [github-app](github-app/README.md) | Conceptual | GitHub App for webhook notifications, authenticated repo access, and organization-level installation |
+| [onboarding](onboarding/README.md) | Conceptual | Guided wizard for first-time project setup — repo connection, GitHub App installation, AI-powered scaffolding, or demo launch |
 
 ## Feature Summaries
 
@@ -94,7 +96,13 @@ The `synchestra` command-line interface. Follows a `synchestra <resource> <actio
 
 The REST API layer that exposes Synchestra's coordination capabilities over HTTP. Every mutation endpoint maps 1:1 to a CLI command, using the same atomic git semantics. Task and project identifiers are query parameters matching CLI flag conventions. The normative OpenAPI specs live in [`spec/api/`](../api/README.md).
 
-## Feature dependency graph
+### [GitHub App](github-app/README.md)
+
+The Synchestra GitHub App registered under the `synchestra-io` organization. Provides real-time webhook delivery (issues, pull requests, pushes), fine-grained repository permissions, and short-lived installation tokens for authenticated API access. Users install the app at the organization or personal-account level during onboarding; Synchestra uses the installation to discover accessible repos, push state changes, and sync issue/PR activity. The app is the prerequisite for any real-time integration between Synchestra and GitHub-hosted repositories.
+
+### [Onboarding](onboarding/README.md)
+
+A guided wizard delivered through both the web app and the CLI that walks new users through first-time project setup. Offers two paths: "Connect your repositories" (GitHub App installation → spec repo selection → optional code repos → state repo provisioning → bring-your-own AI key → AI-powered repo analysis and scaffolding → project creation) and "Try the demo" (pre-built sample project with example features, tasks, and proposals). The wizard handles infrastructure bootstrapping — creating state repos, generating `synchestra-spec.yaml`, and scaffolding initial feature structures — so users reach a working project in minutes.
 
 ```
 feature → proposals, development-plan, outstanding-questions (features are the spec unit)
@@ -111,6 +119,8 @@ chat → feature, proposals, development-plan, task-status-board, agent-skills, 
 ui → proposals, cli, task-status-board, agent-skills, development-plan, chat
 api → cli (api mirrors cli contract)
 global-config ← cli (cli reads ~/.synchestra.yaml for repo resolution)
+github-app → api (callback endpoint)
+onboarding → github-app, project-definition, ui, cli, api (orchestrates first-time setup)
 ```
 
 `feature` is the foundational spec-layer concept — proposals, plans, and outstanding questions all attach to features.
@@ -143,6 +153,8 @@ global-config ← cli (cli reads ~/.synchestra.yaml for repo resolution)
 - [chat/workflow/create-feature](chat/workflow/create-feature/README.md): 3 outstanding questions
 - [chat/workflow/raise-issue](chat/workflow/raise-issue/README.md): 3 outstanding questions
 - [chat/workflow/tweak-document](chat/workflow/tweak-document/README.md): 3 outstanding questions
+- [github-app](github-app/README.md): 4 outstanding questions
+- [onboarding](onboarding/README.md): 5 outstanding questions
 - [ui](ui/README.md): 5 outstanding questions
 - [ui/web-app](ui/web-app/README.md): 5 outstanding questions
 - [ui/tui](ui/tui/README.md): 5 outstanding questions
