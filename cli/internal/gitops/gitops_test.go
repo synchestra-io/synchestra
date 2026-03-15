@@ -170,3 +170,34 @@ func TestPull(t *testing.T) {
 		t.Errorf("file content = %q, want %q", data, "shared")
 	}
 }
+
+func TestPush(t *testing.T) {
+	bare := setupBareRepo(t)
+	cloneDir := cloneRepo(t, bare)
+	runner := gitops.NewRunner()
+
+	// Write a file and commit it locally WITHOUT pushing
+	if err := os.WriteFile(filepath.Join(cloneDir, "push.txt"), []byte("pushed"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	run(t, cloneDir, "git", "add", "push.txt")
+	run(t, cloneDir, "git", "commit", "-m", "local commit")
+
+	// Push the local commit to the remote
+	if err := runner.Push(cloneDir); err != nil {
+		t.Fatalf("Push failed: %v", err)
+	}
+
+	// Verify the commit appears in the bare repo by cloning a fresh copy
+	dest := filepath.Join(t.TempDir(), "verify")
+	if err := runner.Clone(bare, dest); err != nil {
+		t.Fatal(err)
+	}
+	data, err := os.ReadFile(filepath.Join(dest, "push.txt"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(data) != "pushed" {
+		t.Errorf("file content = %q, want %q", data, "pushed")
+	}
+}
