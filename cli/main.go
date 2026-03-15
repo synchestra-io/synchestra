@@ -1,5 +1,7 @@
 package cli
 
+// Features implemented: cli
+
 import (
 	"context"
 	"errors"

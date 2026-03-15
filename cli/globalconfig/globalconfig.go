@@ -1,5 +1,7 @@
 package globalconfig
 
+// Features implemented: global-config
+
 import (
 	"errors"
 	"io/fs"

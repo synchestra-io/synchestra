@@ -1,5 +1,7 @@
 package project
 
+// Features implemented: cli/project/new
+
 import (
 	"os"
 	"path/filepath"

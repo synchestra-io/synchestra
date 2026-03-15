@@ -1,5 +1,7 @@
 package reporef
 
+// Features implemented: global-config
+
 import (
 	"fmt"
 	"net/url"

@@ -1,5 +1,7 @@
 package project
 
+// Features implemented: cli/project
+
 import (
 	"github.com/spf13/cobra"
 )
