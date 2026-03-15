@@ -1,5 +1,7 @@
 package project
 
+// Features implemented: project-definition, cli/project/new
+
 import (
 	"fmt"
 	"os"

@@ -1,5 +1,7 @@
 package gitops
 
+// Features depended on: cli/project/new
+
 import (
 	"fmt"
 	"os"
