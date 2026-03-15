@@ -54,7 +54,7 @@ Build the workflow orchestration layer: YAML workflow parsing, step sequencing, 
 **Produces:**
   - Workflow YAML parser and validator
   - Step orchestrator (transitions between steps based on AI assessment)
-  - Project customization loader (prompts, rules, checks from `synchestra-project.yaml`)
+  - Project customization loader (prompts, rules, checks from `synchestra-spec.yaml`)
   - Artifact production pipeline (creating and committing artifacts to appropriate repos)
   - Workflow discovery API (which workflows are available for a given document type and user role)
 **Task mapping:** `chat-workflow-engine/*`

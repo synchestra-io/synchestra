@@ -6,7 +6,7 @@ Synchestra operates with three kinds of repositories. Each has a distinct role, 
 
 | Repository type | What it holds | Who writes to it | Commit cadence |
 |---|---|---|---|
-| **Spec repository** | Requirements, architecture, documentation, `synchestra-project.yaml` | Humans, agents (reviewed) | Low — deliberate, reviewed changes |
+| **Spec repository** | Requirements, architecture, documentation, `synchestra-spec.yaml` | Humans, agents (reviewed) | Low — deliberate, reviewed changes |
 | **State repository** | Tasks, claims, coordination state, workflow artifacts | Synchestra CLI, agents (automated) | High — frequent machine commits |
 | **Code repository** (one or more) | Implementation and source code | Developers, agents | Medium — feature branches, PRs |
 
@@ -17,7 +17,7 @@ The spec repository is the **source of truth for what should be built**. It cont
 - **Feature specifications** — what the system should do, acceptance criteria, design decisions
 - **Architecture documents** — how the system is structured, trade-offs, constraints
 - **Product documentation** — user-facing explanations, API guides, tutorials
-- **Project configuration** — [`synchestra-project.yaml`](../features/project-definition/README.md), which defines the project and references the state and code repositories
+- **Project configuration** — [`synchestra-spec.yaml`](../features/project-definition/README.md), which defines the project and references the state and code repositories
 
 The spec repo is where humans and agents collaborate on *decisions*. Changes are deliberate and typically reviewed. The directory structure mirrors the product's feature tree — agents navigate `spec/features/` to understand requirements before starting work.
 
@@ -33,7 +33,7 @@ User's choice. Common patterns: `{project}`, `{project}-spec`, or combined with 
 
 ```
 acme/
-  synchestra-project.yaml         # Project config → references state repo + code repos
+  synchestra-spec.yaml         # Project config → references state repo + code repos
   README.md
   spec/
     features/
@@ -114,13 +114,13 @@ For a project with multiple code repos:
 acme-api/          # Backend code repo
 acme-web/          # Frontend code repo
 acme-infra/        # Infrastructure code repo
-acme/              # Spec repo (with synchestra-project.yaml)
+acme/              # Spec repo (with synchestra-spec.yaml)
 acme-synchestra/   # State repo (tasks, coordination)
 ```
 
 ## How They Connect
 
-The **spec repository** is the anchor. Its `synchestra-project.yaml` defines the project and references the other repositories:
+The **spec repository** is the anchor. Its `synchestra-spec.yaml` defines the project and references the other repositories:
 
 ```yaml
 title: Acme Platform
@@ -131,9 +131,9 @@ repos:
   - https://github.com/acme/acme-infra
 ```
 
-The **state repository** contains a minimal `synchestra-project.yaml` with a back-reference to the spec repo, plus the auto-generated README.
+The **state repository** contains a minimal `synchestra-spec.yaml` with a back-reference to the spec repo, plus the auto-generated README.
 
-**Code repositories** are referenced by the spec repo's config. Agents discover them through `synchestra-project.yaml` when they need to create branches or push implementation changes.
+**Code repositories** are referenced by the spec repo's config. Agents discover them through `synchestra-spec.yaml` when they need to create branches or push implementation changes.
 
 ### Typical workflow
 
@@ -147,11 +147,11 @@ See [Spec-to-Execution Pipeline](spec-to-execution.md) for the full lifecycle wi
 
 ## Combining Repositories
 
-For smaller projects, the spec and code repos can be combined into a single repository. The `synchestra-project.yaml` lives at the root alongside `spec/`, `docs/`, and the source code. The state repo remains separate.
+For smaller projects, the spec and code repos can be combined into a single repository. The `synchestra-spec.yaml` lives at the root alongside `spec/`, `docs/`, and the source code. The state repo remains separate.
 
 ```
 acme/                             # Combined spec + code repo
-  synchestra-project.yaml
+  synchestra-spec.yaml
   spec/
     features/
       ...

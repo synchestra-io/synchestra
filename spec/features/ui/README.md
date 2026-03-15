@@ -52,7 +52,7 @@ This is the MVP navigation surface. Additional entries (e.g., Settings, Agents, 
 
 ### Home screen
 
-Shows the list of [projects](../project-definition/README.md) the current user is working with. Each project entry is derived from a `synchestra-project.yaml` file the user has access to.
+Shows the list of [projects](../project-definition/README.md) the current user is working with. Each project entry is derived from a `synchestra-spec.yaml` file the user has access to.
 
 Selecting a project opens the project menu.
 
@@ -123,13 +123,13 @@ The UI feature presents and triggers workflows defined elsewhere — it does not
 | [CLI](../cli/README.md) | TUI delivery surface; task mutation semantics; command contract |
 | [Task Status Board](../task-status-board/README.md) | Board format, status lifecycle, claiming protocol |
 | [Agent Skills](../agent-skills/README.md) | Skills that back the task actions (create, enqueue) |
-| [Project Definition](../project-definition/README.md) | `synchestra-project.yaml` — source of the project list |
+| [Project Definition](../project-definition/README.md) | `synchestra-spec.yaml` — source of the project list |
 | [HTTP API](../../../docs/api/README.md) | Backend for the web app surface |
 
 ## Outstanding Questions
 
 - Should the workers screen be deferred entirely until a `workers` feature spec is defined, or is UI-level visibility enough for an MVP?
-- How should the home screen discover projects — scan local filesystem for `synchestra-project.yaml` files, query the API for a user's project list, or both depending on the surface?
+- How should the home screen discover projects — scan local filesystem for `synchestra-spec.yaml` files, query the API for a user's project list, or both depending on the surface?
 - Should the task-status-board rendering in the UI be a generic markdown table renderer, or should tasks have a purpose-built component?
 - What authentication model does the UI use? The [API](../../../docs/api/README.md) requires Bearer tokens created via `synchestra auth token create`. The root README mentions GitHub OAuth and Firebase. Which applies to each surface?
 - Should the feature detail screen support navigating into sub-features, or only root features for MVP?

@@ -1,15 +1,16 @@
 module github.com/synchesta-io/synchestra
 
-go 1.26.0
+go 1.26.1
 
 require (
 	charm.land/fang/v2 v2.0.1
-	github.com/ingitdb/ingitdb-cli v0.53.0
+	github.com/ingitdb/ingitdb-cli v0.53.1
 	github.com/spf13/cobra v1.10.2
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
-	charm.land/lipgloss/v2 v2.0.1 // indirect
+	charm.land/lipgloss/v2 v2.0.2 // indirect
 	github.com/RoaringBitmap/roaring/v2 v2.15.0 // indirect
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
 	github.com/bits-and-blooms/bitset v1.24.4 // indirect
@@ -17,7 +18,7 @@ require (
 	github.com/charmbracelet/colorprofile v0.4.3 // indirect
 	github.com/charmbracelet/ultraviolet v0.0.0-20260309091805-903bfd0cf188 // indirect
 	github.com/charmbracelet/x/ansi v0.11.6 // indirect
-	github.com/charmbracelet/x/exp/charmtone v0.0.0-20260309091332-e8ca31595cc4 // indirect
+	github.com/charmbracelet/x/exp/charmtone v0.0.0-20260315003922-bbd79dac4a98 // indirect
 	github.com/charmbracelet/x/term v0.2.2 // indirect
 	github.com/charmbracelet/x/termios v0.1.1 // indirect
 	github.com/charmbracelet/x/windows v0.2.2 // indirect
@@ -31,7 +32,7 @@ require (
 	github.com/julienschmidt/httprouter v1.3.0 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/lucasb-eyer/go-colorful v1.3.0 // indirect
-	github.com/mailru/easyjson v0.9.1 // indirect
+	github.com/mailru/easyjson v0.9.2 // indirect
 	github.com/mattn/go-runewidth v0.0.21 // indirect
 	github.com/metoro-io/mcp-golang v0.16.1 // indirect
 	github.com/mschoch/smat v0.2.0 // indirect
@@ -52,6 +53,5 @@ require (
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	golang.org/x/sync v0.20.0 // indirect
 	golang.org/x/sys v0.42.0 // indirect
-	golang.org/x/text v0.34.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
+	golang.org/x/text v0.35.0 // indirect
 )

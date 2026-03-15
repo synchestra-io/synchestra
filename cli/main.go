@@ -1,5 +1,7 @@
 package cli
 
+// Features implemented: cli
+
 import (
 	"context"
 	"errors"
@@ -8,6 +10,7 @@ import (
 	"charm.land/fang/v2"
 	"github.com/ingitdb/ingitdb-cli/cmd/ingitdb/commands"
 	"github.com/spf13/cobra"
+	"github.com/synchesta-io/synchestra/cli/project"
 )
 
 var (
@@ -46,6 +49,7 @@ func Run(
 		commands.Watch(),
 		commands.Find(),
 		commands.Migrate(),
+		project.Command(),
 	)
 
 	rootCmd.SetArgs(args[1:])

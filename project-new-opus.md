@@ -8,7 +8,7 @@
 
 ## Summary
 
-The branch adds the new `synchestra project new` command, repo/config helpers, integration tests, and feature-reference comments. The previously reported relative-`repos_dir` bug is fixed in this version, but I still found two meaningful correctness issues in the new project-creation flow. I also ran `go test ./...` in the worktree; the current tests pass, but they do not cover the problems below.
+The branch adds the new `synchestra project new` command, repo/config helpers, integration tests, and feature-reference comments. The previously reported relative-`repos_dir` bug is fixed in this version, and it remains the strongest of the three reviewed branches. That said, I still found two meaningful correctness issues in the new project-creation flow, and the comparison with the Sonnet and Haiku variants surfaced a few worthwhile hardening ideas that should be folded into follow-up work. I also ran `go test ./...` in the worktree; the current tests pass, but they do not cover the problems below.
 
 ## Findings
 
@@ -31,6 +31,23 @@ The branch adds the new `synchestra project new` command, repo/config helpers, i
 - `cli/project/new.go:79-107` resolves disk paths and only checks `gitops.IsGitRepo`; it never verifies that the checkout's `origin` matches the requested repo reference.
 - `cli/gitops/gitops.go:18-25` already includes a `GetOriginURL` helper, but `project new` does not use it.
 - `spec/features/cli/project/README.md:13-20` and `spec/features/cli/project/new/README.md:46-49` describe these arguments as repository references that are resolved and validated, not just arbitrary existing git directories.
+
+## Worth porting from the other reviews
+
+These points do not change the overall recommendation to use `config-opus` as the base branch, but they are the best follow-up improvements highlighted by the Sonnet/Haiku comparison work:
+
+- **From `config-sonnet`: tighten command-level exit-code plumbing.** The comparison found that some missing-required-flag paths still exit `1` before the command-specific logic can translate invalid arguments into the spec-required exit code `2`. Opus is still the best base, but it should preserve the CLI's documented invalid-argument behavior even when Cobra required-flag handling fires early.
+- **From `config-sonnet`: keep leaning into testable command boundaries.** Sonnet's runner-oriented seams were one of its strongest engineering qualities. Opus already has the better end result, but adopting similarly clean command/runtime boundaries would make follow-up hardening easier to test.
+- **From `config-haiku`: add repo-path hardening around clone targets.** Haiku's most worthwhile idea was defensive handling of resolved repo paths, especially rejecting path traversal outside `repos_dir` and refusing symlinked clone targets. Those checks would strengthen Opus without changing its overall design.
+
+## Recommended follow-up
+
+If this branch is the one that gets merged, the first hardening pass should cover four things together:
+
+- reject any layout where the state repo overlaps with the spec repo or a target repo;
+- verify that a pre-existing checkout's `origin` matches the requested repository reference before reusing it;
+- preserve exit code `2` for invalid argument cases such as missing required flags; and
+- add the repo-path safety checks called out above for resolved local clone destinations.
 
 ## Validation
 
