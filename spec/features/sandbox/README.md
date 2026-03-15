@@ -15,6 +15,7 @@ Safe, isolated execution environments for running user-initiated commands from t
 | [docker-entrypoint.sh](docker-entrypoint.sh) | Container entrypoint script for initialization |
 | [container-build-deployment.md](container-build-deployment.md) | Image building, scanning, deployment (Docker, Compose, K8s) |
 | [container-build-automation.md](container-build-automation.md) | Build scripts, Makefile targets, CI/CD pipeline (GitHub Actions) |
+| [orchestrator.md](orchestrator.md) | Container Orchestrator: lifecycle state machine, gRPC pool, health monitoring, routing |
 
 ## Document Summaries
 
@@ -44,6 +45,9 @@ Build, scan, and deployment procedures.
 
 ### [container-build-automation.md](container-build-automation.md)
 Makefile targets, build scripts, and CI/CD pipeline.
+
+### [orchestrator.md](orchestrator.md)
+Container Orchestrator specification: lifecycle state machine, gRPC connection pool, health monitoring, idle detection, circuit breaker, request routing, and resource quota enforcement.
 
 ## Outstanding Questions
 
