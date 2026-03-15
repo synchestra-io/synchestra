@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>config-haiku review report</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+      margin: 2rem auto;
+      max-width: 900px;
+      padding: 0 1rem;
+      color: #1f2937;
+    }
+    code { background: #f3f4f6; padding: 0.1rem 0.3rem; border-radius: 4px; }
+    .meta, .summary { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 1rem; }
+    .finding { border-left: 4px solid #dc2626; padding-left: 1rem; margin: 1.5rem 0; }
+    .severity { font-weight: 700; color: #991b1b; }
+    ul { padding-left: 1.25rem; }
+  </style>
+</head>
+<body>
+  <h1>Review report: <code>config-haiku</code></h1>
+
+  <section class="meta">
+    <p><strong>Reviewed worktree:</strong> <code>.claude/worktrees/config-haiku</code></p>
+    <p><strong>Reviewed branch:</strong> <code>worktree-config-haiku</code> against <code>main</code></p>
+    <p><strong>Scope reviewed:</strong> branch delta introduced by commits <code>8eaa2b1</code> and <code>3512602</code></p>
+  </section>
+
+  <section class="summary">
+    <h2>Summary</h2>
+    <p>The branch adds <code>synchestra project new</code>, supporting config helpers, and Go-file feature-reference comments. I found two meaningful issues in the new implementation. I also ran <code>go test ./...</code> in the worktree; the current tests pass, but they do not cover the problems below.</p>
+  </section>
+
+  <section>
+    <h2>Findings</h2>
+
+    <article class="finding">
+      <h3><span class="severity">High</span> — Relative <code>repos_dir</code> paths do not follow the spec</h3>
+      <p><strong>Why it matters:</strong> the global-config spec says relative <code>repos_dir</code> values are resolved relative to the user's home directory. The new loader returns relative paths unchanged, so a config like <code>repos_dir: repos</code> resolves relative to whatever directory the CLI happens to run from instead of the home directory. That can clone or modify repositories in the wrong location.</p>
+      <p><strong>Evidence:</strong></p>
+      <ul>
+        <li><code>internal/config.go:48-54</code> only expands <code>~</code>; non-absolute relative paths are returned unchanged.</li>
+        <li><code>internal/config_test.go:57-67</code> explicitly encodes the wrong behavior by expecting <code>"relative/path"</code> instead of a home-relative path.</li>
+        <li><code>spec/features/global-config/README.md:46</code> says: “Relative paths are resolved relative to the user's home directory.”</li>
+      </ul>
+    </article>
+
+    <article class="finding">
+      <h3><span class="severity">High</span> — <code>project new</code> is not atomic across the repos it mutates</h3>
+      <p><strong>Why it matters:</strong> the command writes and pushes the spec repo first, then the state repo, then targets one by one. If a later commit or push fails, earlier repositories are already permanently updated, leaving the project half-created and inconsistent. That breaks the CLI's documented mutation guarantees and creates a hard-to-recover operational state.</p>
+      <p><strong>Evidence:</strong></p>
+      <ul>
+        <li><code>cli/project_new.go:219-233</code> performs separate commit/push operations sequentially for each repo.</li>
+        <li><code>spec/features/README.md:91</code> and <code>spec/features/cli/README.md:56</code> describe CLI mutations as atomic commit-and-push operations.</li>
+      </ul>
+    </article>
+  </section>
+
+  <section>
+    <h2>Validation</h2>
+    <ul>
+      <li>Inspected the branch diff against <code>main</code>.</li>
+      <li>Ran <code>go test ./...</code> in <code>.claude/worktrees/config-haiku</code> successfully.</li>
+    </ul>
+  </section>
+</body>
+</html>

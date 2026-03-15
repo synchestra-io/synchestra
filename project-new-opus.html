@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>config-opus review report</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+      margin: 2rem auto;
+      max-width: 900px;
+      padding: 0 1rem;
+      color: #1f2937;
+    }
+    code { background: #f3f4f6; padding: 0.1rem 0.3rem; border-radius: 4px; }
+    .meta, .summary { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 1rem; }
+    .finding { border-left: 4px solid #dc2626; padding-left: 1rem; margin: 1.5rem 0; }
+    .severity { font-weight: 700; color: #991b1b; }
+    ul { padding-left: 1.25rem; }
+  </style>
+</head>
+<body>
+  <h1>Review report: <code>config-opus</code></h1>
+
+  <section class="meta">
+    <p><strong>Reviewed worktree:</strong> <code>.claude/worktrees/config-opus</code></p>
+    <p><strong>Reviewed branch:</strong> <code>worktree-config-opus</code> against <code>main</code></p>
+    <p><strong>Scope reviewed:</strong> branch delta introduced by commits <code>541a75e</code> through <code>5c26bc8</code></p>
+  </section>
+
+  <section class="summary">
+    <h2>Summary</h2>
+    <p>The branch adds the new <code>synchestra project new</code> command, repo/config helpers, integration tests, and feature-reference comments. The previously reported relative-<code>repos_dir</code> bug is fixed in this version, but I still found two meaningful correctness issues in the new project-creation flow. I also ran <code>go test ./...</code> in the worktree; the current tests pass, but they do not cover the problems below.</p>
+  </section>
+
+  <section>
+    <h2>Findings</h2>
+
+    <article class="finding">
+      <h3><span class="severity">High</span> — <code>project new</code> allows the state repo to overlap with spec or target repos</h3>
+      <p><strong>Why it matters:</strong> Synchestra's repository model requires the state repository to stay dedicated and separate because it is the high-churn coordination database for agents. The new command accepts any combination of repo refs and never rejects a state repo that resolves to the same repository as the spec repo or one of the targets, so it can create an invalid project layout and mix machine-written state into repositories that are supposed to have different lifecycles.</p>
+      <p><strong>Evidence:</strong></p>
+      <ul>
+        <li><code>cli/project/new.go:50-66</code> parses all repo references but never checks that <code>--state-repo</code> differs from <code>--spec-repo</code> and every <code>--target-repo</code>.</li>
+        <li><code>cli/project/new.go:131-166</code> blindly writes config files and commits each resolved path, so colliding refs will cause the same repository to be treated as multiple repository types.</li>
+        <li><code>spec/architecture/repository-types.md:62-68</code> and <code>spec/architecture/repository-types.md:150-168</code> say the state repo must be dedicated and remains separate even when spec and code are combined.</li>
+      </ul>
+    </article>
+
+    <article class="finding">
+      <h3><span class="severity">High</span> — Existing local checkouts are trusted without verifying their remote origin</h3>
+      <p><strong>Why it matters:</strong> The command resolves each repo ref to a deterministic path under <code>repos_dir</code>. If that path already contains a git repository cloned from the wrong remote, the implementation still treats it as the requested repo and writes project config into it. That can silently attach an unrelated local repository to the new project and push commits to the wrong origin.</p>
+      <p><strong>Evidence:</strong></p>
+      <ul>
+        <li><code>cli/project/new.go:79-107</code> resolves disk paths and only checks <code>gitops.IsGitRepo</code>; it never verifies that the checkout's <code>origin</code> matches the requested repo reference.</li>
+        <li><code>cli/gitops/gitops.go:18-25</code> already includes a <code>GetOriginURL</code> helper, but <code>project new</code> does not use it.</li>
+        <li><code>spec/features/cli/project/README.md:13-20</code> and <code>spec/features/cli/project/new/README.md:46-49</code> describe these arguments as repository references that are resolved and validated, not just arbitrary existing git directories.</li>
+      </ul>
+    </article>
+  </section>
+
+  <section>
+    <h2>Validation</h2>
+    <ul>
+      <li>Inspected the branch diff against <code>main</code>.</li>
+      <li>Ran <code>go test ./...</code> in <code>.claude/worktrees/config-opus</code> successfully.</li>
+    </ul>
+  </section>
+</body>
+</html>
