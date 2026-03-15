@@ -1,5 +1,5 @@
 #!/bin/bash
-# This script should be placed in synchestra-go repository at: build/docker-entrypoint.sh
+# This script should be placed at: build/docker-entrypoint.sh (in repository root)
 #
 # Container entrypoint that:
 # 1. Validates environment

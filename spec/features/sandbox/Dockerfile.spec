@@ -1,4 +1,4 @@
-# This Dockerfile should be placed in synchestra-go repository at: build/Dockerfile.sandbox-agent
+# This Dockerfile should be placed at: build/Dockerfile.sandbox-agent (in this repository root)
 #
 # Multi-stage build for Synchestra Sandbox Agent container
 # Produces minimal, secure image optimized for execution isolation
@@ -32,7 +32,7 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
     -ldflags="-s -w" \
     -o /tmp/synchestra-sandbox-agent \
-    ./cmd/sandbox-agent
+    ./internal/sandbox/agent/cmd
 
 # Verify binary was created
 RUN ls -lh /tmp/synchestra-sandbox-agent && file /tmp/synchestra-sandbox-agent

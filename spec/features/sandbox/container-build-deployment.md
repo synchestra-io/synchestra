@@ -10,12 +10,12 @@ The Sandbox Agent runs in a Docker container, one per Synchestra project. This d
 
 - Docker 20.10+ or compatible runtime
 - Go 1.21+ (for build-time compilation only)
-- synchestra-go repository
+- This repository (synchestra)
 
 ### Building Locally
 
 ```bash
-cd synchestra-go/
+cd /path/to/synchestra
 
 # Build image
 docker build \

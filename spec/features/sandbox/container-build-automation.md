@@ -1,8 +1,8 @@
 # Container Build Automation
 
-## Makefile Targets (in synchestra-go)
+## Makefile Targets (in this repository root)
 
-Add these targets to `Makefile`:
+Add these targets to the main `Makefile`:
 
 ```makefile
 # Build sandbox agent container image
@@ -100,8 +100,7 @@ BUILD_DATE ?= $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
 ```bash
 #!/bin/bash
 # Build and optionally push Synchestra Sandbox Agent container image
-
-set -euo pipefail
+# Place this script at: build/build-sandbox-image.sh (in repository root)
 
 # Configuration
 REGISTRY="${REGISTRY:-synchestra}"
@@ -271,7 +270,6 @@ on:
   push:
     branches: [main, develop]
     paths:
-      - 'cmd/sandbox-agent/**'
       - 'internal/sandbox/**'
       - 'build/Dockerfile.sandbox-agent'
       - 'build/docker-entrypoint.sh'
