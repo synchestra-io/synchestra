@@ -1,5 +1,8 @@
 package project
 
+// Features implemented: cli/project/new
+// Features depended on:  global-config
+
 import (
 	"bufio"
 	"errors"

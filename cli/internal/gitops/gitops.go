@@ -1,6 +1,8 @@
 // Package gitops provides git operations used by Synchestra CLI commands.
 package gitops
 
+// Features implemented: cli/project/new
+
 import (
 	"fmt"
 	"os"

@@ -1,6 +1,8 @@
 // Package globalconfig loads ~/.synchestra.yaml.
 package globalconfig
 
+// Features implemented: global-config
+
 import (
 	"errors"
 	"os"

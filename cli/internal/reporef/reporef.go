@@ -1,6 +1,8 @@
 // Package reporef parses and resolves Synchestra repository references.
 package reporef
 
+// Features implemented: cli/project/new
+
 import (
 	"fmt"
 	"path/filepath"
