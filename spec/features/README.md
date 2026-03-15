@@ -25,6 +25,7 @@ Feature specifications for the Synchestra project, managed by Synchestra.
 | [api](api/README.md) | In Progress | REST API exposing Synchestra operations over HTTP |
 | [github-app](github-app/README.md) | Conceptual | GitHub App for webhook notifications, authenticated repo access, and organization-level installation |
 | [onboarding](onboarding/README.md) | Conceptual | Guided wizard for first-time project setup — repo connection, GitHub App installation, AI-powered scaffolding, or demo launch |
+| [sandbox](sandbox/README.md) | Conceptual | Isolated Docker container environments per project for executing user-initiated commands from the chat interface |
 
 ## Feature Summaries
 
@@ -104,6 +105,10 @@ The Synchestra GitHub App registered under the `synchestra-io` organization. Pro
 
 A guided wizard delivered through both the web app and the CLI that walks new users through first-time project setup. Offers two paths: "Connect your repositories" (GitHub App installation → spec repo selection → optional code repos → state repo provisioning → bring-your-own AI key → AI-powered repo analysis and scaffolding → project creation) and "Try the demo" (pre-built sample project with example features, tasks, and proposals). The wizard handles infrastructure bootstrapping — creating state repos, generating `synchestra-spec.yaml`, and scaffolding initial feature structures — so users reach a working project in minutes.
 
+### [Sandbox](sandbox/README.md)
+
+Isolated Docker container environments per project for executing user-initiated commands from the chat interface. Each project gets its own persistent container with encrypted credential storage (AES256), user-isolated sessions, and a gRPC agent for host↔container communication. The host is stateless and routes requests; all state, secrets, and execution data remain inside containers.
+
 ```
 feature → proposals, development-plan, outstanding-questions (features are the spec unit)
 claim-and-push ← conflict-resolution
@@ -121,6 +126,7 @@ api → cli (api mirrors cli contract)
 global-config ← cli (cli reads ~/.synchestra.yaml for repo resolution)
 github-app → api (callback endpoint)
 onboarding → github-app, project-definition, ui, cli, api (orchestrates first-time setup)
+sandbox → cli, api (containers execute commands, host routes via API)
 ```
 
 `feature` is the foundational spec-layer concept — proposals, plans, and outstanding questions all attach to features.
@@ -155,6 +161,7 @@ onboarding → github-app, project-definition, ui, cli, api (orchestrates first-
 - [chat/workflow/tweak-document](chat/workflow/tweak-document/README.md): 3 outstanding questions
 - [github-app](github-app/README.md): 4 outstanding questions
 - [onboarding](onboarding/README.md): 5 outstanding questions
+- [sandbox](sandbox/README.md): 5 outstanding questions
 - [ui](ui/README.md): 5 outstanding questions
 - [ui/web-app](ui/web-app/README.md): 5 outstanding questions
 - [ui/tui](ui/tui/README.md): 5 outstanding questions

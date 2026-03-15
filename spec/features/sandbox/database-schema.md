@@ -20,7 +20,7 @@ CREATE TABLE sandbox_user_project_access (
     user_id VARCHAR(255) NOT NULL,
     project_id VARCHAR(255) NOT NULL,
     access_level VARCHAR(50) NOT NULL DEFAULT 'read_write',
-    -- access_level: 'read', 'write', 'admin', or custom policies
+    -- access_level: 'read', 'read_write', 'admin', or custom policies
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     
@@ -65,7 +65,13 @@ CREATE TABLE sandbox_container_metadata (
     -- Docker container ID (nullable if container not created yet)
     
     container_status VARCHAR(50) NOT NULL DEFAULT 'stopped',
-    -- running, paused, stopped, failed, terminated
+    -- Container status values:
+    -- 'creating'    - Container image being pulled/built
+    -- 'running'     - Container is active and accepting commands
+    -- 'paused'      - Container is suspended (idle timeout)
+    -- 'stopped'     - Container is shut down but preserved
+    -- 'failed'      - Container crashed or health checks failed
+    -- 'terminated'  - Container was explicitly destroyed/removed
     
     socket_path VARCHAR(255),
     -- /var/run/synchestra-{project_id}.sock (nullable until container starts)
@@ -164,7 +170,7 @@ WHERE project_id = ? AND container_status = 'running'
 ### Container-Managed (State Accuracy)
 
 - **Task state**: Live in `.synchestra/` inside container
-- **Session data**: Ephemeral, stored in `/workspace/{project}/sessions/{session_id}/`
+- **Session data**: Ephemeral, stored in `/workspace/{project_id}/sessions/{session_id}/`
 - **Execution logs**: Streamed to user, optionally retained in container
 - **User data**: Cloned repos, working directories, never persisted in host DB
 

@@ -21,7 +21,7 @@ service SandboxAgent {
   // Stream logs from a session (real-time)
   rpc StreamLogs(StreamLogsRequest) returns (stream LogEntry) {}
   
-  // Store a credential (user provides token, container encrypts)
+  // Store or update a credential (user provides token, container encrypts)
   rpc StoreCredential(StoreCredentialRequest) returns (StoreCredentialResponse) {}
   
   // Get task state from local .synchestra/ repo
@@ -85,6 +85,24 @@ message CommandOutput {
 // Status Messages
 // ============================================================================
 
+// Container lifecycle status
+enum ContainerStatus {
+  CONTAINER_STATUS_UNSPECIFIED = 0;
+  CONTAINER_STATUS_RUNNING = 1;
+  CONTAINER_STATUS_PAUSED = 2;
+  CONTAINER_STATUS_STOPPED = 3;
+  CONTAINER_STATUS_FAILED = 4;
+}
+
+// Session lifecycle status
+enum SessionStatus {
+  SESSION_STATUS_UNSPECIFIED = 0;
+  SESSION_STATUS_PENDING = 1;
+  SESSION_STATUS_RUNNING = 2;
+  SESSION_STATUS_COMPLETED = 3;
+  SESSION_STATUS_FAILED = 4;
+}
+
 message StatusRequest {
   // Empty request.
 }
@@ -93,7 +111,7 @@ message StatusResponse {
   string container_id = 1;
   // Docker container ID.
   
-  string status = 2;
+  ContainerStatus status = 2;
   // Container lifecycle status.
   
   int64 uptime_seconds = 3;
@@ -119,7 +137,7 @@ message ContainerResources {
 message SessionInfo {
   string session_id = 1;
   string user_id = 2;
-  string status = 3;
+  SessionStatus status = 3;
   int32 command_count = 4;
   int64 memory_used_mb = 5;
   int64 runtime_seconds = 6;
@@ -136,11 +154,18 @@ message ListSessionsRequest {
   
   string status_filter = 2;
   // Optional: filter by status.
+  
+  int32 page_size = 4;
+  // Max results per page. Default: 50
+  
+  string page_token = 5;
+  // Token for next page (from previous response)
 }
 
 message SessionList {
   repeated SessionInfo sessions = 1;
   int32 total_count = 2;
+  string next_page_token = 3;  // Token for next page, empty if last page
 }
 
 // ============================================================================

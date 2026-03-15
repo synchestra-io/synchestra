@@ -36,7 +36,7 @@ service SandboxAgent {
   // Stream logs from a session (real-time)
   rpc StreamLogs(StreamLogsRequest) returns (stream LogEntry) {}
   
-  // Store a credential (user provides token, container encrypts)
+  // Store or update a credential (user provides token, container encrypts)
   rpc StoreCredential(StoreCredentialRequest) returns (StoreCredentialResponse) {}
   
   // Get task state from local .synchestra/ repo
@@ -110,7 +110,10 @@ message CommandOutput {
   // 0 = success
   // 1-255 = process exit code
   // -1 = killed by signal
+  // -2 = security violation (path traversal, permission denied)
   // 124 = timeout (SIGTERM timeout)
+  // 137 = OOM killed (SIGKILL from kernel)
+  // 139 = segmentation fault
   // Only populated on final message (completed=true).
   
   bool completed = 5;
@@ -151,12 +154,30 @@ message StatusRequest {
   // Empty request (no parameters).
 }
 
+// Container lifecycle status
+enum ContainerStatus {
+  CONTAINER_STATUS_UNSPECIFIED = 0;
+  CONTAINER_STATUS_RUNNING = 1;
+  CONTAINER_STATUS_PAUSED = 2;
+  CONTAINER_STATUS_STOPPED = 3;
+  CONTAINER_STATUS_FAILED = 4;
+}
+
+// Session lifecycle status
+enum SessionStatus {
+  SESSION_STATUS_UNSPECIFIED = 0;
+  SESSION_STATUS_PENDING = 1;
+  SESSION_STATUS_RUNNING = 2;
+  SESSION_STATUS_COMPLETED = 3;
+  SESSION_STATUS_FAILED = 4;
+}
+
 message StatusResponse {
   string container_id = 1;
   // Docker container ID (for debugging).
   
-  string status = 2;
-  // Container lifecycle status: "running", "paused", "stopped", "failed".
+  ContainerStatus status = 2;
+  // Container lifecycle status.
   
   int64 uptime_seconds = 3;
   // Seconds since container started (wall-clock).
@@ -194,7 +215,7 @@ message ContainerResources {
 message SessionInfo {
   string session_id = 1;
   string user_id = 2;
-  string status = 3;           // "pending", "running", "completed", "failed"
+  SessionStatus status = 3;   // Session lifecycle status
   int32 command_count = 4;     // Number of commands executed in this session
   int64 memory_used_mb = 5;    // Memory used by session subprocess
   int64 runtime_seconds = 6;   // Seconds since session started
@@ -215,11 +236,18 @@ message ListSessionsRequest {
   string status_filter = 2;
   // Optional: filter by status ("running", "completed", etc.).
   // If empty, returns all statuses.
+  
+  int32 page_size = 4;
+  // Max results per page. Default: 50
+  
+  string page_token = 5;
+  // Token for next page (from previous response)
 }
 
 message SessionList {
   repeated SessionInfo sessions = 1;
-  int32 total_count = 2;       // Total sessions (if paginated)
+  int32 total_count = 2;       // Total sessions matching filter
+  string next_page_token = 3;  // Token for next page, empty if last page
 }
 ```
 
@@ -255,7 +283,8 @@ message LogEntry {
 
 ### StoreCredential
 
-Store an encrypted credential in the container's local vault.
+Store or update an encrypted credential in the container's local vault.
+Existing credentials with the same identifier are overwritten silently.
 
 ```protobuf
 message StoreCredentialRequest {
@@ -287,7 +316,8 @@ message StoreCredentialResponse {
   string message = 2;
   // Success message or error details.
   // Example: "Credential 'github-prod' stored and encrypted."
-  // Example (error): "Credential 'github-prod' already exists. Use update to replace."
+  // If a credential with the same identifier already exists, it is overwritten.
+  // Example (overwrite): "Credential 'github-prod' updated and encrypted."
   
   // NOTE: Response NEVER contains the credential value or decryption key.
 }
@@ -296,7 +326,7 @@ message StoreCredentialResponse {
 **Behavior:**
 1. Container receives credential_value
 2. Container encrypts: `AES256-GCM(credential_value, encryption_key, nonce)`
-3. Container stores in `/workspace/{project}/.secure/credentials.enc`
+3. Container stores in `/workspace/{project_id}/.secure/credentials.enc`
 4. Returns success
 5. Never logs credential_value or encryption_key
 
@@ -390,13 +420,12 @@ Standard gRPC status codes used in responses:
 - `INVALID_ARGUMENT (3)`: Invalid request (empty command, timeout out of range, etc.)
 - `DEADLINE_EXCEEDED (4)`: Timeout (command exceeded timeout_seconds)
 - `NOT_FOUND (5)`: Session/credential/state not found
-- `ALREADY_EXISTS (6)`: Credential identifier already stored
 - `PERMISSION_DENIED (7)`: User does not have access (project, credential)
 - `RESOURCE_EXHAUSTED (8)`: Session limit reached, disk quota exceeded, memory limit
-- `FAILED_PRECONDITION (9)`: Container not ready, state repo not initialized
+- `FAILED_PRECONDITION (9)`: Container exists but has not completed initialization (state repo not cloned, agent not ready). Permanent until initialization completes — client should NOT retry immediately.
 - `ABORTED (10)`: Command aborted (e.g., killed by signal)
 - `INTERNAL (13)`: Container internal error (filesystem, subprocess error)
-- `UNAVAILABLE (14)`: Container temporarily unavailable (paused, pausing)
+- `UNAVAILABLE (14)`: Container is temporarily unreachable (paused, restarting, network issue). Transient — client SHOULD retry with exponential backoff.
 - `UNAUTHENTICATED (16)`: Authentication required (missing user_id header)
 
 **Example Error Response:**
@@ -405,6 +434,14 @@ Status: RESOURCE_EXHAUSTED
 Message: "Session memory limit (100MB) exceeded. Process killed."
 Details: { "limit_mb": 100, "used_mb": 102, "session_id": "user1-20260315-abc123" }
 ```
+
+### gRPC Status Code → exit_code Mapping
+
+| gRPC Status Code | exit_code | Scenario |
+|---|---|---|
+| `RESOURCE_EXHAUSTED (8)` | 137 | Command killed by OOM (SIGKILL from kernel) |
+| `PERMISSION_DENIED (7)` | _(none)_ | Command not started; gRPC error only |
+| `DEADLINE_EXCEEDED (4)` | 124 | Command killed after timeout_seconds elapsed |
 
 ## Authentication & Authorization
 
@@ -466,6 +503,5 @@ If future changes require breaking changes:
 
 1. Should GetCredential require additional user confirmation or 2FA?
 2. Should we add bulk operations (BulkStoreCredentials, BulkDeleteCredentials)?
-3. Should we add server-side filtering for ListSessions (pagination, date range)?
-4. Should we add metrics/prometheus support (command execution count, latencies)?
-5. Should we support streaming from multiple log streams (stdout + stderr merged)?
+3. Should we add metrics/prometheus support (command execution count, latencies)?
+4. Should we support streaming from multiple log streams (stdout + stderr merged)?

@@ -53,10 +53,11 @@ RUN apk add --no-cache \
     git \
     ca-certificates \
     tini \
-    coreutils
+    coreutils \
+    openssl
 
 # Verify critical binaries
-RUN which bash git ca-certificates tini
+RUN which bash git tini openssl && test -d /etc/ssl/certs
 
 # Create unprivileged user (UID 1000 standard)
 RUN addgroup -g 1000 synchestra && \
@@ -83,6 +84,9 @@ RUN chmod +x /entrypoint.sh
 # ============================================================================
 # Security Hardening
 # ============================================================================
+
+# Ensure $HOME is set for git credential store and other tools
+ENV HOME=/home/synchestra
 
 # Switch to unprivileged user
 USER synchestra:synchestra

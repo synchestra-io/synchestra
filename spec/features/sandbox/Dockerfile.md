@@ -7,7 +7,6 @@ Multi-stage Docker image that builds the gRPC agent and runtime environment. Opt
 ## Build Arguments
 
 - `GO_VERSION`: Go runtime version (default: 1.21-alpine)
-- `SYNCHESTRA_VERSION`: Synchestra release version (default: latest from repo)
 
 ## Build & Push
 
@@ -27,9 +26,9 @@ docker push myregistry.azurecr.io/synchestra/sandbox-agent:latest
 
 - **Base Image**: Alpine Linux (minimal, ~40MB)
 - **Non-root User**: Runs as UID 1000 (unprivileged)
-- **Dropped Capabilities**: All except NET_BIND_SERVICE
+- **Dropped Capabilities**: All capabilities dropped (Unix sockets don't require special capabilities)
 - **Read-only Root FS**: Except /tmp and /workspace
-- **No Package Manager**: apt/apk removed after build (no supply chain attacks)
+- **Minimal Package Manager**: Only essential runtime packages installed; consider removing apk in production builds for additional hardening (`RUN rm -rf /sbin/apk /etc/apk /lib/apk /usr/share/apk`)
 - **Signed Binaries**: Optional: GPG verification of Go binary and git
 
 ## Runtime Configuration
@@ -70,11 +69,11 @@ SYNCHESTRA_CPU_LIMIT        # Optional: per-session CPU limit (default: 0.5)
 ## Example Runtime
 
 ```bash
+# Note: --cap-drop=ALL is sufficient; no --cap-add needed since the agent uses Unix sockets.
 docker run \
   --name synchestra-sandbox-${PROJECT_ID} \
   --rm \
   --cap-drop=ALL \
-  --cap-add=NET_BIND_SERVICE \
   --read-only \
   --tmpfs /run:noexec,nosuid \
   --tmpfs /tmp:noexec,nosuid \

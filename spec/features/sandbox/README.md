@@ -16,6 +16,35 @@ Safe, isolated execution environments for running user-initiated commands from t
 | [container-build-deployment.md](container-build-deployment.md) | Image building, scanning, deployment (Docker, Compose, K8s) |
 | [container-build-automation.md](container-build-automation.md) | Build scripts, Makefile targets, CI/CD pipeline (GitHub Actions) |
 
+## Document Summaries
+
+### [database-schema.md](database-schema.md)
+Host-side database schema for container metadata and access control.
+
+### [protocol.md](protocol.md)
+Complete gRPC service specification for host↔container communication.
+
+### [agent.proto](agent.proto)
+Protobuf 3 service definition for code generation.
+
+### [agent-implementation-guide.md](agent-implementation-guide.md)
+Go implementation patterns for the gRPC agent.
+
+### [Dockerfile.spec](Dockerfile.spec)
+Multi-stage Dockerfile for sandbox container image.
+
+### [Dockerfile.md](Dockerfile.md)
+Container build arguments and runtime configuration documentation.
+
+### [docker-entrypoint.sh](docker-entrypoint.sh)
+Container initialization and setup script.
+
+### [container-build-deployment.md](container-build-deployment.md)
+Build, scan, and deployment procedures.
+
+### [container-build-automation.md](container-build-automation.md)
+Makefile targets, build scripts, and CI/CD pipeline.
+
 ## Outstanding Questions
 
 1. Should credentials support expiry/auto-rotation? Timeline for this feature?

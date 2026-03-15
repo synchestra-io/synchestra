@@ -95,7 +95,7 @@ CREATE TABLE sandbox_user_project_access (
 CREATE TABLE sandbox_container_metadata (
     project_id VARCHAR(255) PRIMARY KEY,
     container_id VARCHAR(255),           -- Docker ID
-    container_status VARCHAR(50),        -- running, paused, stopped
+    container_status VARCHAR(50),        -- running, paused, stopped, failed, terminated
     socket_path VARCHAR(255),            -- /var/run/synchestra-{project_id}.sock
     resource_quota_gb INT,               -- max disk
     memory_limit_mb INT,                 -- max memory
@@ -163,7 +163,7 @@ service SandboxAgent {
 3. Container creates isolated session directory
 4. Container executes command, streams stdout/stderr
 5. On completion, container returns exit code
-6. Session artifacts (logs) retained in `.secure/sessions/{session_id}/` until cleanup
+6. Session artifacts (logs) retained in `/workspace/{project_id}/sessions/{session_id}/logs/` until cleanup
 
 **GetTaskState Flow:**
 1. Host (or web app) requests task state
@@ -257,6 +257,20 @@ If a session exceeds limits, container kills subprocess and returns error.
 2. If project deleted explicitly:
    - Same cleanup immediately
 
+### Failed (Container Crash or Health Check Failure)
+
+1. Container health check (`Ping()` RPC) fails repeatedly
+2. After N consecutive failures (configurable, default 3): update `container_status = failed`
+3. Orchestrator may attempt automatic restart or escalate to cleanup
+4. Failed containers retain workspace for debugging; manual intervention may be needed
+
+### Terminated (Explicit Destruction)
+
+1. Container explicitly destroyed via `DELETE /api/v1/sandbox/{project_id}` or orchestrator cleanup
+2. Update `container_status = terminated`
+3. Container removed: `docker rm {container_id}`
+4. Workspace archived or deleted depending on policy
+
 ## State Management
 
 ### Container-Authoritative State
@@ -301,6 +315,7 @@ POST   /api/v1/sandbox/{project_id}/execute
        Request: { command: [string], user_id: string, timeout_seconds: int }
        Response: { session_id: string }
        Streams: stdout/stderr (EventSource or WebSocket)
+       Default timeout_seconds: 1800 (30 minutes). Range: [1, 86400].
 
 GET    /api/v1/sandbox/{project_id}/status
        Response: { container_status, uptime, active_sessions, resource_usage }

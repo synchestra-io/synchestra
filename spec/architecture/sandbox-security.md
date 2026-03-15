@@ -50,7 +50,7 @@ The Sandbox feature is designed with **security by architecture**: isolating sec
 - Can exfiltrate secrets from sibling containers or encrypted stores
 
 **Mitigations:**
-- Run container with restricted capabilities: `--cap-drop=ALL --cap-add=NET_BIND_SERVICE`
+- Run container with restricted capabilities: `--cap-drop=ALL` (no capabilities added — agent uses Unix socket, not privileged ports)
 - Drop: `CAP_SYS_ADMIN`, `CAP_SYS_PTRACE`, `CAP_NET_ADMIN`, etc.
 - Read-only root filesystem (where safe): `/` read-only, `/workspace` read-write
 - No privileged flag, no host network access
@@ -108,7 +108,7 @@ The Sandbox feature is designed with **security by architecture**: isolating sec
 - User B can invoke commands as User A
 
 **Mitigations:**
-- Credential store `/workspace/{project}/.secure/credentials.enc` has restrictive permissions (0600)
+- Credential store `/workspace/{project_id}/.secure/credentials.enc` has restrictive permissions (0600)
 - Session directories created with user-specific umask: 0700 (owner read-write-execute only)
 - Environment variables cleared after command execution
 - No credential values in logs; log only: `Used credential type=git_token identifier=github-prod`
@@ -217,7 +217,7 @@ The Sandbox feature is designed with **security by architecture**: isolating sec
 ```
 User provides token → gRPC StoreCredential() → 
   Container: AES256-GCM(token, key, nonce) → 
-  Store ciphertext in /workspace/{project}/.secure/credentials.enc →
+  Store ciphertext in /workspace/{project_id}/.secure/credentials.enc →
   Response: { success: true }
 ```
 
@@ -253,7 +253,7 @@ Command: git clone https://github.com/private/repo →
 ```bash
 docker run \
   --cap-drop=ALL \
-  --cap-add=NET_BIND_SERVICE \
+  # No capabilities needed — agent uses Unix socket, not privileged ports
   --read-only \
   --tmpfs /run:noexec,nosuid \
   --tmpfs /tmp:noexec,nosuid \
@@ -273,10 +273,10 @@ docker run \
 
 **Filesystem Permissions:**
 ```
-/workspace/{project}/.secure/ — mode 0700 (root only, or container uid)
-/workspace/{project}/.secure/credentials.enc — mode 0600
-/workspace/{project}/sessions/{session_id}/ — mode 0700 (per-session cleanup)
-/workspace/{project}/.synchestra/ — mode 0755 (readable by processes)
+/workspace/{project_id}/.secure/ — mode 0700 (root only, or container uid)
+/workspace/{project_id}/.secure/credentials.enc — mode 0600
+/workspace/{project_id}/sessions/{session_id}/ — mode 0700 (per-session cleanup)
+/workspace/{project_id}/.synchestra/ — mode 0755 (readable by processes)
 ```
 
 **Unprivileged User:**
@@ -293,7 +293,7 @@ docker run \
 - Cleanup: Delete on session completion or timeout
 
 **Credential Isolation:**
-- Stored in shared `/workspace/{project}/.secure/credentials.enc`
+- Stored in shared `/workspace/{project_id}/.secure/credentials.enc`
 - gRPC layer validates `user_id` before granting credential access
 - Future: Per-user credential encryption with separate keys
 
@@ -303,7 +303,7 @@ docker run \
 - cgroups enforce memory/CPU per session (if possible via isolation)
 
 **Log Isolation:**
-- Stdout/stderr captured per session: `/workspace/{project}/sessions/{session_id}/logs/`
+- Stdout/stderr captured per session: `/workspace/{project_id}/sessions/{session_id}/logs/`
 - No cross-session log access
 - Logs cleaned up with session
 
@@ -352,7 +352,7 @@ Disk:      50 GB (default)
 - [ ] **State Repo**: Verify `.synchestra/` is read-only for non-gRPC operations
 - [ ] **Cross-Project Isolation**: Two projects in separate containers; verify no file/network access between them
 - [ ] **Audit Logging**: Credential access attempt logged (not value); verify in logs
-- [ ] **Permissions**: Verify `/.secure/credentials.enc` is 0600, sessions/ are 0700
+- [ ] **Permissions**: Verify `/workspace/{project_id}/.secure/credentials.enc` is 0600, sessions/ are 0700
 - [ ] **Network**: Verify no external network access from container (except authorized egress)
 
 ### Penetration Testing

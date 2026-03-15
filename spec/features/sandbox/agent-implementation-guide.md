@@ -6,7 +6,7 @@ The gRPC Agent is a Go service that runs inside each Synchestra sandbox containe
 
 **Language**: Go  
 **Location in repo**: `internal/sandbox/agent/`  
-**Container entry point**: `/app/synchestra-sandbox-agent`
+**Container entry point**: `/usr/local/bin/synchestra-sandbox-agent`
 
 ## Architecture
 

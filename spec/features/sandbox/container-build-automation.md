@@ -57,7 +57,7 @@ sandbox-image-buildx:
 .PHONY: sandbox-image-test
 sandbox-image-test: sandbox-image
 	@echo "Testing Sandbox Agent image..."
-	docker run --rm synchestra/sandbox-agent:latest /usr/bin/synchestra-sandbox-agent --version
+	docker run --rm synchestra/sandbox-agent:latest /usr/local/bin/synchestra-sandbox-agent --version
 	@echo "✓ Image test passed"
 
 # Build and test sandbox image (full pipeline)
@@ -377,7 +377,6 @@ cd -
 docker run --rm \
   --name test-sandbox-${PROJECT_ID} \
   --cap-drop=ALL \
-  --cap-add=NET_BIND_SERVICE \
   --read-only \
   --tmpfs /tmp \
   -v ${WORK_DIR}:/workspace/${PROJECT_ID}:rw \

@@ -131,11 +131,11 @@ docker run \
   \
   # Security options
   --cap-drop=ALL \
-  --cap-add=NET_BIND_SERVICE \
+  # No capabilities needed — agent uses Unix socket, not privileged ports
   --read-only \
   --tmpfs /run:noexec,nosuid \
   --tmpfs /tmp:noexec,nosuid \
-  --security-opt=seccomp=unconfined \
+  --security-opt=seccomp=default \
   \
   # Volume mounts
   -v /var/lib/synchestra/workspaces/${PROJECT_ID}:/workspace/${PROJECT_ID}:rw \
@@ -177,8 +177,7 @@ services:
     
     cap_drop:
       - ALL
-    cap_add:
-      - NET_BIND_SERVICE
+    # No capabilities needed — agent uses Unix socket, not privileged ports
     
     read_only: true
     tmpfs:
@@ -256,8 +255,7 @@ spec:
           capabilities:
             drop:
               - ALL
-            add:
-              - NET_BIND_SERVICE
+            # No capabilities needed — agent uses Unix socket, not privileged ports
           readOnlyRootFilesystem: true
         
         env:
