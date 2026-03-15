@@ -8,6 +8,9 @@ import (
 	"charm.land/fang/v2"
 	"github.com/ingitdb/ingitdb-cli/cmd/ingitdb/commands"
 	"github.com/spf13/cobra"
+	"github.com/synchesta-io/synchestra/cli/cmd/project"
+	"github.com/synchesta-io/synchestra/cli/internal/exitcode"
+	"github.com/synchesta-io/synchestra/cli/internal/gitops"
 )
 
 var (
@@ -22,8 +25,8 @@ func Run(
 	osGetwd func() (string, error),
 	fatal func(error),
 	logf func(...any),
+	exit func(int),
 ) {
-	_ = osUserHomeDir
 	_ = osGetwd
 	_ = logf
 	rootCmd := &cobra.Command{
@@ -46,10 +49,18 @@ func Run(
 		commands.Watch(),
 		commands.Find(),
 		commands.Migrate(),
+		project.GroupCommand(osUserHomeDir, gitops.NewRunner()),
 	)
 
 	rootCmd.SetArgs(args[1:])
 	if err := fang.Execute(context.Background(), rootCmd); err != nil {
+		var exitErr *exitcode.Error
+		if errors.As(err, &exitErr) {
+			fatal(exitErr.Err)
+			exit(exitErr.Code)
+			return
+		}
 		fatal(err)
+		exit(1)
 	}
 }
