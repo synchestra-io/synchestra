@@ -1,6 +1,8 @@
 // Package project implements the `synchestra project` command group.
 package project
 
+// Features implemented: cli/project/new
+
 import (
 	"github.com/spf13/cobra"
 	"github.com/synchesta-io/synchestra/cli/internal/gitops"

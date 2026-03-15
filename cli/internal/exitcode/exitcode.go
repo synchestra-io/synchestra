@@ -1,6 +1,8 @@
 // Package exitcode defines an error type that carries a process exit code.
 package exitcode
 
+// Features implemented: cli/project/new
+
 import "fmt"
 
 // Error is an error that carries a specific process exit code.
