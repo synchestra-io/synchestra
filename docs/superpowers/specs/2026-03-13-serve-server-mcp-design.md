@@ -8,7 +8,7 @@ Three independent CLI commands for running the Synchestra API server in differen
 - **`synchestra server`** — background daemon, config-driven (`synchestra-server.yaml`)
 - **`synchestra mcp`** — stdio MCP server for AI agent tools
 
-All three resolve a working directory by traversing up from CWD (or `--path`) to find `synchestra-state.yaml`, `synchestra-project.yaml`, or `synchestra-server.yaml`. Error (exit code 3) if none found.
+All three resolve a working directory by traversing up from CWD (or `--path`) to find `synchestra-state.yaml`, `synchestra-spec.yaml`, or `synchestra-server.yaml`. Error (exit code 3) if none found.
 
 ## Command: `synchestra serve`
 
@@ -43,7 +43,7 @@ Required when `--https` is used.
 ### Behavior
 
 1. Resolve working directory: use `--path` or CWD
-2. Traverse up to find `synchestra-state.yaml`, `synchestra-project.yaml`, or `synchestra-server.yaml`
+2. Traverse up to find `synchestra-state.yaml`, `synchestra-spec.yaml`, or `synchestra-server.yaml`
 3. If none found: exit code 3 ("Not a synchestra directory")
 4. If `synchestra-server.yaml` found: load config as base, CLI args override — supports multi-project
 5. If spec/state repo found: behave as single-project server, resolve counterpart repo via cross-reference
@@ -236,7 +236,7 @@ All three commands share the same directory resolution logic:
 2. Traverse up the directory tree
 3. Look for (in priority order):
    - `synchestra-server.yaml` → server directory (multi-project)
-   - `synchestra-project.yaml` → spec repo (resolve state via cross-reference)
+   - `synchestra-spec.yaml` → spec repo (resolve state via cross-reference)
    - `synchestra-state.yaml` → state repo (resolve spec via cross-reference)
 4. If root (`/`) reached without finding any marker → exit code 3
 

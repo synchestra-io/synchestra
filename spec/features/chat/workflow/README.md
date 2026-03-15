@@ -51,7 +51,7 @@ Workflows solve this by providing a declarative format that separates **what and
 
 ### Workflow location
 
-Built-in workflow definitions ship with Synchestra. Project-level overrides and customizations live in `synchestra-project.yaml`.
+Built-in workflow definitions ship with Synchestra. Project-level overrides and customizations live in `synchestra-spec.yaml`.
 
 The canonical workflow specs live under `spec/features/chat/workflow/` in the Synchestra spec repo.
 
@@ -172,7 +172,7 @@ For entity creation (e.g., "New feature" on the features index page), the UI ren
 
 ### Project customization
 
-Projects customize built-in workflows in `synchestra-project.yaml`. The built-in workflows define the structure (steps, order, artifact types); the project configures the substance (questions, rules, checks).
+Projects customize built-in workflows in `synchestra-spec.yaml`. The built-in workflows define the structure (steps, order, artifact types); the project configures the substance (questions, rules, checks).
 
 ```yaml
 workflows:
@@ -217,7 +217,7 @@ workflows:
 | [Chat](../README.md) | Workflows configure the chat layer. Each chat instance runs exactly one workflow. |
 | [Agent Skills](../../agent-skills/README.md) | Workflow steps reference skills/prompts from the skill infrastructure. |
 | [UI](../../ui/README.md) | The web UI renders workflow buttons based on `anchor-types`, `roles`, and `ui` configuration. |
-| [Project Definition](../../project-definition/README.md) | Workflow customization lives in `synchestra-project.yaml`. |
+| [Project Definition](../../project-definition/README.md) | Workflow customization lives in `synchestra-spec.yaml`. |
 | [CLI](../../cli/README.md) | `synchestra workflow list` shows available workflows. Workflows are primarily a web UI concept. |
 
 ## Outstanding Questions

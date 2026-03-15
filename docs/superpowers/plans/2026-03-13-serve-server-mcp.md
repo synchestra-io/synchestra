@@ -60,7 +60,7 @@ Specifies the working directory for commands that resolve a Synchestra context.
 Overrides the current working directory for directory resolution. The CLI traverses up from this path (or CWD if omitted) looking for one of the following marker files:
 
 - `synchestra-server.yaml` — server directory (multi-project)
-- `synchestra-project.yaml` — spec repo
+- `synchestra-spec.yaml` — spec repo
 - `synchestra-state.yaml` — state repo
 
 If no marker file is found before reaching the filesystem root, the command exits with code `3`.
@@ -116,7 +116,7 @@ Add summary sections after the existing `### --project` summary:
 ```markdown
 ### `--path`
 
-Overrides the current working directory for commands that resolve a Synchestra context (serve, server, mcp). The CLI traverses up from this path looking for `synchestra-server.yaml`, `synchestra-project.yaml`, or `synchestra-state.yaml`. See [path.md](path.md).
+Overrides the current working directory for commands that resolve a Synchestra context (serve, server, mcp). The CLI traverses up from this path looking for `synchestra-server.yaml`, `synchestra-spec.yaml`, or `synchestra-state.yaml`. See [path.md](path.md).
 
 ### `--format`
 
@@ -232,7 +232,7 @@ Exit codes `1` (Conflict) and `4` (Invalid state transition) do not apply — `s
 ## Behaviour
 
 1. Resolve working directory: use `--path` or CWD
-2. Traverse up to find `synchestra-server.yaml`, `synchestra-project.yaml`, or `synchestra-state.yaml`
+2. Traverse up to find `synchestra-server.yaml`, `synchestra-spec.yaml`, or `synchestra-state.yaml`
 3. If none found: exit with code `3`
 4. If `synchestra-server.yaml` found: load config as base, CLI args override
 5. If spec/state repo found: resolve counterpart repo via cross-reference, operate as single-project server
@@ -957,7 +957,7 @@ Cross-linked with the API endpoint [`POST /api/v1/projects`](../../../../../api/
 
 1. Resolve directory via `--path` or CWD traversal
 2. Find and parse `synchestra-server.yaml`; exit `3` if not found
-3. Validate that `--spec` points to a directory with `synchestra-project.yaml`
+3. Validate that `--spec` points to a directory with `synchestra-spec.yaml`
 4. Validate that `--state` points to a directory with `synchestra-state.yaml`
 5. Check if the project already exists in the config; exit `1` if so
 6. Append the new project entry to `synchestra-server.yaml`
@@ -1018,7 +1018,7 @@ Path to the project's spec repository.
 
 ## Description
 
-Specifies the path to a spec repository containing `synchestra-project.yaml`. The path is stored in `synchestra-server.yaml` and used by the server to locate project specifications.
+Specifies the path to a spec repository containing `synchestra-spec.yaml`. The path is stored in `synchestra-server.yaml` and used by the server to locate project specifications.
 
 Relative paths are resolved relative to the directory containing `synchestra-server.yaml`.
 
@@ -1131,7 +1131,7 @@ Operates in single-project mode, determined by the resolved directory.
 ## Behaviour
 
 1. Resolve directory via `--path` or CWD traversal
-2. Find `synchestra-state.yaml`, `synchestra-project.yaml`, or `synchestra-server.yaml`; exit `3` if not found
+2. Find `synchestra-state.yaml`, `synchestra-spec.yaml`, or `synchestra-server.yaml`; exit `3` if not found
 3. If spec/state repo: resolve counterpart, operate as single-project
 4. If server dir: operate as single-project using the first project in config
 5. Start MCP server on stdio (stdin for requests, stdout for responses)
