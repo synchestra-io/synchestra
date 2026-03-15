@@ -13,7 +13,7 @@ These are cross-cutting concerns that features and specifications build upon.
 
 ### repository-types.md
 
-Defines the three kinds of repositories Synchestra operates with: the spec repository (requirements and documentation), the state repository (tasks and coordination), and the code repository (implementation). Explains why the state repo must be separate, naming conventions, how repos connect through `synchestra-project.yaml`, and when spec+code repos can be combined.
+Defines the three kinds of repositories Synchestra operates with: the spec repository (requirements and documentation), the state repository (tasks and coordination), and the code repository (implementation). Explains why the state repo must be separate, naming conventions, how repos connect through `synchestra-spec.yaml`, and when spec+code repos can be combined.
 
 ### spec-to-execution.md
 

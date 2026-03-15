@@ -14,11 +14,11 @@ Arguments available to all `synchestra` commands.
 
 ### `--project`
 
-Identifies which Synchestra project to operate on. Optional when the CLI is running inside a project directory or subdirectory — the project is autodetected from `synchestra-project.yaml`. Not required by `serve` and other project-independent commands. See [project.md](project.md) for full details.
+Identifies which Synchestra project to operate on. Optional when the CLI is running inside a project directory or subdirectory — the project is autodetected from `synchestra-spec.yaml`. Not required by `serve` and other project-independent commands. See [project.md](project.md) for full details.
 
 ### `--path`
 
-Overrides the current working directory for commands that resolve a Synchestra context (serve, server, mcp). The CLI traverses up from this path looking for `synchestra-server.yaml`, `synchestra-project.yaml`, or `synchestra-state.yaml`. See [path.md](path.md).
+Overrides the current working directory for commands that resolve a Synchestra context (serve, server, mcp). The CLI traverses up from this path looking for `synchestra-server.yaml`, `synchestra-spec.yaml`, or `synchestra-state.yaml`. See [path.md](path.md).
 
 ### `--format`
 

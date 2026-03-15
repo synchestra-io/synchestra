@@ -44,7 +44,7 @@ Exit codes `1` (Conflict) and `4` (Invalid state transition) do not apply — `s
 ## Behaviour
 
 1. Resolve working directory: use `--path` or CWD
-2. Traverse up to find `synchestra-server.yaml`, `synchestra-project.yaml`, or `synchestra-state.yaml`
+2. Traverse up to find `synchestra-server.yaml`, `synchestra-spec.yaml`, or `synchestra-state.yaml`
 3. If none found: exit with code `3`
 4. If `synchestra-server.yaml` found: load config as base, CLI args override
 5. If spec/state repo found: resolve counterpart repo via cross-reference, operate as single-project server
