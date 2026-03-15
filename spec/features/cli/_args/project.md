@@ -14,11 +14,11 @@ Most `synchestra` commands. Not required by `serve` and other commands that oper
 
 ## Description
 
-Tells the CLI which project to read from or write to. The value matches the project's `project_id` as defined in `synchestra-project.yaml` or the project directory name under `synchestra/projects/` in a multi-project spec repo.
+Tells the CLI which project to read from or write to. The value matches the project's `project_id` as defined in `synchestra-spec.yaml` or the project directory name under `synchestra/projects/` in a multi-project spec repo.
 
 ### Autodetection
 
-When `--project` is omitted, the CLI walks up from the current working directory looking for a `synchestra-project.yaml` file. If found, the project is inferred automatically. This means agents and humans running commands inside a project directory (or any subdirectory) can skip the flag entirely.
+When `--project` is omitted, the CLI walks up from the current working directory looking for a `synchestra-spec.yaml` file. If found, the project is inferred automatically. This means agents and humans running commands inside a project directory (or any subdirectory) can skip the flag entirely.
 
 If the CLI cannot autodetect a project and `--project` is not provided, the command exits with code `2` (invalid arguments).
 
