@@ -1,0 +1,245 @@
+syntax = "proto3";
+
+package synchestra.sandbox.v1;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/struct.proto";
+
+// SandboxAgent is the gRPC service running inside each container.
+// It handles command execution, credential storage, and state management.
+service SandboxAgent {
+  // Execute a command in an isolated session
+  rpc ExecuteCommand(CommandRequest) returns (stream CommandOutput) {}
+  
+  // Get container status and active sessions
+  rpc GetStatus(StatusRequest) returns (StatusResponse) {}
+  
+  // List active sessions
+  rpc ListSessions(ListSessionsRequest) returns (SessionList) {}
+  
+  // Stream logs from a session (real-time)
+  rpc StreamLogs(StreamLogsRequest) returns (stream LogEntry) {}
+  
+  // Store a credential (user provides token, container encrypts)
+  rpc StoreCredential(StoreCredentialRequest) returns (StoreCredentialResponse) {}
+  
+  // Get task state from local .synchestra/ repo
+  rpc GetTaskState(GetTaskStateRequest) returns (TaskStateResponse) {}
+  
+  // Retrieve stored credential (decrypted, for command execution)
+  rpc GetCredential(GetCredentialRequest) returns (GetCredentialResponse) {}
+  
+  // Health check (liveness probe)
+  rpc Ping(google.protobuf.Empty) returns (PingResponse) {}
+}
+
+// ============================================================================
+// ExecuteCommand Messages
+// ============================================================================
+
+message CommandRequest {
+  string session_id = 1;
+  // Unique identifier for this execution session.
+  
+  string user_id = 2;
+  // User identifier from auth system.
+  
+  repeated string command = 3;
+  // Command to execute (execve argv format).
+  
+  string working_dir = 4;
+  // Working directory relative to session directory.
+  
+  map<string, string> env_vars = 5;
+  // Environment variables to inject.
+  
+  int32 timeout_seconds = 6;
+  // Command timeout (wall-clock seconds).
+  
+  bool stream_output = 7;
+  // If true, stream output in real-time.
+}
+
+message CommandOutput {
+  string session_id = 1;
+  // Echo session_id for correlation.
+  
+  bytes stdout = 2;
+  // Chunk of stdout.
+  
+  bytes stderr = 3;
+  // Chunk of stderr.
+  
+  int32 exit_code = 4;
+  // Exit code (only on final message).
+  
+  bool completed = 5;
+  // True on final message.
+  
+  string error_message = 6;
+  // Error if command failed to start.
+}
+
+// ============================================================================
+// Status Messages
+// ============================================================================
+
+message StatusRequest {
+  // Empty request.
+}
+
+message StatusResponse {
+  string container_id = 1;
+  // Docker container ID.
+  
+  string status = 2;
+  // Container lifecycle status.
+  
+  int64 uptime_seconds = 3;
+  // Seconds since container started.
+  
+  ContainerResources resources = 4;
+  // Current resource usage.
+  
+  repeated SessionInfo active_sessions = 5;
+  // List of active sessions.
+}
+
+message ContainerResources {
+  int64 memory_used_mb = 1;
+  int64 memory_limit_mb = 2;
+  float cpu_usage_percent = 3;
+  float cpu_limit = 4;
+  int64 disk_used_gb = 5;
+  int64 disk_limit_gb = 6;
+  int32 active_sessions_count = 7;
+}
+
+message SessionInfo {
+  string session_id = 1;
+  string user_id = 2;
+  string status = 3;
+  int32 command_count = 4;
+  int64 memory_used_mb = 5;
+  int64 runtime_seconds = 6;
+  string working_dir = 7;
+}
+
+// ============================================================================
+// ListSessions Messages
+// ============================================================================
+
+message ListSessionsRequest {
+  string user_id = 1;
+  // Optional: filter by user.
+  
+  string status_filter = 2;
+  // Optional: filter by status.
+}
+
+message SessionList {
+  repeated SessionInfo sessions = 1;
+  int32 total_count = 2;
+}
+
+// ============================================================================
+// StreamLogs Messages
+// ============================================================================
+
+message StreamLogsRequest {
+  string session_id = 1;
+  // Session ID to stream from.
+  
+  bool follow = 2;
+  // Keep stream open after completion.
+  
+  int32 tail = 3;
+  // Return last N lines.
+}
+
+message LogEntry {
+  google.protobuf.Timestamp timestamp = 1;
+  string stream = 2;  // "stdout" or "stderr"
+  bytes data = 3;     // Log line data
+}
+
+// ============================================================================
+// Credential Messages
+// ============================================================================
+
+message StoreCredentialRequest {
+  string credential_type = 1;
+  // Type: "git_token", "ssh_key", "api_key", etc.
+  
+  string credential_value = 2;
+  // The actual secret (never logged or echoed).
+  
+  string identifier = 3;
+  // Human-readable identifier ("github-prod", etc).
+  
+  string description = 4;
+  // Optional description.
+  
+  int64 expires_at_unix = 5;
+  // Optional expiry timestamp.
+}
+
+message StoreCredentialResponse {
+  bool success = 1;
+  string message = 2;
+  // Success or error message (never contains credential).
+}
+
+message GetCredentialRequest {
+  string identifier = 1;
+  // Credential identifier to retrieve.
+  
+  string user_id = 2;
+  // User requesting (for audit).
+}
+
+message GetCredentialResponse {
+  string credential_type = 1;
+  string credential_value = 2;
+  // Decrypted credential value.
+  
+  bool found = 3;
+  bool expired = 4;
+}
+
+// ============================================================================
+// Task State Messages
+// ============================================================================
+
+message GetTaskStateRequest {
+  string query_path = 1;
+  // Optional path to specific task.
+  
+  string git_ref = 2;
+  // Optional git ref (default: "HEAD").
+}
+
+message TaskStateResponse {
+  string state_json = 1;
+  // JSON content of state file(s).
+  
+  string git_commit_hash = 2;
+  // Current HEAD commit hash.
+  
+  google.protobuf.Timestamp git_commit_time = 3;
+  // Commit timestamp.
+  
+  int32 http_status = 4;
+  // 200 = found, 404 = not found, 500 = error.
+}
+
+// ============================================================================
+// Health Check Messages
+// ============================================================================
+
+message PingResponse {
+  string status = 1;  // "ok", "degraded", "unhealthy"
+  google.protobuf.Timestamp timestamp = 2;
+  int64 uptime_seconds = 3;
+}
