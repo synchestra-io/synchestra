@@ -24,7 +24,7 @@ func NewCommand(homeDir func() (string, error), git gitops.Runner) *cobra.Comman
 	var (
 		specRepoRef   string
 		stateRepoRef  string
-		targetRepRefs []string
+		targetRepoRefs []string
 		title         string
 	)
 
@@ -36,15 +36,19 @@ one or more target repos. Resolves all repo references, clones any that
 are not already on disk, writes config files to each, commits and pushes.`,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			return runProjectNew(cmd, homeDir, git, specRepoRef, stateRepoRef, targetRepRefs, title)
+			return runProjectNew(cmd, homeDir, git, specRepoRef, stateRepoRef, targetRepoRefs, title)
 		},
 	}
 
 	cmd.Flags().StringVar(&specRepoRef, "spec-repo", "", "Spec repository reference (required)")
 	cmd.Flags().StringVar(&stateRepoRef, "state-repo", "", "State repository reference (required)")
-	cmd.Flags().StringArrayVar(&targetRepRefs, "target-repo", nil, "Target repository reference (repeatable, at least one required)")
+	cmd.Flags().StringArrayVar(&targetRepoRefs, "target-repo", nil, "Target repository reference (repeatable, at least one required)")
 	cmd.Flags().StringVar(&title, "title", "", "Project title (derived from README.md or repo name if omitted)")
 
+	// Note: cobra's MarkFlagRequired errors exit with code 1 (not 2) because they return
+	// a generic error, not an exitcode.Error. --target-repo is validated manually in RunE
+	// to correctly emit exit code 2. --spec-repo and --state-repo missing-flag errors
+	// take the cobra path and exit 1.
 	_ = cmd.MarkFlagRequired("spec-repo")
 	_ = cmd.MarkFlagRequired("state-repo")
 
@@ -119,7 +123,17 @@ func runProjectNew(
 	stateLocal := stateRef.LocalPath(cfg.ReposDir)
 	specOrigin := specRef.OriginURL()
 
-	// Check for conflicts: existing config files pointing to a different project
+	// Get authoritative origin URLs from git remote before conflict checks.
+	stateOrigin, err := git.OriginURL(stateLocal)
+	if err != nil {
+		return exitcode.New(10, "get origin URL for state repo: %v", err)
+	}
+
+	// Check for conflicts: existing config files pointing to a different project.
+	// This applies to all repos, including the spec repo itself.
+	if err := checkNoConflict(specLocal, "synchestra-spec.yaml", "state_repo", stateOrigin); err != nil {
+		return err
+	}
 	if err := checkNoConflict(stateLocal, "synchestra-state.yaml", "spec_repo", specOrigin); err != nil {
 		return err
 	}
@@ -133,12 +147,6 @@ func runProjectNew(
 	// Derive title
 	if title == "" {
 		title = deriveTitle(specLocal, specRef.Repo)
-	}
-
-	// Get origin URLs from git remote (authoritative)
-	stateOrigin, err := git.OriginURL(stateLocal)
-	if err != nil {
-		return exitcode.New(10, "get origin URL for state repo: %v", err)
 	}
 
 	targetOrigins := make([]string, len(targetRefs))
@@ -178,7 +186,7 @@ func runProjectNew(
 	commitMsg := fmt.Sprintf("chore: initialize Synchestra project %q", title)
 
 	if err := commitPushWithRetry(git, specLocal, []string{"synchestra-spec.yaml"}, commitMsg, func() error {
-		return nil // spec repo owns the project definition; no conflict re-check needed
+		return checkNoConflict(specLocal, "synchestra-spec.yaml", "state_repo", stateOrigin)
 	}); err != nil {
 		return exitcode.New(10, "commit spec repo: %v", err)
 	}
@@ -231,13 +239,17 @@ func checkNoConflict(dir, filename, field, expectedValue string) error {
 	if err != nil {
 		return exitcode.New(10, "read %s: %v", path, err)
 	}
-	var m map[string]string
+	var m map[string]any
 	if err := yaml.Unmarshal(data, &m); err != nil {
 		return exitcode.New(10, "parse %s: %v", path, err)
 	}
 	existing, ok := m[field]
-	if ok && existing != expectedValue {
-		return exitcode.New(1, "%s already configured for a different project (%s: %q)", filename, field, existing)
+	if !ok {
+		return nil
+	}
+	existingStr, isStr := existing.(string)
+	if isStr && existingStr != expectedValue {
+		return exitcode.New(1, "%s already configured for a different project (%s: %q)", filename, field, existingStr)
 	}
 	return nil
 }
