@@ -1,6 +1,6 @@
 module github.com/synchesta-io/synchestra
 
-go 1.26.0
+go 1.26.1
 
 require (
 	charm.land/fang/v2 v2.0.1
