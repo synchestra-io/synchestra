@@ -1,5 +1,8 @@
 package cli
 
+// Features implemented: cli/project
+// Features depended on:  global-config
+
 import (
 	"github.com/spf13/cobra"
 )

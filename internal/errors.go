@@ -1,5 +1,7 @@
 package internal
 
+// Features depended on: cli
+
 import "fmt"
 
 // ExitError wraps an error with an exit code for CLI handling.

@@ -1,5 +1,7 @@
 package internal
 
+// Features depended on: global-config
+
 import (
 	"fmt"
 	"os"

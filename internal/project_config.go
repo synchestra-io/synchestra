@@ -1,5 +1,7 @@
 package internal
 
+// Features depended on: cli/project/new, repository-types
+
 import (
 	"fmt"
 	"os"

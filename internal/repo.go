@@ -1,5 +1,7 @@
 package internal
 
+// Features depended on: cli/project/new, repository-types, architecture/spec-to-execution
+
 import (
 	"bytes"
 	"fmt"
