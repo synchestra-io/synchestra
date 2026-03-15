@@ -34,3 +34,16 @@ import (
 ### Why
 
 These annotations let agents and developers trace from source code back to specifications, understand cross-feature coupling, and assess the impact of spec changes on implementation.
+
+## Go validation after code changes
+
+After any change to `.go` files, agents must run the full Go validation sequence before considering the task complete:
+
+- `gofmt -w <changed-go-files>` (or `gofmt -w ./...` when appropriate)
+- `golangci-lint run ./...`
+- `go test ./...`
+- `go build ./...`
+- `go vet ./...`
+
+If the user explicitly says to skip one of these checks, follow the user's instruction and say which validation was skipped.
+

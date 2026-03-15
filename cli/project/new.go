@@ -9,6 +9,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/synchesta-io/synchestra/cli/gitops"
@@ -31,9 +32,6 @@ each, and commits and pushes the changes.`,
 	cmd.Flags().String("state-repo", "", "state repository reference (required)")
 	cmd.Flags().StringArray("target-repo", nil, "target repository reference (repeatable, at least one required)")
 	cmd.Flags().String("title", "", "project title (default: derived from spec repo README)")
-	_ = cmd.MarkFlagRequired("spec-repo")
-	_ = cmd.MarkFlagRequired("state-repo")
-	_ = cmd.MarkFlagRequired("target-repo")
 	return cmd
 }
 
@@ -43,11 +41,10 @@ func runNew(cmd *cobra.Command, _ []string) error {
 	targetRepoStrs, _ := cmd.Flags().GetStringArray("target-repo")
 	titleFlag, _ := cmd.Flags().GetString("title")
 
-	if len(targetRepoStrs) == 0 {
-		return &exitError{code: 2, msg: "at least one --target-repo is required"}
+	if err := validateRequiredRepoFlags(specRepoStr, stateRepoStr, targetRepoStrs); err != nil {
+		return err
 	}
 
-	// Parse repo references
 	specRef, err := reporef.Parse(specRepoStr)
 	if err != nil {
 		return &exitError{code: 2, msg: fmt.Sprintf("invalid --spec-repo: %v", err)}
@@ -56,7 +53,8 @@ func runNew(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return &exitError{code: 2, msg: fmt.Sprintf("invalid --state-repo: %v", err)}
 	}
-	var targetRefs []reporef.Ref
+
+	targetRefs := make([]reporef.Ref, 0, len(targetRepoStrs))
 	for _, s := range targetRepoStrs {
 		ref, err := reporef.Parse(s)
 		if err != nil {
@@ -65,7 +63,10 @@ func runNew(cmd *cobra.Command, _ []string) error {
 		targetRefs = append(targetRefs, ref)
 	}
 
-	// Load global config
+	if err := validateDistinctRepoRoles(specRef, stateRef, targetRefs); err != nil {
+		return err
+	}
+
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return &exitError{code: 10, msg: fmt.Sprintf("cannot determine home directory: %v", err)}
@@ -76,37 +77,45 @@ func runNew(cmd *cobra.Command, _ []string) error {
 	}
 	reposDir := globalconfig.ResolveReposDir(cfg.ReposDir, homeDir)
 
-	// Resolve disk paths
 	allRefs := append([]reporef.Ref{specRef, stateRef}, targetRefs...)
 	allPaths := make([]string, len(allRefs))
 	for i, ref := range allRefs {
 		allPaths[i] = ref.DiskPath(reposDir)
+		if err := validateResolvedRepoPath(reposDir, allPaths[i], ref.Identifier()); err != nil {
+			return err
+		}
 	}
 	specPath, statePath := allPaths[0], allPaths[1]
 	targetPaths := allPaths[2:]
 
-	// Clone repos that don't exist on disk
 	for i, ref := range allRefs {
 		p := allPaths[i]
-		if _, err := os.Stat(p); errors.Is(err, fs.ErrNotExist) {
-			fmt.Fprintf(cmd.ErrOrStderr(), "Cloning %s...\n", ref.Identifier())
-			if err := os.MkdirAll(filepath.Dir(p), 0755); err != nil {
+		info, err := os.Stat(p)
+		switch {
+		case errors.Is(err, fs.ErrNotExist):
+			_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "Cloning %s...\n", ref.Identifier())
+			if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
 				return &exitError{code: 3, msg: fmt.Sprintf("creating directory for %s: %v", ref.Identifier(), err)}
 			}
 			if err := gitops.Clone(ref.OriginURL(), p); err != nil {
 				return &exitError{code: 3, msg: fmt.Sprintf("cloning %s: %v", ref.Identifier(), err)}
 			}
+		case err != nil:
+			return &exitError{code: 10, msg: fmt.Sprintf("checking %s: %v", ref.Identifier(), err)}
+		case !info.IsDir():
+			return &exitError{code: 1, msg: fmt.Sprintf("path for %s already exists and is not a directory: %s", ref.Identifier(), p)}
 		}
 	}
 
-	// Validate all are git repos
 	for i, ref := range allRefs {
 		if !gitops.IsGitRepo(allPaths[i]) {
 			return &exitError{code: 3, msg: fmt.Sprintf("%s is not a git repository", ref.Identifier())}
 		}
+		if err := ensureCheckoutMatchesRef(allPaths[i], ref); err != nil {
+			return err
+		}
 	}
 
-	// Check for existing config files pointing to a different project
 	if err := checkSpecConflict(specPath, stateRef.OriginURL()); err != nil {
 		return err
 	}
@@ -119,16 +128,12 @@ func runNew(cmd *cobra.Command, _ []string) error {
 		}
 	}
 
-	// Derive title
 	title := DeriveTitle(titleFlag, specPath, specRef.Repo)
-
-	// Collect target origin URLs
 	targetOriginURLs := make([]string, len(targetRefs))
 	for i, ref := range targetRefs {
 		targetOriginURLs[i] = ref.OriginURL()
 	}
 
-	// Write config files
 	specCfg := SpecConfig{
 		Title:     title,
 		StateRepo: stateRef.OriginURL(),
@@ -150,9 +155,7 @@ func runNew(cmd *cobra.Command, _ []string) error {
 		}
 	}
 
-	// Commit and push
 	commitMsg := fmt.Sprintf("synchestra: initialize project %q", title)
-
 	if err := gitops.CommitAndPush(specPath, []string{SpecConfigFile}, commitMsg); err != nil {
 		return &exitError{code: 10, msg: fmt.Sprintf("committing spec repo: %v", err)}
 	}
@@ -165,7 +168,117 @@ func runNew(cmd *cobra.Command, _ []string) error {
 		}
 	}
 
-	fmt.Fprintf(cmd.OutOrStdout(), "Project %q created successfully.\n", title)
+	_, _ = fmt.Fprintf(cmd.OutOrStdout(), "Project %q created successfully.\n", title)
+	return nil
+}
+
+func validateRequiredRepoFlags(specRepoStr, stateRepoStr string, targetRepoStrs []string) error {
+	switch {
+	case strings.TrimSpace(specRepoStr) == "":
+		return &exitError{code: 2, msg: "--spec-repo is required"}
+	case strings.TrimSpace(stateRepoStr) == "":
+		return &exitError{code: 2, msg: "--state-repo is required"}
+	case len(targetRepoStrs) == 0:
+		return &exitError{code: 2, msg: "at least one --target-repo is required"}
+	default:
+		return nil
+	}
+}
+
+func validateDistinctRepoRoles(specRef, stateRef reporef.Ref, targetRefs []reporef.Ref) error {
+	if specRef == stateRef {
+		return &exitError{code: 2, msg: fmt.Sprintf("invalid repository layout: state repo %s must differ from spec repo %s", stateRef.Identifier(), specRef.Identifier())}
+	}
+
+	seen := map[string]string{
+		specRef.Identifier():  "spec repo",
+		stateRef.Identifier(): "state repo",
+	}
+	for i, ref := range targetRefs {
+		id := ref.Identifier()
+		if prevRole, ok := seen[id]; ok {
+			return &exitError{code: 2, msg: fmt.Sprintf("invalid repository layout: target repo %s must differ from %s", id, prevRole)}
+		}
+		seen[id] = fmt.Sprintf("target repo #%d", i+1)
+	}
+	return nil
+}
+
+func validateResolvedRepoPath(reposDir, path, identifier string) error {
+	reposDirAbs, err := filepath.Abs(reposDir)
+	if err != nil {
+		return &exitError{code: 10, msg: fmt.Sprintf("resolving repos_dir: %v", err)}
+	}
+	pathAbs, err := filepath.Abs(path)
+	if err != nil {
+		return &exitError{code: 10, msg: fmt.Sprintf("resolving local path for %s: %v", identifier, err)}
+	}
+
+	rel, err := filepath.Rel(reposDirAbs, pathAbs)
+	if err != nil {
+		return &exitError{code: 10, msg: fmt.Sprintf("checking local path for %s: %v", identifier, err)}
+	}
+	if rel == ".." || strings.HasPrefix(rel, ".."+string(os.PathSeparator)) {
+		return &exitError{code: 2, msg: fmt.Sprintf("unsafe local path for %s: %s resolves outside repos_dir", identifier, pathAbs)}
+	}
+	if err := rejectSymlinkPath(reposDirAbs, pathAbs); err != nil {
+		return &exitError{code: 1, msg: fmt.Sprintf("unsafe local path for %s: %v", identifier, err)}
+	}
+	return nil
+}
+
+func rejectSymlinkPath(rootAbs, pathAbs string) error {
+	if err := rejectSymlink(rootAbs); err != nil {
+		return err
+	}
+
+	rel, err := filepath.Rel(rootAbs, pathAbs)
+	if err != nil {
+		return err
+	}
+	if rel == "." {
+		return nil
+	}
+
+	current := rootAbs
+	for _, segment := range strings.Split(rel, string(os.PathSeparator)) {
+		if segment == "" || segment == "." {
+			continue
+		}
+		current = filepath.Join(current, segment)
+		if err := rejectSymlink(current); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func rejectSymlink(path string) error {
+	info, err := os.Lstat(path)
+	if errors.Is(err, fs.ErrNotExist) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	if info.Mode()&os.ModeSymlink != 0 {
+		return fmt.Errorf("%s is a symlink", path)
+	}
+	return nil
+}
+
+func ensureCheckoutMatchesRef(dir string, expected reporef.Ref) error {
+	originURL, err := gitops.GetOriginURL(dir)
+	if err != nil {
+		return &exitError{code: 1, msg: fmt.Sprintf("cannot verify origin for %s in %s: %v", expected.Identifier(), dir, err)}
+	}
+	originRef, err := reporef.Parse(originURL)
+	if err != nil {
+		return &exitError{code: 1, msg: fmt.Sprintf("existing checkout for %s in %s has unsupported origin %q: %v", expected.Identifier(), dir, originURL, err)}
+	}
+	if originRef != expected {
+		return &exitError{code: 1, msg: fmt.Sprintf("existing checkout in %s points to %s, not %s", dir, originRef.Identifier(), expected.Identifier())}
+	}
 	return nil
 }
 
