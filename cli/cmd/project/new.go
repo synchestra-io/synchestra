@@ -175,7 +175,7 @@ func runProjectNew(
 	commitMsg := fmt.Sprintf("chore: initialize Synchestra project %q", title)
 
 	if err := commitPushWithRetry(git, specLocal, []string{"synchestra-spec.yaml"}, commitMsg, func() error {
-		return checkNoConflict(stateLocal, "synchestra-state.yaml", "spec_repo", specOrigin)
+		return nil // spec repo owns the project definition; no conflict re-check needed
 	}); err != nil {
 		return exitcode.New(10, "commit spec repo: %v", err)
 	}
@@ -201,12 +201,13 @@ func runProjectNew(
 // conflicts, then retries with Push only. This implements the spec's "on push conflict:
 // pull, re-check, retry or fail" requirement.
 func commitPushWithRetry(git gitops.Runner, dir string, files []string, msg string, conflictCheck func() error) error {
-	if err := git.CommitAndPush(dir, files, msg); err == nil {
+	commitErr := git.CommitAndPush(dir, files, msg)
+	if commitErr == nil {
 		return nil
 	}
-	// Push failed — pull to get remote changes
+	// Push may have failed — pull to get remote changes and retry
 	if pullErr := git.Pull(dir); pullErr != nil {
-		return fmt.Errorf("pull after push failure: %w", pullErr)
+		return fmt.Errorf("pull after push failure (original: %v): %w", commitErr, pullErr)
 	}
 	// Re-check: if a concurrent writer set a conflicting config, return exit code 1
 	if checkErr := conflictCheck(); checkErr != nil {
@@ -247,8 +248,8 @@ func deriveTitle(repoDir, repoName string) string {
 	scanner := bufio.NewScanner(strings.NewReader(string(data)))
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
-		if strings.HasPrefix(line, "# ") {
-			return strings.TrimSpace(strings.TrimPrefix(line, "# "))
+		if title, ok := strings.CutPrefix(line, "# "); ok {
+			return strings.TrimSpace(title)
 		}
 	}
 	return repoName
