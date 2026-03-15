@@ -1,5 +1,8 @@
 package cli
 
+// Features implemented: cli/project/new
+// Features depended on:  global-config, repository-types, architecture/spec-to-execution
+
 import (
 	"errors"
 	"fmt"
