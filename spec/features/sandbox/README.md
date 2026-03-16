@@ -17,7 +17,11 @@ Safe, isolated execution environments for running user-initiated commands from t
 | [container-build-automation.md](container-build-automation.md) | Build scripts, Makefile targets, CI/CD pipeline (GitHub Actions) |
 | [orchestrator.md](orchestrator.md) | Container Orchestrator: lifecycle state machine, gRPC pool, health monitoring, routing |
 | [orchestrator-implementation-guide.md](orchestrator-implementation-guide.md) | Go implementation patterns for Container Orchestrator |
+| [credentials.md](credentials.md) | Credential encryption, vault format, injection patterns, rotation, audit |
+| [lifecycle.md](lifecycle.md) | Container lifecycle phases, workspace cache, timing parameters, runbook |
 | [http-api.md](http-api.md) | HTTP REST API specification: sandbox and admin endpoints, auth, error mapping, rate limiting |
+| [testing.md](testing.md) | Integration testing strategy: unit, integration, and end-to-end test specifications |
+| [monitoring.md](monitoring.md) | Monitoring, logging, alerting: Prometheus metrics, structured logging, tracing, dashboards |
 
 ## Document Summaries
 
@@ -54,8 +58,20 @@ Container Orchestrator specification: lifecycle state machine, gRPC connection p
 ### [orchestrator-implementation-guide.md](orchestrator-implementation-guide.md)
 Go implementation patterns for the Container Orchestrator — interfaces, state machine, connection pool, health manager, circuit breaker, and graceful shutdown.
 
+### [credentials.md](credentials.md)
+Credential management specification: AES256-GCM encryption architecture, vault format, credential injection patterns (git tokens, SSH keys, env vars), key rotation, and audit logging. Authoritative reference for all credential-related behavior.
+
+### [lifecycle.md](lifecycle.md)
+Container lifecycle specification: 8 lifecycle phases (provision through terminate), workspace cache with GitHub Actions-style persistence, resource management by state, timing parameters, and operational runbook for common scenarios.
+
 ### [http-api.md](http-api.md)
 HTTP REST API specification served by `synchestra serve --http`. Defines all sandbox endpoints (execute, status, sessions, WebSocket logs, credentials, destroy) and admin endpoints (stop, restart, evict, config, image, container listing). Covers authentication, authorization matrix, gRPC-to-HTTP error mapping, rate limiting, and Go package structure.
+
+### [testing.md](testing.md)
+Integration testing strategy covering three tiers: unit tests (orchestrator state machine, credential vault, HTTP handlers), integration tests (Docker lifecycle, gRPC communication, session reconnection), and end-to-end tests (full HTTP→orchestrator→gRPC→container flows). Includes test infrastructure (mock Docker client, test container image), CI/CD integration, and security test cases.
+
+### [monitoring.md](monitoring.md)
+Monitoring, logging, and alerting specification: Prometheus metrics catalog (host-side and container-side), structured JSON logging with sensitive data policy, OpenTelemetry distributed tracing, alerting rules (critical/warning/info), dashboard specifications (overview, per-project, operations), and health endpoints.
 
 ## Outstanding Questions
 
