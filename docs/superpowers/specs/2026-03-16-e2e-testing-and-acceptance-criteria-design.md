@@ -39,9 +39,11 @@ the id of the deleted project.
 
 ## Inputs
 
-| Name | Description |
-|---|---|
-| project_id | ID of the project that was deleted |
+| Name | Required | Description |
+|---|---|---|
+| project_id | Yes | ID of the project that was deleted |
+
+Inputs are matched by name against the step's declared Inputs and Outputs. If a required input is not available from the step's context, the runner reports an error for that AC (not a test failure — a configuration error). Optional inputs (marked `No`) default to empty string if not provided.
 
 ## Verification
 
@@ -107,6 +109,39 @@ The feature spec's **Required sections** table gains a new entry:
 | Section | Required | Notes |
 |---|---|---|
 | Acceptance Criteria | Yes | Always present. States "Not defined yet." if empty; must also raise an Outstanding Question. |
+
+The feature directory structure gains two new optional directories:
+
+```
+spec/features/{feature-slug}/
+  README.md                   ← feature specification
+  acs/                        ← acceptance criteria (optional, present when ACs are defined)
+    {ac-slug}.md
+  _tests/                     ← feature-scoped test scenarios (optional)
+    {scenario-slug}.md
+    flows/
+  proposals/                  ← change requests (optional)
+    README.md
+    {proposal-slug}/
+  {sub-feature-slug}/         ← sub-feature (optional)
+    README.md
+```
+
+The `acs/` directory does not use the `_` prefix because it is a first-class part of the feature specification (like `proposals/`), not tooling infrastructure.
+
+### Relationship to development plan ACs
+
+The development plan spec defines acceptance criteria at two levels: plan-level (cross-cutting) and step-level (per-deliverable). These are **different from feature-level ACs** and serve different purposes:
+
+| AC type | Lives in | Answers | Lifecycle |
+|---|---|---|---|
+| **Feature AC** | `spec/features/{feature}/acs/` | "How do we verify this feature works correctly?" | Evolves with the feature; long-lived |
+| **Plan-level AC** | `spec/plans/{plan}/README.md` (inline or `acs/` subdir) | "How do we verify this plan's goals were achieved?" | Frozen with the plan; immutable |
+| **Plan step-level AC** | Within each plan step | "How do we verify this step's deliverable?" | Frozen with the plan; immutable |
+
+Plan ACs are scoped to a specific implementation effort and are frozen once the plan is approved. Feature ACs are scoped to the feature itself and evolve over time. A plan step AC may *reference* a feature AC (e.g., "the feature AC `cli/project/remove/not-in-list` must pass after this step"), but they are not the same artifact.
+
+When generating tasks from a plan, both plan step ACs and any referenced feature ACs are copied into the task description, giving agents clear targets.
 
 ### Mandatory enforcement
 
@@ -187,6 +222,12 @@ synchestra project list --format json
 
 **Depends on:** Step 3
 
+**Inputs:**
+
+| Name | Source |
+|---|---|
+| project_id | ${{ steps.1.outputs.project_id }} |
+
 **ACs:**
 - cli/server/project/status/*
 
@@ -197,6 +238,12 @@ synchestra server project status --project ${{ inputs.project_id }} --format jso
 ## 5. Shutdown container
 
 **Depends on:** Step 4
+
+**Inputs:**
+
+| Name | Source |
+|---|---|
+| project_id | ${{ steps.1.outputs.project_id }} |
 
 **ACs:**
 - cli/server/project/shutdown/*
@@ -241,8 +288,10 @@ rm -rf $SYNCHESTRA_HOME
 | Inputs | No | Table of inputs consumed from upstream step outputs |
 | Outputs | No | Table of outputs extracted from step results (stdout, stderr, exit code) |
 | ACs | No | List or table of AC references to verify after the step executes |
-| Include | No | Delegates to a sub-flow `.md` file. Mutually exclusive with a code block |
-| Code block | No | Bash script to execute. Mutually exclusive with Include |
+| Include | Conditional | Delegates to a sub-flow `.md` file. Mutually exclusive with Code block |
+| Code block | Conditional | Bash script to execute. Mutually exclusive with Include |
+
+Every step must have exactly one of **Include** or **Code block**. A step with neither is a validation error.
 
 ### AC reference syntax
 
@@ -275,14 +324,29 @@ The runner only parses column 1 of the table. Additional columns are for human r
 |---|---|
 | `cli/project/remove/*` | All ACs under `spec/features/cli/project/remove/acs/` |
 | `cli/project/remove/not-in-list` | Specific AC by slug |
-| `cli/project/remove/not-in-list,recreate-same-id` | Multiple specific ACs |
+
+For multiple specific ACs, use separate list items or table rows — no comma syntax needed:
+
+```markdown
+**ACs:**
+- cli/project/remove/not-in-list
+- cli/project/remove/recreate-same-id
+```
+
+### Step identification and references
+
+Steps are identified by their number (the integer prefix in the heading). The canonical identifier is the number alone.
+
+- `**Depends on:**` accepts `Step N` or just `N`. The `Step` prefix is optional syntactic sugar for readability.
+- `${{ steps.N.outputs.name }}` uses the number only.
+- Multiple dependencies use comma separation: `**Depends on:** Step 1, Step 3`
 
 ### Input/Output model
 
 Modeled after GitHub Actions steps:
 
 - **Outputs** are extracted from step results using shell expressions. Available variables: `$STEP_STDOUT` (path to stdout file), `$STEP_STDERR` (path to stderr file), `$STEP_EXIT_CODE`.
-- **Inputs** are resolved from upstream outputs via `${{ steps.N.outputs.name }}` syntax.
+- **Inputs** are resolved from upstream outputs via `${{ steps.N.outputs.name }}` syntax. A step can only reference outputs from steps listed in its `Depends on` (direct or transitive). Referencing an output from a non-dependency is a validation error.
 - Inputs are passed to both the step's code block and its AC verification scripts as environment variables.
 
 ### Include (sub-flows)
@@ -306,8 +370,8 @@ The included file is a full scenario with its own steps. Inputs are passed down,
 
 ### Setup and Teardown
 
-- `## Setup` — runs before the first step. No step number, no dependencies.
-- `## Teardown` — runs after the last step completes (or after failure). Guaranteed execution for cleanup.
+- `## Setup` — runs before the first step. No step number, no dependencies, no inputs/outputs. Purely environment-level: sets env vars, creates temp dirs, starts services. Any state it creates is available to all steps via the shared environment.
+- `## Teardown` — runs after the last step completes (or after failure). Guaranteed execution for cleanup. No inputs/outputs. Has access to the same environment as Setup (e.g., `$SYNCHESTRA_HOME`).
 
 ### Tags
 
@@ -355,6 +419,10 @@ synchestra test list --tag e2e                      ← list filtered by tag
 ```
 
 Follows the existing `synchestra <resource> <action>` command pattern.
+
+### Spec root resolution
+
+The runner resolves the spec root from the project's `synchestra-spec.yaml` configuration (`project_dirs.specifications`, default: `spec`). All AC references (e.g., `cli/project/remove/*`) resolve to `{spec_root}/features/{ac_path}/acs/`. This configuration is read once at runner initialization and passed to the AC resolver.
 
 ### Execution model
 
