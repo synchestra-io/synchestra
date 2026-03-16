@@ -93,7 +93,7 @@ Each step is an `## {step-name}` heading. Steps contain a mix of optional metada
 | Include | No | Delegates to a sub-flow `.md` file (mutually exclusive with code block) |
 | Code block | Conditional | Script to execute (required unless Include is specified). Supports `bash`, `python`, and `starlark` — see [Supported languages](../../acceptance-criteria/README.md#supported-languages). |
 
-A step with neither a code block nor an Include directive is a validation error — every step must do something. The code block's language annotation determines the interpreter; bash is the default if no annotation is provided.
+A step with neither a code block nor an Include directive is a validation error — every step must do something. The code block's language annotation is **mandatory** — a code block without an annotation (e.g., bare `` ``` `` instead of `` ```bash ``) is a validation error. This ensures every script's interpreter is explicit and unambiguous.
 
 ### Step identification and references
 
