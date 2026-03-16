@@ -32,6 +32,12 @@ The test runner tests itself via the scenario at
 go run . test run spec/features/testing-framework/test-runner/_tests/runner-core.md
 ```
 
+For machine-readable JSON output:
+
+```bash
+go run . test run spec/features/testing-framework/test-runner/_tests/runner-core.md --format json
+```
+
 See the
 [Test Runner feature README](../../spec/features/testing-framework/test-runner/README.md#dogfooding)
 for background on the bootstrap strategy.
