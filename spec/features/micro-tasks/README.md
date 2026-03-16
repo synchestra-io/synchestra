@@ -117,7 +117,7 @@ micro-tasks:
 
 - Should micro-tasks have access to the main task's context, or are they fully isolated?
 - Should background tasks be cancellable if the main task fails?
-- How does the micro-task chain interact with the claim-and-push protocol? (Does the pre-task chain run before or after claiming?)
+- How does the micro-task chain interact with the task claiming protocol? (Does the pre-task chain run before or after claiming?)
 - Should there be a `finally` phase that runs regardless of main task success/failure?
 - Can micro-tasks spawn sub-tasks, or are they strictly leaf operations?
 

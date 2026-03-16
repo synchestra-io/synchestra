@@ -60,7 +60,7 @@ Build the layer that reads and writes chat data to the state repo. This includes
 - Can update chat metadata (status, timestamps) via atomic git commits
 - Can write artifacts to `chats/{chat-id}/artifacts/` and commit them
 - Can flush message history to `history.jsonl` in JSONL format
-- Git operations handle concurrent access (commit-and-push with conflict retry, consistent with Synchestra's claim-and-push pattern)
+- Git operations handle concurrent access (commit-and-push with conflict retry, consistent with Synchestra's optimistic locking pattern)
 - Can read chat metadata and artifact listings from state repo
 - Can list all chats with filtering by status
 

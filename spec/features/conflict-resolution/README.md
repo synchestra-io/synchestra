@@ -8,7 +8,7 @@ When git merge conflicts occur between concurrent agent operations, Synchestra l
 
 ## Problem
 
-Concurrent agents working on the same project will occasionally produce conflicting changes. The claim-and-push protocol prevents two agents from claiming the same task, but it doesn't prevent two agents working on different tasks from editing the same file or document section.
+Concurrent agents working on the same project will occasionally produce conflicting changes. The optimistic locking mechanism (see [Task Status Board: Claiming a Task](../task-status-board/README.md#claiming-a-task-optimistic-locking)) prevents two agents from claiming the same task, but it doesn't prevent two agents working on different tasks from editing the same file or document section.
 
 Git detects these conflicts but can't resolve them. Agents that encounter merge conflicts typically fail and require human intervention. For a system designed around async, concurrent work, this is a bottleneck.
 

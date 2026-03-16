@@ -15,8 +15,7 @@ Feature specifications for the Synchestra project, managed by Synchestra.
 | [outstanding-questions](outstanding-questions/README.md) | Conceptual | Question lifecycle management linked to tasks and features |
 | [proposals](proposals/README.md) | Conceptual | Non-normative change requests attached to features with review status and optional tracker linkage |
 | [ui](ui/README.md) | Conceptual | Human-facing interfaces for project navigation, proposals, tasks, and workers across web and terminal surfaces |
-| [claim-and-push](claim-and-push/README.md) | Conceptual | Distributed task claiming via git push-based optimistic locking |
-| [task-status-board](task-status-board/README.md) | Conceptual | Markdown task board in task directory READMEs for at-a-glance status visibility |
+| [task-status-board](task-status-board/README.md) | Conceptual | Markdown task board in task directory READMEs for at-a-glance status visibility and claiming via optimistic locking |
 | [development-plan](development-plan/README.md) | Conceptual | Immutable planning documents that bridge feature specs and change requests to executable tasks |
 | [agent-skills](agent-skills/README.md) | In Progress | Dedicated, focused skills that AI agents use to interact with Synchestra |
 | [cli](cli/README.md) | In Progress | The `synchestra` CLI — primary interface for agents and humans |
@@ -66,13 +65,10 @@ Proposals attach non-normative change requests directly to a feature without cha
 
 The human-facing product surfaces for Synchestra. Defines a shared information architecture (home → project menu → Features / Tasks / Workers) with MVP flows for proposal creation and task creation/enqueueing. Two delivery surfaces: a progressive [web app](ui/web-app/README.md) communicating via the HTTP API, and a [TUI](ui/tui/README.md) delivered through the CLI operating on local git state. Introduces the Workers concept at the UI level; a dedicated workers feature spec is needed before going beyond visibility.
 
-### [Claim-and-Push](claim-and-push/README.md)
-
-Distributed task claiming through git's push semantics. Agents claim tasks by committing a status change and pushing — if the push fails, another agent got there first. No central lock server needed. The protocol relies on frequent commits to minimize conflict windows and provide granular audit trail.
 
 ### [Task Status Board](task-status-board/README.md)
 
-A markdown table in task directory READMEs that serves as both the visibility layer and the claim mechanism. The board is the source of truth for task state — agents claim tasks by updating a row and pushing. Conflicts on the same row indicate a claim collision; the CLI parses diffs by task ID to distinguish collisions from unrelated changes.
+A markdown table in task directory READMEs that provides at-a-glance visibility and serves as the source of truth for task state. Agents claim tasks by updating a board row and pushing through optimistic locking (git push-based). Conflicts on the same row indicate a claim collision; the CLI parses diffs by task ID to distinguish collisions from unrelated changes. See the [Claiming a Task](task-status-board/README.md#claiming-a-task-optimistic-locking) section for the full protocol.
 
 ### [Development Plan](development-plan/README.md)
 
@@ -116,7 +112,7 @@ The pluggable abstraction layer for all Synchestra project coordination state. D
 
 ```
 feature → proposals, development-plan, outstanding-questions (features are the spec unit)
-claim-and-push ← conflict-resolution
+task-status-board ← conflict-resolution
        ↑                ↑
 cross-repo-sync ────────┘
        ↑
@@ -132,7 +128,7 @@ global-config ← cli (cli reads ~/.synchestra.yaml for repo resolution)
 github-app → api (callback endpoint)
 onboarding → github-app, project-definition, ui, cli, api (orchestrates first-time setup)
 sandbox → cli, api (containers execute commands, host routes via API)
-state-store → claim-and-push (claim atomicity), task-status-board (board interface), chat (chat persistence)
+state-store → task-status-board (board interface and claim atomicity), chat (chat persistence)
 state-store ← cli, api, agent-skills (all consumers of state go through state store)
 ```
 
@@ -141,13 +137,13 @@ state-store ← cli, api, agent-skills (all consumers of state go through state 
 ## Diagram Conventions
 
 All diagrams in feature specifications should use **mermaid syntax** instead of ASCII art. Mermaid provides better clarity, GitHub rendering support, and maintainability.
-`claim-and-push` is foundational for execution — most concurrent features depend on it.
+`task-status-board` is foundational for execution — it provides the claiming mechanism (optimistic locking) and status visibility.
 `development-plan` bridges the spec-to-execution gap — proposals and feature specs flow through it to become tasks.
 
 ## Outstanding Questions
 
 - Are there features missing from this list that are already described in `docs/features/` but not yet tracked here?
-- **Suggested build order:** claim-and-push first (foundational), then outstanding-questions and model-selection (independent, high value), then proposals, then UI once CLI and proposal flows are ready enough to expose, then conflict-resolution, then micro-tasks and cross-repo-sync. Does this align with project priorities?
+- **Suggested build order:** task-status-board first (foundational), then outstanding-questions and model-selection (independent, high value), then proposals, then UI once CLI and proposal flows are ready enough to expose, then conflict-resolution, then micro-tasks and cross-repo-sync. Does this align with project priorities?
 
 ### Features with outstanding questions:
 
@@ -158,7 +154,6 @@ All diagrams in feature specifications should use **mermaid syntax** instead of 
 - [model-selection](model-selection/README.md): 4 outstanding questions
 - [conflict-resolution](conflict-resolution/README.md): 3 outstanding questions
 - [outstanding-questions](outstanding-questions/README.md): 3 outstanding questions
-- [claim-and-push](claim-and-push/README.md): 3 outstanding questions
 - [task-status-board](task-status-board/README.md): 4 outstanding questions
 - [development-plan](development-plan/README.md): 4 outstanding questions
 - [agent-skills](agent-skills/README.md): 3 outstanding questions
