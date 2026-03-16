@@ -46,6 +46,11 @@ spec/features/
   README.md                     ← feature index
   {feature-slug}/
     README.md                   ← feature specification
+    _acs/                       ← acceptance criteria (optional)
+      {ac-slug}.md
+    _tests/                     ← feature-scoped test scenarios (optional)
+      {scenario-slug}.md
+      flows/
     proposals/                  ← change requests (optional)
       README.md
       {proposal-slug}/
@@ -55,6 +60,16 @@ spec/features/
 ```
 
 `{feature-slug}` is a URL/path-safe identifier using lowercase letters, numbers, and hyphens (e.g., `claim-and-push`, `model-selection`, `ui`).
+
+### Reserved `_` prefix convention
+
+Directories prefixed with `_` are reserved for Synchestra tooling and are **not** sub-features. They are excluded from the feature index and Contents table.
+
+| Directory | Purpose | Introduced by |
+|---|---|---|
+| `_acs/` | Acceptance criteria | [Test Scenario](../test-scenario/README.md) |
+| `_args/` | CLI argument documentation | [CLI](../cli/README.md) |
+| `_tests/` | Feature-scoped test scenarios | [Test Scenario](../test-scenario/README.md) |
 
 ### Feature README structure
 
@@ -94,6 +109,12 @@ examples, edge cases.
 
 (Optional) How this feature relates to other features.
 
+## Acceptance Criteria
+
+Not defined yet.
+
+(Or: a table of ACs when defined. See [Test Scenario](../test-scenario/README.md).)
+
 ## Outstanding Questions
 
 - Question 1
@@ -114,6 +135,7 @@ examples, edge cases.
 | Behavior                | Yes      | How the feature works                                             |
 | Proposals               | Conditional | Present when the feature has a `proposals/` directory. See [Proposals](../proposals/README.md#feature-readme-proposals-section). |
 | Plans                   | Conditional | Present when a [development plan](../development-plan/README.md) touches this feature. |
+| Acceptance Criteria     | Yes      | Always present. States "Not defined yet." if empty; must also raise an Outstanding Question. See [Test Scenario](../test-scenario/README.md). |
 | Outstanding Questions   | Yes      | Always present. Explicitly states "None at this time." if empty.  |
 
 ### Optional sections

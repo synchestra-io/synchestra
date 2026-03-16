@@ -24,7 +24,7 @@ The test runner is built as `pkg/testscenario/` inside this repo, with the under
 
 ### AC file location and structure
 
-Each AC lives in `spec/features/{feature}/acs/{ac-slug}.md`:
+Each AC lives in `spec/features/{feature}/_acs/{ac-slug}.md`:
 
 ```markdown
 # AC: not-in-list
@@ -96,8 +96,8 @@ And a corresponding Outstanding Question must be raised:
 
 | AC | Description | Status |
 |---|---|---|
-| [not-in-list](acs/not-in-list.md) | Deleted project absent from list | implemented |
-| [recreate-same-id](acs/recreate-same-id.md) | Can recreate project with same id | planned |
+| [not-in-list](_acs/not-in-list.md) | Deleted project absent from list | implemented |
+| [recreate-same-id](_acs/recreate-same-id.md) | Can recreate project with same id | planned |
 ```
 
 The table is a derived summary — the AC `.md` file is the source of truth.
@@ -115,7 +115,7 @@ The feature directory structure gains two new optional directories:
 ```
 spec/features/{feature-slug}/
   README.md                   ← feature specification
-  acs/                        ← acceptance criteria (optional, present when ACs are defined)
+  _acs/                       ← acceptance criteria (optional, present when ACs are defined)
     {ac-slug}.md
   _tests/                     ← feature-scoped test scenarios (optional)
     {scenario-slug}.md
@@ -127,7 +127,7 @@ spec/features/{feature-slug}/
     README.md
 ```
 
-The `acs/` directory does not use the `_` prefix because it is a first-class part of the feature specification (like `proposals/`), not tooling infrastructure.
+The `_acs/` directory uses the reserved `_` prefix convention, consistent with `_tests/` and `_args/`.
 
 ### Relationship to development plan ACs
 
@@ -135,8 +135,8 @@ The development plan spec defines acceptance criteria at two levels: plan-level 
 
 | AC type | Lives in | Answers | Lifecycle |
 |---|---|---|---|
-| **Feature AC** | `spec/features/{feature}/acs/` | "How do we verify this feature works correctly?" | Evolves with the feature; long-lived |
-| **Plan-level AC** | `spec/plans/{plan}/README.md` (inline or `acs/` subdir) | "How do we verify this plan's goals were achieved?" | Frozen with the plan; immutable |
+| **Feature AC** | `spec/features/{feature}/_acs/` | "How do we verify this feature works correctly?" | Evolves with the feature; long-lived |
+| **Plan-level AC** | `spec/plans/{plan}/README.md` (inline or `_acs/` subdir) | "How do we verify this plan's goals were achieved?" | Frozen with the plan; immutable |
 | **Plan step-level AC** | Within each plan step | "How do we verify this step's deliverable?" | Frozen with the plan; immutable |
 
 Plan ACs are scoped to a specific implementation effort and are frozen once the plan is approved. Feature ACs are scoped to the feature itself and evolve over time. A plan step AC may *reference* a feature AC (e.g., "the feature AC `cli/project/remove/not-in-list` must pass after this step"), but they are not the same artifact.
@@ -148,8 +148,8 @@ When generating tasks from a plan, both plan step ACs and any referenced feature
 Validation tooling (lint/pre-commit) should check:
 - Every feature README has an `## Acceptance Criteria` section
 - If the section says "Not defined yet.", the Outstanding Questions section includes the corresponding question
-- Every `.md` file in `acs/` is listed in the feature README table
-- Every entry in the feature README table has a corresponding `.md` file in `acs/`
+- Every `.md` file in `_acs/` is listed in the feature README table
+- Every entry in the feature README table has a corresponding `.md` file in `_acs/`
 
 ## Part 2: Test Scenario Format
 
@@ -194,7 +194,7 @@ synchestra project new --repo https://github.com/example/test --format json
 
 | Feature | ACs |
 |---|---|
-| [cli/project/list](spec/features/cli/project/list/) | [in-list](spec/features/cli/project/list/acs/in-list.md) |
+| [cli/project/list](spec/features/cli/project/list/) | [in-list](spec/features/cli/project/list/_acs/in-list.md) |
 
 ```bash
 synchestra project list --format json
@@ -271,7 +271,7 @@ ACs are referenced using a **table format** with two required columns: Feature a
 | Feature | ACs |
 |---|---|
 | [cli/project/remove](spec/features/cli/project/remove/) | * |
-| [cli/project/list](spec/features/cli/project/list/) | [in-list](spec/features/cli/project/list/acs/in-list.md), [has-metadata](spec/features/cli/project/list/acs/has-metadata.md) |
+| [cli/project/list](spec/features/cli/project/list/) | [in-list](spec/features/cli/project/list/_acs/in-list.md), [has-metadata](spec/features/cli/project/list/_acs/has-metadata.md) |
 ```
 
 The runner parses these two columns. Additional columns are allowed for human readability — the runner ignores them:
@@ -286,7 +286,7 @@ The runner parses these two columns. Additional columns are allowed for human re
 
 | Pattern | Meaning |
 |---|---|
-| `*` | All ACs under that feature's `acs/` directory |
+| `*` | All ACs under that feature's `_acs/` directory |
 | `[ac-name](link)` | Specific AC by slug (linked to the AC file) |
 | `[ac1](link), [ac2](link)` | Multiple specific ACs, comma-separated in the ACs column |
 
@@ -423,7 +423,7 @@ Follows the existing `synchestra <resource> <action>` command pattern.
 
 ### Spec root resolution
 
-The runner resolves the spec root from the project's `synchestra-spec.yaml` configuration (`project_dirs.specifications`, default: `spec`). All AC references (e.g., `cli/project/remove/*`) resolve to `{spec_root}/features/{ac_path}/acs/`. This configuration is read once at runner initialization and passed to the AC resolver.
+The runner resolves the spec root from the project's `synchestra-spec.yaml` configuration (`project_dirs.specifications`, default: `spec`). All AC references (e.g., `cli/project/remove/*`) resolve to `{spec_root}/features/{ac_path}/_acs/`. This configuration is read once at runner initialization and passed to the AC resolver.
 
 ### Execution model
 
@@ -449,7 +449,7 @@ The runner resolves the spec root from the project's `synchestra-spec.yaml` conf
 
 When a step declares `cli/project/remove/*`:
 
-1. Resolve path: `{spec_root}/features/cli/project/remove/acs/`
+1. Resolve path: `{spec_root}/features/cli/project/remove/_acs/`
 2. Read each `.md` file in the directory
 3. Extract the `## Verification` code block from each
 4. Extract `## Inputs` to validate required inputs are available
@@ -500,12 +500,12 @@ The first scenario to implement, exercising the full system end-to-end:
 For features that are already implemented (`cli/project/new`, `cli/project/list`, etc.), define initial ACs:
 
 ```
-spec/features/cli/project/new/acs/
+spec/features/cli/project/new/_acs/
   creates-spec-repo.md
   creates-state-repo.md
   returns-project-id.md
 
-spec/features/cli/project/remove/acs/
+spec/features/cli/project/remove/_acs/
   not-in-list.md
   recreate-same-id.md
 ```

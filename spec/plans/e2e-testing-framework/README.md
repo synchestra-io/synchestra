@@ -4,7 +4,7 @@
 
 **Goal:** Build a markdown-native test scenario runner (`pkg/testscenario/`) and establish acceptance criteria as first-class feature artifacts, then dogfood both by writing the CLI project lifecycle E2E test.
 
-**Architecture:** A Go package (`pkg/testscenario/`) that parses markdown scenario files, resolves AC references from feature spec `acs/` directories, executes steps sequentially (with opt-in parallel groups), and reports results. The package has no dependencies on Synchestra-specific code — it receives a configurable spec root path and resolves everything from the filesystem. CLI commands (`synchestra test run`, `synchestra test list`) wire the package to the command tree.
+**Architecture:** A Go package (`pkg/testscenario/`) that parses markdown scenario files, resolves AC references from feature spec `_acs/` directories, executes steps sequentially (with opt-in parallel groups), and reports results. The package has no dependencies on Synchestra-specific code — it receives a configurable spec root path and resolves everything from the filesystem. CLI commands (`synchestra test run`, `synchestra test list`) wire the package to the command tree.
 
 **Tech Stack:** Go 1.26, standard library (`os/exec` for shell execution, `sync` for parallel groups), `github.com/spf13/cobra` for CLI commands. No new external dependencies for the core package.
 
@@ -28,7 +28,7 @@ pkg/
     parser_test.go    — parser tests
     context.go        — execution context: context/step output storage, variable resolution
     context_test.go   — context tests
-    ac.go             — AC file parser + resolver (reads acs/*.md, extracts verification scripts)
+    ac.go             — AC file parser + resolver (reads _acs/*.md, extracts verification scripts)
     ac_test.go        — AC resolution tests
     runner.go         — step executor: sequential/parallel, shell execution, output capture
     runner_test.go    — runner tests
@@ -653,7 +653,7 @@ git commit -m "feat(testscenario): add execution context with variable storage a
 Tests for:
 1. Parse a well-formed AC `.md` file → extract slug, status, inputs, verification script
 2. Parse AC file with optional input (Required=No) → correctly parsed
-3. Resolve wildcard `*` for a feature path → finds all `.md` files in `acs/` dir
+3. Resolve wildcard `*` for a feature path → finds all `.md` files in `_acs/` dir
 4. Resolve specific AC slug → finds the one file
 5. Resolve AC for non-existent feature path → error
 6. Validate required AC input is present in available vars → pass
@@ -1661,7 +1661,7 @@ git commit -m "feat(cli): add synchestra test run and test list commands"
 
 **Files:**
 - Create: `spec/features/test-scenario/README.md`
-- Modify: `spec/features/feature/README.md` — add Acceptance Criteria to required sections, add `acs/` and `_tests/` to directory structure, formalize `_` prefix convention
+- Modify: `spec/features/feature/README.md` — add Acceptance Criteria to required sections, add `_acs/` and `_tests/` to directory structure, formalize `_` prefix convention
 - Modify: `spec/features/README.md` — add test-scenario to feature index
 - Create: `spec/tests/README.md`
 
@@ -1678,7 +1678,7 @@ The feature spec for the test scenario system, following the established feature
 Add to Required sections table:
 - Acceptance Criteria: Yes — always present, states "Not defined yet." if empty
 
-Add to Behavior → Feature location section the `acs/` and `_tests/` directories.
+Add to Behavior → Feature location section the `_acs/` and `_tests/` directories.
 
 Add the `_` prefix convention:
 > Directories prefixed with `_` are reserved for Synchestra tooling and are not sub-features. They are excluded from the feature index and Contents table.
@@ -1715,15 +1715,15 @@ git commit -m "feat(spec): add test-scenario feature, update feature spec with A
 ### Task 10: Dogfood — Write initial ACs and the project lifecycle E2E scenario
 
 **Files:**
-- Create: `spec/features/cli/project/new/acs/creates-spec-config.md`
-- Create: `spec/features/cli/project/new/acs/creates-state-config.md`
+- Create: `spec/features/cli/project/new/_acs/creates-spec-config.md`
+- Create: `spec/features/cli/project/new/_acs/creates-state-config.md`
 - Create: `spec/tests/project-lifecycle.md`
 - Modify: `spec/features/cli/project/new/README.md` — add Acceptance Criteria section with table
 - Create: `spec/tests/flows/README.md`
 
 - [ ] **Step 1: Create AC files for `cli/project/new`**
 
-Create `spec/features/cli/project/new/acs/creates-spec-config.md`:
+Create `spec/features/cli/project/new/_acs/creates-spec-config.md`:
 
 ```markdown
 # AC: creates-spec-config
@@ -1756,7 +1756,7 @@ test "$title" = "$expected_title"
 (None yet.)
 ```
 
-Create `spec/features/cli/project/new/acs/creates-state-config.md`:
+Create `spec/features/cli/project/new/_acs/creates-state-config.md`:
 
 ```markdown
 # AC: creates-state-config
@@ -1798,8 +1798,8 @@ Add an Acceptance Criteria section before the Outstanding Questions section:
 
 | AC | Description | Status |
 |---|---|---|
-| [creates-spec-config](acs/creates-spec-config.md) | synchestra-spec.yaml created in spec repo | implemented |
-| [creates-state-config](acs/creates-state-config.md) | synchestra-state.yaml created in state repo | implemented |
+| [creates-spec-config](_acs/creates-spec-config.md) | synchestra-spec.yaml created in spec repo | implemented |
+| [creates-state-config](_acs/creates-state-config.md) | synchestra-state.yaml created in state repo | implemented |
 ```
 
 - [ ] **Step 3: Create `spec/tests/project-lifecycle.md`**
@@ -1889,6 +1889,6 @@ Expected: Scenario runs and reports results. May need debugging — this is the 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add spec/features/cli/project/new/acs/ spec/features/cli/project/new/README.md spec/tests/
+git add spec/features/cli/project/new/_acs/ spec/features/cli/project/new/README.md spec/tests/
 git commit -m "feat(dogfood): add initial ACs for project new and CLI lifecycle E2E scenario"
 ```
