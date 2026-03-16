@@ -2,6 +2,8 @@
 
 ## Overview
 
+> **Related documents:** [orchestrator.md](orchestrator.md) (state machine, transitions), [monitoring.md](monitoring.md) (lifecycle events and metrics), [credentials.md](credentials.md) (credential persistence across restarts), [outstanding-questions.md](outstanding-questions.md) (open design questions).
+
 This specification details the hybrid lifecycle model for sandbox containers. Containers are **persistent** (always exist in some state) but **resource-efficient** (auto-pause when idle, auto-resume on demand). The orchestrator manages all transitions; containers themselves are passive.
 
 The lifecycle model is "hybrid" because it combines:
@@ -56,44 +58,37 @@ Triggered when the first user request arrives for a project with no existing con
 
 **Complete flow:**
 
-```
-User Request
-  │
-  ▼
-1. Orchestrator receives request for {project_id}
-2. Looks up container in DB → not found (unprovisioned)
-3. Checks user access permissions against project ACL
-4. Loads project config from DB:
-   - State repo URL
-   - Container image + tag
-   - Resource limits (CPU, memory, disk, PIDs)
-   - Environment variables
-5. Checks capacity: current container count < MAX_CONTAINERS
-   - If at capacity → attempt eviction (see Phase 8)
-   - If no evictable candidates → return RESOURCE_EXHAUSTED
-6. Inserts DB row: status = 'creating'
-7. Pulls image (if not cached on host)
-8. Creates container via Docker API:
-   - Image: project-configured or default
-   - User: 1000:1000 (synchestra)
-   - Bind mount: {WORKSPACE_ROOT}/{project_id}/ → /workspace/{project_id}/
-   - Unix socket: /var/run/synchestra-{project_id}.sock
-   - Resource limits applied (--memory, --cpus, --pids-limit)
-   - Capabilities dropped (all except minimal set)
-   - No network (--network=none)
-   - Read-only rootfs (--read-only) with tmpfs for /tmp
-9. Starts container → entrypoint runs:
-   a. Generates encryption key (if not in workspace cache)
-   b. Clones state repo (or incremental pull if cached)
-   c. Sets up workspace directories
-   d. Starts gRPC agent on Unix socket
-10. Orchestrator polls Ping() every 500ms:
-    - Timeout: 60s for startup
-    - On success → container enters 'running'
-    - On timeout → container marked 'failed', cleanup initiated
-11. DB updated: status = 'running', started_at = now()
-12. gRPC connection added to pool
-13. Original request forwarded to agent
+```mermaid
+graph TD
+    A["User Request"] --> B["Orchestrator receives request"]
+    B --> C["Lookup container in DB"]
+    C --> D{Container<br/>exists?}
+
+    D -->|No| E["Check user permissions"]
+    E --> F["Load project config"]
+    F --> G{At capacity?}
+
+    G -->|Yes| H["Attempt eviction"]
+    H --> I{Eviction<br/>successful?}
+    I -->|No| Z1["Return RESOURCE_EXHAUSTED"]
+    I -->|Yes| J["Insert DB row: creating"]
+
+    G -->|No| J
+    D -->|Yes| J
+
+    J --> K["Pull image if needed"]
+    K --> L["Create container via Docker<br/>image, user, mounts, limits"]
+    L --> M["Start container"]
+    M --> N["Entrypoint: gen key, clone repo,<br/>setup workspace, start gRPC agent"]
+
+    N --> O["Poll Ping() every 500ms<br/>timeout: 60s"]
+    O --> P{Ping<br/>succeeds?}
+
+    P -->|No| Z2["Mark failed, cleanup"]
+    P -->|Yes| Q["Update DB: status=running"]
+    Q --> R["Add gRPC connection to pool"]
+    R --> S["Forward original request"]
+    S --> T["Done"]
 ```
 
 **Expected latency:**
@@ -138,12 +133,15 @@ When a container has no active sessions for `IDLE_TIMEOUT` (default 10 minutes),
 - For each running container: if `active_sessions == 0` and `now() - idle_since >= IDLE_TIMEOUT` → trigger pause
 
 **Pause sequence:**
-```
-1. Orchestrator: close gRPC connection, remove from pool
-2. Orchestrator: open circuit breaker for {project_id}
-3. Docker API: pause container
-4. DB update: status = 'paused'
-5. Emit event: container.paused
+```mermaid
+graph TD
+    A["Idle timeout triggered"] --> B["Close gRPC connection"]
+    B --> C["Remove from pool"]
+    C --> D["Open circuit breaker"]
+    D --> E["Docker API: pause container"]
+    E --> F["Update DB: status=paused"]
+    F --> G["Emit event: container.paused"]
+    G --> H["Done"]
 ```
 
 **What happens during pause:**
@@ -165,25 +163,28 @@ When a container has no active sessions for `IDLE_TIMEOUT` (default 10 minutes),
 When a new request arrives for a paused container, the orchestrator transparently resumes it.
 
 **Resume sequence:**
-```
-1. Request arrives for {project_id}
-2. Orchestrator looks up container → status = 'paused'
-3. Request queued (max 100 queued requests per container)
-4. DB update: status = 'running' (optimistic)
-5. Docker API: unpause container
-6. All processes resume from exactly where they were frozen
-7. Orchestrator dials gRPC on unix:///var/run/synchestra-{project_id}.sock
-8. Polls Ping() every 500ms (timeout: 30s)
-9. On Ping() success:
-   a. gRPC connection added to pool
-   b. Circuit breaker: half-open → closed
-   c. idle_since = NULL
-   d. Emit event: container.resumed
-   e. Queued requests drained FIFO
-10. On Ping() timeout:
-    a. Container marked 'failed'
-    b. Queued requests returned with error
-    c. Recovery logic triggered (Phase 6)
+```mermaid
+graph TD
+    A["Request for paused container"] --> B["Lookup container"]
+    B --> C["Queue request<br/>max 100 per container"]
+    C --> D["DB update: status=running<br/>optimistic"]
+    D --> E["Docker API: unpause container"]
+    E --> F["Processes resume from freeze point"]
+    F --> G["Dial gRPC socket"]
+    G --> H["Poll Ping() every 500ms<br/>timeout: 30s"]
+
+    H --> I{Ping<br/>succeeds?}
+
+    I -->|Yes| J["Add gRPC to pool"]
+    J --> K["Circuit breaker: half-open → closed"]
+    K --> L["Set idle_since = NULL"]
+    L --> M["Emit event: container.resumed"]
+    M --> N["Drain queued requests FIFO"]
+    N --> O["Done"]
+
+    I -->|No| P["Mark container failed"]
+    P --> Q["Return error to queued requests"]
+    Q --> R["Trigger recovery Phase 6"]
 ```
 
 **Expected resume latency:** 1–3s (processes resume instantly; gRPC reconnect is the bottleneck)
@@ -199,21 +200,28 @@ When a new request arrives for a paused container, the orchestrator transparentl
 Triggered by: admin request, host shutdown signal, or resource pressure eviction.
 
 **Shutdown sequence:**
+```mermaid
+graph TD
+    A["Shutdown triggered"] --> B["Stop accepting new requests"]
+    B --> C["Close gRPC connection"]
+    C --> D["Remove from pool"]
+    D --> E["Docker API: SIGTERM to PID 1"]
+    E --> F["Agent stops accepting sessions"]
+    F --> G["Wait for active commands<br/>timeout: 60s"]
+    G --> H{Commands<br/>completed?}
+
+    H -->|No| I["Docker sends SIGKILL"]
+    I --> J["Container exits"]
+
+    H -->|Yes| J
+
+    J --> K["Update DB: status=stopped"]
+    K --> L["Clean up socket file"]
+    L --> M["Emit event: container.stopped"]
+    M --> N["Done"]
 ```
-1. Orchestrator: stop accepting new requests for {project_id}
-2. Orchestrator: close gRPC connection, remove from pool
-3. Docker API: send SIGTERM to container PID 1
-4. Agent receives SIGTERM:
-   a. Stop accepting new sessions
-   b. Wait for active commands to complete (up to 60s)
-   c. Clean up session temp files
-   d. Close gRPC listener
-   e. Exit 0
-5. If container hasn't exited after 60s → Docker sends SIGKILL
-6. DB update: status = 'stopped', stopped_at = now()
-7. Socket file cleaned up from host: /var/run/synchestra-{project_id}.sock
-8. Emit event: container.stopped
-```
+
+> **Note:** The admin force-stop endpoint in [orchestrator.md](orchestrator.md) uses a shorter 10-second timeout before SIGKILL, compared to the 60-second graceful shutdown timeout above. The 10s timeout applies only to the admin force-stop API; the 60s timeout applies to all other stop triggers (idle timeout, system shutdown, user-initiated stop).
 
 **What's preserved after stop:**
 - Workspace volume on host (repos, cache, credentials, encryption key)

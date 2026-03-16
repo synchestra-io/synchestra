@@ -2,6 +2,8 @@
 
 ## Overview
 
+> **Related documents:** [protocol.md](protocol.md) (gRPC service that the API proxies to), [orchestrator.md](orchestrator.md) (orchestrator interface), [credentials.md](credentials.md) (credential management details), [testing.md](testing.md) (API test specifications), [outstanding-questions.md](outstanding-questions.md) (open design questions).
+
 The sandbox HTTP API is served by `synchestra serve --http` and provides RESTful endpoints for the web application to interact with sandbox containers. All sandbox endpoints are prefixed with `/api/v1/sandbox/`. Admin endpoints are prefixed with `/api/v1/admin/sandbox/`.
 
 The API server acts as a stateless proxy — it authenticates requests, validates access permissions, and forwards operations to the appropriate container via the Container Orchestrator and gRPC. The host holds no session state: any host instance can serve any request for any project. Session state lives exclusively inside the container, and session logs are persisted to disk by the container agent.

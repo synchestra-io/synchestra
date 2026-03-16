@@ -4,6 +4,8 @@ Testing strategy for the sandbox feature covering unit tests, integration tests,
 
 **Location in repo**: `internal/sandbox/` (tests co-located with source)
 
+> **API paths**: All endpoint paths follow the conventions defined in [http-api.md](http-api.md). Admin endpoints use `/api/v1/admin/sandbox/{project_id}/...`.
+
 ## Test Categories
 
 ### Unit Tests
@@ -94,10 +96,10 @@ Unit tests run without Docker. They use interface-based mocks for all external d
 
 **Handlers** (`handler_test.go`):
 - Each endpoint tested with a mock orchestrator (interface-based).
-- `POST /api/v1/projects/{project_id}/sandbox/exec` → calls orchestrator `Execute`, returns command output.
-- `POST /api/v1/projects/{project_id}/sandbox/credentials` → calls orchestrator `StoreCredential`, returns 201.
-- `GET /api/v1/projects/{project_id}/sandbox/sessions` → returns session list.
-- `GET /api/v1/projects/{project_id}/sandbox/sessions/{session_id}/logs` → upgrades to WebSocket, streams logs.
+- `POST /api/v1/sandbox/{project_id}/execute` → calls orchestrator `Execute`, returns command output.
+- `POST /api/v1/sandbox/{project_id}/credentials` → calls orchestrator `StoreCredential`, returns 201.
+- `GET /api/v1/sandbox/{project_id}/sessions` → returns session list.
+- `GET /api/v1/sandbox/{project_id}/sessions/{session_id}/logs` → upgrades to WebSocket, streams logs.
 - Error from orchestrator is mapped to appropriate HTTP status (see Error Mapping below).
 
 **Auth Middleware** (`auth_test.go`):
@@ -171,7 +173,7 @@ Integration tests require Docker and use real gRPC connections. They are gated b
 
 #### Credential Flow (`internal/sandbox/agent/credential_integration_test.go`)
 
-- **HTTP → container vault**: Store a credential via `POST /api/v1/projects/{project_id}/sandbox/credentials`. Verify it is encrypted in the container's vault (inspect vault file — ciphertext, not plaintext).
+- **HTTP → container vault**: Store a credential via `POST /api/v1/sandbox/{project_id}/credentials`. Verify it is encrypted in the container's vault (inspect vault file — ciphertext, not plaintext).
 - **Credential injection in command**: Store a git HTTPS token. Execute `git clone` with credential injection. Verify clone succeeds (the credential was injected via `GIT_ASKPASS`).
 - **Persist across restart**: Store a credential. Restart the container. Retrieve the credential. Verify it decrypts correctly (master key and vault are on the volume).
 - **Expired credential rejected**: Store a credential with a short `expires_at`. Wait for expiry. Execute a command with credential injection. Verify the command fails with a clear error indicating credential expiry.
@@ -185,41 +187,41 @@ Full-stack tests exercise the entire path: HTTP → Orchestrator → gRPC → Co
 #### `internal/sandbox/e2e_test.go`
 
 **Credential + Git Clone**:
-1. `POST /api/v1/projects/{project_id}/sandbox/credentials` — store a git HTTPS token.
-2. `POST /api/v1/projects/{project_id}/sandbox/exec` — execute `git clone https://github.com/example/repo.git`.
+1. `POST /api/v1/sandbox/{project_id}/credentials` — store a git HTTPS token.
+2. `POST /api/v1/sandbox/{project_id}/execute` — execute `git clone https://github.com/example/repo.git`.
 3. Verify 200 response with clone output. Verify repo exists in the container's working directory.
 
 **Long-Running Command + Reconnect**:
-1. `POST /api/v1/projects/{project_id}/sandbox/exec` — execute `for i in $(seq 1 10); do echo $i; sleep 1; done`.
-2. Open WebSocket to `GET /api/v1/projects/{project_id}/sandbox/sessions/{session_id}/logs`.
+1. `POST /api/v1/sandbox/{project_id}/execute` — execute `for i in $(seq 1 10); do echo $i; sleep 1; done`.
+2. Open WebSocket to `GET /api/v1/sandbox/{project_id}/sessions/{session_id}/logs`.
 3. Receive first few lines, then close the WebSocket (simulating disconnect).
 4. Wait 5 seconds.
 5. Reopen WebSocket to the same `{session_id}`.
 6. Verify all 10 lines are received (including those generated during disconnect).
 
 **Concurrent Users, Isolated Sessions**:
-1. User A: `POST /api/v1/projects/{project_id}/sandbox/exec` — execute `echo user_a > /tmp/test.txt`.
-2. User B: `POST /api/v1/projects/{project_id}/sandbox/exec` — execute `cat /tmp/test.txt` (in a different session).
+1. User A: `POST /api/v1/sandbox/{project_id}/execute` — execute `echo user_a > /tmp/test.txt`.
+2. User B: `POST /api/v1/sandbox/{project_id}/execute` — execute `cat /tmp/test.txt` (in a different session).
 3. Verify User B cannot see User A's file (sessions have isolated working directories).
 
 **Idle → Pause → Resume**:
-1. `POST /api/v1/projects/{project_id}/sandbox/exec` — execute `echo warm`.
+1. `POST /api/v1/sandbox/{project_id}/execute` — execute `echo warm`.
 2. Wait for idle timeout (configured short for test, e.g., 5s).
 3. Verify container state is `PAUSED` via `GET /api/v1/admin/sandbox/{project_id}`.
-4. `POST /api/v1/projects/{project_id}/sandbox/exec` — execute `echo resumed`.
+4. `POST /api/v1/sandbox/{project_id}/execute` — execute `echo resumed`.
 5. Verify response arrives within 3s (resume latency target). Verify output is `resumed`.
 
 **Crash → Restart → Retry**:
-1. `POST /api/v1/projects/{project_id}/sandbox/exec` — execute `echo before_crash`.
+1. `POST /api/v1/sandbox/{project_id}/execute` — execute `echo before_crash`.
 2. Kill the agent process inside the container (simulate crash via a special test command or Docker exec).
 3. Wait for orchestrator health check to detect failure and auto-restart.
-4. `POST /api/v1/projects/{project_id}/sandbox/exec` — execute `echo after_restart`.
+4. `POST /api/v1/sandbox/{project_id}/execute` — execute `echo after_restart`.
 5. Verify response succeeds with output `after_restart`.
 
 **Eviction Under Pressure**:
 1. Provision containers for `{project_id}` A, B, C (where `max_containers=3`).
 2. Allow container A to idle and get paused.
-3. `POST /api/v1/projects/{project_id_d}/sandbox/exec` — request a 4th project's sandbox.
+3. `POST /api/v1/sandbox/{project_id_d}/execute` — request a 4th project's sandbox.
 4. Verify container A is evicted (state removed from orchestrator).
 5. Verify the new container for project D is `RUNNING` and the command succeeds.
 

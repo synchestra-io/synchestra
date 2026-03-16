@@ -2,6 +2,8 @@
 
 ## Overview
 
+> **Related documents:** [orchestrator.md](orchestrator.md) (state machine and behavior spec — authoritative), [lifecycle.md](lifecycle.md) (lifecycle phases), [go-types-and-signatures.md](go-types-and-signatures.md) (consolidated type definitions and call graph), [outstanding-questions.md](outstanding-questions.md) (open design questions).
+
 The Container Orchestrator manages the lifecycle of sandbox containers on the host side. It is initialized as part of `synchestra serve --http` and provides the bridge between HTTP API requests and gRPC container agents.
 
 **Language**: Go  

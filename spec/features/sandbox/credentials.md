@@ -4,6 +4,8 @@
 
 Container-managed encrypted credential vault for the Synchestra sandbox. The host is **stateless** — it never sees, stores, or decrypts credentials. Each container autonomously manages its own vault using AES256-GCM encryption with a per-container persistent key.
 
+> **Related documents:** [protocol.md](protocol.md) (gRPC messages), [agent-implementation-guide.md](agent-implementation-guide.md) (Go implementation), [http-api.md](http-api.md) (REST endpoints), [outstanding-questions.md](outstanding-questions.md) (open design questions).
+
 This document is the **authoritative, consolidated** credential management reference. For gRPC message definitions and RPC behavior, see [protocol.md](protocol.md). For Go implementation patterns (structs, functions, tests), see [agent-implementation-guide.md](agent-implementation-guide.md).
 
 **Related specs:**
@@ -28,7 +30,7 @@ This document is the **authoritative, consolidated** credential management refer
 | `git_token` | `github-{name}` | Git HTTPS authentication | GitHub PAT for cloning private repos |
 | `ssh_key` | `ssh-{name}` | SSH authentication | Deploy key for git over SSH |
 | `api_key` | `api-{service}-{name}` | External service authentication | OpenAI API key, AWS access key |
-| `env_secret` | `env-{name}` | Injected as environment variable during command execution | Database connection string |
+| `env_var` | `env-{name}` | Injected as environment variable during command execution | Database connection string |
 | `custom` | `{name}` | User-defined | Any secret value |
 
 Credential types are **extensible**. The `credential_type` field in the protobuf schema (see [agent.proto](agent.proto)) is a free-form string. The types above are conventions, not an exhaustive enum.
@@ -116,6 +118,8 @@ The vault is a single JSON file with per-entry encryption:
 
 Each entry is independently encrypted — updating one credential does not require re-encrypting the others.
 
+> **Implementation note:** The `ciphertext` field contains `base64(nonce || gcm_ciphertext)`. On decryption, split the decoded bytes: the first 12 bytes are the GCM nonce, the remainder is the ciphertext. See [agent-implementation-guide.md](agent-implementation-guide.md) for the Go implementation — note that the implementation guide currently stores nonce and ciphertext as separate fields; reconcile to use the combined format defined here.
+
 ## Credential Lifecycle
 
 ### Store (Create/Update)
@@ -180,7 +184,7 @@ export GIT_SSH_COMMAND="ssh -i ${SSH_KEY_FILE} -o StrictHostKeyChecking=accept-n
 # Removed immediately after command completes
 ```
 
-### Environment Variables (`env_secret`)
+### Environment Variables (`env_var`)
 
 ```go
 // Injected directly into the command environment

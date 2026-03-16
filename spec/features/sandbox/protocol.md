@@ -2,6 +2,8 @@
 
 ## Overview
 
+> **Related documents:** [agent.proto](agent.proto) (protobuf source for code generation), [http-api.md](http-api.md) (REST API that proxies to these RPCs), [agent-implementation-guide.md](agent-implementation-guide.md) (Go server implementation), [outstanding-questions.md](outstanding-questions.md) (open design questions).
+
 The gRPC service specification for container-side agent (`SandboxAgent`). Defines all RPCs, message types, and communication semantics.
 
 **Service Location**: Container listens on `/var/run/synchestra-{project_id}.sock` (Unix socket)

@@ -22,6 +22,10 @@ Safe, isolated execution environments for running user-initiated commands from t
 | [http-api.md](http-api.md) | HTTP REST API specification: sandbox and admin endpoints, auth, error mapping, rate limiting |
 | [testing.md](testing.md) | Integration testing strategy: unit, integration, and end-to-end test specifications |
 | [monitoring.md](monitoring.md) | Monitoring, logging, alerting: Prometheus metrics, structured logging, tracing, dashboards |
+| [outstanding-questions.md](outstanding-questions.md) | Consolidated outstanding questions with context and recommendations |
+| [go-types-and-signatures.md](go-types-and-signatures.md) | Go type/interface definitions, function signatures, and call graphs |
+| [compute-backends.md](compute-backends.md) | Pluggable compute backends: Single Host, Cloud Serverless, Kubernetes |
+| [cloud-serverless.md](cloud-serverless.md) | Cloud Serverless deep-dive: 3 submodes (managed, delegated, external), workspace sync, cold starts, cloud-vs-K8s comparison |
 
 ## Document Summaries
 
@@ -73,7 +77,21 @@ Integration testing strategy covering three tiers: unit tests (orchestrator stat
 ### [monitoring.md](monitoring.md)
 Monitoring, logging, and alerting specification: Prometheus metrics catalog (host-side and container-side), structured JSON logging with sensitive data policy, OpenTelemetry distributed tracing, alerting rules (critical/warning/info), dashboard specifications (overview, per-project, operations), and health endpoints.
 
+### [outstanding-questions.md](outstanding-questions.md)
+Consolidated summary of all unresolved design questions from across the sandbox spec. Grouped by theme (credential management, container lifecycle, API & protocol, observability, database, testing, security) with brief context and 1-2 recommended resolutions per question.
+
+### [go-types-and-signatures.md](go-types-and-signatures.md)
+All Go type definitions, interface definitions, and function signatures for the sandbox feature. Organized by package (orchestrator, agent, API, observability) with detailed call graphs for the main execution flows (command execution, credential management, health checking, idle detection, auto-resume, graceful shutdown).
+
+### [compute-backends.md](compute-backends.md)
+Pluggable compute backend architecture for running sandbox containers across different deployment topologies. Defines the `ComputeBackend` Go interface and three execution modes: Single Host (local Docker, SQLite, Unix sockets — the default), Cloud Serverless (Cloud Run/Fargate/ACI, HTTPS, pay-per-use), and Kubernetes (CRD+operator, PVCs, K8s scheduler). Includes a user-provided external endpoint variant and a comparison matrix across all modes.
+
+### [cloud-serverless.md](cloud-serverless.md)
+Comprehensive architecture for the Cloud Serverless backend. Defines three submodes: Fully Managed (Synchestra owns cloud infra, user pays Synchestra), Delegated (Synchestra manages lifecycle in user's cloud account, cloud bills user directly), and External (user provides a pre-running endpoint, Synchestra connects only). Covers gRPC-over-HTTPS transport, workspace persistence to cloud storage, cold start optimization, orchestrator-to-agent authentication, and a detailed cloud-vs-Kubernetes implementation cost/effort comparison with a phased roadmap.
+
 ## Outstanding Questions
+
+> **See [outstanding-questions.md](outstanding-questions.md) for the full consolidated list with context and recommendations.**
 
 1. Should credentials support expiry/auto-rotation? Timeline for this feature?
 2. ~~Should audit logs be retained indefinitely or with retention policy?~~ **Resolved**: Retain logs only for the last N hours; default is 24 hours. The retention window is configurable per host.

@@ -2,6 +2,8 @@
 
 ## Overview
 
+> **Related documents:** [Dockerfile.spec](Dockerfile.spec) (Dockerfile), [docker-entrypoint.sh](docker-entrypoint.sh) (entrypoint script), [container-build-automation.md](container-build-automation.md) (CI/CD workflow).
+
 The Sandbox Agent runs in a Docker container, one per Synchestra project. This document covers image building, deployment, security hardening, and operational considerations.
 
 ## Image Build

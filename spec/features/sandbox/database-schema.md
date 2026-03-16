@@ -2,6 +2,8 @@
 
 ## Overview
 
+> **Related documents:** [orchestrator.md](orchestrator.md) (container metadata usage), [lifecycle.md](lifecycle.md) (state transitions that update the database), [outstanding-questions.md](outstanding-questions.md) (open design questions).
+
 The host-side database (`synchestra serve --http`) stores **minimal data**: only user↔project access mappings and container metadata for lifecycle management. **All state, secrets, and execution data remain inside containers.**
 
 This minimalist approach ensures:
@@ -9,66 +11,81 @@ This minimalist approach ensures:
 - No complex schema migrations or state synchronization logic
 - Database is read-heavy (lookups for authorization), write-light (container metadata updates)
 
+## Database Engine
+
+**SQLite 3.35+** — embedded, zero-config, single-file database at `SYNCHESTRA_DATABASE_PATH` (default: `~/.synchestra/sandbox.db`).
+
+SQLite is the right choice because:
+- Both tables are small: O(projects) rows for metadata, O(users × projects) for access cache
+- Single-process access: only one `synchestra serve --http` process per host
+- Read-heavy, write-light workload — no contention concerns
+- No external dependency to install, configure, or maintain
+- The orchestrator opens the database at startup via Go's `database/sql` with `mattn/go-sqlite3` (or `modernc.org/sqlite` for pure-Go builds)
+
+The DDL below uses SQLite-compatible syntax.
+
 ## Tables
 
-### `sandbox_user_project_access`
+### `sandbox_user_project_access` (cache)
 
-Maps users to projects for access control. Used by HTTP API to validate authorization before routing requests to container.
+**Local cache** of user↔project access mappings. The source of truth is the external/cloud database; this table is a read-through cache refreshed on access or periodically.
 
 ```sql
 CREATE TABLE sandbox_user_project_access (
-    user_id VARCHAR(255) NOT NULL,
-    project_id VARCHAR(255) NOT NULL,
-    access_level VARCHAR(50) NOT NULL DEFAULT 'read_write',
-    -- access_level: 'read', 'read_write', 'admin', or custom policies
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    user_id    TEXT NOT NULL,
+    project_id TEXT NOT NULL,
+    access_level TEXT NOT NULL DEFAULT 'read_write',
+    -- access_level: 'read', 'read_write', 'admin'
+    cached_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+    -- When this row was fetched from the external DB (for TTL-based eviction)
     
-    PRIMARY KEY (user_id, project_id),
-    INDEX idx_user_projects (user_id),
-    INDEX idx_project_users (project_id)
+    PRIMARY KEY (user_id, project_id)
 );
+
+CREATE INDEX idx_user_projects ON sandbox_user_project_access(user_id);
+CREATE INDEX idx_project_users ON sandbox_user_project_access(project_id);
+CREATE INDEX idx_cache_age ON sandbox_user_project_access(cached_at);
 ```
 
 **Columns:**
 - `user_id`: External user identifier (from auth system, e.g., GitHub username, Auth0 ID)
 - `project_id`: Synchestra project identifier (matches state repo name)
 - `access_level`: Authorization level for this user on this project
-- `created_at`: When access was granted
-- `updated_at`: When access was last modified (e.g., downgrade from admin to write)
+- `cached_at`: When this row was fetched from the external DB — rows older than the cache TTL (default: 5 min) are re-validated on next access
+
+**Cache behavior:**
+- On API request: check local cache → if miss or stale (`cached_at` older than TTL), fetch from external DB, upsert into cache
+- Periodic cleanup: `DELETE FROM sandbox_user_project_access WHERE cached_at < datetime('now', '-1 hour')` removes entries not accessed recently
+- On external DB unavailability: serve from stale cache (log warning)
 
 **Queries:**
 ```sql
--- Check if user can access project
-SELECT access_level FROM sandbox_user_project_access
+-- Check if user can access project (cache hit)
+SELECT access_level, cached_at FROM sandbox_user_project_access
 WHERE user_id = ? AND project_id = ?;
 
--- List all projects user can access
-SELECT project_id, access_level FROM sandbox_user_project_access
-WHERE user_id = ?;
-
--- List all users with access to project
-SELECT user_id, access_level FROM sandbox_user_project_access
-WHERE project_id = ?;
+-- Evict stale cache entries
+DELETE FROM sandbox_user_project_access
+WHERE cached_at < datetime('now', '-1 hour');
 ```
 
 ### `sandbox_container_metadata`
 
-Tracks container lifecycle and configuration for each project. Used by Container Orchestrator to manage startup, pause/resume, and cleanup.
+Local source of truth for container lifecycle on this host. One row per project. Used by the orchestrator for status queries (auto-pause, health checks, routing).
 
 ```sql
 CREATE TABLE sandbox_container_metadata (
-    project_id VARCHAR(255) PRIMARY KEY,
+    project_id TEXT PRIMARY KEY,
     
     -- Container identity
-    container_id VARCHAR(255) UNIQUE,
-    -- Docker container ID (nullable if container not created yet)
+    container_id TEXT UNIQUE,
+    -- Docker container ID (NULL if container not created yet)
     
-    container_image VARCHAR(255) DEFAULT 'synchestra/sandbox-agent:latest',
+    container_image TEXT NOT NULL DEFAULT 'synchestra/sandbox-agent:latest',
     -- Per-project image override
     
-    container_status VARCHAR(50) NOT NULL DEFAULT 'stopped',
-    -- Container status values:
+    container_status TEXT NOT NULL DEFAULT 'stopped',
+    -- Status values:
     -- 'creating'    - Container image being pulled/built
     -- 'running'     - Container is active and accepting commands
     -- 'paused'      - Container is suspended (idle timeout)
@@ -76,71 +93,52 @@ CREATE TABLE sandbox_container_metadata (
     -- 'failed'      - Container crashed or health checks failed
     -- 'terminated'  - Container was explicitly destroyed/removed
     
-    socket_path VARCHAR(255),
-    -- /var/run/synchestra-{project_id}.sock (nullable until container starts)
+    socket_path TEXT,
+    -- /var/run/synchestra-{project_id}.sock (NULL until container starts)
     
     -- Resource configuration
-    resource_quota_gb INT NOT NULL DEFAULT 50,
-    -- Max disk space for /workspace/{project_id}/ (GB)
+    resource_quota_gb INTEGER NOT NULL DEFAULT 50,
+    memory_limit_mb  INTEGER NOT NULL DEFAULT 512,
+    cpu_limit         REAL NOT NULL DEFAULT 2.0,
     
-    memory_limit_mb INT NOT NULL DEFAULT 512,
-    -- Docker memory limit (MB)
+    -- Lifecycle timestamps (ISO 8601 strings)
+    created_at  TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+    started_at  TEXT,
+    paused_at   TEXT,
+    idle_since  TEXT,
     
-    cpu_limit FLOAT NOT NULL DEFAULT 2.0,
-    -- Docker CPU limit (cores, can be fractional)
+    -- Restart tracking
+    restart_count   INTEGER DEFAULT 0,
+    last_restart_at TEXT,
     
-    -- Lifecycle metadata
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    -- When container was first created
+    updated_at TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
     
-    started_at TIMESTAMP WITH TIME ZONE,
-    -- Last time container transitioned to 'running'
-    
-    paused_at TIMESTAMP WITH TIME ZONE,
-    -- Last time container transitioned to 'paused'
-    
-    idle_since TIMESTAMP WITH TIME ZONE,
-    -- When no commands have been executing (used for auto-pause)
-    
-    -- Restart tracking (persisted across host restarts)
-    restart_count INT DEFAULT 0,
-    -- Consecutive restart attempts
-    
-    last_restart_at TIMESTAMP WITH TIME ZONE,
-    -- When last restart was attempted
-    
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    -- Last metadata update (for optimistic locking or versioning)
-    
-    -- Observability
-    last_health_check TIMESTAMP WITH TIME ZONE,
-    -- Last successful Ping() RPC
-    
-    health_check_failures INT DEFAULT 0,
-    -- Consecutive failed health checks (reset on success)
-    
-    INDEX idx_status (container_status),
-    INDEX idx_idle_since (idle_since)
+    -- Health
+    last_health_check    TEXT,
+    health_check_failures INTEGER DEFAULT 0
 );
+
+CREATE INDEX idx_container_status ON sandbox_container_metadata(container_status);
+CREATE INDEX idx_container_idle ON sandbox_container_metadata(container_status, idle_since);
 ```
 
 **Columns:**
 - `project_id`: Synchestra project identifier (primary key)
-- `container_id`: Docker container ID (nullable until first creation)
-- `container_status`: Enum state of container lifecycle
+- `container_id`: Docker container ID (NULL until first creation)
+- `container_status`: Lifecycle state of the container
 - `socket_path`: Unix socket path for gRPC communication
 - `resource_quota_gb`: Disk quota (enforced by Docker volume or kernel quotas)
 - `memory_limit_mb`: Docker memory constraint
-- `cpu_limit`: Docker CPU constraint
-- `created_at`: Container creation timestamp
+- `cpu_limit`: Docker CPU constraint (cores, fractional)
+- `created_at`: Container creation timestamp (ISO 8601)
 - `started_at`: When container last started
 - `paused_at`: When container was last paused
-- `idle_since`: Timestamp used to detect if container should auto-pause
+- `idle_since`: When the container became idle (used for auto-pause)
 - `restart_count`: Consecutive restart attempts (persisted to survive host process restarts)
-- `last_restart_at`: When last restart was attempted (persisted to survive host process restarts)
+- `last_restart_at`: When last restart was attempted
 - `updated_at`: Last database row update
 - `last_health_check`: Last successful `Ping()` RPC to container
-- `health_check_failures`: Counter for circuit breaker pattern
+- `health_check_failures`: Consecutive failures — feeds circuit breaker pattern
 
 **Queries:**
 ```sql
@@ -152,21 +150,23 @@ WHERE project_id = ?;
 -- Find idle containers (for auto-pause)
 SELECT project_id, container_id FROM sandbox_container_metadata
 WHERE container_status = 'running'
-  AND idle_since < NOW() - INTERVAL '10 minutes';
+  AND idle_since < datetime('now', '-10 minutes');
 
 -- Find paused containers (for cleanup after 24h idle)
 SELECT project_id, container_id FROM sandbox_container_metadata
 WHERE container_status = 'paused'
-  AND paused_at < NOW() - INTERVAL '24 hours';
+  AND paused_at < datetime('now', '-24 hours');
 
--- Update container on-demand (resume from pause)
+-- Resume from pause
 UPDATE sandbox_container_metadata
-SET container_status = 'running', idle_since = NULL, updated_at = NOW()
+SET container_status = 'running', idle_since = NULL,
+    updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
 WHERE project_id = ? AND container_status = 'paused';
 
--- Mark container idle (for auto-pause decision)
+-- Mark container idle
 UPDATE sandbox_container_metadata
-SET idle_since = NOW(), updated_at = NOW()
+SET idle_since = strftime('%Y-%m-%dT%H:%M:%fZ', 'now'),
+    updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
 WHERE project_id = ? AND container_status = 'running'
   AND idle_since IS NULL;
 ```
@@ -195,51 +195,43 @@ WHERE project_id = ? AND container_status = 'running'
 
 ## Indexes
 
-**Recommended indexes for performance:**
+Indexes are defined inline in the DDL above. Summary:
 
-```sql
--- Fast access verification
-CREATE INDEX idx_user_projects ON sandbox_user_project_access(user_id);
-CREATE INDEX idx_project_users ON sandbox_user_project_access(project_id);
-
--- Lifecycle management (auto-pause, cleanup)
-CREATE INDEX idx_container_idle ON sandbox_container_metadata(container_status, idle_since);
-CREATE INDEX idx_container_status ON sandbox_container_metadata(container_status);
-CREATE INDEX idx_container_paused ON sandbox_container_metadata(paused_at)
-WHERE container_status = 'paused';
-```
+| Index | Table | Purpose |
+|---|---|---|
+| `idx_user_projects` | `sandbox_user_project_access` | Fast lookup by user |
+| `idx_project_users` | `sandbox_user_project_access` | Fast lookup by project |
+| `idx_cache_age` | `sandbox_user_project_access` | TTL-based cache eviction |
+| `idx_container_status` | `sandbox_container_metadata` | Filter by lifecycle state |
+| `idx_container_idle` | `sandbox_container_metadata` | Auto-pause candidate queries |
 
 ## Retention & Cleanup
 
-### Access Mappings
-
-- Retained indefinitely (unless user deleted from system)
-- No auto-cleanup; managed via administrative process
+### Access Cache
+- Entries evicted automatically when older than cache TTL (default: 5 min on read, 1 hour hard cleanup)
+- Full cache cleared on orchestrator restart (rebuilt on demand)
 
 ### Container Metadata
-
 - Retained while container exists
-- On container cleanup (destroyed after idle timeout):
-  - Archive to backup storage (for recovery)
-  - Delete from active table (or soft-delete via `deleted_at`)
-  - Optional: Retain for 30 days before hard delete
+- On container termination:
+  - Soft-delete via `container_status = 'terminated'`
+  - Hard-delete after 30 days (periodic cleanup job)
 
 ## Migration Strategy
 
 ### Initial Deployment
 
-```sql
-CREATE TABLE sandbox_user_project_access (...)
-CREATE TABLE sandbox_container_metadata (...)
-CREATE INDEX idx_user_projects ON sandbox_user_project_access(user_id);
--- (... other indexes)
+The orchestrator creates the database and tables at startup if they don't exist (embedded DDL in Go). No external migration tool required.
+
+```go
+// On startup: os.MkdirAll(filepath.Dir(dbPath), 0700)
+// Then: sql.Open("sqlite3", dbPath)
+// Then: db.Exec(ddl) for each CREATE TABLE IF NOT EXISTS
 ```
 
 ### Scaling (Future)
 
-- **Replication**: Replicate `sandbox_user_project_access` to read replicas for fast authorization
-- **Partitioning**: If millions of users, partition by `project_id` (hash partition)
-- **Archive**: Move old `paused_at` containers to archive table after 30 days
+SQLite is sufficient for single-host deployments (hundreds of projects). If Synchestra grows to support multi-host orchestration, the access cache and container metadata would need to move to a shared store (PostgreSQL, CockroachDB). The `*sql.DB` interface makes this a driver swap, not a rewrite.
 
 ## Outstanding Questions
 

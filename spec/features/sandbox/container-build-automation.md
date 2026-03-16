@@ -1,5 +1,7 @@
 # Container Build Automation
 
+> **Related documents:** [Dockerfile.spec](Dockerfile.spec) (Dockerfile), [docker-entrypoint.sh](docker-entrypoint.sh) (entrypoint script), [container-build-deployment.md](container-build-deployment.md) (deployment procedures).
+
 ## Makefile Targets (in this repository root)
 
 Add these targets to the main `Makefile`:

@@ -2,6 +2,8 @@
 
 ## Overview
 
+> **Related documents:** [lifecycle.md](lifecycle.md) (lifecycle phases and timing), [orchestrator-implementation-guide.md](orchestrator-implementation-guide.md) (Go implementation patterns), [http-api.md](http-api.md) (admin API endpoints), [monitoring.md](monitoring.md) (health checks and metrics), [outstanding-questions.md](outstanding-questions.md) (open design questions).
+
 The Container Orchestrator is the host-side service component responsible for managing the lifecycle of sandbox containers, maintaining gRPC connections to container agents, performing health monitoring, and routing requests from the HTTP API layer to the appropriate container. It runs as part of `synchestra serve --http`.
 
 **Design principle**: The orchestrator is a stateless router and lifecycle manager. It stores only container metadata (status, resource config, timestamps) and user↔project access mappings in the host database. It never stores credentials, task state, execution logs, or user data — all of that lives inside the container.
@@ -55,37 +57,36 @@ All valid state transitions. Any transition not listed here is illegal and must 
 
 ### Transition Diagram
 
-```
-                          ┌─────────────┐
-                          │unprovisioned│
-                          └──────┬──────┘
-                     first request│
-                          ┌──────▼──────┐
-                     ┌────│  creating   │────┐
-                     │    └──────┬──────┘    │
-                  success        │        failure
-                     │    ┌──────▼──────┐    │
-                     │    │  starting   │────┤
-                     │    └──────┬──────┘    │
-                     │     Ping()│ok         │
-                     │    ┌──────▼──────┐    │
-              ┌──────┼────│   running   │────┤
-              │      │    └───┬─────┬───┘    │
-         idle │      │   stop │     │ health │
-        timeout      │        │     │  fail  │
-              │      │  ┌─────▼──┐  │   ┌────▼────┐
-              │      │  │stopping│  │   │ failed  │
-              │      │  └────┬───┘  │   └────┬────┘
-              │      │ drained│     │  restart│ or destroy
-         ┌────▼───┐  │  ┌────▼──┐  │        │
-         │ paused │  │  │stopped│──┼────────►│
-         └────┬───┘  │  └───┬───┘  │   ┌────▼─────┐
-        resume│      │destroy│     │   │terminated│
-         ┌────▼────┐ │  ┌───▼─────┐│   └────┬─────┘
-         │resuming │ │  │terminated││  re-provision
-         └────┬────┘ │  └─────────┘│        │
-          Ping│ok    │             │        │
-              └──────┘             └────────┘
+```mermaid
+stateDiagram-v2
+    [*] --> unprovisioned
+
+    unprovisioned --> creating: first request
+
+    creating --> starting: success
+    creating --> failed: failure
+
+    starting --> running: Ping() ok
+    starting --> failed: timeout/failure
+
+    running --> paused: idle timeout
+    running --> stopping: stop
+    running --> failed: health failures
+
+    paused --> resuming: resume request
+
+    resuming --> running: Ping() ok
+    resuming --> failed: timeout
+
+    stopping --> stopped: drained
+
+    stopped --> starting: new request
+    stopped --> terminated: destroy
+
+    failed --> starting: restart
+    failed --> terminated: max restarts exceeded
+
+    terminated --> creating: new request
 ```
 
 ## gRPC Connection Pool
@@ -308,19 +309,14 @@ Each project has its own independent circuit breaker. Failures in one container 
 
 ### Transitions
 
-```
-Closed → Open:
-    When health_check_failures >= MAX_FAILURES
-    OR when container transitions to failed/stopped/paused
+```mermaid
+stateDiagram-v2
+    Closed --> Open: health_check_failures >= MAX_FAILURES\nor container failed/stopped/paused
 
-Open → Half-Open:
-    After CIRCUIT_RESET_TIMEOUT (default 30s)
+    Open --> HalfOpen: CIRCUIT_RESET_TIMEOUT (30s)
 
-Half-Open → Closed:
-    If probe request (Ping) succeeds
-
-Half-Open → Open:
-    If probe request fails
+    HalfOpen --> Closed: probe request succeeds
+    HalfOpen --> Open: probe request fails
 ```
 
 ### Behavior
@@ -414,18 +410,32 @@ Projects can specify a custom container image instead of the default `synchestra
 
 ### Request Flow
 
-```
-HTTP Request → Auth middleware → Orchestrator.Route(project_id, request)
-    │
-    ├─ Container running? → Get gRPC connection → Forward request → Stream response
-    │
-    ├─ Container paused? → Auto-resume → Queue request → Forward after resume
-    │
-    ├─ Container stopped/failed? → Auto-start → Queue request → Forward after ready
-    │
-    ├─ Container unprovisioned? → Auto-provision → Queue request → Forward after ready
-    │
-    └─ Container terminated? → Re-provision → Queue request → Forward after ready
+```mermaid
+graph TD
+    A["HTTP Request"] --> B["Auth middleware"]
+    B --> C["Orchestrator.Route<br/>project_id, request"]
+
+    C --> D{Container Status}
+
+    D -->|Running| E["Get gRPC connection"]
+    E --> F["Forward request"]
+    F --> G["Stream response"]
+
+    D -->|Paused| H["Auto-resume"]
+    H --> I["Queue request"]
+    I --> J["Forward after resume"]
+
+    D -->|Stopped/Failed| K["Auto-start"]
+    K --> L["Queue request"]
+    L --> M["Forward after ready"]
+
+    D -->|Unprovisioned| N["Auto-provision"]
+    N --> O["Queue request"]
+    O --> P["Forward after ready"]
+
+    D -->|Terminated| Q["Re-provision"]
+    Q --> R["Queue request"]
+    R --> S["Forward after ready"]
 ```
 
 ### Auto-Provision on First Request

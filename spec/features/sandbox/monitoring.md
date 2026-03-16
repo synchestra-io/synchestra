@@ -2,6 +2,8 @@
 
 ## Overview
 
+> **Related documents:** [orchestrator.md](orchestrator.md) (event bus and health checks), [lifecycle.md](lifecycle.md) (lifecycle events), [http-api.md](http-api.md) (admin health endpoints), [outstanding-questions.md](outstanding-questions.md) (open design questions).
+
 Observability strategy for the sandbox feature covering metrics (Prometheus), structured logging (JSON), distributed tracing (OpenTelemetry), alerting rules, and dashboards. Monitoring spans both host-side (orchestrator, HTTP API) and container-side (gRPC agent, command execution).
 
 The host is stateless — all durable state lives in containers and the database. This means monitoring must cover both sides to provide a complete picture: the host reports on routing, lifecycle management, and API health, while the container agent reports on session execution, credential operations, and workspace state.
