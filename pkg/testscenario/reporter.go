@@ -243,8 +243,9 @@ func FormatResultJSON(r ScenarioResult) string {
 
 // LiveReporter prints real-time progress to a writer during scenario execution.
 type LiveReporter struct {
-	w      io.Writer
-	hasACs bool // true if any AC lines were printed for the current step
+	w         io.Writer
+	stepName  string     // current step name for deferred printing
+	acResults []ACResult // buffered AC results, flushed in StepFinished
 }
 
 // NewLiveReporter creates a LiveReporter that writes to w.
@@ -273,15 +274,16 @@ func (lr *LiveReporter) SetupFinished(err string) {
 }
 
 func (lr *LiveReporter) StepStarted(stepName string) {
-	lr.hasACs = false
+	lr.stepName = stepName
+	lr.acResults = lr.acResults[:0]
 	_, _ = fmt.Fprintf(lr.w, "  %s  %s\n", styleDuration.Render("▸"), styleDuration.Render(stepName))
 }
 
 func (lr *LiveReporter) StepFinished(result StepResult) {
-	if !lr.hasACs {
-		// No AC lines printed — overwrite the "in progress" line.
-		_, _ = fmt.Fprintf(lr.w, "\033[1A\033[2K")
-	}
+	// Overwrite the "in progress" line.
+	_, _ = fmt.Fprintf(lr.w, "\033[1A\033[2K")
+
+	// Print step result line first (parent).
 	dur := fmt.Sprintf("%.1fs", result.Duration.Seconds())
 	if result.Passed {
 		_, _ = fmt.Fprintf(lr.w, "  %s  %s  %s\n", stylePass.Render("✔"), styleStepName.Render(result.StepName), styleDuration.Render(dur))
@@ -291,30 +293,31 @@ func (lr *LiveReporter) StepFinished(result StepResult) {
 			_, _ = fmt.Fprintf(lr.w, "    %s\n", styleError.Render(result.Error))
 		}
 	}
+
+	// Print buffered AC results below (children, indented).
+	for _, ac := range lr.acResults {
+		slug := ac.FeaturePath + "/" + ac.ACSlug
+		if ac.Passed {
+			_, _ = fmt.Fprintf(lr.w, "      %s  %s\n", stylePass.Render("✔"), styleACPath.Render(slug))
+		} else {
+			_, _ = fmt.Fprintf(lr.w, "      %s  %s\n", styleFail.Render("✘"), styleACPath.Render(slug))
+			if ac.Error != "" {
+				_, _ = fmt.Fprintf(lr.w, "        %s\n", styleError.Render(ac.Error))
+			}
+		}
+	}
 }
 
 func (lr *LiveReporter) ACStarted(featurePath, acSlug string) {
-	if !lr.hasACs {
-		// First AC for this step — overwrite the step's "in progress" line.
-		_, _ = fmt.Fprintf(lr.w, "\033[1A\033[2K")
-		lr.hasACs = true
-	}
+	// AC is running — update the in-progress line to show which AC.
+	_, _ = fmt.Fprintf(lr.w, "\033[1A\033[2K")
 	slug := featurePath + "/" + acSlug
-	_, _ = fmt.Fprintf(lr.w, "      %s  %s\n", styleDuration.Render("▸"), styleDuration.Render(slug))
+	_, _ = fmt.Fprintf(lr.w, "  %s  %s %s\n", styleDuration.Render("▸"), styleDuration.Render(lr.stepName), styleDuration.Render("· "+slug))
 }
 
 func (lr *LiveReporter) ACFinished(result ACResult) {
-	// Move cursor up and overwrite the "in progress" line.
-	_, _ = fmt.Fprintf(lr.w, "\033[1A\033[2K")
-	slug := result.FeaturePath + "/" + result.ACSlug
-	if result.Passed {
-		_, _ = fmt.Fprintf(lr.w, "      %s  %s\n", stylePass.Render("✔"), styleACPath.Render(slug))
-	} else {
-		_, _ = fmt.Fprintf(lr.w, "      %s  %s\n", styleFail.Render("✘"), styleACPath.Render(slug))
-		if result.Error != "" {
-			_, _ = fmt.Fprintf(lr.w, "        %s\n", styleError.Render(result.Error))
-		}
-	}
+	// Buffer the result; it will be printed in StepFinished.
+	lr.acResults = append(lr.acResults, result)
 }
 
 func (lr *LiveReporter) TeardownStarted() {
