@@ -4,15 +4,15 @@
 
 ## Summary
 
-A Go package (`pkg/testscenario/`) that parses [test scenarios](../test-scenario/README.md), resolves [acceptance criteria](../../acceptance-criteria/README.md) verification scripts from feature `_acs/` directories, executes bash steps sequentially (with opt-in parallel groups), and reports pass/fail results. The runner has no dependencies on Synchestra-specific code — it receives a configurable spec root path and resolves everything from the filesystem.
+The test runner is the engine that turns [test scenarios](../test-scenario/README.md) from readable documentation into executable verification. It parses scenario markdown, resolves [acceptance criteria](../../acceptance-criteria/README.md) from feature `_acs/` directories, executes bash steps (sequentially or in parallel groups), and produces structured pass/fail reports for both terminal output and CI pipelines. The runner is self-contained — give it a spec root path and a scenario file, and it handles discovery, resolution, execution, and reporting with no external dependencies.
 
 ## Problem
 
-The [test scenario](../test-scenario/README.md) format defines what to test. The runner is the engine that executes it. Without a dedicated runner:
+A [test scenario](../test-scenario/README.md) without a runner is a well-formatted README. The runner bridges the gap between format and execution:
 
-- **Scenarios are inert documentation.** A markdown file with bash blocks is just a README unless something parses and executes it.
-- **AC resolution is manual.** Linking a scenario step to feature ACs, locating the verification scripts, validating inputs, and executing them requires tooling.
-- **Reporting is ad-hoc.** Without structured output, test results are buried in terminal output with no aggregation, filtering, or CI integration.
+- **Scenarios are inert without parsing.** A markdown file with bash blocks, AC references, and output declarations is readable but not runnable. Something must parse the structure, resolve the references, and orchestrate execution in the correct order.
+- **AC resolution requires filesystem awareness.** When a scenario step says "verify all ACs for `cli/project/new`," something must walk the `_acs/` directory, parse each AC file, validate that required inputs are available, and execute each verification script with the right environment variables. This is not trivial — it is the core value the runner provides.
+- **Reporting must be structured.** Terminal output from bash scripts is a stream of text. Teams need per-step and per-AC pass/fail results, durations, and machine-readable output for CI dashboards. Ad-hoc scripts cannot provide this without significant scaffolding.
 
 ## Behavior
 
@@ -29,32 +29,34 @@ pkg/testscenario/
   reporter.go       — Result formatting (text, JSON, future: TAP/JUnit)
 ```
 
-The package is self-contained. It depends only on the Go standard library and a markdown parser.
+The package is self-contained with no Synchestra-specific dependencies. It depends only on the Go standard library and a markdown parser. This means it can be extracted, embedded in other projects, or tested in isolation.
 
 ### Parsing
 
-The parser reads a scenario `.md` file and produces a `Scenario` struct:
+The parser reads a scenario `.md` file and produces a typed `Scenario` struct:
 
 1. Extract title from `# Scenario: {name}`
 2. Extract metadata (Description, Tags) from bold key-value pairs
 3. Split on `## ` headings to identify steps
-4. For each step, parse: Depends on, Parallel, Inputs, Outputs (table), ACs (table), Include, code block
+4. For each step: parse Depends on, Parallel, Inputs, Outputs (table), ACs (table), Include, and the code block
 5. Validate: unique step names, no circular dependencies, reserved step names used correctly, every step has a code block or Include
 
-Parse errors are returned with line numbers for debugging.
+Parse errors include line numbers — when a scenario fails to parse, the author knows exactly where to look.
 
 ### AC resolution
 
-When a step declares AC references, the runner resolves them:
+When a step declares AC references, the runner resolves them against the filesystem:
 
 1. **Wildcard (`*`):** Read all `.md` files (except README.md) from `{spec_root}/features/{feature}/_acs/`. Execute in alphabetical order by slug.
 2. **Specific ACs:** Resolve each named AC to its `.md` file. Execute in the order listed in the table.
 
-For each AC file:
-1. Parse the AC markdown to extract Inputs and Verification script
-2. Validate that all required inputs are available (from step outputs, context, or environment)
-3. Execute the verification script with inputs as environment variables
+For each resolved AC file:
+1. Parse the markdown to extract the Inputs table and Verification script
+2. Validate that all required inputs are available (from step outputs, context, or environment variables)
+3. Execute the verification script with inputs passed as environment variables
 4. Record pass (exit 0) or fail (non-zero exit) per AC
+
+This is the heart of the runner: it connects the abstract reference `cli/project/new/*` to concrete bash scripts on disk and runs them with the right data.
 
 ### Execution flow
 
@@ -78,30 +80,30 @@ graph TD
 
 1. **Parse** the scenario markdown into a `Scenario` struct
 2. **Validate:** unique step names, no circular includes, no duplicate context keys, `Depends on` references point to earlier steps
-3. **Resolve** `Include` references recursively (cycle-detected)
-4. **Run Setup** block (if present). On failure, skip all steps, run Teardown, report failure.
+3. **Resolve** `Include` references recursively (cycle detection fails fast)
+4. **Run Setup** (if present). On failure: skip all steps, run Teardown, report failure
 5. **Execute steps** in file order:
-   - **Sequential steps:** execute one at a time
+   - **Sequential steps:** one at a time, in order
    - **Parallel groups:** consecutive `Parallel: true` steps launch as goroutines; the runner waits for all to complete before continuing
    - For each step:
-     a. Resolve context and step output variable references in the code block
-     b. Execute the code block via `exec.Command("bash", "-c", script)`
+     a. Resolve `${{ context.* }}` and `${{ steps.*.outputs.* }}` references in the code block
+     b. Execute via `exec.Command("bash", "-c", script)`
      c. Capture stdout, stderr, exit code
-     d. If exit code != 0, mark step as failed (continue to next step unless `--fail-fast`)
-     e. Extract declared outputs, store to context and/or step scope
-     f. Resolve AC references → find AC `.md` files → extract verification scripts
-     g. Execute each AC verification script with context + step outputs as env vars
+     d. If exit code != 0, mark step as failed (continue unless `--fail-fast`)
+     e. Extract declared outputs and store to context and/or step scope
+     f. Resolve AC references → locate AC files → extract verification scripts
+     g. Execute each verification script with context + step outputs as env vars
      h. Record per-step and per-AC pass/fail
-6. **Run Teardown** block (always, even on failure)
+6. **Run Teardown** (always, even on failure — this is unconditional)
 7. **Report** results
 
 ### Spec root resolution
 
-The runner resolves the spec root from the project's `synchestra-spec.yaml` configuration (`project_dirs.specifications`, default: `spec`). All AC references (e.g., `cli/project/remove/*`) resolve to `{spec_root}/features/{feature}/_acs/`. This configuration is read once at runner initialization and passed to the AC resolver.
+The runner reads `project_dirs.specifications` from `synchestra-spec.yaml` (default: `spec`). All AC references resolve relative to this root — `cli/project/remove/*` becomes `{spec_root}/features/cli/project/remove/_acs/`. Configuration is read once at initialization and threaded through the AC resolver.
 
 ### Reporting
 
-The runner produces structured results:
+The runner produces structured, readable results:
 
 ```
 Scenario: Project lifecycle
@@ -117,21 +119,27 @@ Result: FAIL (3 passed, 1 failed, 4 ACs: 2 passed, 1 failed)
 ```
 
 Output formats:
-- **Text** (default): human-readable, colored terminal output
-- **JSON**: machine-readable for CI integration
+- **Text** (default): human-readable, colored terminal output with step-level and AC-level detail
+- **JSON**: machine-readable for CI integration, dashboards, and programmatic analysis
+
+Every failure is attributable — you can see which step failed, which AC within that step failed, and what exit code it produced. No hunting through logs.
 
 ### Error handling
 
+The runner handles errors predictably — no silent swallowing, no ambiguous states:
+
 | Error | Behavior |
 |---|---|
-| Parse error | Fail before execution, report line number |
+| Parse error | Fail before execution, report file path and line number |
 | Setup failure | Skip all steps, run Teardown, report failure |
-| Step failure | Record failure, continue to next step (or stop if `--fail-fast`) |
-| AC failure | Record per-AC failure, step is marked failed |
-| Teardown failure | Report warning, do not mask step results |
-| Include cycle | Fail at validation, before execution |
-| Missing AC file | Fail at AC resolution, step is marked failed |
-| Missing required AC input | Fail at AC execution, AC is marked failed |
+| Step failure | Record failure, continue to next step (stop if `--fail-fast`) |
+| AC failure | Record per-AC failure, mark the containing step as failed |
+| Teardown failure | Report as warning, do not mask step results |
+| Include cycle | Fail at validation (before any execution) |
+| Missing AC file | Fail at AC resolution, mark the containing step as failed |
+| Missing required AC input | Fail at AC execution, mark the AC as failed |
+
+The principle: **failures are precise**. A step failure does not prevent Teardown. A Teardown failure does not hide the real problem. A missing AC file does not crash the runner — it marks exactly what failed and continues.
 
 ## Interaction with Other Features
 
@@ -140,11 +148,16 @@ Output formats:
 | [Test Scenario](../test-scenario/README.md) | The runner parses and executes the scenario format defined by this sibling feature. |
 | [Acceptance Criteria](../../acceptance-criteria/README.md) | The runner resolves AC files from `_acs/` directories and executes their verification scripts. |
 | [Testing Framework](../README.md) | Parent feature — defines CLI commands that invoke the runner. |
-| [CLI](../../cli/README.md) | `synchestra test run` and `synchestra test list` wire the runner to the command tree. |
+| [CLI](../../cli/README.md) | `synchestra test run` and `synchestra test list` wire the runner to the CLI command tree. |
 
 ## Dogfooding
 
-The test runner is tested by itself — the feature-scoped test scenarios in `_tests/` are executed by the very runner they verify. This circular validation is intentional: if the runner can successfully parse and execute its own test scenarios, that is itself strong evidence of correctness. The initial bootstrap requires Go unit tests (`pkg/testscenario/*_test.go`) to validate core parsing and execution before the runner is capable of self-testing.
+The test runner tests itself. The feature-scoped test scenarios in `_tests/` are parsed and executed by the very runner they verify. This is not a philosophical curiosity — it is a practical bootstrap strategy:
+
+1. **Phase 1 (bootstrap):** Go unit tests in `pkg/testscenario/*_test.go` validate core parsing and execution. These are traditional tests with no self-reference.
+2. **Phase 2 (self-hosting):** Once the runner can parse a scenario, resolve ACs, and execute bash steps, the runner's own `_tests/runner-core.md` scenario is added to CI. From this point forward, the runner is validated by its own output.
+
+If the runner can successfully parse and execute a scenario that tests its own parsing and execution, that is direct, non-circular evidence of correctness. The Go unit tests remain as the safety net; the dogfood scenario is the confidence multiplier.
 
 ## Acceptance Criteria
 
@@ -163,7 +176,8 @@ The test runner is tested by itself — the feature-scoped test scenarios in `_t
 | [detects-include-cycles](_acs/detects-include-cycles.md) | Circular includes rejected at validation | planned |
 
 ## Outstanding Questions
+
 - What is the exact reporting format for CI — should the runner support TAP and/or JUnit XML in addition to text and JSON?
 - Should the runner support a `--dry-run` mode that parses and validates scenarios without executing them?
 - Should there be a `--timeout` flag for per-scenario or per-step time limits?
-- Should the runner cache parsed AC files across steps that reference the same feature, or re-parse each time?
+- Should the runner cache parsed AC files across steps that reference the same feature, or re-parse each time for simplicity?
