@@ -211,6 +211,63 @@ When a request arrives for a paused container:
 
 **Request queuing during resume**: Incoming requests for a resuming container are queued (buffered channel, max 100) and drained once the container reaches `running`. If resume fails, all queued requests receive `UNAVAILABLE` error.
 
+## Workspace Cache
+
+When a container is terminated, workspace data is NOT destroyed immediately. Instead, cached workspace layers are preserved on the host filesystem, giving subsequent containers for the same project a "warm start." This is analogous to GitHub Actions cache — repos do not need to be re-cloned, and dependencies do not need to be re-downloaded.
+
+### Cache Location
+
+Cached workspaces are stored at `{WORKSPACE_ROOT}/{project_id}/` on the host (where `WORKSPACE_ROOT` defaults to `SYNCHESTRA_SANDBOX_WORKSPACE_ROOT`).
+
+### Cache Contents
+
+| Included | Excluded |
+|---|---|
+| Cloned repositories (`repos/`) | Credentials (`.secure/`) |
+| Build artifacts | Active sessions (`sessions/`) — ephemeral |
+| Dependency caches (e.g., `node_modules/`, `.cache/pip/`) | |
+
+### Warm Start Behavior
+
+When a new container is created for a project that has a cached workspace:
+
+1. The cached workspace directory is bind-mounted into the new container.
+2. The agent detects existing repo clones and performs an incremental pull instead of a full clone.
+3. Dependency caches are immediately available, reducing build times.
+
+### Cache Invalidation
+
+- **Explicit admin action**: The `DELETE /api/v1/admin/sandbox/{project_id}?clear_cache=true` endpoint clears the workspace cache.
+- **TTL-based**: Caches that have not been accessed for longer than `SYNCHESTRA_SANDBOX_CACHE_TTL` (default: `7d`) are eligible for automatic cleanup by a background sweep.
+- **Manual**: Direct filesystem cleanup by a host administrator.
+
+### Cache Quota
+
+Cache size is counted toward the project's disk quota. The disk quota monitoring (see Resource Quota Enforcement) includes cached workspace data when computing usage.
+
+## Container Capacity & Eviction
+
+### Global Container Limit
+
+The orchestrator enforces a configurable maximum number of concurrent containers across all projects: `SYNCHESTRA_SANDBOX_MAX_CONTAINERS` (default: `50`).
+
+### LRU Eviction
+
+When a new container is requested and the limit is reached, the orchestrator performs LRU (Least Recently Used) eviction:
+
+1. **Identify candidates**: Containers in `paused` or `stopped` state with no active sessions. Containers in `running` state with active sessions are **never** evicted.
+2. **Sort**: Candidates are sorted by `idle_since` timestamp, oldest idle first.
+3. **Evict**: The least-recently-used candidate transitions to `stopped` → workspace cache is preserved → container is removed from the active pool.
+4. **Create**: The new container is created in the freed slot.
+
+### Eviction Failure
+
+If no evictable containers exist (all containers are actively running with sessions), the orchestrator returns a `RESOURCE_EXHAUSTED` gRPC error to the requesting client. The request is not queued.
+
+### Eviction Events
+
+Every eviction emits a `container.evicted` event via the event bus (see Event Bus section). This enables external monitoring systems to track eviction frequency and patterns.
+
 ## Resource Quota Enforcement
 
 ### Per-Container Limits (Docker Flags)
@@ -278,7 +335,7 @@ Half-Open → Open:
 
 ```go
 containerConfig := &container.Config{
-    Image: "synchestra/sandbox-agent:" + imageTag,
+    Image: metadata.ContainerImage, // Per-project image; defaults to SYNCHESTRA_SANDBOX_IMAGE
     Env: []string{
         "SYNCHESTRA_PROJECT_ID=" + projectID,
         "SYNCHESTRA_STATE_REPO_URL=" + stateRepoURL,
@@ -337,6 +394,19 @@ Container name: `synchestra-sandbox-{project_id}`
 2. Container binds: `/var/run/synchestra/:/var/run/:rw`
 3. Agent inside container creates socket at: `/var/run/synchestra-{project_id}.sock`
 4. Host accesses socket at: `/var/run/synchestra/synchestra-{project_id}.sock`
+
+### Per-Project Container Images
+
+Projects can specify a custom container image instead of the default `synchestra/sandbox-agent:latest`. This enables language-specific runtimes (Node.js, Python, Rust), pre-installed toolchains, and custom environments.
+
+- The image is stored in the `sandbox_container_metadata` table in a `container_image` column:
+  ```sql
+  container_image VARCHAR(255) DEFAULT 'synchestra/sandbox-agent:latest'
+  ```
+- Default image: the value of the `SYNCHESTRA_SANDBOX_IMAGE` env var (fallback: `synchestra/sandbox-agent:latest`).
+- All custom images **MUST** extend the base sandbox-agent image. They must include the gRPC agent binary (`synchestra-sandbox-agent`) and the standard entrypoint. Images that do not satisfy this requirement will fail the agent readiness check during startup.
+- **Image validation**: During container creation, the orchestrator verifies the image exists by attempting a pull (if remote) or a local image inspect. If the image cannot be found, the container transitions to `failed` with a descriptive error.
+- Container creation code (see Docker API Integration above) uses `metadata.ContainerImage` rather than a hardcoded image reference.
 
 ## Request Routing
 
@@ -406,6 +476,72 @@ Pre-created containers with no project assignment, ready to be claimed on first 
 
 > **Not implemented in initial version.** Synchronous provisioning with pre-pulled images is acceptable for MVP.
 
+## Admin API
+
+Admin endpoints provide operators with direct control over sandbox containers. All endpoints require `admin` access level (verified by auth middleware).
+
+### Endpoints
+
+```
+POST   /api/v1/admin/sandbox/{project_id}/stop
+```
+
+Force-stop a container. Sends `SIGTERM`; if the container does not exit within 10 seconds, sends `SIGKILL`.
+
+```
+POST   /api/v1/admin/sandbox/{project_id}/restart
+```
+
+Force-restart a container (stop + start). Equivalent to calling stop followed by an immediate start.
+
+```
+DELETE /api/v1/admin/sandbox/{project_id}
+```
+
+Destroy a container and optionally clear the workspace cache.
+- Query parameter: `?clear_cache=true` (default: `false`).
+- When `clear_cache=true`, the workspace cache at `{WORKSPACE_ROOT}/{project_id}/` is deleted.
+
+```
+PATCH  /api/v1/admin/sandbox/{project_id}/config
+```
+
+Update resource limits for a project. Changes take effect on the next container restart.
+- Request body:
+  ```json
+  {
+    "memory_limit_mb": 1024,
+    "cpu_limit": 4.0,
+    "disk_quota_gb": 100
+  }
+  ```
+- All fields are optional; only provided fields are updated.
+
+```
+GET    /api/v1/admin/sandbox/containers
+```
+
+List all containers across all projects. Returns: container status, resource usage, uptime, `idle_since`, `project_id`.
+
+```
+POST   /api/v1/admin/sandbox/{project_id}/evict
+```
+
+Evict a container: stop the container and remove it from the active pool. Used by LRU eviction logic or manual operator cleanup. Workspace cache is preserved.
+
+```
+PATCH  /api/v1/admin/sandbox/{project_id}/image
+```
+
+Update the container image for a project. Takes effect on the next container restart.
+- Request body:
+  ```json
+  {
+    "image": "custom-image:tag"
+  }
+  ```
+- The image must satisfy the same requirements as per-project container images (must extend the base sandbox-agent image).
+
 ## Configuration
 
 ### Environment Variables
@@ -427,6 +563,8 @@ Pre-created containers with no project assignment, ready to be claimed on first 
 | `SYNCHESTRA_SANDBOX_DEFAULT_CPU` | `2.0` | Default container CPU limit |
 | `SYNCHESTRA_SANDBOX_DEFAULT_DISK` | `50g` | Default workspace disk quota |
 | `SYNCHESTRA_SANDBOX_DISK_CHECK_INTERVAL` | `5m` | Disk usage check interval |
+| `SYNCHESTRA_SANDBOX_MAX_CONTAINERS` | `50` | Maximum concurrent containers (global limit) |
+| `SYNCHESTRA_SANDBOX_CACHE_TTL` | `7d` | Workspace cache retention after container termination |
 
 ## Go Package Structure
 
@@ -437,12 +575,70 @@ internal/sandbox/orchestrator/
 ├── connection_pool.go       // gRPC connection pool (dial, close, get)
 ├── health.go                // Health check loop, failure detection
 ├── idle.go                  // Idle detection, auto-pause, auto-resume
+├── eviction.go              // LRU eviction logic, capacity enforcement
+├── events.go                // EventEmitter interface and in-process implementation
 ├── circuit_breaker.go       // Per-project circuit breaker
 ├── router.go                // Request routing, auto-provision, queuing
 ├── config.go                // Configuration loading from env vars
 ├── metrics.go               // Prometheus metrics (future)
 └── orchestrator_test.go     // Unit tests (mock Docker client, mock gRPC)
 ```
+
+## Event Bus
+
+The orchestrator publishes structured lifecycle and operational events through a pluggable `EventEmitter` interface. This decouples event production from consumption and enables external monitoring, analytics, and alerting integrations.
+
+### Event Envelope
+
+All events share a common JSON envelope:
+
+```json
+{
+  "event_type": "container.started",
+  "project_id": "{project_id}",
+  "timestamp": "2024-01-15T10:30:00Z",
+  "payload": { }
+}
+```
+
+### Event Types
+
+| Event Type | Trigger |
+|---|---|
+| `container.created` | Container created successfully |
+| `container.started` | Container reached `running` state |
+| `container.paused` | Container auto-paused (idle timeout) |
+| `container.resumed` | Container resumed from `paused` |
+| `container.stopped` | Container stopped gracefully |
+| `container.failed` | Container entered `failed` state |
+| `container.terminated` | Container and resources destroyed |
+| `container.evicted` | Container evicted by LRU eviction |
+| `session.started` | New session began in a container |
+| `session.completed` | Session completed successfully |
+| `session.failed` | Session ended with an error |
+| `health.check_failed` | Health check failure detected |
+| `health.check_recovered` | Container recovered after health check failures |
+| `resource.disk_warning` | Disk usage exceeded 90% of quota |
+| `resource.disk_exceeded` | Disk usage exceeded 100% of quota |
+
+### Interface
+
+```go
+// EventEmitter publishes orchestrator events. Implementations must be non-blocking.
+type EventEmitter interface {
+    Emit(ctx context.Context, event Event) error
+    Close() error
+}
+```
+
+### Implementation
+
+- **Initial implementation**: In-process buffered channel. `Emit()` is non-blocking; events are dropped if the buffer is full (with a metric increment). Consumers read from the channel in a separate goroutine.
+- **Future backends**: NATS, Redis Pub/Sub, Kafka, webhook. The `EventEmitter` interface is pluggable — implementations can be swapped via configuration without changing orchestrator code.
+
+### Package Location
+
+`events.go` in `internal/sandbox/orchestrator/` — contains the `EventEmitter` interface, the `Event` struct, and the in-process channel implementation.
 
 ## Metrics (Observability)
 
@@ -458,6 +654,7 @@ All metrics use the `synchestra_sandbox_` prefix. Labels follow Prometheus namin
 | `synchestra_sandbox_requests_routed_total{status="success\|queued\|failed"}` | Request routing outcomes |
 | `synchestra_sandbox_auto_pauses_total` | Auto-pause events |
 | `synchestra_sandbox_auto_resumes_total` | Auto-resume events |
+| `synchestra_sandbox_evictions_total` | Container evictions (LRU) |
 
 ### Gauges
 
@@ -467,6 +664,7 @@ All metrics use the `synchestra_sandbox_` prefix. Labels follow Prometheus namin
 | `synchestra_sandbox_active_sessions` | Total active sessions across all containers |
 | `synchestra_sandbox_connection_pool_size` | Current gRPC connections in pool |
 | `synchestra_sandbox_request_queue_depth{project_id}` | Queued requests per project |
+| `synchestra_sandbox_containers_total` | Total containers across all states |
 
 ### Histograms
 
@@ -479,8 +677,4 @@ All metrics use the `synchestra_sandbox_` prefix. Labels follow Prometheus namin
 
 ## Outstanding Questions
 
-1. Should the orchestrator support multiple container images per project (e.g., different language runtimes)?
-2. Should workspace data be preserved across container termination, or archived to object storage?
-3. Should there be admin-only endpoints for force-stopping containers or adjusting resource limits at runtime?
-4. Should the orchestrator emit events to a message bus (e.g., NATS, Redis Pub/Sub) for external monitoring integration?
-5. What is the maximum number of concurrent containers the host should support? Should there be a global limit?
+None at this time.
