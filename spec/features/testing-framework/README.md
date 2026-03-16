@@ -62,6 +62,7 @@ The spec root directory name is configurable via `project_dirs.specifications` i
 2. **ACs are the reusable unit.** Scenarios compose ACs; they don't re-implement assertions.
 3. **No custom DSL.** The format is markdown with conventions, not a new language.
 4. **Sequential by default.** Parallelism is opt-in and explicit.
+5. **Dogfooded.** The testing framework tests itself. The [test runner](test-runner/README.md)'s own acceptance criteria and feature-scoped test scenarios are executed by the runner it verifies. This circular validation is intentional — if the runner can parse and execute its own tests, that is strong evidence of correctness. Bootstrap relies on Go unit tests before the runner is self-hosting.
 
 ## Interaction with Other Features
 
