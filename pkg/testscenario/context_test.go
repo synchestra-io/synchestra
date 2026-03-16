@@ -44,12 +44,15 @@ func TestExecContext_storeBoth(t *testing.T) {
 	}
 }
 
-func TestExecContext_duplicateContextKey(t *testing.T) {
+func TestExecContext_contextKeyOverwrite(t *testing.T) {
 	ctx := NewExecContext()
 	_ = ctx.StoreOutput("s1", "id", "x", StoreContext)
-	err := ctx.StoreOutput("s2", "id", "y", StoreContext)
-	if err == nil {
-		t.Fatal("expected error for duplicate context key")
+	if err := ctx.StoreOutput("s2", "id", "y", StoreContext); err != nil {
+		t.Fatalf("overwriting context key should succeed: %v", err)
+	}
+	val, _ := ctx.ResolveVar("context.id")
+	if val != "y" {
+		t.Errorf("got %q, want %q (latest value)", val, "y")
 	}
 }
 

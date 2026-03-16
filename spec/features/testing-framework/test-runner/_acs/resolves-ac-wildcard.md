@@ -17,11 +17,12 @@ each AC individually with pass/fail status.
 | scenario_path | Yes | Path to a scenario with a wildcard AC reference |
 | binary_path | Yes | Path to the compiled `synchestra` binary |
 | feature_path | Yes | Path to the feature directory containing `_acs/` with at least 2 AC files |
+| spec_root | Yes | Spec root directory for the scenario under test |
 
 ## Verification
 
 ```bash
-output=$("$binary_path" test run "$scenario_path" --format json 2>&1)
+output=$("$binary_path" test run "$scenario_path" --spec-root "$spec_root" --format json 2>&1)
 rc=$?
 
 # Count AC files in the feature's _acs/ directory (excluding README.md)

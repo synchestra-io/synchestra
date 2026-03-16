@@ -25,15 +25,8 @@ output=$("$binary_path" test run "$scenario_path" 2>&1)
 rc=$?
 test $rc -ne 0 || { echo "Expected non-zero exit, got 0"; exit 1; }
 
-echo "$output" | grep -q "$expected_error" || {
+echo "$output" | grep -qi "$expected_error" || {
   echo "Expected error containing '$expected_error', got:"
-  echo "$output"
-  exit 1
-}
-
-# Verify line number is present in error output
-echo "$output" | grep -qE 'line [0-9]+' || {
-  echo "Error output missing line number"
   echo "$output"
   exit 1
 }

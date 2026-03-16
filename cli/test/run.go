@@ -22,16 +22,30 @@ func runCommand() *cobra.Command {
 		RunE:  runRun,
 	}
 	cmd.Flags().StringSlice("tag", nil, "filter scenarios by tag")
+	cmd.Flags().String("format", "text", "output format: text or json")
+	cmd.Flags().String("spec-root", "", "override spec root directory")
+	cmd.Flags().Bool("run-manual-tests", false, "include scenarios tagged 'manual'")
 	return cmd
 }
 
 func runRun(cmd *cobra.Command, args []string) error {
 	specRoot := "spec" // TODO: read from synchestra-spec.yaml project_dirs.specifications
+	if sr, _ := cmd.Flags().GetString("spec-root"); sr != "" {
+		specRoot = sr
+	}
 	tags, _ := cmd.Flags().GetStringSlice("tag")
+	format, _ := cmd.Flags().GetString("format")
+	runManual, _ := cmd.Flags().GetBool("run-manual-tests")
 
+	// When a specific file is passed, always run it (even if manual).
+	// When scanning a directory, skip manual scenarios unless --run-manual-tests.
+	specificFile := false
 	target := specRoot + "/tests"
 	if len(args) > 0 {
 		target = args[0]
+		if info, err := os.Stat(target); err == nil && !info.IsDir() {
+			specificFile = true
+		}
 	}
 
 	files, err := collectScenarioFiles(target)
@@ -49,12 +63,21 @@ func runRun(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return fmt.Errorf("parsing %s: %w", f, err)
 		}
+		if !specificFile && !runManual && hasTag(scenario.Tags, "manual") {
+			continue
+		}
 		if len(tags) > 0 && !matchesTags(scenario.Tags, tags) {
 			continue
 		}
-		runner := testscenario.NewRunner(testscenario.RunnerConfig{SpecRoot: specRoot})
+		cfg := testscenario.RunnerConfig{SpecRoot: specRoot}
+		if format == "text" {
+			cfg.Progress = testscenario.NewLiveReporter(cmd.OutOrStdout())
+		}
+		runner := testscenario.NewRunner(cfg)
 		result := runner.Run(scenario)
-		_, _ = fmt.Fprint(cmd.OutOrStdout(), testscenario.FormatResult(result))
+		if format == "json" {
+			_, _ = fmt.Fprint(cmd.OutOrStdout(), testscenario.FormatResultJSON(result))
+		}
 		if !result.Passed {
 			anyFailed = true
 		}
@@ -83,6 +106,15 @@ func collectScenarioFiles(path string) ([]string, error) {
 		}
 		return nil
 	})
+}
+
+func hasTag(scenarioTags []string, tag string) bool {
+	for _, t := range scenarioTags {
+		if t == tag {
+			return true
+		}
+	}
+	return false
 }
 
 func matchesTags(scenarioTags, filterTags []string) bool {

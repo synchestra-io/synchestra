@@ -14,6 +14,7 @@ import (
 // RunnerConfig holds configuration for a Runner.
 type RunnerConfig struct {
 	SpecRoot string
+	Progress ProgressReporter
 }
 
 // Runner executes test scenarios.
@@ -40,24 +41,31 @@ func (r *Runner) Run(s *Scenario) (result ScenarioResult) {
 		Passed:        true,
 	}
 	ctx := NewExecContext()
+	r.notify(func(p ProgressReporter) { p.ScenarioStarted(s.Title) })
 
 	// Run teardown via defer so it always runs.
 	defer func() {
 		if s.Teardown != "" {
+			r.notify(func(p ProgressReporter) { p.TeardownStarted() })
 			_, stderr, exitCode, err := execScript(s.TeardownLanguage, s.Teardown, ctx.ContextVarsAsEnv())
+			teardownErr := ""
 			if err != nil || exitCode != 0 {
 				msg := stderr
 				if err != nil {
 					msg = err.Error()
 				}
 				result.TeardownError = msg
+				teardownErr = msg
 			}
+			r.notify(func(p ProgressReporter) { p.TeardownFinished(teardownErr) })
 		}
 		result.Duration = time.Since(scenarioStart)
+		r.notify(func(p ProgressReporter) { p.ScenarioFinished(result) })
 	}()
 
 	// Run setup if present. Propagate exported variables to context.
 	if s.Setup != "" {
+		r.notify(func(p ProgressReporter) { p.SetupStarted() })
 		stdout, stderr, exitCode, err := execScript(s.SetupLanguage, s.Setup, nil)
 		if err != nil || exitCode != 0 {
 			msg := stderr
@@ -66,8 +74,10 @@ func (r *Runner) Run(s *Scenario) (result ScenarioResult) {
 			}
 			result.SetupError = msg
 			result.Passed = false
+			r.notify(func(p ProgressReporter) { p.SetupFinished(msg) })
 			return result
 		}
+		r.notify(func(p ProgressReporter) { p.SetupFinished("") })
 		// Parse exported variables from setup stdout so subsequent steps can use them.
 		parseExportedVars(stdout, ctx)
 	}
@@ -191,9 +201,17 @@ func groupSteps(steps []Step) [][]Step {
 	return groups
 }
 
+// notify calls fn with the progress reporter if one is configured.
+func (r *Runner) notify(fn func(ProgressReporter)) {
+	if r.config.Progress != nil {
+		fn(r.config.Progress)
+	}
+}
+
 // runStep executes a single step and returns the result.
 func (r *Runner) runStep(step Step, ctx *ExecContext) StepResult {
 	stepStart := time.Now()
+	r.notify(func(p ProgressReporter) { p.StepStarted(step.Name) })
 	sr := StepResult{
 		StepName: step.Name,
 		Passed:   true,
@@ -226,7 +244,7 @@ func (r *Runner) runStep(step Step, ctx *ExecContext) StepResult {
 
 	// Extract outputs.
 	for _, output := range step.Outputs {
-		outVal, err := r.extractOutput(output, stdout, stderr, exitCode)
+		outVal, err := r.extractOutput(output, ctx, stdout, stderr, exitCode)
 		if err != nil {
 			sr.Passed = false
 			sr.Error = fmt.Sprintf("extracting output %q: %v", output.Name, err)
@@ -251,8 +269,10 @@ func (r *Runner) runStep(step Step, ctx *ExecContext) StepResult {
 			return sr
 		}
 		for _, ac := range acs {
+			r.notify(func(p ProgressReporter) { p.ACStarted(ac.FeaturePath, ac.Slug) })
 			acResult := r.verifyAC(ac, ctx, stdout, stderr, exitCode)
 			sr.ACResults = append(sr.ACResults, acResult)
+			r.notify(func(p ProgressReporter) { p.ACFinished(acResult) })
 			if !acResult.Passed {
 				sr.Passed = false
 			}
@@ -260,13 +280,14 @@ func (r *Runner) runStep(step Step, ctx *ExecContext) StepResult {
 	}
 
 	sr.Duration = time.Since(stepStart)
+	r.notify(func(p ProgressReporter) { p.StepFinished(sr) })
 	return sr
 }
 
 // extractOutput runs the extract expression and returns the captured value.
 // STEP_STDOUT and STEP_STDERR are written to temp files so extract expressions
 // can use them as file paths (e.g., `cat $STEP_STDOUT`).
-func (r *Runner) extractOutput(output Output, stdout, stderr string, exitCode int) (string, error) {
+func (r *Runner) extractOutput(output Output, ctx *ExecContext, stdout, stderr string, exitCode int) (string, error) {
 	stdoutFile, err := writeTempFile("step-stdout-*", stdout)
 	if err != nil {
 		return "", fmt.Errorf("creating stdout temp file: %w", err)
@@ -279,11 +300,12 @@ func (r *Runner) extractOutput(output Output, stdout, stderr string, exitCode in
 	}
 	defer func() { _ = os.Remove(stderrFile) }()
 
-	env := []string{
-		"STEP_STDOUT=" + stdoutFile,
-		"STEP_STDERR=" + stderrFile,
+	env := ctx.ContextVarsAsEnv()
+	env = append(env,
+		"STEP_STDOUT="+stdoutFile,
+		"STEP_STDERR="+stderrFile,
 		fmt.Sprintf("STEP_EXIT_CODE=%d", exitCode),
-	}
+	)
 
 	val, _, extractExitCode, err := execScript("bash", output.Extract, env)
 	if err != nil {

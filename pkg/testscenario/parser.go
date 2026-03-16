@@ -130,14 +130,32 @@ func ParseScenario(data []byte) (*Scenario, error) {
 // splitIntoSections splits markdown text into sections by "## " headings.
 // The first element is any content before the first ## heading.
 // Each subsequent element starts with the heading text (without "## " prefix) on the first line.
+// Headings inside fenced code blocks are ignored.
 func splitIntoSections(text string) []string {
 	var result []string
 	lines := strings.Split(text, "\n")
 	var current []string
 	inSection := false
+	fenceLen := 0 // 0 means not inside a code fence
 
 	for _, line := range lines {
-		if strings.HasPrefix(line, "## ") {
+		trimmed := strings.TrimSpace(line)
+
+		// Track code fence state so we skip headings inside fences.
+		if fenceLen == 0 {
+			if n := countBacktickPrefix(trimmed); n >= 3 {
+				fenceLen = n
+			}
+		} else {
+			n := countBacktickPrefix(trimmed)
+			if n >= fenceLen && strings.Trim(trimmed, "`") == "" {
+				fenceLen = 0
+			}
+			current = append(current, line)
+			continue
+		}
+
+		if fenceLen == 0 && strings.HasPrefix(line, "## ") {
 			if inSection || len(current) > 0 {
 				result = append(result, strings.Join(current, "\n"))
 			}
@@ -308,16 +326,31 @@ func extractCodeBlock(text string) (code, language string, err error) {
 	return "", "", fmt.Errorf("no code block found")
 }
 
+// countBacktickPrefix returns the number of leading backticks in s.
+func countBacktickPrefix(s string) int {
+	n := 0
+	for _, c := range s {
+		if c == '`' {
+			n++
+		} else {
+			break
+		}
+	}
+	return n
+}
+
 // extractCodeBlockFromLines extracts a code block starting at the given line index.
+// Supports CommonMark fenced code blocks: the closing fence must have at least
+// as many backticks as the opening fence, allowing nested shorter fences.
 func extractCodeBlockFromLines(lines []string, startIdx int) (code, language string, err error) {
 	openLine := strings.TrimSpace(lines[startIdx])
-	// openLine is "```" or "```bash" etc.
-	lang := strings.TrimPrefix(openLine, "```")
+	fenceLen := countBacktickPrefix(openLine)
+	fence := strings.Repeat("`", fenceLen)
+
+	lang := strings.TrimPrefix(openLine, fence)
 	lang = strings.TrimSpace(lang)
 
 	if lang == "" {
-		// Find actual line number by counting from the start.
-		// We use startIdx+1 as a 1-based approximation.
 		return "", "", fmt.Errorf("code block at line %d is missing language annotation", startIdx+1)
 	}
 
@@ -329,11 +362,11 @@ func extractCodeBlockFromLines(lines []string, startIdx int) (code, language str
 		return "", "", fmt.Errorf("unsupported language annotation %q (supported: bash, python, starlark)", lang)
 	}
 
-	// Collect lines until closing ```.
+	// Collect lines until closing fence with at least fenceLen backticks.
 	var codeLines []string
 	for i := startIdx + 1; i < len(lines); i++ {
 		trimmed := strings.TrimSpace(lines[i])
-		if trimmed == "```" {
+		if countBacktickPrefix(trimmed) >= fenceLen && strings.Trim(trimmed, "`") == "" {
 			return strings.Join(codeLines, "\n"), lang, nil
 		}
 		codeLines = append(codeLines, lines[i])

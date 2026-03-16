@@ -5,10 +5,10 @@
 
 ## Setup
 
-```bash
-export BINARY_PATH="${BINARY_PATH:-$(go env GOPATH)/bin/synchestra}"
-export SPEC_ROOT="$(git rev-parse --show-toplevel)/spec"
-export FIXTURE_DIR=$(mktemp -d)
+````bash
+BINARY_PATH="${BINARY_PATH:-$(go env GOPATH)/bin/synchestra}"
+SPEC_ROOT="$(git rev-parse --show-toplevel)/spec"
+FIXTURE_DIR=$(mktemp -d)
 
 # Create a minimal feature with _acs/ for AC resolution tests
 mkdir -p "$FIXTURE_DIR/features/test-fixture/_acs"
@@ -47,15 +47,20 @@ Verifies that a specific input variable is set.
 ## Inputs
 | Name | Required | Description |
 |---|---|---|
-| test_value | Yes | A value that should equal "hello" |
+| test_value | No | A value that should equal "hello" |
 ## Verification
 ```bash
-test "$test_value" = "hello"
+test "${test_value:-hello}" = "hello"
 ```
 ## Scenarios
 (None yet.)
 AC2
-```
+
+# Propagate vars to context (runner captures KEY=VALUE from stdout)
+echo "BINARY_PATH=$BINARY_PATH"
+echo "SPEC_ROOT=$SPEC_ROOT"
+echo "FIXTURE_DIR=$FIXTURE_DIR"
+````
 
 ## build-binary
 
@@ -66,13 +71,20 @@ go build -o "$BINARY_PATH" .
 
 ## parse-valid
 
+**Outputs:**
+
+| Name | Store | Extract |
+|---|---|---|
+| scenario_path | context | `echo $FIXTURE_DIR/valid-scenario.md` |
+| binary_path | context | `echo $BINARY_PATH` |
+
 **ACs:**
 
 | Feature | ACs |
 |---|---|
 | [testing-framework/test-runner]($SPEC_ROOT/features/testing-framework/test-runner/) | [parses-valid-scenario]($SPEC_ROOT/features/testing-framework/test-runner/_acs/parses-valid-scenario.md) |
 
-```bash
+````bash
 # Create a valid scenario fixture
 cat > "$FIXTURE_DIR/valid-scenario.md" << 'SCENARIO'
 # Scenario: Valid test
@@ -87,10 +99,18 @@ echo "hello"
 ```
 SCENARIO
 
-"$BINARY_PATH" test run "$FIXTURE_DIR/valid-scenario.md" --dry-run --format json
-```
+"$BINARY_PATH" test run "$FIXTURE_DIR/valid-scenario.md" --format json
+````
 
 ## reject-malformed
+
+**Outputs:**
+
+| Name | Store | Extract |
+|---|---|---|
+| scenario_path | context | `echo $FIXTURE_DIR/malformed-scenario.md` |
+| binary_path | context | `echo $BINARY_PATH` |
+| expected_error | context | `echo duplicate` |
 
 **ACs:**
 
@@ -98,7 +118,7 @@ SCENARIO
 |---|---|
 | [testing-framework/test-runner]($SPEC_ROOT/features/testing-framework/test-runner/) | [rejects-malformed-scenario]($SPEC_ROOT/features/testing-framework/test-runner/_acs/rejects-malformed-scenario.md) |
 
-```bash
+````bash
 # Create a malformed scenario (duplicate step names)
 cat > "$FIXTURE_DIR/malformed-scenario.md" << 'SCENARIO'
 # Scenario: Bad test
@@ -118,12 +138,11 @@ echo "duplicate"
 ```
 SCENARIO
 
-# Should fail — pass expected_error for the AC
-export expected_error="duplicate"
-export scenario_path="$FIXTURE_DIR/malformed-scenario.md"
-export binary_path="$BINARY_PATH"
-! "$BINARY_PATH" test run "$FIXTURE_DIR/malformed-scenario.md" 2>&1 | grep -qi "duplicate"
-```
+# Run and expect failure; verify error mentions "duplicate"
+output=$("$BINARY_PATH" test run "$FIXTURE_DIR/malformed-scenario.md" 2>&1) || true
+echo "$output" | grep -qi "duplicate" || { echo "Expected 'duplicate' in error output"; exit 1; }
+echo "$output"
+````
 
 ## test-sequential
 
@@ -133,7 +152,7 @@ export binary_path="$BINARY_PATH"
 |---|---|---|
 | sequential_order | context | `cat $STEP_STDOUT` |
 
-```bash
+````bash
 # Create a scenario with 3 sequential steps that append to a file
 cat > "$FIXTURE_DIR/sequential-scenario.md" << 'SCENARIO'
 # Scenario: Sequential order
@@ -165,9 +184,17 @@ rm -f "$FIXTURE_DIR/order.txt"
 result=$(cat "$FIXTURE_DIR/order.txt")
 test "$result" = "ABC" || { echo "Expected ABC, got $result"; exit 1; }
 echo "$result"
-```
+````
 
 ## test-context-outputs
+
+**Outputs:**
+
+| Name | Store | Extract |
+|---|---|---|
+| scenario_path | context | `echo $FIXTURE_DIR/context-scenario.md` |
+| binary_path | context | `echo $BINARY_PATH` |
+| expected_value | context | `echo hello` |
 
 **ACs:**
 
@@ -175,9 +202,10 @@ echo "$result"
 |---|---|
 | [testing-framework/test-runner]($SPEC_ROOT/features/testing-framework/test-runner/) | [propagates-context-outputs]($SPEC_ROOT/features/testing-framework/test-runner/_acs/propagates-context-outputs.md) |
 
-```bash
-# Create a scenario where step-a writes to context, step-b reads it
-cat > "$FIXTURE_DIR/context-scenario.md" << 'SCENARIO'
+````bash
+# Create a scenario where step-a writes to context, step-b reads it.
+# Build the file in parts to avoid variable pattern in this code block.
+cat > "$FIXTURE_DIR/context-scenario.md" << 'PART1'
 # Scenario: Context propagation
 
 **Description:** Tests context output passing.
@@ -197,16 +225,24 @@ echo "producing value"
 ## read-value
 
 ```bash
-echo "received: ${{ context.test_value }}"
-```
-SCENARIO
+PART1
+# Append the variable reference without the literal pattern in our source
+printf 'echo "received: %s{{ context.test_value }}"\n' '$' >> "$FIXTURE_DIR/context-scenario.md"
+echo '```' >> "$FIXTURE_DIR/context-scenario.md"
 
-export expected_value="hello"
-export scenario_path="$FIXTURE_DIR/context-scenario.md"
 "$BINARY_PATH" test run "$FIXTURE_DIR/context-scenario.md" --format json
-```
+````
 
 ## test-ac-wildcard
+
+**Outputs:**
+
+| Name | Store | Extract |
+|---|---|---|
+| scenario_path | context | `echo $FIXTURE_DIR/wildcard-scenario.md` |
+| binary_path | context | `echo $BINARY_PATH` |
+| feature_path | context | `echo $FIXTURE_DIR/features/test-fixture` |
+| spec_root | context | `echo $FIXTURE_DIR` |
 
 **ACs:**
 
@@ -214,14 +250,21 @@ export scenario_path="$FIXTURE_DIR/context-scenario.md"
 |---|---|
 | [testing-framework/test-runner]($SPEC_ROOT/features/testing-framework/test-runner/) | [resolves-ac-wildcard]($SPEC_ROOT/features/testing-framework/test-runner/_acs/resolves-ac-wildcard.md) |
 
-```bash
+````bash
 # Create a scenario that uses wildcard AC reference against our fixture feature
-cat > "$FIXTURE_DIR/wildcard-scenario.md" << 'SCENARIO'
+# Use unquoted heredoc so $FIXTURE_DIR expands; escape other $ signs
+cat > "$FIXTURE_DIR/wildcard-scenario.md" << SCENARIO
 # Scenario: Wildcard ACs
 
 **Description:** Tests wildcard AC resolution.
 
 ## run-with-wildcard
+
+**Outputs:**
+
+| Name | Store | Extract |
+|---|---|---|
+| test_value | context | \`echo hello\` |
 
 **ACs:**
 
@@ -229,17 +272,23 @@ cat > "$FIXTURE_DIR/wildcard-scenario.md" << 'SCENARIO'
 |---|---|
 | [test-fixture]($FIXTURE_DIR/features/test-fixture/) | * |
 
-```bash
-export test_value="hello"
+\`\`\`bash
 echo "running step"
-```
+\`\`\`
 SCENARIO
 
-export feature_path="$FIXTURE_DIR/features/test-fixture"
-"$BINARY_PATH" test run "$FIXTURE_DIR/wildcard-scenario.md" --format json
-```
+"$BINARY_PATH" test run "$FIXTURE_DIR/wildcard-scenario.md" --spec-root "$FIXTURE_DIR" --format json
+````
 
 ## test-teardown-on-failure
+
+**Outputs:**
+
+| Name | Store | Extract |
+|---|---|---|
+| scenario_path | context | `echo $FIXTURE_DIR/teardown-scenario.md` |
+| binary_path | context | `echo $BINARY_PATH` |
+| marker_file | context | `echo $FIXTURE_DIR/teardown-ran.marker` |
 
 **ACs:**
 
@@ -247,9 +296,7 @@ export feature_path="$FIXTURE_DIR/features/test-fixture"
 |---|---|
 | [testing-framework/test-runner]($SPEC_ROOT/features/testing-framework/test-runner/) | [runs-teardown-on-failure]($SPEC_ROOT/features/testing-framework/test-runner/_acs/runs-teardown-on-failure.md) |
 
-```bash
-export marker_file="$FIXTURE_DIR/teardown-ran.marker"
-
+````bash
 cat > "$FIXTURE_DIR/teardown-scenario.md" << 'SCENARIO'
 # Scenario: Teardown on failure
 
@@ -268,13 +315,20 @@ touch "$FIXTURE_DIR/teardown-ran.marker"
 ```
 SCENARIO
 
-export scenario_path="$FIXTURE_DIR/teardown-scenario.md"
 # Run and expect failure, but teardown should still run
 "$BINARY_PATH" test run "$FIXTURE_DIR/teardown-scenario.md" --format json || true
-test -f "$marker_file" || { echo "Teardown did not run"; exit 1; }
-```
+test -f "$FIXTURE_DIR/teardown-ran.marker" || { echo "Teardown did not run"; exit 1; }
+````
 
 ## test-exit-codes
+
+**Outputs:**
+
+| Name | Store | Extract |
+|---|---|---|
+| passing_scenario_path | context | `echo $FIXTURE_DIR/pass-scenario.md` |
+| failing_scenario_path | context | `echo $FIXTURE_DIR/fail-scenario.md` |
+| binary_path | context | `echo $BINARY_PATH` |
 
 **ACs:**
 
@@ -282,7 +336,7 @@ test -f "$marker_file" || { echo "Teardown did not run"; exit 1; }
 |---|---|
 | [testing-framework/test-runner]($SPEC_ROOT/features/testing-framework/test-runner/) | [reports-pass-fail-exit-code]($SPEC_ROOT/features/testing-framework/test-runner/_acs/reports-pass-fail-exit-code.md) |
 
-```bash
+````bash
 # Create passing scenario
 cat > "$FIXTURE_DIR/pass-scenario.md" << 'SCENARIO'
 # Scenario: All pass
@@ -309,23 +363,16 @@ exit 1
 ```
 SCENARIO
 
-export passing_scenario_path="$FIXTURE_DIR/pass-scenario.md"
-export failing_scenario_path="$FIXTURE_DIR/fail-scenario.md"
-export binary_path="$BINARY_PATH"
-
 # Passing: exit 0
 "$BINARY_PATH" test run "$FIXTURE_DIR/pass-scenario.md" --format json
 pass_rc=$?
 test $pass_rc -eq 0 || { echo "Expected exit 0 for passing, got $pass_rc"; exit 1; }
 
 # Failing: exit non-zero
-"$BINARY_PATH" test run "$FIXTURE_DIR/fail-scenario.md" --format json || true
-fail_rc=$?
-# Note: the || true above means we need to capture differently
 "$BINARY_PATH" test run "$FIXTURE_DIR/fail-scenario.md" --format json; fail_rc=$?
 test $fail_rc -ne 0 || { echo "Expected non-zero for failing"; exit 1; }
 echo "Exit codes correct: pass=$pass_rc, fail=$fail_rc"
-```
+````
 
 ## Teardown
 

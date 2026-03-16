@@ -20,7 +20,7 @@ structure: scenario name, step names in file order, declared outputs, and AC ref
 ## Verification
 
 ```bash
-output=$("$binary_path" test run "$scenario_path" --dry-run --format json 2>&1)
+output=$("$binary_path" test run "$scenario_path" --format json 2>&1)
 rc=$?
 test $rc -eq 0 || { echo "Expected exit 0, got $rc"; echo "$output"; exit 1; }
 
@@ -28,7 +28,7 @@ test $rc -eq 0 || { echo "Expected exit 0, got $rc"; echo "$output"; exit 1; }
 echo "$output" | jq -e '.scenario.name' > /dev/null || { echo "Missing scenario name"; exit 1; }
 
 # Verify steps are present and ordered
-step_count=$(echo "$output" | jq '.scenario.steps | length')
+step_count=$(echo "$output" | jq '.steps | length')
 test "$step_count" -gt 0 || { echo "No steps found"; exit 1; }
 ```
 

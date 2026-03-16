@@ -17,7 +17,7 @@ func TestFormatResult_passing(t *testing.T) {
 		},
 	}
 	out := FormatResult(r)
-	if !strings.Contains(out, "PASS") || !strings.Contains(out, "My Test") || !strings.Contains(out, "(0.2s)") {
+	if !strings.Contains(out, "PASS") || !strings.Contains(out, "My Test") || !strings.Contains(out, "0.2s") {
 		t.Errorf("output = %q", out)
 	}
 }

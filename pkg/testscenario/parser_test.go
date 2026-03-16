@@ -2,7 +2,11 @@ package testscenario
 
 // Features implemented: testing-framework/test-runner
 
-import "testing"
+import (
+	"os"
+	"strings"
+	"testing"
+)
 
 func TestParseScenario_header(t *testing.T) {
 	input := `# Scenario: My test
@@ -141,6 +145,88 @@ func TestParseScenario_languageAnnotation(t *testing.T) {
 	}
 	if s.Steps[2].Language != "starlark" {
 		t.Errorf("step 2 language = %q, want %q", s.Steps[2].Language, "starlark")
+	}
+}
+
+func TestParseScenario_nestedCodeFences(t *testing.T) {
+	// A step whose bash code block contains triple-backtick heredocs.
+	// The outer fence uses 4+ backticks so inner ``` don't close it.
+	input := "# Scenario: T\n\n## Setup\n\n````bash\ncat > /tmp/x.md << 'EOF'\n```bash\necho nested\n```\nEOF\n````\n\n## do-thing\n\n```bash\necho ok\n```"
+	s, err := ParseScenario([]byte(input))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	want := "cat > /tmp/x.md << 'EOF'\n```bash\necho nested\n```\nEOF"
+	if s.Setup != want {
+		t.Errorf("setup = %q, want %q", s.Setup, want)
+	}
+}
+
+func TestParseScenario_nestedCodeFencesInStep(t *testing.T) {
+	input := "# Scenario: T\n\n## create-fixture\n\n````bash\ncat > /tmp/x.md << 'EOF'\n```bash\necho nested\n```\nEOF\n````"
+	s, err := ParseScenario([]byte(input))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(s.Steps) != 1 {
+		t.Fatalf("steps = %d, want 1", len(s.Steps))
+	}
+	want := "cat > /tmp/x.md << 'EOF'\n```bash\necho nested\n```\nEOF"
+	if s.Steps[0].Code != want {
+		t.Errorf("code = %q, want %q", s.Steps[0].Code, want)
+	}
+}
+
+func TestParseScenario_runnerCoreDogfood(t *testing.T) {
+	data, err := os.ReadFile("../../spec/features/testing-framework/test-runner/_tests/runner-core.md")
+	if err != nil {
+		t.Fatalf("reading runner-core.md: %v", err)
+	}
+	s, err := ParseScenario(data)
+	if err != nil {
+		t.Fatalf("parsing runner-core.md: %v", err)
+	}
+	if s.Title != "Runner core behaviors" {
+		t.Errorf("title = %q, want %q", s.Title, "Runner core behaviors")
+	}
+	if s.Setup == "" {
+		t.Error("expected non-empty Setup")
+	}
+	if s.SetupLanguage != "bash" {
+		t.Errorf("setup language = %q, want %q", s.SetupLanguage, "bash")
+	}
+	if s.Teardown == "" {
+		t.Error("expected non-empty Teardown")
+	}
+
+	expectedSteps := []string{
+		"build-binary",
+		"parse-valid",
+		"reject-malformed",
+		"test-sequential",
+		"test-context-outputs",
+		"test-ac-wildcard",
+		"test-teardown-on-failure",
+		"test-exit-codes",
+	}
+	if len(s.Steps) != len(expectedSteps) {
+		t.Fatalf("steps = %d, want %d", len(s.Steps), len(expectedSteps))
+	}
+	for i, name := range expectedSteps {
+		if s.Steps[i].Name != name {
+			t.Errorf("step[%d].Name = %q, want %q", i, s.Steps[i].Name, name)
+		}
+		if s.Steps[i].Code == "" {
+			t.Errorf("step[%d] %q has empty code", i, name)
+		}
+		if s.Steps[i].Language != "bash" {
+			t.Errorf("step[%d] %q language = %q, want %q", i, name, s.Steps[i].Language, "bash")
+		}
+	}
+
+	// Verify nested code fences in Setup are preserved (heredoc content with ``` inside).
+	if !strings.Contains(s.Setup, "```bash") {
+		t.Error("setup code should contain nested ```bash from heredocs")
 	}
 }
 

@@ -76,7 +76,19 @@ This is not pseudo-code. This is an actual scenario file that the runner execute
 |---|---|---|
 | Title | Yes | `# Scenario: {name}` — human-readable scenario name |
 | Description | Yes | One-line summary of what the scenario verifies |
-| Tags | No | Comma-separated labels for filtering (`e2e`, `cli`, `smoke`, `regression`, etc.) |
+| Tags | No | Comma-separated labels for filtering (`e2e`, `cli`, `smoke`, `regression`, etc.). See [Reserved tags](#reserved-tags). |
+
+### Reserved tags
+
+The `manual` tag has special runtime behavior:
+
+| Tag | Behavior |
+|---|---|
+| `manual` | Scenario is **skipped** when the runner discovers it via directory scan. It runs only when the scenario file is passed directly by path, or when `--run-manual-tests` is set. |
+
+Use `manual` for demo scenarios, long-running stress tests, or interactive verification that should not execute in CI or default `test run` sweeps. Scenarios tagged `manual` still appear in `test list` output — they are discoverable but opt-in for execution.
+
+All other tags (e.g., `e2e`, `cli`, `smoke`, `regression`, `demo`, `integration`) are user-defined labels with no built-in behavior beyond `--tag` filtering.
 
 ### Step elements
 

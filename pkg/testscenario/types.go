@@ -98,3 +98,17 @@ type ScenarioResult struct {
 	SetupError    string
 	TeardownError string
 }
+
+// ProgressReporter receives live updates during scenario execution.
+type ProgressReporter interface {
+	ScenarioStarted(title string)
+	SetupStarted()
+	SetupFinished(err string)
+	StepStarted(stepName string)
+	StepFinished(result StepResult)
+	ACStarted(featurePath, acSlug string)
+	ACFinished(result ACResult)
+	TeardownStarted()
+	TeardownFinished(err string)
+	ScenarioFinished(result ScenarioResult)
+}

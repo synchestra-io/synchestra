@@ -135,8 +135,20 @@ Result: FAIL (3 passed, 1 failed, 4 ACs: 2 passed, 1 failed)
 ```
 
 Output formats:
-- **Text** (default): human-readable, colored terminal output with step-level and AC-level detail
+- **Text** (default): human-readable, colored terminal output with real-time progress and step-level/AC-level detail. Uses lipgloss for styled output with color, checkmarks/crosses, and inline duration.
 - **JSON**: machine-readable for CI integration, dashboards, and programmatic analysis
+
+### Real-time progress
+
+In text mode, the runner reports progress as steps execute — not just a batch summary at the end. Each step shows a dimmed `▸ step-name` indicator while running, which is replaced in-place with a colored `✔`/`✘` result and duration when the step completes. AC verifications nest under their parent step with the same live treatment. This makes long-running scenarios observable without waiting for the final report.
+
+### Manual scenario filtering
+
+Scenarios tagged `manual` are excluded from directory-scanned runs by default. This prevents demo scenarios, stress tests, and interactive verification from running in CI or routine `test run` sweeps.
+
+Manual scenarios run when:
+- The scenario file is **passed directly by path** (e.g., `synchestra test run path/to/demo.md`)
+- The `--run-manual-tests` flag is set (e.g., `synchestra test run tests/ --run-manual-tests`)
 
 Every failure is attributable — you can see which step failed, which AC within that step failed, and what exit code it produced. No hunting through logs.
 

@@ -33,9 +33,6 @@ func (c *ExecContext) StoreOutput(stepName, name, value string, store OutputStor
 	defer c.mu.Unlock()
 	switch store {
 	case StoreContext, StoreBoth:
-		if _, exists := c.contextVars[name]; exists {
-			return fmt.Errorf("duplicate context key %q", name)
-		}
 		c.contextVars[name] = value
 	}
 	switch store {

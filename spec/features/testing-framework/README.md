@@ -58,13 +58,25 @@ Cross-feature scenarios test workflows that span multiple features — the "happ
 ### CLI commands
 
 ```
-synchestra test run [path]       — run scenario file or directory
-synchestra test run --tag e2e    — filter by tag
-synchestra test list             — list available scenarios
-synchestra test list --tag e2e   — list filtered by tag
+synchestra test run [path]                  — run scenario file or directory
+synchestra test run --tag e2e               — filter by tag
+synchestra test run --format json           — machine-readable output
+synchestra test run --run-manual-tests      — include scenarios tagged 'manual'
+synchestra test run --spec-root ./my-spec   — override spec root directory
+synchestra test list                        — list available scenarios
+synchestra test list --tag e2e              — list filtered by tag
 ```
 
+| Flag | Default | Description |
+|---|---|---|
+| `--format` | `text` | Output format: `text` (styled with live progress) or `json` |
+| `--spec-root` | `spec` | Override the spec root directory |
+| `--tag` | | Filter scenarios by tag (repeatable) |
+| `--run-manual-tests` | `false` | Include scenarios tagged `manual` (see [Reserved tags](test-scenario/README.md#reserved-tags)) |
+
 These follow the existing `synchestra <resource> <action>` command pattern.
+
+Scenarios tagged `manual` are skipped during directory scans unless `--run-manual-tests` is set, but always run when a specific file path is passed. This keeps demo and stress-test scenarios discoverable but out of default CI runs.
 
 ### Configurable spec root
 
