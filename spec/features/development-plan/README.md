@@ -8,7 +8,7 @@ A development plan bridges feature specifications and change requests to executa
 
 ## Problem
 
-Synchestra has a well-defined task system: tasks live in the state repo, agents claim and execute them, and the task status board provides real-time visibility. But there is no structured way to go from "we know what to build" to "here are the tasks to execute."
+Synchestra has a well-defined task system: tasks live in the state store, agents claim and execute them, and the task status board provides real-time visibility. But there is no structured way to go from "we know what to build" to "here are the tasks to execute."
 
 Today that decomposition happens ad hoc — a human or AI agent reads a feature spec, mentally breaks it into steps, and manually creates tasks one by one. This creates three problems:
 
@@ -25,7 +25,7 @@ Synchestra separates **intent** from **execution** by design, with distinct arti
 | Feature spec | What do we want? | Product, engineering | Versioned | Spec repo |
 | Change request | What should change in an existing feature? | Product, engineering | Versioned until approved | Spec repo |
 | Development plan | How will we build it? | Reviewers, planners | Immutable once approved | Spec repo |
-| Tasks | Who's doing what right now? | Agents, operators | Highly fluid | State repo |
+| Tasks | Who's doing what right now? | Agents, operators | Highly fluid | State store |
 
 A **feature spec** defines something new. A **change request** (implemented as a [proposal](../proposals/README.md)) mutates something that already exists. Both are *what* artifacts — they describe desired outcomes. The distinction matters because:
 
@@ -410,7 +410,7 @@ synchestra plan approve --plan add-batch-mode --approver @jordan
 
 ### Stage 4: Generate tasks
 
-Once approved, the plan's steps become tasks in the state repo.
+Once approved, the plan's steps become tasks in the state store.
 
 **Generation rules:**
 
@@ -476,7 +476,7 @@ graph LR
 
 ### The link: plan step reference
 
-Each task generated from a plan carries a reference to its plan and step number in its README. Each plan step carries a **Task mapping** field that points to the task path in the state repo. These references are written once during task generation and never updated.
+Each task generated from a plan carries a reference to its plan and step number in its README. Each plan step carries a **Task mapping** field that points to the task path in the state store. These references are written once during task generation and never updated.
 
 ### What happens when tasks mutate
 
@@ -501,7 +501,7 @@ graph LR
         S3["Step 3"]
     end
 
-    subgraph "Tasks (live, in state repo)"
+    subgraph "Tasks (live, in state store)"
         T1["Task 1 ✅"]
         T2["Task 2 🔵"]
         T2a["Task 2a ✅"]
@@ -539,7 +539,7 @@ Returns structured JSON with plan steps, mapped tasks, statuses, and unplanned t
 
 ### What is an artifact?
 
-An artifact is a named output that a task produces and commits to the state repo. It is not code (code lives in code repos on branches). It is the metadata, decisions, schemas, and intermediate results that downstream tasks need to do their work.
+An artifact is a named output that a task produces and commits to the state store. It is not code (code lives in code repos on branches). It is the metadata, decisions, schemas, and intermediate results that downstream tasks need to do their work.
 
 Examples:
 
@@ -553,7 +553,7 @@ Examples:
 
 ### Where artifacts live
 
-Inside the task directory in the state repo:
+Inside the task directory in the state store:
 
 ```
 tasks/user-auth/
@@ -565,7 +565,7 @@ tasks/user-auth/
       auth-flow-diagram.md
 ```
 
-The `artifacts/` directory is a convention. Simple tasks may have zero artifacts. Complex tasks may have several. Artifacts are committed to git — they are versioned, auditable, and accessible to any agent that can read the state repo.
+The `artifacts/` directory is a convention. Simple tasks may have zero artifacts. Complex tasks may have several. Artifacts are committed to git — they are versioned, auditable, and accessible to any agent that can read the state store.
 
 ### Declaring artifacts in the plan
 
@@ -639,7 +639,7 @@ Artifacts make the data flow between tasks explicit and traceable. Instead of an
 
 ### Artifacts vs. code
 
-| | Code (code repo) | Artifacts (state repo) |
+| | Code (code repo) | Artifacts (state store) |
 |---|---|---|
 | What | Source code, configs, tests | Schemas, decisions, intermediate results |
 | Where | `synchestra/{task-slug}` branch | `tasks/{task}/artifacts/` |

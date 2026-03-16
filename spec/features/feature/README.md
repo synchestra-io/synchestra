@@ -228,7 +228,7 @@ graph LR
 
 Features do not directly reference tasks — the development plan is the bridge. However, task context (via `synchestra task info`) can include the originating feature spec for agent awareness.
 
-The chain is always: **Feature (or proposal) → Plan → Tasks**. This separation ensures that the spec repo stays focused on *what* while the state repo handles *who and when*.
+The chain is always: **Feature (or proposal) → Plan → Tasks**. This separation ensures that the spec repo stays focused on *what* while the state store handles *who and when*.
 
 ### Features and outstanding questions
 

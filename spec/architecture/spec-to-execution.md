@@ -156,7 +156,7 @@ graph LR
         S3["Step 3"]
     end
 
-    subgraph "Tasks (live, in state repo)"
+    subgraph "Tasks (live, in state store)"
         T1["Task 1 ✅"]
         T2["Task 2 🔵"]
         T2a["Task 2a ✅"]
