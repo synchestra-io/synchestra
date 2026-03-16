@@ -42,6 +42,15 @@ import (
 
 These annotations let agents and developers trace from source code back to specifications, understand cross-feature coupling, and assess the impact of spec changes on implementation.
 
+## Diagrams in specifications
+
+Use **mermaid diagrams** instead of ASCII art in all specification documents. Mermaid provides:
+- Better visual clarity and maintainability
+- Native support in GitHub markdown rendering
+- Support for flowcharts, sequence diagrams, state diagrams, dependency graphs, and more
+
+When adding or updating diagrams in specs, convert ASCII art to mermaid or create new diagrams using mermaid syntax.
+
 ## Go validation after code changes
 
 After any change to `.go` files, agents must run the full Go validation sequence before considering the task complete:

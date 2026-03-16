@@ -29,6 +29,10 @@ Comprehensive design specification for the Sandbox feature. Covers: stateless ho
 
 Detailed security model and threat analysis for Sandbox. Covers: threat model with seven attack vectors (host compromise, container escape, credential theft, cross-user leakage, DoS, state tampering, network interception), mitigations for each threat, security mechanisms (AES256 encryption, container hardening, user isolation, resource limits, gRPC security), validation testing checklist, and future enhancements (HSM, signed commits, audit trail, credential rotation, per-user encryption).
 
+## Diagram Conventions
+
+All diagrams in architectural documents should use **mermaid syntax** instead of ASCII art. Mermaid provides better clarity, GitHub rendering support, and maintainability.
+
 ## Outstanding Questions
 
 None at this time.

@@ -130,6 +130,10 @@ sandbox → cli, api (containers execute commands, host routes via API)
 ```
 
 `feature` is the foundational spec-layer concept — proposals, plans, and outstanding questions all attach to features.
+
+## Diagram Conventions
+
+All diagrams in feature specifications should use **mermaid syntax** instead of ASCII art. Mermaid provides better clarity, GitHub rendering support, and maintainability.
 `claim-and-push` is foundational for execution — most concurrent features depend on it.
 `development-plan` bridges the spec-to-execution gap — proposals and feature specs flow through it to become tasks.
 
