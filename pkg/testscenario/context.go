@@ -43,6 +43,15 @@ func (c *ExecContext) StoreOutput(stepName, name, value string, store OutputStor
 	return nil
 }
 
+// ContextVarsAsEnv returns all context variables as KEY=VALUE env var pairs.
+func (c *ExecContext) ContextVarsAsEnv() []string {
+	env := make([]string, 0, len(c.contextVars))
+	for k, v := range c.contextVars {
+		env = append(env, k+"="+v)
+	}
+	return env
+}
+
 // ResolveVar resolves a variable reference like "context.pid" or "steps.create.outputs.id".
 func (c *ExecContext) ResolveVar(ref string) (string, error) {
 	if strings.HasPrefix(ref, "context.") {
