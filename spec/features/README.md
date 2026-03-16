@@ -26,6 +26,7 @@ Feature specifications for the Synchestra project, managed by Synchestra.
 | [github-app](github-app/README.md) | Conceptual | GitHub App for webhook notifications, authenticated repo access, and organization-level installation |
 | [onboarding](onboarding/README.md) | Conceptual | Guided wizard for first-time project setup — repo connection, GitHub App installation, AI-powered scaffolding, or demo launch |
 | [sandbox](sandbox/README.md) | Conceptual | Isolated Docker container environments per project for executing user-initiated commands from the chat interface |
+| [state-store](state-store/README.md) | Conceptual | Pluggable state storage abstraction — composable Go interface (`state.Store`) with git-backed default implementation |
 
 ## Feature Summaries
 
@@ -109,6 +110,10 @@ A guided wizard delivered through both the web app and the CLI that walks new us
 
 Isolated Docker container environments per project for executing user-initiated commands from the chat interface. Each project gets its own persistent container with encrypted credential storage (AES256), user-isolated sessions, and a gRPC agent for host↔container communication. The host is stateless and routes requests; all state, secrets, and execution data remain inside containers.
 
+### [State Store](state-store/README.md)
+
+The pluggable abstraction layer for all Synchestra project coordination state. Defines a composable, hierarchical Go interface (`state.Store`) with sub-interfaces for tasks (`TaskStore`), chat (`ChatStore`), and project configuration (`ProjectStore`). Navigated like CLI subcommands — `store.Task().Claim(ctx, ...)` — keeping each interface focused and discoverable. The default git-backed implementation (`gitstore`) maps to the existing state repository design; future backends (SQLite, PostgreSQL, cloud databases) satisfy the same interface.
+
 ```
 feature → proposals, development-plan, outstanding-questions (features are the spec unit)
 claim-and-push ← conflict-resolution
@@ -127,6 +132,8 @@ global-config ← cli (cli reads ~/.synchestra.yaml for repo resolution)
 github-app → api (callback endpoint)
 onboarding → github-app, project-definition, ui, cli, api (orchestrates first-time setup)
 sandbox → cli, api (containers execute commands, host routes via API)
+state-store → claim-and-push (claim atomicity), task-status-board (board interface), chat (chat persistence)
+state-store ← cli, api, agent-skills (all consumers of state go through state store)
 ```
 
 `feature` is the foundational spec-layer concept — proposals, plans, and outstanding questions all attach to features.
@@ -166,6 +173,7 @@ All diagrams in feature specifications should use **mermaid syntax** instead of 
 - [github-app](github-app/README.md): 4 outstanding questions
 - [onboarding](onboarding/README.md): 5 outstanding questions
 - [sandbox](sandbox/README.md): 5 outstanding questions
+- [state-store](state-store/README.md): 4 outstanding questions
 - [ui](ui/README.md): 5 outstanding questions
 - [ui/web-app](ui/web-app/README.md): 5 outstanding questions
 - [ui/tui](ui/tui/README.md): 5 outstanding questions
