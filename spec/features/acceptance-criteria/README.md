@@ -4,57 +4,60 @@
 
 ## Summary
 
-Acceptance criteria (ACs) are first-class, individually addressable artifacts that define verifiable conditions a feature or plan step must satisfy. Each AC is a separate markdown file with a status, description, typed inputs, and a bash verification script. ACs bridge the gap between prose specifications and executable validation.
+Acceptance criteria are the contract between what a feature promises and what the system actually delivers. In Synchestra, each AC is a standalone markdown file — readable by product owners, auditable by reviewers, and executable by the [test runner](../testing-framework/test-runner/README.md). ACs live alongside the features they verify, carry their own lifecycle, and compose into [test scenarios](../testing-framework/test-scenario/README.md) for end-to-end validation. Write an AC once; reference it from any number of test flows.
 
 ## Problem
 
-Synchestra features describe desired behavior in prose, and development plans list acceptance criteria inline as bullet points. But there is no structured, reusable unit of verification:
+Feature specs describe desired behavior. Development plans list acceptance criteria as inline bullet points. But today, these two worlds are disconnected:
 
-- **No executable link from spec to test.** "This feature should do X" has no corresponding "this script verifies X."
-- **No reuse.** The same assertion ("project appears in list after creation") is re-described in multiple plans, features, and test scenarios. Without a canonical, addressable unit, each context re-implements or re-states the check.
-- **No lifecycle tracking.** There is no way to know which acceptance criteria have verification scripts, which are still prose-only, and which are outdated.
+- **Specs promise, nothing verifies.** A feature says "creating a project writes `synchestra-spec.yaml` to the spec repo." There is no structured artifact that turns that sentence into an executable check. The gap between intent and proof is filled by hope and manual testing.
+- **Verification logic is duplicated.** The assertion "deleted project does not appear in the list" lives in a Go unit test, a shell script in CI, and prose in three different plan steps. When the behavior changes, some of these get updated. The rest silently drift.
+- **Nobody knows the coverage picture.** Which features have automated verification? Which acceptance criteria are still prose-only? Which were implemented six months ago and never updated? Without a lifecycle, there is no answer — only archaeology.
+
+Acceptance criteria as first-class artifacts solve all three: each AC is addressable, versioned, executable, and tracked through a status lifecycle from `planned` to `implemented`.
 
 ## Behavior
 
 ### AC file location
 
-Each feature can define acceptance criteria in an `_acs/` subdirectory:
+Each feature defines its acceptance criteria in an `_acs/` subdirectory:
 
 ```
 spec/features/{feature}/_acs/
-  README.md             <- AC index for this feature
-  {ac-slug}.md          <- individual AC
+  README.md             ← AC index for this feature
+  {ac-slug}.md          ← individual AC
 ```
 
 The `_acs/` directory uses the reserved `_` prefix convention — it is not a sub-feature and is excluded from the feature index and Contents table.
 
 ### AC file format
 
-Each AC is a separate `.md` file:
+Each AC is a self-contained markdown file. Everything needed to understand and execute the criterion lives in one place:
 
 ```markdown
-# AC: {ac-slug}
+# AC: creates-spec-config
 
-**Status:** {status}
-**Feature:** [{feature-name}](../README.md)
+**Status:** implemented
+**Feature:** [cli/project/new](../README.md)
 
 ## Description
 
-What this AC verifies — one to three sentences.
+After `synchestra project new`, `synchestra-spec.yaml` exists in the spec repo
+with the correct title and state_repo fields.
 
 ## Inputs
 
 | Name | Required | Description |
 |---|---|---|
-| input_name | Yes | What this input represents |
-| optional_input | No | Optional context |
+| spec_repo_path | Yes | Path to the spec repository |
+| expected_title | Yes | Expected project title |
 
 ## Verification
 
 ```bash
-# Bash script that exits 0 on success, non-zero on failure.
-# Inputs are available as environment variables: $input_name, $optional_input
-test -f "$input_name/expected-file.yaml"
+test -f "$spec_repo_path/synchestra-spec.yaml"
+title=$(grep 'title:' "$spec_repo_path/synchestra-spec.yaml" | head -1 | sed 's/title: *//')
+test "$title" = "$expected_title"
 ```
 
 ## Scenarios
@@ -62,27 +65,29 @@ test -f "$input_name/expected-file.yaml"
 | Scenario | Step |
 |---|---|
 | [project-lifecycle](../../../tests/project-lifecycle.md) | verify-configs |
-
-(Or: "(None yet.)" if no scenarios reference this AC.)
 ```
+
+**Why markdown, not code?** Because the audience is broader than developers. Product owners can read the Description and Inputs table to confirm "yes, this is what I meant." Testers can review the Verification script to check edge cases. AI agents can parse the structure without language-specific tooling. And developers can execute it as-is — it's bash, not pseudo-code.
 
 ### AC identification
 
-ACs are identified by their feature path and slug:
+ACs are identified by their feature path and slug — the same pattern used for features themselves:
 
 | AC path | Identifier |
 |---|---|
 | `spec/features/cli/project/new/_acs/creates-spec-config.md` | `cli/project/new/creates-spec-config` |
 | `spec/features/cli/project/remove/_acs/not-in-list.md` | `cli/project/remove/not-in-list` |
 
+This path-based ID is used in test scenario references, plan step cross-links, CLI output, and reporting.
+
 ### AC statuses
 
 | Status | Description |
 |---|---|
 | `planned` | AC is described but has no verification script yet |
-| `wip` | Verification script is being written/tested |
+| `wip` | Verification script is being written or tested |
 | `implemented` | Verification script exists and passes |
-| `deprecated` | AC is no longer relevant |
+| `deprecated` | AC is no longer relevant (feature changed or removed) |
 
 ```mermaid
 graph LR
@@ -97,9 +102,13 @@ graph LR
     A -->|no longer relevant| D
 ```
 
+A `planned` AC is not a failure — it is a signal. It tells the team "we know what to verify but haven't automated it yet." The Outstanding Questions mechanism ensures these don't silently accumulate.
+
 ### Mandatory AC section in feature READMEs
 
-Every feature README must include an **Acceptance Criteria** section. When ACs are defined, it contains a summary table:
+Every feature README must include an **Acceptance Criteria** section. This is not optional — it forces every feature author to think about verifiability at spec time, not as an afterthought.
+
+When ACs are defined:
 
 ```markdown
 ## Acceptance Criteria
@@ -110,7 +119,7 @@ Every feature README must include an **Acceptance Criteria** section. When ACs a
 | [creates-state-config](_acs/creates-state-config.md) | synchestra-state.yaml created in state repo | implemented |
 ```
 
-When no ACs are defined yet, the section states:
+When no ACs are defined yet:
 
 ```markdown
 ## Acceptance Criteria
@@ -118,25 +127,25 @@ When no ACs are defined yet, the section states:
 Not defined yet.
 ```
 
-And the Outstanding Questions section must include a corresponding question: "Acceptance criteria not yet defined for this feature."
+The "Not defined yet." state triggers a mandatory Outstanding Question: "Acceptance criteria not yet defined for this feature." This ensures missing ACs are visible — not forgotten.
 
 ### Relationship to development plan ACs
 
-Feature ACs and plan ACs are different artifacts with different lifecycles:
+Feature ACs and plan ACs serve different audiences and have different lifecycles:
 
 | AC type | Lives in | Answers | Lifecycle |
 |---|---|---|---|
-| **Feature AC** | `spec/features/{feature}/_acs/` | "How do we verify this feature works correctly?" | Evolves with the feature; long-lived |
-| **Plan-level AC** | `spec/plans/{plan}/README.md` (inline or `_acs/` subdir) | "How do we verify this plan's goals were achieved?" | Frozen with the plan; immutable |
-| **Plan step-level AC** | Within each plan step | "How do we verify this step's deliverable?" | Frozen with the plan; immutable |
+| **Feature AC** | `spec/features/{feature}/_acs/` | "Does this feature work correctly?" | Evolves with the feature; long-lived |
+| **Plan-level AC** | `spec/plans/{plan}/README.md` (inline or `_acs/` subdir) | "Were this plan's goals achieved?" | Frozen with the plan; immutable |
+| **Plan step-level AC** | Within each plan step | "Was this step's deliverable produced?" | Frozen with the plan; immutable |
 
-Plan step ACs may *reference* feature ACs (e.g., "the feature AC `cli/project/remove/not-in-list` must pass after this step"), but they are not the same artifact. Feature ACs are the long-lived, canonical verification units. Plan ACs are scoped to a specific implementation effort.
+Plan step ACs may *reference* feature ACs — for example, "the feature AC `cli/project/remove/not-in-list` must pass after this step." But they are not the same artifact. Feature ACs are the long-lived, canonical verification units. Plan ACs are scoped to a single implementation effort and frozen on approval.
 
-When generating tasks from a plan, both plan step ACs and any referenced feature ACs are copied into the task description, giving agents clear verification targets.
+When generating tasks from a plan, both plan step ACs and any referenced feature ACs are copied into the task description. Agents know exactly what "done" looks like before they write a line of code.
 
 ### Validation rules
 
-Validation tooling (lint/pre-commit) should check:
+Validation tooling (lint/pre-commit) enforces consistency:
 
 1. Every feature README has an `## Acceptance Criteria` section
 2. If the section says "Not defined yet.", the Outstanding Questions section includes the corresponding question
@@ -144,14 +153,16 @@ Validation tooling (lint/pre-commit) should check:
 4. Every entry in the feature README AC table has a corresponding `.md` file in `_acs/`
 5. AC slugs are lowercase, hyphen-separated, and unique within the feature
 
+These rules keep the AC index and the actual files in sync — no phantom entries, no orphaned files.
+
 ## Interaction with Other Features
 
 | Feature | Interaction |
 |---|---|
-| [Feature](../feature/README.md) | Features gain a mandatory Acceptance Criteria section and `_acs/` directory convention. The feature spec defines the structural rules; this feature defines what goes inside `_acs/`. |
+| [Feature](../feature/README.md) | Features gain a mandatory Acceptance Criteria section and `_acs/` directory convention. The feature spec defines the structural rules; this feature defines what goes inside. |
 | [Development Plan](../development-plan/README.md) | Plan step ACs may reference feature ACs. Plan-level ACs follow the same format but are frozen with the plan. |
-| [Testing Framework](../testing-framework/README.md) | Test scenarios reference ACs via table syntax. The test runner resolves and executes AC verification scripts. |
-| [Outstanding Questions](../outstanding-questions/README.md) | Missing ACs are surfaced as outstanding questions in the feature README. |
+| [Testing Framework](../testing-framework/README.md) | Test scenarios reference ACs via table syntax. The test runner resolves and executes verification scripts. |
+| [Outstanding Questions](../outstanding-questions/README.md) | Missing ACs surface as outstanding questions, keeping them visible until addressed. |
 
 ## Acceptance Criteria
 
