@@ -2,6 +2,133 @@
 
 **Synchestra** — as in *synch*ronized *orchestra* — is a modular, opinionated platform for orchestrating multi-platform AI agents asynchronously. It manages the **I/O** of AI-driven development: the **inputs** (prompts, specifications, task queues) and the **outputs** (code, documents, artifacts) — keeping token usage minimal, output velocity high, and humans in the loop.
 
+## Architecture Overview
+
+### Option A: System Architecture
+
+```mermaid
+graph TB
+    subgraph Agents["Agent Platforms"]
+        CC[Claude Code]
+        CU[Cursor / Windsurf]
+        GPT[GPT / Custom]
+        DA[Daemon<br><i>headless agents</i>]
+    end
+
+    subgraph Tools["Synchestra Tools"]
+        CLI[CLI + MCP Server]
+        WEB[Web UI + HTTP API]
+        HOOKS[Git Hooks + CI Guards]
+    end
+
+    subgraph Repos["Git Repositories  ·  inGitDB"]
+        STATE["State Repo<br><code>{project}-synchestra</code><br><i>tasks · claims · coordination</i>"]
+        SPEC["Spec Repo<br><i>features · plans · specs</i>"]
+        CODE["Code Repo(s)<br><i>implementation · artifacts</i>"]
+    end
+
+    CC & CU & GPT & DA -->|skills + CLI| CLI
+    CLI -->|read/write + validate| STATE & SPEC & CODE
+    WEB -->|HTTP API| CLI
+    HOOKS -->|pre-commit · pre-push| STATE & SPEC
+    SPEC -.->|references| STATE
+    SPEC -.->|references| CODE
+```
+
+### Option B: Agent Coordination Flow
+
+```mermaid
+sequenceDiagram
+    participant Q as Task Queue
+    participant A as Agent
+    participant R as State Repo
+    participant B as Other Agents
+
+    A->>Q: Find unclaimed task
+    A->>R: Commit claim (status → wip)
+    A->>R: git push
+    alt Push succeeds
+        A->>A: Work on task
+        A->>R: Commit result + mark complete
+        A->>R: git push
+    else Push fails (conflict)
+        R-->>A: Another agent claimed first
+        A->>Q: Move to next task
+    end
+    Note over B,R: Multiple agents run this<br>loop concurrently
+```
+
+### Option C: C4-Style Component Diagram
+
+```mermaid
+C4Context
+    title Synchestra — System Context
+
+    Person(dev, "Developer", "Manages projects, reviews agent output, resolves escalations")
+    Person(agent, "AI Agent", "Claude Code, Cursor, GPT, or custom script")
+
+    System(synchestra, "Synchestra", "Coordination layer for multi-platform AI agents")
+
+    System_Ext(git, "Git + inGitDB", "Structured storage, schema validation, audit trail")
+    System_Ext(github, "GitHub", "Remote hosting, Actions CI/CD, OAuth")
+    System_Ext(platforms, "Agent Platforms", "Claude, OpenAI, local LLMs")
+
+    Rel(dev, synchestra, "Web UI, CLI", "HTTPS, terminal")
+    Rel(agent, synchestra, "Skills, CLI, MCP", "stdio, HTTPS")
+    Rel(synchestra, git, "Read/write repos", "git protocol")
+    Rel(synchestra, github, "Push, hooks, Actions", "HTTPS")
+    Rel(agent, platforms, "LLM inference", "API calls")
+
+    UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="1")
+```
+
+### Option D: Visual Flowchart — How Work Flows Through Synchestra
+
+```mermaid
+flowchart LR
+    subgraph Input["📥 Input"]
+        SPEC[Feature Spec]
+        PLAN[Development Plan]
+        QUEUE[Task Queue]
+    end
+
+    subgraph Engine["⚙️ Synchestra Engine"]
+        direction TB
+        CONTEXT[Context<br>Generator]
+        MODEL[Model<br>Selector]
+        CLAIM[Claim &<br>Push]
+        MICRO[Micro-task<br>Chains]
+    end
+
+    subgraph Agents["🤖 Agents"]
+        direction TB
+        A1[Agent 1<br><i>Claude Code</i>]
+        A2[Agent 2<br><i>Cursor</i>]
+        A3[Agent 3<br><i>Daemon</i>]
+    end
+
+    subgraph Output["📤 Output"]
+        ARTIFACTS[Code &<br>Artifacts]
+        DOCS[Docs &<br>Specs]
+        STATUS[Status &<br>Progress]
+    end
+
+    SPEC --> PLAN --> QUEUE
+    QUEUE --> CONTEXT
+    CONTEXT --> MODEL --> CLAIM
+    CLAIM --> A1 & A2 & A3
+    MICRO -.->|pre/post| A1 & A2 & A3
+    A1 & A2 & A3 --> ARTIFACTS & DOCS & STATUS
+    STATUS -.->|feedback| QUEUE
+
+    style Input fill:#1a1a2e,stroke:#e94560,color:#eee
+    style Engine fill:#1a1a2e,stroke:#0f3460,color:#eee
+    style Agents fill:#1a1a2e,stroke:#16213e,color:#eee
+    style Output fill:#1a1a2e,stroke:#533483,color:#eee
+```
+
+---
+
 ## Why Synchestra Exists
 
 AI agents are getting powerful. Running a single agent on a single task works. But real work isn't a single task — it's a tree of tasks, features, sub-features, dependencies, and decisions that unfold over time.
