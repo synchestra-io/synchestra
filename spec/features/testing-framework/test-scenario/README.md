@@ -80,7 +80,7 @@ This is not pseudo-code. This is an actual scenario file that the runner execute
 
 ### Step elements
 
-Each step is an `## {step-name}` heading. Steps contain a mix of optional metadata and a bash code block:
+Each step is an `## {step-name}` heading. Steps contain a mix of optional metadata and a code block:
 
 | Element | Required | Description |
 |---|---|---|
@@ -91,9 +91,9 @@ Each step is an `## {step-name}` heading. Steps contain a mix of optional metada
 | Outputs | No | Table with Name, Store, and Extract columns |
 | ACs | No | Table with Feature and ACs columns — links to [acceptance criteria](../../acceptance-criteria/README.md) to verify after this step |
 | Include | No | Delegates to a sub-flow `.md` file (mutually exclusive with code block) |
-| Code block | Conditional | Bash script to execute (required unless Include is specified) |
+| Code block | Conditional | Script to execute (required unless Include is specified). Supports `bash`, `python`, and `starlark` — see [Supported languages](../../acceptance-criteria/README.md#supported-languages). |
 
-A step with neither a code block nor an Include directive is a validation error — every step must do something.
+A step with neither a code block nor an Include directive is a validation error — every step must do something. The code block's language annotation determines the interpreter; bash is the default if no annotation is provided.
 
 ### Step identification and references
 
