@@ -99,6 +99,13 @@ CREATE TABLE sandbox_container_metadata (
     idle_since TIMESTAMP WITH TIME ZONE,
     -- When no commands have been executing (used for auto-pause)
     
+    -- Restart tracking (persisted across host restarts)
+    restart_count INT DEFAULT 0,
+    -- Consecutive restart attempts
+    
+    last_restart_at TIMESTAMP WITH TIME ZONE,
+    -- When last restart was attempted
+    
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     -- Last metadata update (for optimistic locking or versioning)
     
@@ -126,6 +133,8 @@ CREATE TABLE sandbox_container_metadata (
 - `started_at`: When container last started
 - `paused_at`: When container was last paused
 - `idle_since`: Timestamp used to detect if container should auto-pause
+- `restart_count`: Consecutive restart attempts (persisted to survive host process restarts)
+- `last_restart_at`: When last restart was attempted (persisted to survive host process restarts)
 - `updated_at`: Last database row update
 - `last_health_check`: Last successful `Ping()` RPC to container
 - `health_check_failures`: Counter for circuit breaker pattern

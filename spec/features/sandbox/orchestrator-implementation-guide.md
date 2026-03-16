@@ -132,12 +132,7 @@ func New(ctx context.Context, cfg *Config, db *sql.DB) (*orchestrator, error) {
         shutdownCh:   make(chan struct{}),
     }
 
-    // 4. Reconcile DB state with actual Docker state (startup recovery)
-    if err := o.reconcileState(ctx); err != nil {
-        return nil, fmt.Errorf("reconcile state: %w", err)
-    }
-
-    // 5. Start health check manager
+    // 4. Start health check manager
     o.healthMgr = NewHealthManager(o, cfg.HealthInterval, cfg.HealthTimeout, cfg.MaxHealthFailures)
     o.wg.Add(1)
     go func() {
@@ -145,7 +140,7 @@ func New(ctx context.Context, cfg *Config, db *sql.DB) (*orchestrator, error) {
         o.healthMgr.Start(o.shutdownCh)
     }()
 
-    // 6. Start idle detection manager
+    // 5. Start idle detection manager
     o.idleMgr = NewIdleManager(o, cfg.IdleTimeout, cfg.IdleCheckInterval)
     o.wg.Add(1)
     go func() {
@@ -158,69 +153,85 @@ func New(ctx context.Context, cfg *Config, db *sql.DB) (*orchestrator, error) {
 }
 ```
 
-### Startup Recovery
+### Lazy Reconciliation
 
-When the host process restarts, the orchestrator must reconcile the database with actual Docker state. Containers may have stopped, crashed, or been removed while the host was down.
+Instead of reconciling all containers at startup, the orchestrator reconciles Docker state lazily — on the first request for each project. This avoids a potentially slow startup sequence and ensures the orchestrator is ready to serve immediately.
+
+> **Design note**: Event-based reconciliation (Docker event stream listener) and periodic reconciliation loop can be added later for proactive detection. The lazy approach is sufficient for MVP.
 
 ```go
-func (o *orchestrator) reconcileState(ctx context.Context) error {
-    // Load all container metadata from DB
-    rows, err := o.db.QueryContext(ctx, `
-        SELECT project_id, container_id, container_status, socket_path,
-               memory_limit_mb, cpu_limit, resource_quota_gb
-        FROM sandbox_container_metadata
-        WHERE container_status NOT IN ('terminated')
-    `)
-    if err != nil {
-        return fmt.Errorf("query containers: %w", err)
-    }
-    defer rows.Close()
+// reconcileContainer checks Docker for the actual state of a project's container
+// and updates the DB if it differs from the recorded state. Called from ensureRunning
+// before attempting any state transitions.
+func (o *orchestrator) reconcileContainer(ctx context.Context, projectID string) error {
+    o.mu.RLock()
+    cs, exists := o.containers[projectID]
+    o.mu.RUnlock()
 
-    for rows.Next() {
-        var meta containerMeta
-        if err := rows.Scan(
-            &meta.ProjectID, &meta.ContainerID, &meta.Status, &meta.SocketPath,
-            &meta.MemoryLimitMB, &meta.CPULimit, &meta.DiskQuotaGB,
-        ); err != nil {
-            return fmt.Errorf("scan container row: %w", err)
+    if !exists {
+        // No in-memory state — load from DB if available
+        meta, err := o.loadContainerMeta(ctx, projectID)
+        if err != nil {
+            return nil // No DB record either — truly unprovisioned, nothing to reconcile
         }
 
-        cs := &containerState{
+        cs = &containerState{
             projectID:   meta.ProjectID,
             containerID: meta.ContainerID,
             socketPath:  meta.SocketPath,
             status:      meta.Status,
         }
+        o.mu.Lock()
+        o.containers[projectID] = cs
+        o.mu.Unlock()
+    }
 
-        if meta.ContainerID == "" {
-            // No Docker container was ever created; mark as unprovisioned
+    if cs.containerID == "" {
+        // No Docker container was ever created; ensure marked as unprovisioned
+        if cs.status != "unprovisioned" && cs.status != "terminated" {
             cs.status = "unprovisioned"
-            o.updateContainerStatus(ctx, meta.ProjectID, "unprovisioned")
-            o.containers[meta.ProjectID] = cs
-            continue
+            o.updateContainerStatus(ctx, projectID, "unprovisioned")
         }
+        return nil
+    }
 
-        // Check if Docker container still exists and its actual state
-        inspect, err := o.docker.ContainerInspect(ctx, meta.ContainerID)
-        if err != nil {
-            // Container removed outside orchestrator control
-            log.Warnf("container %s for project %s not found in Docker, marking stopped",
-                meta.ContainerID, meta.ProjectID)
-            cs.status = "stopped"
-            o.updateContainerStatus(ctx, meta.ProjectID, "stopped")
-            o.cleanupStaleSocket(meta.SocketPath)
-            o.containers[meta.ProjectID] = cs
-            continue
-        }
+    // Check if Docker container still exists and its actual state
+    inspect, err := o.docker.ContainerInspect(ctx, cs.containerID)
+    if err != nil {
+        // Container removed outside orchestrator control
+        log.Warnf("container %s for project %s not found in Docker, marking stopped",
+            cs.containerID, projectID)
+        cs.status = "stopped"
+        o.updateContainerStatus(ctx, projectID, "stopped")
+        o.cleanupStaleSocket(cs.socketPath)
+        return nil
+    }
 
-        switch {
-        case inspect.State.Running:
-            // Container is running — try to re-establish gRPC connection
-            conn, err := o.connPool.Add(meta.ProjectID, meta.SocketPath)
+    // Compare actual Docker state with DB state and update if they differ
+    var actualStatus string
+    switch {
+    case inspect.State.Running:
+        actualStatus = "running"
+    case inspect.State.Paused:
+        actualStatus = "paused"
+    default:
+        actualStatus = "stopped"
+    }
+
+    if cs.status != actualStatus {
+        log.Infof("reconcile project %s: DB says %s, Docker says %s — updating",
+            projectID, cs.status, actualStatus)
+        cs.status = actualStatus
+        o.updateContainerStatus(ctx, projectID, actualStatus)
+
+        // If running, try to re-establish gRPC connection
+        if actualStatus == "running" {
+            conn, err := o.connPool.Add(projectID, cs.socketPath)
             if err != nil {
-                log.Warnf("cannot reconnect to %s: %v, marking failed", meta.ProjectID, err)
+                log.Warnf("cannot reconnect to %s during reconcile: %v, marking failed",
+                    projectID, err)
                 cs.status = "failed"
-                o.updateContainerStatus(ctx, meta.ProjectID, "failed")
+                o.updateContainerStatus(ctx, projectID, "failed")
             } else {
                 // Verify agent is responsive
                 pingCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
@@ -229,32 +240,17 @@ func (o *orchestrator) reconcileState(ctx context.Context) error {
                 cancel()
 
                 if pingErr != nil {
-                    log.Warnf("agent unresponsive for %s: %v, marking failed", meta.ProjectID, pingErr)
-                    o.connPool.Remove(meta.ProjectID)
+                    log.Warnf("agent unresponsive for %s during reconcile: %v, marking failed",
+                        projectID, pingErr)
+                    o.connPool.Remove(projectID)
                     cs.status = "failed"
-                    o.updateContainerStatus(ctx, meta.ProjectID, "failed")
-                } else {
-                    cs.status = "running"
-                    o.updateContainerStatus(ctx, meta.ProjectID, "running")
-                    log.Infof("reconnected to running container for project %s", meta.ProjectID)
+                    o.updateContainerStatus(ctx, projectID, "failed")
                 }
             }
-
-        case inspect.State.Paused:
-            cs.status = "paused"
-            o.updateContainerStatus(ctx, meta.ProjectID, "paused")
-
-        default:
-            // Exited, dead, or other non-running state
-            cs.status = "stopped"
-            o.updateContainerStatus(ctx, meta.ProjectID, "stopped")
-            o.cleanupStaleSocket(meta.SocketPath)
         }
-
-        o.containers[meta.ProjectID] = cs
     }
 
-    return rows.Err()
+    return nil
 }
 
 func (o *orchestrator) cleanupStaleSocket(socketPath string) {
@@ -412,13 +408,15 @@ type containerState struct {
     status        string         // See orchestrator.md for valid states
     containerID   string         // Docker container ID
     socketPath    string         // /var/run/synchestra/synchestra-{project_id}.sock
-    restartCount  int
-    lastRestartAt time.Time
+    restartCount  int            // Persisted in sandbox_container_metadata.restart_count
+    lastRestartAt time.Time      // Persisted in sandbox_container_metadata.last_restart_at
 
     mu     sync.Mutex       // Per-container lock for state transitions
     readyCh chan struct{}    // Closed when container reaches "running"
 }
 ```
+
+> **Design note (restart persistence)**: Restart counts are persisted in the host database (`sandbox_container_metadata.restart_count`, `sandbox_container_metadata.last_restart_at`) to survive host process restarts. This prevents crash-looping containers from getting infinite restart attempts. On startup, `restartCount` and `lastRestartAt` are loaded from the database when a container's state is first accessed.
 
 ### State Machine Validation
 
@@ -734,8 +732,18 @@ func (o *orchestrator) doTerminated(ctx context.Context, cs *containerState) err
 
 This is the central method called before routing any request. It ensures the container reaches `running` state, handling all transitions transparently.
 
+> **Design note**: Synchronous provisioning — caller blocks until container is ready. Acceptable because container start + agent init typically completes in <10 seconds when the image is pre-pulled. Image pull (which can take longer) should be handled separately via warm pool or pre-pull.
+
+> **Design note**: Uses a channel-based condition variable (`readyCh`) — first caller triggers creation, subsequent callers block on the channel. Chosen over `sync.Cond` for simpler API and natural integration with `select`/context cancellation.
+
 ```go
 func (o *orchestrator) ensureRunning(ctx context.Context, projectID string) error {
+    // 0. Reconcile Docker state for this project before attempting transitions
+    if err := o.reconcileContainer(ctx, projectID); err != nil {
+        log.Warnf("reconcile %s: %v", projectID, err)
+        // Non-fatal — proceed with current state
+    }
+
     o.mu.RLock()
     cs, exists := o.containers[projectID]
     o.mu.RUnlock()
@@ -875,6 +883,8 @@ func (o *orchestrator) waitForReady(ctx context.Context, cs *containerState) err
 ## Health Manager
 
 A single goroutine iterates all running containers on each tick. This avoids goroutine sprawl and simplifies shutdown.
+
+> **Resolved**: Uses a single goroutine that iterates all running containers sequentially. Simpler shutdown semantics and lower resource usage. Health check latency grows linearly with container count — acceptable for expected scale (<100 containers per host).
 
 ```go
 type HealthManager struct {
@@ -1229,6 +1239,10 @@ func (o *orchestrator) ExecuteCommand(ctx context.Context, projectID string, req
     }
 
     // 5. Track session activity (for idle detection)
+    //    NOTE: TrackSessionEnd is NOT called on client disconnect (gRPC stream cancellation).
+    //    Sessions are persistent — the command continues in the container.
+    //    TrackSessionEnd is only called when the container-side command completes.
+    //    See "Session Reconnection" subsection for details.
     o.idleMgr.TrackSessionStart(projectID)
 
     breaker.RecordSuccess()
@@ -1336,6 +1350,73 @@ func (o *orchestrator) getContainerState(projectID string) *containerState {
     return o.containers[projectID]
 }
 ```
+
+### Session Reconnection
+
+Sessions are persistent and reconnectable — they survive client disconnects, host restarts, and even host+container migration to a different machine.
+
+**Design principle**: The container is the sole source of truth for session state. The host stores no session data and never caches session metadata. Every reconnection queries the container directly. This means reconnection works as long as the host can reach the container, regardless of whether the host process or machine has changed.
+
+**Reconnection scenarios:**
+
+| Scenario | Session Survives? | Mechanism |
+|----------|-------------------|-----------|
+| Client disconnects (tab closed, network drop) | ✅ Yes | Command continues in container; client re-attaches via `StreamLogs(session_id)` |
+| Client reconnects from different device | ✅ Yes | Same user + session_id, routed to same container |
+| Host process restarts | ✅ Yes | Lazy reconciliation re-discovers container, re-establishes gRPC |
+| Host migrates to different machine | ✅ Yes | New host connects to container (if reachable via socket/network) |
+| Container restarts (volume preserved) | ⚠️ Partial | Completed session logs survive on volume; running commands lost |
+| Container terminated + workspace destroyed | ❌ No | All session data lost; user starts new session |
+
+**Reconnection flow (implementation):**
+
+```go
+// Client reconnects → HTTP API handler:
+func (h *Handler) GetSession(w http.ResponseWriter, r *http.Request) {
+    projectID := chi.URLParam(r, "project_id")
+    sessionID := chi.URLParam(r, "session_id")
+    
+    // 1. Ensure container is running (auto-resume if paused)
+    if err := h.orchestrator.Provision(r.Context(), projectID); err != nil {
+        // Container unreachable — session may be lost
+        respondError(w, err)
+        return
+    }
+    
+    // 2. Query container for session state (container is source of truth)
+    resp, err := h.orchestrator.GetSessionDetails(r.Context(), projectID, sessionID)
+    // ... return session status, logs, exit code
+}
+
+// For live re-attachment to a running command:
+func (h *Handler) StreamSessionLogs(w http.ResponseWriter, r *http.Request) {
+    // 1. Ensure container running
+    // 2. Call StreamLogs(session_id) on container
+    // 3. Proxy gRPC stream → WebSocket/SSE to client
+    // Works identically whether this is the original client or a reconnection
+}
+```
+
+**Implementation impact on `ExecuteCommand`**: The orchestrator calls `TrackSessionStart` when the RPC is initiated, but must NOT call `TrackSessionEnd` when the gRPC stream context is cancelled by a client disconnect. Instead, `TrackSessionEnd` is called only when the container agent signals command completion (e.g., via a session completion callback or status poll).
+
+**Idle detection**: Based on container-side session state (active commands), not client connections. A disconnected client with a running command keeps the container marked as "active" — which is correct, since the command is still consuming resources.
+
+> **Note**: Session logs are written to the workspace volume (`/workspace/{project_id}/sessions/{session_id}/logs/`), ensuring they survive container restarts as long as the volume is preserved. This is the mechanism that enables partial recovery after container restart.
+
+### Future Enhancement: Warm Pool
+
+Pre-create N containers with no project assignment, ready to be claimed on first request.
+
+**How it works:**
+- A background goroutine maintains a pool of N warm containers (configurable).
+- On first request for a project: assign a warm container instead of creating from scratch.
+- The warm container gets configured with the project's state repo URL and credentials at assignment time.
+
+**Benefits:**
+- Reduces first-request latency from ~10s (container create + start + agent init) to <1s (assign + configure).
+- Trade-off: idle resource consumption vs. latency.
+
+> **Not implemented in initial version.** The synchronous provisioning path (~10s with pre-pulled image) is acceptable for MVP. Warm pool can be added later when first-request latency becomes a user-facing concern.
 
 ## Graceful Shutdown
 
@@ -1641,10 +1722,4 @@ internal/sandbox/orchestrator/
 
 ## Outstanding Questions
 
-1. Should the orchestrator use a separate goroutine per container for health checks, or a single goroutine that iterates all containers? (This guide assumes single-goroutine iteration — simpler shutdown, but health check latency grows linearly with container count.)
-2. Should container creation be synchronous (block until ready) or return immediately with a status endpoint for polling? (This guide assumes synchronous `ensureRunning` — simpler for callers, but ties up the HTTP connection during provisioning.)
-3. How should the orchestrator handle Docker daemon restarts (all containers stop unexpectedly)? Options: periodic reconciliation loop, Docker event stream listener, or only reconcile on next request.
-4. Should there be a warm pool of pre-created containers for faster first-request latency?
-5. How should `ensureRunning` handle concurrent callers for the same project during the `creating → starting → running` transition? Current design uses `readyCh` (channel-based condition variable) — is a `sync.Cond` more appropriate?
-6. Should the orchestrator persist restart counts across host process restarts, or reset them? (If reset, a crash-looping container could restart indefinitely across host restarts.)
-7. What is the strategy for `ExecuteCommand` session cleanup on client disconnect? Should the orchestrator call `TrackSessionEnd` when the gRPC stream context is cancelled?
+None at this time.

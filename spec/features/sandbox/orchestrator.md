@@ -132,7 +132,7 @@ grpc.WithKeepaliveParams(keepalive.ClientParameters{
 
 ### Health Check Loop
 
-- One background goroutine per running container.
+- A single background goroutine iterates all running containers on each tick.
 - Interval: 30 seconds (configurable via `SYNCHESTRA_SANDBOX_HEALTH_INTERVAL`).
 - Timeout per check: 5 seconds (configurable via `SYNCHESTRA_SANDBOX_HEALTH_TIMEOUT`).
 - Uses the `Ping()` RPC defined in [agent.proto](agent.proto).
@@ -168,6 +168,7 @@ every HEALTH_CHECK_INTERVAL:
 - **Restart strategy**: Stop container → remove → create new → start (full cycle).
 - **Max restarts**: 3 per hour (configurable via `SYNCHESTRA_SANDBOX_MAX_RESTARTS`). After max, remain in `failed` until manual intervention.
 - **Restart backoff**: 5s, 15s, 45s (exponential with 3× multiplier).
+- **Restart persistence**: Restart counts (`restart_count`, `last_restart_at`) are persisted in the host database (`sandbox_container_metadata`) to survive host process restarts. This prevents crash-looping containers from getting infinite restart attempts across host restarts.
 
 ## Idle Detection & Auto-Pause
 
@@ -374,6 +375,36 @@ When a request arrives for a project with no container:
 - Drained FIFO when container reaches `running`.
 - Timeout per queued request: 120 seconds.
 - On timeout or failure: return appropriate gRPC error (`UNAVAILABLE` or `DEADLINE_EXCEEDED`) to all queued requests.
+
+### Session Reconnection
+
+Sessions are persistent and reconnectable. They survive client disconnects, host restarts, and even host+container migration to a different machine.
+
+**Design principle**: The container is the sole source of truth for session state. The host stores no session data — it is purely a router. This means reconnection works as long as the host can reach the container, regardless of whether the host process or machine has changed.
+
+**Reconnection scenarios:**
+
+| Scenario | Session Survives? | Mechanism |
+|----------|-------------------|-----------|
+| Client disconnects (tab closed, network drop) | ✅ Yes — command continues in container | Client re-attaches via `StreamLogs(session_id)` |
+| Client reconnects from different device | ✅ Yes — same user, same session_id | Route to same container via project_id lookup |
+| Host process restarts | ✅ Yes — container still running | Lazy reconciliation re-discovers container |
+| Host migrates to different machine | ✅ Yes — if container is reachable | New host connects to container via socket/network |
+| Container restarts (workspace volume preserved) | ⚠️ Partial — completed session logs survive, running commands lost | Session logs at `/workspace/{project_id}/sessions/` persist on volume |
+| Container terminated + workspace destroyed | ❌ No — all session data lost | User must start a new session |
+
+**Key behaviors:**
+
+- Sessions are NOT tied to a single WebSocket/gRPC stream connection.
+- The host never caches session state — every reconnection queries the container via `ListSessions` or `StreamLogs`.
+- Idle detection is based on container-side active commands, not client connections. A disconnected client with a running command keeps the container marked as "active."
+- Session logs are written to the workspace volume (`/workspace/{project_id}/sessions/{session_id}/logs/`), so they survive container restarts as long as the volume is preserved.
+
+### Future Enhancement: Warm Pool
+
+Pre-created containers with no project assignment, ready to be claimed on first request for faster first-request latency. Reduces provisioning time from ~10s to <1s by skipping container creation and startup.
+
+> **Not implemented in initial version.** Synchronous provisioning with pre-pulled images is acceptable for MVP.
 
 ## Configuration
 
