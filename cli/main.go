@@ -11,6 +11,7 @@ import (
 	"github.com/ingitdb/ingitdb-cli/cmd/ingitdb/commands"
 	"github.com/spf13/cobra"
 	"github.com/synchesta-io/synchestra/cli/project"
+	testcmd "github.com/synchesta-io/synchestra/cli/test"
 )
 
 var (
@@ -50,6 +51,7 @@ func Run(
 		commands.Find(),
 		commands.Migrate(),
 		project.Command(),
+		testcmd.Command(),
 	)
 
 	rootCmd.SetArgs(args[1:])
