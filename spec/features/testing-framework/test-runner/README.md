@@ -103,11 +103,13 @@ The runner supports multiple script languages in both scenario step code blocks 
 
 | Annotation | Interpreter | Execution |
 |---|---|---|
-| `` ```bash `` (or no annotation) | `bash -c` | Script passed via stdin; inputs as env vars |
+| `` ```bash `` | `bash -c` | Script passed via stdin; inputs as env vars |
 | `` ```python `` | `python3 -c` | Script passed as argument; inputs as env vars |
 | `` ```starlark `` | Embedded Starlark interpreter | Script evaluated in sandbox; inputs as global variables |
 
-Bash is the default — unlabeled code blocks are treated as bash for backward compatibility and because the majority of CLI verification is naturally shell-based. Python is available for complex data manipulation (parsing JSON responses, validating YAML structures). Starlark provides hermetic, deterministic execution with no filesystem side effects — ideal for pure logic verification.
+**The language annotation is mandatory.** A code block without an annotation is a validation error — the runner rejects it before execution. This eliminates guesswork: every script explicitly declares its interpreter.
+
+Bash handles the majority of CLI-driven verification. Python is available for complex data manipulation (parsing JSON responses, validating YAML structures). Starlark provides hermetic, deterministic execution with no filesystem side effects — ideal for pure logic verification.
 
 The runner detects the language once per code block and dispatches to the appropriate interpreter. All interpreters receive the same inputs (context variables, step outputs) — only the delivery mechanism differs (env vars for bash/python, globals for Starlark).
 
@@ -145,6 +147,7 @@ The runner handles errors predictably — no silent swallowing, no ambiguous sta
 | Error | Behavior |
 |---|---|
 | Parse error | Fail before execution, report file path and line number |
+| Missing language annotation | Fail at parse time — code blocks must specify `bash`, `python`, or `starlark` |
 | Setup failure | Skip all steps, run Teardown, report failure |
 | Step failure | Record failure, continue to next step (stop if `--fail-fast`) |
 | AC failure | Record per-AC failure, mark the containing step as failed |

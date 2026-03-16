@@ -81,7 +81,7 @@ Verification scripts are not limited to bash. The code block's language annotati
 
 Bash is the default and the most common choice — it maps naturally to CLI-driven verification. Python is available when assertions require structured data manipulation that would be unwieldy in bash. Starlark provides a deterministic, sandboxed alternative for verification logic that must be side-effect-free and reproducible.
 
-The runner detects the language from the code fence annotation. If no annotation is provided, the block is treated as bash for backward compatibility.
+The runner detects the language from the code fence annotation. **The annotation is mandatory** — a code block without a language annotation is a validation error. This eliminates ambiguity and makes every script's execution environment explicit.
 
 A single AC file uses one language. If a feature needs both a bash check and a Python check, those are two separate ACs — keeping each focused and testable independently.
 
