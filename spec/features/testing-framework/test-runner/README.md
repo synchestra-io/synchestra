@@ -87,7 +87,7 @@ graph TD
    - **Parallel groups:** consecutive `Parallel: true` steps launch as goroutines; the runner waits for all to complete before continuing
    - For each step:
      a. Resolve `${{ context.* }}` and `${{ steps.*.outputs.* }}` references in the code block
-     b. Execute via `exec.Command("bash", "-c", script)`
+     b. Execute via the appropriate interpreter based on the code block's language annotation (bash, python, starlark — see [Supported languages](../../acceptance-criteria/README.md#supported-languages))
      c. Capture stdout, stderr, exit code
      d. If exit code != 0, mark step as failed (continue unless `--fail-fast`)
      e. Extract declared outputs and store to context and/or step scope
@@ -96,6 +96,20 @@ graph TD
      h. Record per-step and per-AC pass/fail
 6. **Run Teardown** (always, even on failure — this is unconditional)
 7. **Report** results
+
+### Language dispatch
+
+The runner supports multiple script languages in both scenario step code blocks and AC verification scripts. The language is determined by the code fence annotation:
+
+| Annotation | Interpreter | Execution |
+|---|---|---|
+| `` ```bash `` (or no annotation) | `bash -c` | Script passed via stdin; inputs as env vars |
+| `` ```python `` | `python3 -c` | Script passed as argument; inputs as env vars |
+| `` ```starlark `` | Embedded Starlark interpreter | Script evaluated in sandbox; inputs as global variables |
+
+Bash is the default — unlabeled code blocks are treated as bash for backward compatibility and because the majority of CLI verification is naturally shell-based. Python is available for complex data manipulation (parsing JSON responses, validating YAML structures). Starlark provides hermetic, deterministic execution with no filesystem side effects — ideal for pure logic verification.
+
+The runner detects the language once per code block and dispatches to the appropriate interpreter. All interpreters receive the same inputs (context variables, step outputs) — only the delivery mechanism differs (env vars for bash/python, globals for Starlark).
 
 ### Spec root resolution
 
