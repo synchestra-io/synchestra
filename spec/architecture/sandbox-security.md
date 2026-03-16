@@ -7,7 +7,7 @@ The Sandbox feature is designed with **security by architecture**: isolating sec
 **Key Principles:**
 1. **Host has no secrets**: Host cannot access encrypted credentials, decryption keys, or unencrypted tokens
 2. **Containers are security boundary**: Each container is isolated from others; compromise of one does not affect others
-3. **Encryption at rest**: All secrets stored in containers encrypted with AES256
+3. **Encryption at rest**: All secrets stored in containers encrypted with AES256-GCM
 4. **Defense in depth**: Multiple layers of isolation (filesystem, process, network, resource limits)
 
 ## Threat Model
@@ -79,7 +79,7 @@ The Sandbox feature is designed with **security by architecture**: isolating sec
 - Can clone/push to private repos, access external services (AWS, etc.)
 
 **Mitigations:**
-- Credentials stored encrypted on disk (AES256)
+- Credentials stored encrypted on disk (AES256-GCM)
 - Decryption key never serialized or logged (in-memory only)
 - Command execution: decrypt on-demand, pass to subprocess via environment variable or stdin
 - Decrypted value cleared from memory after command completes
@@ -208,8 +208,7 @@ The Sandbox feature is designed with **security by architecture**: isolating sec
 **Algorithm**: AES256-GCM (authenticated encryption)
 
 **Key Management:**
-- Generated per container at startup: `openssl rand 32 > /secure/encryption.key`
-- Stored in container memory (encrypted at rest using container secrets if available)
+- Generated on first container start, persisted to `/workspace/{project_id}/.secure/encryption.key` (mode 0400) for reuse across container restarts. Never exported to host.
 - Never transmitted to host or other containers
 - Optional: Store in container image secrets (Docker Secrets, Kubernetes Secrets) for cluster deployments
 
@@ -419,7 +418,7 @@ Disk:      50 GB (default)
 
 ### SOC 2 / ISO 27001 Readiness
 
-- [ ] Encryption at rest: AES256
+- [ ] Encryption at rest: AES256-GCM
 - [ ] Encryption in transit: TLS/Unix socket
 - [ ] Access control: User↔project validation
 - [ ] Audit logging: Credential access, command execution

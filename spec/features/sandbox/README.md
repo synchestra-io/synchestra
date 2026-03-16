@@ -16,6 +16,8 @@ Safe, isolated execution environments for running user-initiated commands from t
 | [container-build-deployment.md](container-build-deployment.md) | Image building, scanning, deployment (Docker, Compose, K8s) |
 | [container-build-automation.md](container-build-automation.md) | Build scripts, Makefile targets, CI/CD pipeline (GitHub Actions) |
 | [orchestrator.md](orchestrator.md) | Container Orchestrator: lifecycle state machine, gRPC pool, health monitoring, routing |
+| [orchestrator-implementation-guide.md](orchestrator-implementation-guide.md) | Go implementation patterns for Container Orchestrator |
+| [http-api.md](http-api.md) | HTTP REST API specification: sandbox and admin endpoints, auth, error mapping, rate limiting |
 
 ## Document Summaries
 
@@ -48,6 +50,12 @@ Makefile targets, build scripts, and CI/CD pipeline.
 
 ### [orchestrator.md](orchestrator.md)
 Container Orchestrator specification: lifecycle state machine, gRPC connection pool, health monitoring, idle detection, circuit breaker, request routing, and resource quota enforcement.
+
+### [orchestrator-implementation-guide.md](orchestrator-implementation-guide.md)
+Go implementation patterns for the Container Orchestrator — interfaces, state machine, connection pool, health manager, circuit breaker, and graceful shutdown.
+
+### [http-api.md](http-api.md)
+HTTP REST API specification served by `synchestra serve --http`. Defines all sandbox endpoints (execute, status, sessions, WebSocket logs, credentials, destroy) and admin endpoints (stop, restart, evict, config, image, container listing). Covers authentication, authorization matrix, gRPC-to-HTTP error mapping, rate limiting, and Go package structure.
 
 ## Outstanding Questions
 

@@ -7,7 +7,7 @@ The Container Orchestrator manages the lifecycle of sandbox containers on the ho
 **Language**: Go  
 **Location in repo**: `internal/sandbox/orchestrator/`  
 **Integration point**: Called from HTTP API handlers in `internal/api/sandbox/`  
-**Module**: `github.com/synchesta-io/synchestra`
+**Module**: `github.com/synchestra-io/synchestra`
 
 This guide provides practical Go code patterns and examples for building the orchestrator service. It complements the [orchestrator spec](orchestrator.md) (state machine, configuration, metrics) and the [agent implementation guide](agent-implementation-guide.md) (container-side agent).
 
@@ -27,7 +27,7 @@ package orchestrator
 import (
     "context"
 
-    pb "github.com/synchesta-io/synchestra/internal/sandbox/proto"
+    pb "github.com/synchestra-io/synchestra/internal/sandbox/proto"
 )
 
 // Orchestrator manages sandbox container lifecycles and request routing.
@@ -58,6 +58,10 @@ type Orchestrator interface {
 
     // DestroyContainer terminates and removes a project's container and workspace.
     DestroyContainer(ctx context.Context, projectID string) error
+
+    // GetSessionDetails returns details for a specific session in a project's container.
+    // Used for session reconnection after client disconnect or host restart.
+    GetSessionDetails(ctx context.Context, projectID, sessionID string) (*pb.SessionInfo, error)
 
     // Shutdown gracefully shuts down the orchestrator (drains connections, stops health checks).
     Shutdown(ctx context.Context) error
@@ -408,6 +412,7 @@ type containerState struct {
     status        string         // See orchestrator.md for valid states
     containerID   string         // Docker container ID
     socketPath    string         // /var/run/synchestra/synchestra-{project_id}.sock
+    stateRepoURL  string         // State repo URL from project registry lookup
     restartCount  int            // Persisted in sandbox_container_metadata.restart_count
     lastRestartAt time.Time      // Persisted in sandbox_container_metadata.last_restart_at
 
@@ -545,6 +550,7 @@ func (o *orchestrator) doCreate(ctx context.Context, cs *containerState) error {
         Image: o.config.Image,
         Env: []string{
             "SYNCHESTRA_PROJECT_ID=" + projectID,
+            "SYNCHESTRA_STATE_REPO_URL=" + cs.stateRepoURL, // Obtained from project registry lookup
             "SYNCHESTRA_LOG_LEVEL=" + o.config.LogLevel,
         },
         User:         "1000:1000",
@@ -563,7 +569,8 @@ func (o *orchestrator) doCreate(ctx context.Context, cs *containerState) error {
     hostConfig := &container.HostConfig{
         Binds: []string{
             workspacePath + ":/workspace/" + projectID + ":rw",
-            o.config.SocketDir + ":/var/run:rw",
+            // Mount only this project's socket directory (isolate from other containers)
+            o.config.SocketDir + "/" + projectID + ":/var/run:rw",
         },
         Resources: container.Resources{
             Memory:    memoryLimitBytes,
@@ -1245,8 +1252,34 @@ func (o *orchestrator) ExecuteCommand(ctx context.Context, projectID string, req
     //    See "Session Reconnection" subsection for details.
     o.idleMgr.TrackSessionStart(projectID)
 
+    // 6. Monitor stream completion in background
+    go o.monitorSessionCompletion(projectID, req.SessionId, stream)
+
     breaker.RecordSuccess()
     return stream, nil
+}
+
+// monitorSessionCompletion runs in a goroutine per active stream.
+// It reads stream messages and calls TrackSessionEnd when the command completes.
+// Client disconnect (context cancellation) does NOT trigger TrackSessionEnd.
+func (o *orchestrator) monitorSessionCompletion(projectID, sessionID string, stream pb.SandboxAgent_ExecuteCommandClient) {
+    for {
+        msg, err := stream.Recv()
+        if err != nil {
+            // Stream ended — check if it was a normal completion or client disconnect
+            if status.Code(err) == codes.Canceled {
+                // Client disconnected — session still active in container
+                return
+            }
+            // Stream error or EOF — session completed or failed
+            o.idleMgr.TrackSessionEnd(projectID)
+            return
+        }
+        if msg.Completed {
+            o.idleMgr.TrackSessionEnd(projectID)
+            return
+        }
+    }
 }
 
 func (o *orchestrator) GetStatus(ctx context.Context, projectID string) (*pb.StatusResponse, error) {
@@ -1267,7 +1300,7 @@ func (o *orchestrator) GetStatus(ctx context.Context, projectID string) (*pb.Sta
     }
 
     client := pb.NewSandboxAgentClient(conn)
-    resp, err := client.GetStatus(ctx, &emptypb.Empty{})
+    resp, err := client.GetStatus(ctx, &pb.StatusRequest{})
     if err != nil {
         breaker.RecordFailure()
         return nil, wrapGRPCError(err)

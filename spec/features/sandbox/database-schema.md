@@ -64,6 +64,9 @@ CREATE TABLE sandbox_container_metadata (
     container_id VARCHAR(255) UNIQUE,
     -- Docker container ID (nullable if container not created yet)
     
+    container_image VARCHAR(255) DEFAULT 'synchestra/sandbox-agent:latest',
+    -- Per-project image override
+    
     container_status VARCHAR(50) NOT NULL DEFAULT 'stopped',
     -- Container status values:
     -- 'creating'    - Container image being pulled/built

@@ -115,6 +115,7 @@ CMD ["/entrypoint.sh"]
 # These are set at build time:
 # docker build --label="version=1.0.0" --label="commit=abc1234" ...
 
+# TCP port for optional network mode (not used in default Unix socket configuration)
 EXPOSE 50051
 
 # Image should be built with: docker build -t synchestra/sandbox-agent:latest -f build/Dockerfile.sandbox-agent .

@@ -92,6 +92,10 @@ enum ContainerStatus {
   CONTAINER_STATUS_PAUSED = 2;
   CONTAINER_STATUS_STOPPED = 3;
   CONTAINER_STATUS_FAILED = 4;
+  CONTAINER_STATUS_CREATING = 5;
+  CONTAINER_STATUS_TERMINATED = 6;
+  // Transitional states (starting, resuming, stopping, unprovisioned) are
+  // orchestrator-internal and don't need protobuf representation.
 }
 
 // Session lifecycle status
@@ -154,6 +158,8 @@ message ListSessionsRequest {
   
   string status_filter = 2;
   // Optional: filter by status.
+  
+  reserved 3;  // Previously used field
   
   int32 page_size = 4;
   // Max results per page. Default: 50

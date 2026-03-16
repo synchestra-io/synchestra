@@ -27,7 +27,7 @@ The Sandbox feature provides isolated execution environments for running user-in
 │  Container (1 per project)                              │
 │  - gRPC Agent (listens on Unix socket)                  │
 │  - .synchestra/ (git-backed state repo)                 │
-│  - Encrypted credential store (AES256)                  │
+│  - Encrypted credential store (AES256-GCM)                │
 │  - Session workspaces (per user request)                │
 └─────────────────────────────────────────────────────────┘
 ```
@@ -73,7 +73,7 @@ The Sandbox feature provides isolated execution environments for running user-in
 
 **Credential Store** (`.secure/credentials.enc`)
 - Encrypted vault for user-provided secrets (git tokens, SSH keys, API keys)
-- AES256 encryption with per-container key
+- AES256-GCM encryption with per-container key
 - User sends credential → gRPC `StoreCredential()` → container encrypts + stores
 - Command execution: container decrypts on-demand, passes to subprocess
 - Host has **zero access** to decryption key or unencrypted values
@@ -87,7 +87,7 @@ The Sandbox feature provides isolated execution environments for running user-in
 CREATE TABLE sandbox_user_project_access (
     user_id VARCHAR(255),
     project_id VARCHAR(255),
-    access_level VARCHAR(50),  -- read, write, admin
+    access_level VARCHAR(50),  -- read, read_write, admin
     PRIMARY KEY (user_id, project_id)
 );
 
@@ -96,6 +96,9 @@ CREATE TABLE sandbox_container_metadata (
     project_id VARCHAR(255) PRIMARY KEY,
     container_id VARCHAR(255),           -- Docker ID
     container_status VARCHAR(50),        -- running, paused, stopped, failed, terminated
+    -- NOTE: The orchestrator defines additional transitional states (unprovisioned, creating,
+    -- starting, resuming, stopping) that are tracked in-memory but NOT persisted to the database.
+    -- The database stores only 6 stable states: creating, running, paused, stopped, failed, terminated.
     socket_path VARCHAR(255),            -- /var/run/synchestra-{project_id}.sock
     resource_quota_gb INT,               -- max disk
     memory_limit_mb INT,                 -- max memory
@@ -153,7 +156,7 @@ service SandboxAgent {
   rpc StreamLogs(StreamLogsRequest) returns (stream LogEntry) {}
   rpc StoreCredential(StoreCredentialRequest) returns (StoreCredentialResponse) {}
   rpc GetTaskState(GetTaskStateRequest) returns (TaskStateResponse) {}
-  rpc Ping(Empty) returns (Empty) {}
+  rpc Ping(google.protobuf.Empty) returns (PingResponse) {}
 }
 ```
 
@@ -173,7 +176,7 @@ service SandboxAgent {
 **StoreCredential Flow:**
 1. User provides token via web UI
 2. Host sends via gRPC (TLS-encrypted) to container
-3. Container receives, encrypts with local key: `AES256(token, container_key)`
+3. Container receives, encrypts with local key: `AES256-GCM(token, container_key)`
 4. Container stores in `.secure/credentials.enc`
 5. Host receives success response (no token echoed back)
 
@@ -300,7 +303,7 @@ See `spec/architecture/sandbox-security.md` for detailed threat analysis and mit
 
 **Quick Summary:**
 
-- **Credential Encryption**: AES256 at rest inside container. Decryption key never leaves container.
+- **Credential Encryption**: AES256-GCM at rest inside container. Decryption key never leaves container.
 - **Host Boundaries**: Host cannot read decrypted credentials, task state, or execution artifacts.
 - **Container Hardening**: Drop capabilities, unprivileged UID, cgroups limits, read-only filesystem (where safe).
 - **User Isolation**: Separate session directories, credentials, and resource limits per user within same container.

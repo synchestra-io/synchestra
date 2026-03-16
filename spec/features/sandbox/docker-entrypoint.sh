@@ -129,9 +129,20 @@ fi
 # Encryption Key Setup
 # ============================================================================
 
+KEY_FILE="${SECURE_PATH}/encryption.key"
+
 if [[ -z "${ENCRYPTION_KEY}" ]]; then
-    echo "[entrypoint] Generating random encryption key..."
-    ENCRYPTION_KEY=$(openssl rand -base64 32)
+    if [[ -f "${KEY_FILE}" ]]; then
+        # Reuse existing key from previous container run
+        ENCRYPTION_KEY=$(cat "${KEY_FILE}")
+        echo "[entrypoint] Loaded existing encryption key from ${KEY_FILE}"
+    else
+        # Generate new key for first run
+        ENCRYPTION_KEY=$(openssl rand -base64 32)
+        echo "${ENCRYPTION_KEY}" > "${KEY_FILE}"
+        chmod 0400 "${KEY_FILE}"
+        echo "[entrypoint] Generated new encryption key, persisted to ${KEY_FILE}"
+    fi
 fi
 
 export SYNCHESTRA_ENCRYPTION_KEY="${ENCRYPTION_KEY}"

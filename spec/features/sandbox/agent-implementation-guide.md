@@ -158,17 +158,17 @@ func (e *SubprocessExecutor) Execute(ctx context.Context, req *CommandRequest, s
         }
     }
     
-    // Add to cgroup for resource limits
-    if session.Cgroup != nil {
-        if err := session.Cgroup.AddProcess(cmd.Process); err != nil {
-            log.Warnf("cgroup add process: %v", err)
-        }
-    }
-    
     // Start process
     startTime := time.Now()
     if err := cmd.Start(); err != nil {
         return nil, fmt.Errorf("start process: %w", err)
+    }
+    
+    // Add process to cgroup AFTER start (cmd.Process is nil before Start())
+    if session.Cgroup != nil {
+        if err := session.Cgroup.AddProcess(cmd.Process.Pid); err != nil {
+            log.Warnf("cgroup add process: %v", err)
+        }
     }
     
     // Wait for completion (with context timeout)
@@ -227,7 +227,7 @@ func getExitCode(cmd *exec.Cmd, err error) int {
 ```go
 type CredentialVault struct {
     encryptionKey []byte          // 32 bytes for AES256
-    storagePath   string          // /workspace/{project}/.secure/credentials.enc
+    storagePath   string          // /workspace/{project_id}/.secure/credentials.enc
     auditLog      *AuditLog
 }
 
@@ -241,24 +241,19 @@ func (v *CredentialVault) Store(ctx context.Context, identifier, credType, value
         vault = &CredentialStore{Credentials: map[string]*Credential{}}
     }
     
-    // Check if identifier already exists
-    if _, exists := vault.Credentials[identifier]; exists {
-        return fmt.Errorf("credential %q already exists", identifier)
-    }
-    
-    // Generate nonce for this credential
+    // Generate nonce for this credential (upsert: overwrite existing credential with same identifier)
     nonce := make([]byte, 12) // GCM standard nonce size
     if _, err := rand.Read(nonce); err != nil {
         return fmt.Errorf("generate nonce: %w", err)
     }
     
     // Encrypt credential value
-    cipher, err := aes.NewCipher(v.encryptionKey)
+    block, err := aes.NewCipher(v.encryptionKey)
     if err != nil {
         return fmt.Errorf("create cipher: %w", err)
     }
     
-    gcm, err := cipher.NewGCM()
+    gcm, err := cipher.NewGCM(block)
     if err != nil {
         return fmt.Errorf("create GCM: %w", err)
     }
@@ -321,12 +316,12 @@ func (v *CredentialVault) Get(ctx context.Context, userID, identifier string) (s
         return "", fmt.Errorf("decode nonce: %w", err)
     }
     
-    cipher, err := aes.NewCipher(v.encryptionKey)
+    block, err := aes.NewCipher(v.encryptionKey)
     if err != nil {
         return "", fmt.Errorf("create cipher: %w", err)
     }
     
-    gcm, err := cipher.NewGCM()
+    gcm, err := cipher.NewGCM(block)
     if err != nil {
         return "", fmt.Errorf("create GCM: %w", err)
     }

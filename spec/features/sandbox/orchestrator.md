@@ -390,10 +390,12 @@ Container name: `synchestra-sandbox-{project_id}`
 
 ### Socket Mount Strategy
 
-1. Host creates directory: `/var/run/synchestra/`
-2. Container binds: `/var/run/synchestra/:/var/run/:rw`
+1. Host creates per-project directory: `/var/run/synchestra/{project_id}/`
+2. Container binds: `/var/run/synchestra/{project_id}/:/var/run/:rw`
 3. Agent inside container creates socket at: `/var/run/synchestra-{project_id}.sock`
-4. Host accesses socket at: `/var/run/synchestra/synchestra-{project_id}.sock`
+4. Host accesses socket at: `/var/run/synchestra/{project_id}/synchestra-{project_id}.sock`
+
+Per-project socket directories prevent containers from accessing sibling containers' sockets via the shared bind mount.
 
 ### Per-Project Container Images
 
