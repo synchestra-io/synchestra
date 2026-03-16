@@ -58,7 +58,7 @@ Consumers navigate to a domain first, then call operations. This mirrors the CLI
 | [Task Store](task-store/) | Task lifecycle, status transitions, claiming, board views, and artifact storage |
 | [Chat Store](chat-store/) | Chat lifecycle, message history, and chat artifacts |
 | [Project Store](project-store/) | Project configuration and README generation |
-| [Git Backend](backends/git/) | Default implementation mapping interface methods to git operations in the state repository |
+| [Backends](backends/) | Pluggable implementations of the `state.Store` interface |
 
 ### Task Store
 
@@ -71,6 +71,10 @@ Manages chat lifecycle (create, finalize, abandon), append-only message history,
 ### Project Store
 
 Thin interface for project-level configuration (the `synchestra-state.yaml` back-reference) and auto-generated README rebuilding. See [Project Store](project-store/).
+
+### Backends
+
+Registry of `state.Store` implementations. Each backend satisfies the full interface using its native storage and concurrency primitives. The git backend is the default and reference implementation; future backends (SQLite, PostgreSQL, cloud) live alongside it. See [Backends](backends/).
 
 ### Git Backend
 

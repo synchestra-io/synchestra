@@ -52,6 +52,8 @@ See [Chat](../../chat/) for the full chat feature specification including workfl
 
 Messages are append-only. `AppendMessages` adds messages to the chat; `Messages` returns the full history. There is no editing or deleting of individual messages.
 
+`AppendMessages` implicitly transitions a `created` chat to `active` on the first call. This avoids a separate `Activate` method for a transition that always coincides with the first message.
+
 In the git backend, messages are held server-side during active chat and flushed to `history.jsonl` on finalize or checkpoint. See [Chat Workflow](../../chat/workflow/) for the hybrid storage model.
 
 ## Artifacts
@@ -103,4 +105,5 @@ type ChatMessage struct {
 
 - Should `Messages` support pagination or cursor-based access for long chat histories?
 - Should there be a `Checkpoint` method that flushes messages to durable storage without finalizing the chat?
-- How should the `created → active` transition be triggered — implicitly on first `AppendMessages`, or explicitly?
+- Should `ChatCreateParams` include an optional `ID` field, or is the store always responsible for generating chat IDs? If store-generated, what format (UUID, timestamp-based, etc.)?
+- Should there be `Delete` or `Archive` methods, or is accumulation by design (with retention policies handled externally)?

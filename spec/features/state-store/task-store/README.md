@@ -170,3 +170,6 @@ type ArtifactRef struct {
 - Should `TaskFilter` support filtering by requester, model, or time range?
 - Should `List` support pagination for projects with very large task trees?
 - Should there be a `Watch` method for streaming task status changes (useful for dashboards and CI integrations)?
+- Should there be `Delete` or `Archive` methods on `TaskStore`, or is accumulation by design (with the recently-finished section handling visibility)?
+- Should `Artifact()` accessor drop `context.Context` for consistency with `Board()` (both are namespace accessors, not leaf I/O), deferring context to the leaf methods like `Get` and `Put`?
+- Should `ArtifactStore.Put` accept `io.Reader` instead of `[]byte` for large artifacts?
