@@ -1657,15 +1657,18 @@ git commit -m "feat(cli): add synchestra test run and test list commands"
 
 ---
 
-### Task 9: Update feature spec and create feature spec for test-scenario
+### Task 9: Create feature specs for acceptance-criteria, testing-framework, and sub-features
 
 **Files:**
-- Create: `spec/features/test-scenario/README.md`
-- Modify: `spec/features/feature/README.md` — add Acceptance Criteria to required sections, add `_acs/` and `_tests/` to directory structure, formalize `_` prefix convention
-- Modify: `spec/features/README.md` — add test-scenario to feature index
+- Create: `spec/features/acceptance-criteria/README.md`
+- Create: `spec/features/testing-framework/README.md`
+- Create: `spec/features/testing-framework/test-scenario/README.md`
+- Create: `spec/features/testing-framework/test-runner/README.md`
+- Modify: `spec/features/feature/README.md` — add Acceptance Criteria to required sections, add `_acs/` and `_tests/` to directory structure, formalize `_` prefix convention, reference acceptance-criteria feature
+- Modify: `spec/features/README.md` — replace test-scenario with acceptance-criteria and testing-framework in feature index
 - Create: `spec/tests/README.md`
 
-- [ ] **Step 1: Create `spec/features/test-scenario/README.md`**
+- [ ] **Step 1: Create feature specs** (acceptance-criteria, testing-framework, testing-framework/test-scenario, testing-framework/test-runner)
 
 The feature spec for the test scenario system, following the established feature README pattern. Includes:
 - Status: In Progress
