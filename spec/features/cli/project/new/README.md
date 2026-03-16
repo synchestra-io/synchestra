@@ -55,6 +55,13 @@ If a repo already contains a config file for a different project, the command fa
 10. Commit and push changes to all affected repos
 11. On push conflict: pull, re-check, retry or fail
 
+## Acceptance Criteria
+
+| AC | Description | Status |
+|---|---|---|
+| [creates-spec-config](_acs/creates-spec-config.md) | synchestra-spec.yaml created in spec repo | implemented |
+| [creates-state-config](_acs/creates-state-config.md) | synchestra-state.yaml created in state repo | implemented |
+
 ## Outstanding Questions
 
 - Should the command validate that the spec repo does not already have a `synchestra-spec.yaml`, or should it allow overwriting/updating?

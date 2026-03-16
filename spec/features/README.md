@@ -26,6 +26,7 @@ Feature specifications for the Synchestra project, managed by Synchestra.
 | [onboarding](onboarding/README.md) | Conceptual | Guided wizard for first-time project setup — repo connection, GitHub App installation, AI-powered scaffolding, or demo launch |
 | [sandbox](sandbox/README.md) | Conceptual | Isolated Docker container environments per project for executing user-initiated commands from the chat interface |
 | [state-store](state-store/README.md) | Conceptual | Pluggable state storage abstraction — composable Go interface (`state.Store`) with git-backed default implementation |
+| [test-scenario](test-scenario/README.md) | Conceptual | Markdown-native test scenario format and runner for composing acceptance criteria into E2E and integration test flows |
 
 ## Feature Summaries
 
@@ -110,6 +111,10 @@ Isolated Docker container environments per project for executing user-initiated 
 
 The pluggable abstraction layer for all Synchestra project coordination state. Defines a composable, hierarchical Go interface (`state.Store`) with sub-interfaces for tasks (`TaskStore`), chat (`ChatStore`), and project configuration (`ProjectStore`). Navigated like CLI subcommands — `store.Task().Claim(ctx, ...)` — keeping each interface focused and discoverable. The default git-backed implementation (`gitstore`) maps to the existing state repository design; future backends (SQLite, PostgreSQL, cloud databases) satisfy the same interface.
 
+### [Test Scenario](test-scenario/README.md)
+
+A markdown-native test scenario format and runner for composing acceptance criteria into multi-step integration and E2E test flows. Scenarios are human-readable `.md` files with named steps, dependency declarations, input/output passing, and AC references. The runner (`pkg/testscenario/`) parses scenarios, resolves AC verification scripts from feature `acs/` directories, executes steps sequentially (with opt-in parallel groups), and reports results. Introduces acceptance criteria as first-class, individually addressable artifacts within feature specs.
+
 ```
 feature → proposals, development-plan, outstanding-questions (features are the spec unit)
 task-status-board ← conflict-resolution
@@ -130,6 +135,7 @@ onboarding → github-app, project-definition, ui, cli, api (orchestrates first-
 sandbox → cli, api (containers execute commands, host routes via API)
 state-store → task-status-board (board interface and claim atomicity), chat (chat persistence)
 state-store ← cli, api, agent-skills (all consumers of state go through state store)
+test-scenario → feature (introduces mandatory AC section), cli (new test command group), development-plan (plan ACs can reference feature ACs)
 ```
 
 `feature` is the foundational spec-layer concept — proposals, plans, and outstanding questions all attach to features.
@@ -169,6 +175,7 @@ All diagrams in feature specifications should use **mermaid syntax** instead of 
 - [onboarding](onboarding/README.md): 5 outstanding questions
 - [sandbox](sandbox/README.md): 5 outstanding questions
 - [state-store](state-store/README.md): 4 outstanding questions
+- [test-scenario](test-scenario/README.md): 5 outstanding questions
 - [ui](ui/README.md): 5 outstanding questions
 - [ui/web-app](ui/web-app/README.md): 5 outstanding questions
 - [ui/tui](ui/tui/README.md): 5 outstanding questions
