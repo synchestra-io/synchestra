@@ -184,7 +184,7 @@ All diagrams in feature specifications should use **mermaid syntax** instead of 
 - [acceptance-criteria](acceptance-criteria/README.md): 4 outstanding questions
 - [testing-framework](testing-framework/README.md): 3 outstanding questions
 - [testing-framework/test-scenario](testing-framework/test-scenario/README.md): 4 outstanding questions
-- [testing-framework/test-runner](testing-framework/test-runner/README.md): 5 outstanding questions
+- [testing-framework/test-runner](testing-framework/test-runner/README.md): 4 outstanding questions
 - [ui](ui/README.md): 5 outstanding questions
 - [ui/web-app](ui/web-app/README.md): 5 outstanding questions
 - [ui/tui](ui/tui/README.md): 5 outstanding questions

@@ -142,13 +142,27 @@ Output formats:
 | [Testing Framework](../README.md) | Parent feature — defines CLI commands that invoke the runner. |
 | [CLI](../../cli/README.md) | `synchestra test run` and `synchestra test list` wire the runner to the command tree. |
 
+## Dogfooding
+
+The test runner is tested by itself — the feature-scoped test scenarios in `_tests/` are executed by the very runner they verify. This circular validation is intentional: if the runner can successfully parse and execute its own test scenarios, that is itself strong evidence of correctness. The initial bootstrap requires Go unit tests (`pkg/testscenario/*_test.go`) to validate core parsing and execution before the runner is capable of self-testing.
+
 ## Acceptance Criteria
 
-Not defined yet.
+| AC | Description | Status |
+|---|---|---|
+| [parses-valid-scenario](_acs/parses-valid-scenario.md) | Valid scenario file parsed into structured result | planned |
+| [rejects-malformed-scenario](_acs/rejects-malformed-scenario.md) | Malformed scenario rejected with line-number error | planned |
+| [executes-sequential-steps](_acs/executes-sequential-steps.md) | Steps execute in file order by default | planned |
+| [executes-parallel-group](_acs/executes-parallel-group.md) | Consecutive Parallel: true steps run concurrently | planned |
+| [resolves-ac-wildcard](_acs/resolves-ac-wildcard.md) | Wildcard (*) resolves all ACs in feature _acs/ directory | planned |
+| [resolves-ac-specific](_acs/resolves-ac-specific.md) | Named AC references resolve to correct _acs/ files | planned |
+| [runs-setup-before-steps](_acs/runs-setup-before-steps.md) | Setup block runs before all steps | planned |
+| [runs-teardown-on-failure](_acs/runs-teardown-on-failure.md) | Teardown runs even when steps fail | planned |
+| [propagates-context-outputs](_acs/propagates-context-outputs.md) | Context-scoped outputs accessible to subsequent steps | planned |
+| [reports-pass-fail-exit-code](_acs/reports-pass-fail-exit-code.md) | Exit 0 on all pass, non-zero on any failure | planned |
+| [detects-include-cycles](_acs/detects-include-cycles.md) | Circular includes rejected at validation | planned |
 
 ## Outstanding Questions
-
-- Acceptance criteria not yet defined for this feature.
 - What is the exact reporting format for CI — should the runner support TAP and/or JUnit XML in addition to text and JSON?
 - Should the runner support a `--dry-run` mode that parses and validates scenarios without executing them?
 - Should there be a `--timeout` flag for per-scenario or per-step time limits?
