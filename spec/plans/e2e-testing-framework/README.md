@@ -83,7 +83,7 @@ None at this time.
 ```go
 package testscenario
 
-// Features implemented: test-scenario
+// Features implemented: testing-framework/test-runner
 
 // OutputStore indicates where a step output is stored.
 type OutputStore string
@@ -116,17 +116,20 @@ type Step struct {
 	Outputs   []Output
 	ACs       []ACRef
 	Include   string // path to sub-flow .md file, empty if inline code
-	Code      string // bash code block content, empty if include
+	Code      string // code block content, empty if include
+	Language  string // code block language annotation: "bash", "python", or "starlark"
 }
 
 // Scenario is a parsed test scenario.
 type Scenario struct {
-	Title       string
-	Description string
-	Tags        []string
-	Setup       string // bash code for setup
-	Teardown    string // bash code for teardown
-	Steps       []Step
+	Title            string
+	Description      string
+	Tags             []string
+	Setup            string // code for setup block
+	SetupLanguage    string // language annotation for setup block
+	Teardown         string // code for teardown block
+	TeardownLanguage string // language annotation for teardown block
+	Steps            []Step
 }
 
 // ACFile is a parsed acceptance criteria file.
@@ -136,7 +139,8 @@ type ACFile struct {
 	FeaturePath  string
 	Description  string
 	Inputs       []ACInput
-	Verification string // bash verification script
+	Verification string // verification script content
+	Language     string // verification script language: "bash", "python", or "starlark"
 }
 
 // ACInput is a named input for an AC verification script.
@@ -211,7 +215,7 @@ Create `pkg/testscenario/parser_test.go` with tests for:
 ```go
 package testscenario
 
-// Features implemented: test-scenario
+// Features implemented: testing-framework/test-runner
 
 import "testing"
 
@@ -276,6 +280,9 @@ func TestParseScenario_stepWithOutputsAndACs(t *testing.T) {
 	if step.Code != "synchestra project new" {
 		t.Errorf("code = %q", step.Code)
 	}
+	if step.Language != "bash" {
+		t.Errorf("language = %q, want %q", step.Language, "bash")
+	}
 }
 
 func TestParseScenario_parallelStep(t *testing.T) {
@@ -334,6 +341,31 @@ func TestParseScenario_stepWithBothCodeAndInclude(t *testing.T) {
 		t.Fatal("expected error for step with both code and include")
 	}
 }
+
+func TestParseScenario_languageAnnotation(t *testing.T) {
+	input := "# Scenario: T\n\n## bash-step\n\n```bash\necho hello\n```\n\n## python-step\n\n```python\nprint('hello')\n```\n\n## starlark-step\n\n```starlark\nresult = True\n```"
+	s, err := ParseScenario([]byte(input))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if s.Steps[0].Language != "bash" {
+		t.Errorf("step 0 language = %q, want %q", s.Steps[0].Language, "bash")
+	}
+	if s.Steps[1].Language != "python" {
+		t.Errorf("step 1 language = %q, want %q", s.Steps[1].Language, "python")
+	}
+	if s.Steps[2].Language != "starlark" {
+		t.Errorf("step 2 language = %q, want %q", s.Steps[2].Language, "starlark")
+	}
+}
+
+func TestParseScenario_rejectsBareCodeFence(t *testing.T) {
+	input := "# Scenario: T\n\n## bare-step\n\n```\necho hello\n```"
+	_, err := ParseScenario([]byte(input))
+	if err == nil {
+		t.Fatal("expected error for code block without language annotation")
+	}
+}
 ```
 
 - [ ] **Step 2: Run tests to verify they fail**
@@ -356,14 +388,15 @@ The parser works by:
 Key implementation details:
 - Use `strings.Split` on `"\n## "` to split sections (after separating the H1)
 - Parse markdown tables by splitting on `|` and trimming cells
-- Extract code blocks between ` ```bash ` and ` ``` ` markers
+- Extract code blocks between ` ```{language} ` and ` ``` ` markers — supported languages: `bash`, `python`, `starlark`
+- **Mandatory language annotation:** A code block without a language annotation (bare ` ``` `) is a validation error — the parser rejects it with a line-number error
 - Extract markdown links from `[text](url)` patterns for Feature column in ACs table
 - Feature path is extracted from the link text (not the URL)
 
 ```go
 package testscenario
 
-// Features implemented: test-scenario
+// Features implemented: testing-framework/test-runner
 
 import (
 	"fmt"
@@ -380,8 +413,8 @@ func ParseScenario(data []byte) (*Scenario, error) {
 	// Phase 2: Extract header metadata (**Description:**, **Tags:**)
 	// Phase 3: Split remaining content by "## " headings into sections
 	// Phase 4: For each section:
-	//   - "Setup" → extract code block into s.Setup
-	//   - "Teardown" → extract code block into s.Teardown
+	//   - "Setup" → extract code block into s.Setup, s.SetupLanguage
+	//   - "Teardown" → extract code block into s.Teardown, s.TeardownLanguage
 	//   - Anything else → parse as Step:
 	//     - Name from heading text (must be kebab-case)
 	//     - Extract **Depends on:** → split by comma, trim
@@ -389,15 +422,17 @@ func ParseScenario(data []byte) (*Scenario, error) {
 	//     - Extract **Outputs:** table → parse rows into []Output
 	//     - Extract **ACs:** table → parse Feature column for path, ACs column for selector
 	//     - Extract **Include:** → parse markdown link for path
-	//     - Extract ```bash code block
+	//     - Extract code block (```bash, ```python, or ```starlark) → Code + Language
+	//     - Reject bare ``` without language annotation (validation error with line number)
 	// Phase 5: Validate:
 	//   - No duplicate step names (check stepNames map)
 	//   - Each step has exactly one of Include or Code (not both, not neither)
 	//   - Depends on references exist and point to earlier steps
 
-	// Helper: extractCodeBlock(lines []string) string — finds ```bash...``` and returns content
+	// Helper: extractCodeBlock(lines []string) (code, language string, err error) — finds ```{lang}...``` and returns content + language; errors on bare ```
 	// Helper: parseTable(lines []string) [][]string — parses markdown table rows into cells
 	// Helper: parseMarkdownLink(text string) (text, url string) — extracts [text](url)
+	// Supported languages: "bash", "python", "starlark"
 
 	_ = lines
 	_ = stepNames
@@ -452,7 +487,7 @@ The `ExecContext` struct holds two maps:
 ```go
 package testscenario
 
-// Features implemented: test-scenario
+// Features implemented: testing-framework/test-runner
 
 import "testing"
 
@@ -536,7 +571,7 @@ Expected: FAIL — `NewExecContext` undefined.
 ```go
 package testscenario
 
-// Features implemented: test-scenario
+// Features implemented: testing-framework/test-runner
 
 import (
 	"fmt"
@@ -664,7 +699,7 @@ The tests use `t.TempDir()` to create mock feature directories with AC files.
 ```go
 package testscenario
 
-// Features implemented: test-scenario
+// Features implemented: testing-framework/test-runner
 
 import (
 	"os"
@@ -674,7 +709,7 @@ import (
 
 func writeACFile(t *testing.T, dir, slug, content string) {
 	t.Helper()
-	acsDir := filepath.Join(dir, "acs")
+	acsDir := filepath.Join(dir, "_acs")
 	if err := os.MkdirAll(acsDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -718,6 +753,9 @@ func TestParseACFile(t *testing.T) {
 	}
 	if ac.Verification != "! echo $project_id" {
 		t.Errorf("verification = %q", ac.Verification)
+	}
+	if ac.Language != "bash" {
+		t.Errorf("language = %q, want %q", ac.Language, "bash")
 	}
 }
 
@@ -773,7 +811,7 @@ Expected: FAIL — `ParseACFile`, `NewACResolver` undefined.
 ```go
 package testscenario
 
-// Features implemented: test-scenario
+// Features implemented: testing-framework/test-runner
 
 import (
 	"fmt"
@@ -795,7 +833,7 @@ func NewACResolver(specRoot string) *ACResolver {
 
 // Resolve finds and parses AC files for a feature path and selector.
 func (r *ACResolver) Resolve(featurePath, selector string) ([]ACFile, error) {
-	acsDir := filepath.Join(r.specRoot, "features", filepath.FromSlash(featurePath), "acs")
+	acsDir := filepath.Join(r.specRoot, "features", filepath.FromSlash(featurePath), "_acs")
 	if selector == "*" {
 		return r.resolveAll(acsDir)
 	}
@@ -810,7 +848,7 @@ func (r *ACResolver) resolveAll(acsDir string) ([]ACFile, error) {
 	var acs []ACFile
 	var slugs []string
 	for _, e := range entries {
-		if e.IsDir() || !strings.HasSuffix(e.Name(), ".md") {
+		if e.IsDir() || !strings.HasSuffix(e.Name(), ".md") || e.Name() == "README.md" {
 			continue
 		}
 		slugs = append(slugs, strings.TrimSuffix(e.Name(), ".md"))
@@ -864,7 +902,8 @@ func ParseACFile(data []byte, slug string) (ACFile, error) {
 	// Find "## Description" section → ac.Description (text until next ##)
 	// Find "## Inputs" section → parse table rows into []ACInput
 	//   Each row: Name | Required (Yes/No) | Description
-	// Find "## Verification" section → extract ```bash code block → ac.Verification
+	// Find "## Verification" section → extract code block (```bash, ```python, or ```starlark) → ac.Verification + ac.Language
+	//   Reject bare ``` without language annotation (same validation as parser)
 	// Ignore "## Scenarios" section (back-references, not needed for execution)
 
 	_ = lines
@@ -913,7 +952,7 @@ Tests for:
 ```go
 package testscenario
 
-// Features implemented: test-scenario
+// Features implemented: testing-framework/test-runner
 
 import (
 	"os"
@@ -924,7 +963,7 @@ import (
 func TestRunner_singleStep(t *testing.T) {
 	s := &Scenario{
 		Title: "simple",
-		Steps: []Step{{Name: "echo-test", Code: "echo hello"}},
+		Steps: []Step{{Name: "echo-test", Code: "echo hello", Language: "bash"}},
 	}
 	r := NewRunner(RunnerConfig{SpecRoot: t.TempDir()})
 	result := r.Run(s)
@@ -939,7 +978,7 @@ func TestRunner_singleStep(t *testing.T) {
 func TestRunner_failingStep(t *testing.T) {
 	s := &Scenario{
 		Title: "fail",
-		Steps: []Step{{Name: "bad", Code: "exit 1"}},
+		Steps: []Step{{Name: "bad", Code: "exit 1", Language: "bash"}},
 	}
 	r := NewRunner(RunnerConfig{SpecRoot: t.TempDir()})
 	result := r.Run(s)
@@ -955,9 +994,11 @@ func TestRunner_setupAndTeardown(t *testing.T) {
 	marker := filepath.Join(t.TempDir(), "teardown-ran")
 	s := &Scenario{
 		Title:    "lifecycle",
-		Setup:    "export MARKER=" + marker,
-		Teardown: "touch " + marker,
-		Steps:    []Step{{Name: "noop", Code: "echo ok"}},
+		Setup:            "export MARKER=" + marker,
+		SetupLanguage:    "bash",
+		Teardown:         "touch " + marker,
+		TeardownLanguage: "bash",
+		Steps:            []Step{{Name: "noop", Code: "echo ok", Language: "bash"}},
 	}
 	r := NewRunner(RunnerConfig{SpecRoot: t.TempDir()})
 	_ = r.Run(s)
@@ -969,9 +1010,10 @@ func TestRunner_setupAndTeardown(t *testing.T) {
 func TestRunner_teardownRunsOnFailure(t *testing.T) {
 	marker := filepath.Join(t.TempDir(), "teardown-ran")
 	s := &Scenario{
-		Title:    "fail-teardown",
-		Teardown: "touch " + marker,
-		Steps:    []Step{{Name: "fail", Code: "exit 1"}},
+		Title:            "fail-teardown",
+		Teardown:         "touch " + marker,
+		TeardownLanguage: "bash",
+		Steps:            []Step{{Name: "fail", Code: "exit 1", Language: "bash"}},
 	}
 	r := NewRunner(RunnerConfig{SpecRoot: t.TempDir()})
 	_ = r.Run(s)
@@ -985,13 +1027,15 @@ func TestRunner_contextOutputPassthrough(t *testing.T) {
 		Title: "context",
 		Steps: []Step{
 			{
-				Name: "produce",
-				Code: "echo myvalue",
-				Outputs: []Output{{Name: "val", Store: StoreContext, Extract: "cat $STEP_STDOUT"}},
+				Name:     "produce",
+				Code:     "echo myvalue",
+				Language: "bash",
+				Outputs:  []Output{{Name: "val", Store: StoreContext, Extract: "cat $STEP_STDOUT"}},
 			},
 			{
-				Name: "consume",
-				Code: "echo got-${{ context.val }}",
+				Name:     "consume",
+				Code:     "echo got-${{ context.val }}",
+				Language: "bash",
 			},
 		},
 	}
@@ -1023,7 +1067,7 @@ The runner:
 ```go
 package testscenario
 
-// Features implemented: test-scenario
+// Features implemented: testing-framework/test-runner
 
 import (
 	"fmt"
@@ -1058,7 +1102,7 @@ func (r *Runner) Run(s *Scenario) ScenarioResult {
 	result := ScenarioResult{ScenarioTitle: s.Title, Passed: true}
 	ctx := NewExecContext()
 
-	// 1. Run Setup block (if present) via execBash(s.Setup, env)
+	// 1. Run Setup block (if present) via execScript(s.SetupLanguage, s.Setup, env)
 	//    If fails → set result.SetupError, result.Passed = false, skip to teardown
 
 	// 2. Group steps into sequential steps and parallel groups
@@ -1071,13 +1115,16 @@ func (r *Runner) Run(s *Scenario) ScenarioResult {
 
 	// 4. For each step in runStep:
 	//    a. Resolve ${{ }} references in Code via ctx.ResolveString()
-	//    b. Execute via execBash() → capture stdout/stderr to temp files, get exit code
+	//    b. Execute via execScript(step.Language, code, env) → dispatch to appropriate interpreter
+	//       - "bash": exec.Command("bash", "-c", script)
+	//       - "python": exec.Command("python3", "-c", script)
+	//       - "starlark": embedded Starlark interpreter (inputs as globals, not env vars)
 	//    c. If exit code != 0 → step failed
-	//    d. Extract outputs: for each Output, run Extract expression via execBash()
+	//    d. Extract outputs: for each Output, run Extract expression via execScript("bash", ...)
 	//       with STEP_STDOUT, STEP_STDERR, STEP_EXIT_CODE env vars
 	//       Store result via ctx.StoreOutput()
 	//    e. Resolve ACs: for each ACRef, call r.acResolver.Resolve()
-	//       Run each AC's Verification script with context vars + step outputs as env vars
+	//       Run each AC's Verification script via execScript(ac.Language, ac.Verification, env)
 	//       If AC fails → step fails
 
 	// 5. defer: Run Teardown block (always, even on panic/failure)
@@ -1087,9 +1134,22 @@ func (r *Runner) Run(s *Scenario) ScenarioResult {
 	return result
 }
 
-// execBash runs a bash script string and returns stdout, stderr, exit code.
-func execBash(script string, env []string) (stdout, stderr string, exitCode int, err error) {
-	cmd := exec.Command("bash", "-c", script)
+// execScript runs a script in the given language and returns stdout, stderr, exit code.
+// Supported languages: "bash", "python", "starlark".
+func execScript(language, script string, env []string) (stdout, stderr string, exitCode int, err error) {
+	var cmd *exec.Cmd
+	switch language {
+	case "bash":
+		cmd = exec.Command("bash", "-c", script)
+	case "python":
+		cmd = exec.Command("python3", "-c", script)
+	case "starlark":
+		// TODO: use embedded Starlark interpreter (go.starlark.net)
+		// For now, fall back to writing a temp file and using a starlark CLI if available
+		return "", "", 1, fmt.Errorf("starlark execution not yet implemented")
+	default:
+		return "", "", 1, fmt.Errorf("unsupported language: %s", language)
+	}
 	cmd.Env = append(os.Environ(), env...)
 	var outBuf, errBuf strings.Builder
 	cmd.Stdout = &outBuf
@@ -1136,7 +1196,7 @@ Tests for:
 ```go
 package testscenario
 
-// Features implemented: test-scenario
+// Features implemented: testing-framework/test-runner
 
 import (
 	"os"
@@ -1202,7 +1262,7 @@ Expected: FAIL — `NewIncludeResolver` undefined.
 ```go
 package testscenario
 
-// Features implemented: test-scenario
+// Features implemented: testing-framework/test-runner
 
 import (
 	"fmt"
@@ -1273,7 +1333,7 @@ Tests for:
 ```go
 package testscenario
 
-// Features implemented: test-scenario
+// Features implemented: testing-framework/test-runner
 
 import (
 	"strings"
@@ -1352,7 +1412,7 @@ FAIL (1/2 steps passed)
 ```go
 package testscenario
 
-// Features implemented: test-scenario
+// Features implemented: testing-framework/test-runner
 
 import (
 	"fmt"
@@ -1444,7 +1504,7 @@ None at this time.
 ```go
 package test
 
-// Features implemented: cli/test
+// Features implemented: cli
 
 import "github.com/spf13/cobra"
 
@@ -1467,8 +1527,8 @@ func Command() *cobra.Command {
 ```go
 package test
 
-// Features implemented: cli/test
-// Features depended on:  test-scenario
+// Features implemented: cli
+// Features depended on:  testing-framework/test-scenario, testing-framework/test-runner
 
 import (
 	"fmt"
@@ -1477,7 +1537,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/synchesta-io/synchestra/pkg/testscenario"
+	"github.com/synchestra-io/synchestra/pkg/testscenario"
 )
 
 func runCommand() *cobra.Command {
@@ -1574,11 +1634,17 @@ func matchesTags(scenarioTags, filterTags []string) bool {
 ```go
 package test
 
-// Features implemented: cli/test
-// Features depended on:  test-scenario
+// Features implemented: cli
+// Features depended on:  testing-framework/test-scenario, testing-framework/test-runner
 
 import (
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+
 	"github.com/spf13/cobra"
+	"github.com/synchestra-io/synchestra/pkg/testscenario"
 )
 
 func listCommand() *cobra.Command {
@@ -1641,7 +1707,7 @@ func runList(cmd *cobra.Command, _ []string) error {
 
 - [ ] **Step 5: Add test command to `cli/main.go`**
 
-Add `testcmd "github.com/synchesta-io/synchestra/cli/test"` import and `testcmd.Command()` to `rootCmd.AddCommand(...)`.
+Add `testcmd "github.com/synchestra-io/synchestra/cli/test"` import and `testcmd.Command()` to `rootCmd.AddCommand(...)`.
 
 - [ ] **Step 6: Run full Go validation**
 
@@ -1659,70 +1725,39 @@ git commit -m "feat(cli): add synchestra test run and test list commands"
 
 ### Task 9: Create feature specs for acceptance-criteria, testing-framework, and sub-features
 
-**Files:**
-- Create: `spec/features/acceptance-criteria/README.md`
-- Create: `spec/features/testing-framework/README.md`
-- Create: `spec/features/testing-framework/test-scenario/README.md`
-- Create: `spec/features/testing-framework/test-runner/README.md`
-- Modify: `spec/features/feature/README.md` — add Acceptance Criteria to required sections, add `_acs/` and `_tests/` to directory structure, formalize `_` prefix convention, reference acceptance-criteria feature
-- Modify: `spec/features/README.md` — replace test-scenario with acceptance-criteria and testing-framework in feature index
-- Create: `spec/tests/README.md`
+**Status: COMPLETED** — All feature specs, ACs, and test scenarios have been created.
 
-- [ ] **Step 1: Create feature specs** (acceptance-criteria, testing-framework, testing-framework/test-scenario, testing-framework/test-runner)
+**Files created/modified:**
+- Created: `spec/features/acceptance-criteria/README.md`
+- Created: `spec/features/testing-framework/README.md`
+- Created: `spec/features/testing-framework/test-scenario/README.md`
+- Created: `spec/features/testing-framework/test-runner/README.md`
+- Created: `spec/features/testing-framework/test-runner/_acs/` (11 AC files + README)
+- Created: `spec/features/testing-framework/test-runner/_tests/runner-core.md` (dogfood scenario)
+- Modified: `spec/features/feature/README.md` — added Acceptance Criteria section, `_acs/`/`_tests/` conventions, `_` prefix rules
+- Modified: `spec/features/README.md` — replaced test-scenario with acceptance-criteria and testing-framework in index
+- Created: `spec/tests/README.md`
 
-The feature spec for the test scenario system, following the established feature README pattern. Includes:
-- Status: In Progress
-- Summary, Problem, Behavior sections based on the design spec
-- Acceptance Criteria section (initially "Not defined yet." with Outstanding Question)
-- Outstanding Questions section
-
-- [ ] **Step 2: Update `spec/features/feature/README.md`**
-
-Add to Required sections table:
-- Acceptance Criteria: Yes — always present, states "Not defined yet." if empty
-
-Add to Behavior → Feature location section the `_acs/` and `_tests/` directories.
-
-Add the `_` prefix convention:
-> Directories prefixed with `_` are reserved for Synchestra tooling and are not sub-features. They are excluded from the feature index and Contents table.
-
-- [ ] **Step 3: Update `spec/features/README.md`**
-
-Add `test-scenario` to the feature index table.
-
-- [ ] **Step 4: Create `spec/tests/README.md`**
-
-```markdown
-# Tests
-
-Cross-feature end-to-end test scenarios.
-
-| Scenario | Description | Tags |
-|---|---|---|
-| (none yet) | | |
-
-## Outstanding Questions
-
-None at this time.
-```
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add spec/features/test-scenario/ spec/features/feature/README.md spec/features/README.md spec/tests/
-git commit -m "feat(spec): add test-scenario feature, update feature spec with AC requirements"
-```
+All steps completed and committed across multiple commits:
+- `e4a98b6` refactor(spec): restructure testing features into acceptance-criteria + testing-framework
+- `7d575f6` feat(spec): add ACs and dogfood test scenario for test-runner feature
+- `b4c1a7e` docs(spec): improve testing-framework and acceptance-criteria feature specs
+- `0752850` feat(spec): add multi-language support for verification scripts
+- `88eb30e` feat(spec): make code block language annotation mandatory
 
 ---
 
 ### Task 10: Dogfood — Write initial ACs and the project lifecycle E2E scenario
 
-**Files:**
-- Create: `spec/features/cli/project/new/_acs/creates-spec-config.md`
-- Create: `spec/features/cli/project/new/_acs/creates-state-config.md`
-- Create: `spec/tests/project-lifecycle.md`
-- Modify: `spec/features/cli/project/new/README.md` — add Acceptance Criteria section with table
-- Create: `spec/tests/flows/README.md`
+**Status: PARTIALLY COMPLETED** — AC files, E2E scenario, and flows directory created and committed (`06be288`). Step 5 (run the scenario) remains.
+
+**Files created/modified (done):**
+- Created: `spec/features/cli/project/new/_acs/creates-spec-config.md`
+- Created: `spec/features/cli/project/new/_acs/creates-state-config.md`
+- Created: `spec/features/cli/project/new/_acs/README.md`
+- Created: `spec/tests/project-lifecycle.md`
+- Modified: `spec/features/cli/project/new/README.md` — added Acceptance Criteria section with table
+- Created: `spec/tests/flows/README.md`
 
 - [ ] **Step 1: Create AC files for `cli/project/new`**
 
