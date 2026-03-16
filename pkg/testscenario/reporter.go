@@ -16,11 +16,12 @@ func FormatResult(r ScenarioResult) string {
 	}
 	passed, total := 0, len(r.StepResults)
 	for _, sr := range r.StepResults {
+		dur := fmt.Sprintf("(%.1fs)", sr.Duration.Seconds())
 		if sr.Passed {
-			fmt.Fprintf(&b, "  ✓ %s\n", sr.StepName)
+			fmt.Fprintf(&b, "  ✓ %s %s\n", sr.StepName, dur)
 			passed++
 		} else {
-			fmt.Fprintf(&b, "  ✗ %s: %s\n", sr.StepName, sr.Error)
+			fmt.Fprintf(&b, "  ✗ %s %s: %s\n", sr.StepName, dur, sr.Error)
 		}
 		for _, ac := range sr.ACResults {
 			if ac.Passed {

@@ -2,6 +2,8 @@ package testscenario
 
 // Features implemented: testing-framework/test-runner
 
+import "time"
+
 // OutputStore indicates where a step output is stored.
 type OutputStore string
 
@@ -75,6 +77,7 @@ type StepResult struct {
 	Stdout    string
 	Stderr    string
 	ExitCode  int
+	Duration  time.Duration
 	ACResults []ACResult
 }
 
@@ -91,6 +94,7 @@ type ScenarioResult struct {
 	ScenarioTitle string
 	Passed        bool
 	StepResults   []StepResult
+	Duration      time.Duration
 	SetupError    string
 	TeardownError string
 }

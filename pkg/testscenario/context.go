@@ -6,12 +6,15 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"sync"
 )
 
 var varPattern = regexp.MustCompile(`\$\{\{\s*([^}]+?)\s*\}\}`)
 
 // ExecContext holds variable state during scenario execution.
+// It is safe for concurrent use by parallel steps.
 type ExecContext struct {
+	mu          sync.RWMutex
 	contextVars map[string]string
 	stepOutputs map[string]map[string]string
 }
@@ -26,6 +29,8 @@ func NewExecContext() *ExecContext {
 
 // StoreOutput stores a named output from a step.
 func (c *ExecContext) StoreOutput(stepName, name, value string, store OutputStore) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	switch store {
 	case StoreContext, StoreBoth:
 		if _, exists := c.contextVars[name]; exists {
@@ -45,6 +50,8 @@ func (c *ExecContext) StoreOutput(stepName, name, value string, store OutputStor
 
 // ContextVarsAsEnv returns all context variables as KEY=VALUE env var pairs.
 func (c *ExecContext) ContextVarsAsEnv() []string {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
 	env := make([]string, 0, len(c.contextVars))
 	for k, v := range c.contextVars {
 		env = append(env, k+"="+v)
@@ -54,21 +61,22 @@ func (c *ExecContext) ContextVarsAsEnv() []string {
 
 // ResolveVar resolves a variable reference like "context.pid" or "steps.create.outputs.id".
 func (c *ExecContext) ResolveVar(ref string) (string, error) {
-	if strings.HasPrefix(ref, "context.") {
-		name := strings.TrimPrefix(ref, "context.")
-		if val, ok := c.contextVars[name]; ok {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	if name, ok := strings.CutPrefix(ref, "context."); ok {
+		if val, found := c.contextVars[name]; found {
 			return val, nil
 		}
 		return "", fmt.Errorf("unknown context variable %q", name)
 	}
-	if strings.HasPrefix(ref, "steps.") {
-		parts := strings.SplitN(strings.TrimPrefix(ref, "steps."), ".outputs.", 2)
+	if rest, ok := strings.CutPrefix(ref, "steps."); ok {
+		parts := strings.SplitN(rest, ".outputs.", 2)
 		if len(parts) != 2 {
 			return "", fmt.Errorf("invalid step output reference %q", ref)
 		}
 		stepName, outputName := parts[0], parts[1]
-		if outputs, ok := c.stepOutputs[stepName]; ok {
-			if val, ok := outputs[outputName]; ok {
+		if outputs, found := c.stepOutputs[stepName]; found {
+			if val, found := outputs[outputName]; found {
 				return val, nil
 			}
 		}
