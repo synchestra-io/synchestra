@@ -65,7 +65,7 @@ Each transition method enforces that the task is in the correct source status. C
 - **Git:** Atomic commit-and-push; push failure indicates another agent claimed first
 - **SQL:** `UPDATE tasks SET status = 'claimed' WHERE slug = ? AND status = 'queued'`; affected rows = 0 means lost race
 
-See [Claim and Push](../../claim-and-push/) for the full git-based protocol.
+See [Task Status Board: Claiming a Task](../../task-status-board/README.md#claiming-a-task-optimistic-locking) for the full git-based protocol.
 
 ## Board
 

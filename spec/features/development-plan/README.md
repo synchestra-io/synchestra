@@ -691,7 +691,6 @@ planning:
 | [Feature](../feature/README.md) | Features are the source artifacts that trigger plans. Plans list affected features; features back-reference active plans in their README. |
 | [Proposals](../proposals/README.md) | A proposal (change request) is a trigger for plan creation. Approved proposals link forward to their plan; plans link back to their source proposal. |
 | [Task Status Board](../task-status-board/README.md) | Tasks generated from a plan appear on the board like any other task. The plan adds a back-reference in each task README but does not change board behavior. |
-| [Claim-and-Push](../claim-and-push/README.md) | No change. Generated tasks are claimed via the existing protocol. |
 | [Micro-Tasks](../micro-tasks/README.md) | A post-commit micro-task can enforce plan immutability (`enforce_freeze`). A pre-completion micro-task can validate artifact existence (`validate_artifacts`). |
 | [CLI](../cli/README.md) | New `synchestra plan` command group: `create`, `submit`, `approve`, `generate-tasks`, `status`, `report`. |
 | [API](../api/README.md) | New `/api/v1/plan/` endpoints mirroring the CLI commands 1:1. |

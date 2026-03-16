@@ -131,14 +131,14 @@ Token efficiency isn't just about loading fewer files. Synchestra optimizes at m
 
 Multiple agents working on the same project will inevitably compete for tasks and touch shared files. Synchestra handles this with a layered approach:
 
-### Prevention: claim-and-push protocol
+### Prevention: optimistic locking
 
 Synchestra's philosophy is **commit often**. When an agent starts work, it must:
 
 1. Claim an unclaimed task by updating its status to "claimed/wip"
 2. Commit and push immediately
 
-If the push fails due to a merge conflict, another agent already claimed the task. The agent moves on to the next available task or exits. This is standard distributed locking — implemented through git, requiring zero additional infrastructure. The [synchestra-claim-task](skills/synchestra-claim-task/README.md) skill handles this entire flow for agents automatically.
+If the push fails due to a merge conflict, another agent already claimed the task. The agent moves on to the next available task or exits. This is standard distributed locking — implemented through git, requiring zero additional infrastructure. The [synchestra-claim-task](skills/synchestra-claim-task/README.md) skill handles this entire flow for agents automatically. See [Task Status Board: Claiming a Task](spec/features/task-status-board/README.md#claiming-a-task-optimistic-locking) for the full protocol.
 
 ### Resolution: AI-powered merge handling
 
@@ -194,7 +194,7 @@ Every project has a dedicated **state repository** (`{project}-synchestra`) that
 | Infrastructure | Server, database, networking | Git + single binary |
 | Context loading | Full project dump or custom retrieval | Auto-generated minimal context per task |
 | Multi-platform | Locked to one runtime | Any tool that can read/write files |
-| Coordination | Real-time messaging | Async via repo state + claim-and-push |
+| Coordination | Real-time messaging | Async via repo state + optimistic locking |
 | Audit trail | Event log in database | Git history |
 | Validation | Application-level checks | Schema-enforced at commit time |
 
@@ -222,11 +222,11 @@ They don't break silently. Synchestra enforces conventions at multiple checkpoin
 
 **"How does async coordination work without conflicts?"**
 
-Through the same mechanism distributed systems have used for decades: optimistic locking. Agents claim tasks by committing a status change and pushing. If the push fails, someone else got there first. For the remaining edge cases — two agents editing different parts of the same file — Synchestra provides AI-powered merge resolution that either handles it automatically or escalates to a human. The "commit often" philosophy minimizes the window for conflicts in the first place.
+Through the same mechanism distributed systems have used for decades: optimistic locking. Agents claim tasks by committing a status change and pushing. If the push fails, someone else got there first. For the remaining edge cases — two agents editing different parts of the same file — Synchestra provides AI-powered merge resolution that either handles it automatically or escalates to a human. The "commit often" philosophy minimizes the window for conflicts in the first place. See [Task Status Board: Claiming a Task](spec/features/task-status-board/README.md#claiming-a-task-optimistic-locking) for details.
 
 **"Does this actually scale beyond a solo developer?"**
 
-Synchestra started small — one developer, a few projects, a $10/month VM. But the architecture scales naturally: git already handles distributed collaboration, inGitDB's schema validation works regardless of team size, and the claim-and-push protocol handles concurrency without a central coordinator. The same conventions that keep a solo developer organized keep a team aligned.
+Synchestra started small — one developer, a few projects, a $10/month VM. But the architecture scales naturally: git already handles distributed collaboration, inGitDB's schema validation works regardless of team size, and optimistic locking (see [Task Status Board](spec/features/task-status-board/README.md#claiming-a-task-optimistic-locking)) handles concurrency without a central coordinator. The same conventions that keep a solo developer organized keep a team aligned.
 
 ## Features
 
@@ -243,7 +243,6 @@ Core features driving Synchestra's development:
 | [Proposals](spec/features/proposals/README.md) | Conceptual | Non-normative change requests attached to features with review status and optional issue linkage |
 | [Development plan](spec/features/development-plan/README.md) | Conceptual | Immutable planning documents that bridge feature specs and change requests to executable tasks |
 | [UI](spec/features/ui/README.md) | Conceptual | Human-facing web and terminal interfaces for projects, features, tasks, proposals, and workers |
-| [Claim-and-push](spec/features/claim-and-push/README.md) | Conceptual | Distributed task claiming via git push-based optimistic locking |
 | [Agent skills](spec/features/agent-skills/README.md) | In Progress | Focused skills that teach AI agents to use Synchestra |
 | [CLI](spec/features/cli/README.md) | In Progress | The `synchestra` command-line interface |
 
@@ -289,7 +288,6 @@ Synchestra is in active development. The conventions, module structure, and CLI 
     - [model-selection](spec/features/model-selection/README.md): 4 outstanding questions
     - [conflict-resolution](spec/features/conflict-resolution/README.md): 3 outstanding questions
     - [outstanding-questions](spec/features/outstanding-questions/README.md): 3 outstanding questions
-    - [claim-and-push](spec/features/claim-and-push/README.md): 3 outstanding questions
     - [development-plan](spec/features/development-plan/README.md): 4 outstanding questions
     - [agent-skills](spec/features/agent-skills/README.md): 3 outstanding questions
     - [cli](spec/features/cli/README.md): 3 outstanding questions

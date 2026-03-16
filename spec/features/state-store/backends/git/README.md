@@ -125,7 +125,7 @@ The git backend relies on git's push-or-fail semantics for atomicity in `sync` m
 
 In `local` mode, atomicity is scoped to the local host (file-level locking prevents concurrent local writes from corrupting state).
 
-See [Claim and Push](../../../claim-and-push/) for the detailed conflict resolution protocol.
+See [Task Status Board: Claiming a Task](../../../task-status-board/README.md#claiming-a-task-optimistic-locking) for the detailed claiming protocol and conflict resolution.
 
 ## Performance Characteristics
 

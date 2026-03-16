@@ -217,3 +217,4 @@ The development plan feature provides a derived status view (`synchestra plan st
 
 - What is the exact task directory structure? (e.g., `tasks/{task-slug}/README.md` with YAML frontmatter for machine-readable status?)
 - Should the `Requester` field support teams/groups or only individual humans?
+- Should the `claimed` status have a separate row state or be folded into the claiming user's identity?

@@ -97,4 +97,4 @@ branch_prefix: synchestra/
 - What does the full specification file format look like? (Needs dedicated design work.)
 - How does Synchestra handle repos with different branching models (e.g., one uses trunk-based, another uses gitflow)?
 - What is the story for cross-repo changes that require database migrations or infrastructure changes?
-- How does the claim-and-push protocol work when the "push" needs to happen to a different repo than the Synchestra repo?
+- How does the task claiming protocol work when the "push" needs to happen to a different repo than the state repo?
