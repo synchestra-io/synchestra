@@ -51,6 +51,17 @@ Use **mermaid diagrams** instead of ASCII art in all specification documents. Me
 
 When adding or updating diagrams in specs, convert ASCII art to mermaid or create new diagrams using mermaid syntax.
 
+## Development plans location and format
+
+All development plans must be created in `spec/plans/` and follow the structure defined in [Development Plan specification](spec/features/development-plan/README.md).
+
+- Plans start in `draft` status and follow the approval workflow: `draft` → `in_review` → `approved` → (optionally) `superseded`
+- Once approved, plans are immutable — edits require creating a new superseding plan
+- Plans live nowhere else — not in `docs/superpowers/`, not in project directories, not in temporary locations
+- Use `synchestra plan create` to scaffold a new plan; use `synchestra plan submit` and `synchestra plan approve` for workflow progression
+
+See the [Development Plan specification](spec/features/development-plan/README.md#behavior) for complete structure, field requirements, and task generation rules.
+
 ## Go validation after code changes
 
 After any change to `.go` files, agents must run the full Go validation sequence before considering the task complete:
