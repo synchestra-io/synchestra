@@ -151,6 +151,14 @@ echo "$output"
 | Name | Store | Extract |
 |---|---|---|
 | sequential_order | context | `cat $STEP_STDOUT` |
+| scenario_path | context | `echo $FIXTURE_DIR/sequential-scenario.md` |
+| binary_path | context | `echo $BINARY_PATH` |
+
+**ACs:**
+
+| Feature | ACs |
+|---|---|
+| [testing-framework/test-runner]($SPEC_ROOT/features/testing-framework/test-runner/) | [executes-sequential-steps]($SPEC_ROOT/features/testing-framework/test-runner/_acs/executes-sequential-steps.md), [parses-valid-scenario]($SPEC_ROOT/features/testing-framework/test-runner/_acs/parses-valid-scenario.md) |
 
 ````bash
 # Create a scenario with 3 sequential steps that append to a file
@@ -180,7 +188,7 @@ cat "$FIXTURE_DIR/order.txt"
 SCENARIO
 
 rm -f "$FIXTURE_DIR/order.txt"
-"$BINARY_PATH" test run "$FIXTURE_DIR/sequential-scenario.md"
+"$BINARY_PATH" test run "$FIXTURE_DIR/sequential-scenario.md" --format json
 result=$(cat "$FIXTURE_DIR/order.txt")
 test "$result" = "ABC" || { echo "Expected ABC, got $result"; exit 1; }
 echo "$result"
