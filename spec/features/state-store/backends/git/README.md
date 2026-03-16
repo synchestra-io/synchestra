@@ -77,9 +77,44 @@ This backend requires no external infrastructure — only a git remote. It is th
 | `Project().UpdateConfig()` | Write `synchestra-state.yaml`, commit |
 | `Project().RebuildREADME()` | Regenerate root `README.md` from project state |
 
+## Sync Mode
+
+The git backend supports configurable sync behavior via `GitStoreOptions.SyncMode`:
+
+| Mode | Pull before read | Push after write | Use case |
+|---|---|---|---|
+| `sync` | Yes | Yes | Multi-host: multiple agents on different machines. Every operation hits the remote to ensure consistency. This is the default. |
+| `local` | No | No | Single-host: one machine runs all agents against a local clone. No network I/O per operation. The caller is responsible for periodic `git pull`/`git push` (e.g., via cron or a background goroutine). |
+
+```go
+type SyncMode string
+
+const (
+    SyncModeSync  SyncMode = "sync"  // pull before read, push after write (default)
+    SyncModeLocal SyncMode = "local" // local-only, no remote I/O per operation
+)
+
+type GitStoreOptions struct {
+    StateRepoPath string
+    SpecRepoPath  string
+    SyncMode      SyncMode // defaults to SyncModeSync
+}
+```
+
+In `local` mode:
+- **Reads** operate directly on the working tree — no `git pull` first.
+- **Writes** commit locally but do not push. The working tree is always up-to-date with the latest local commit.
+- **Claim atomicity** is still guaranteed within the host (file-level locking or similar), but not across hosts. Running multiple hosts in `local` mode against the same remote will cause conflicts.
+- **Periodic sync** is the caller's responsibility. A typical setup pushes every N seconds or on a signal.
+
+In `sync` mode:
+- Every mutating operation follows the full pull → validate → commit → push protocol.
+- Read operations pull first to ensure freshness.
+- This is the safe default for distributed agent setups.
+
 ## Atomicity
 
-The git backend relies on git's push-or-fail semantics for atomicity. The protocol for mutating operations:
+The git backend relies on git's push-or-fail semantics for atomicity in `sync` mode. The protocol for mutating operations:
 
 1. Pull latest state from remote
 2. Validate preconditions (task exists, correct status, etc.)
@@ -88,16 +123,20 @@ The git backend relies on git's push-or-fail semantics for atomicity. The protoc
 5. Push
 6. On push conflict: pull, re-verify preconditions, retry or fail
 
+In `local` mode, atomicity is scoped to the local host (file-level locking prevents concurrent local writes from corrupting state).
+
 See [Claim and Push](../../../claim-and-push/) for the detailed conflict resolution protocol.
 
 ## Performance Characteristics
 
-| Operation | Cost | Notes |
-|---|---|---|
-| Read (Get, List) | File I/O | Fast for small-to-medium projects |
-| Write (Create, status transitions) | File I/O + commit + push | Network round-trip per mutation |
-| Claim (contended) | File I/O + commit + push + possible retry | Multiple network round-trips under contention |
-| Board Rebuild | Scan all task directories | O(n) in number of tasks |
+| Operation | Cost (`sync` mode) | Cost (`local` mode) | Notes |
+|---|---|---|---|
+| Read (Get, List) | Pull + file I/O | File I/O only | `local` avoids network round-trip |
+| Write (Create, status transitions) | File I/O + commit + push | File I/O + commit | `local` defers push |
+| Claim (contended) | File I/O + commit + push + retry | File I/O + commit + local lock | `local` has no remote contention |
+| Board Rebuild | Scan all task directories | Same | O(n) in number of tasks regardless of mode |
+
+For single-host setups, `local` mode eliminates network overhead entirely — mutations become local file + commit operations. Periodic push keeps the remote in sync for visibility (dashboards, other tools) without blocking the hot path.
 
 For projects with hundreds of concurrent agents or thousands of tasks, database backends may offer better performance. See the [backend matrix](../) for alternatives.
 

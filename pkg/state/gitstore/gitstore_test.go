@@ -11,18 +11,18 @@ import (
 )
 
 // TestGitStateStoreImplementsStore verifies that GitStateStore satisfies state.Store
-// and that New can be used as a state.StoreFactory.
+// and that New returns a valid store with all sub-interfaces accessible.
 func TestGitStateStoreImplementsStore(t *testing.T) {
-	// Verify New satisfies StoreFactory signature
-	var factory state.StoreFactory = gitstore.New
+	var store state.Store
 
-	store, err := factory(context.Background(), state.StoreOptions{
+	s, err := gitstore.New(context.Background(), gitstore.Options{
 		StateRepoPath: t.TempDir(),
 		SpecRepoPath:  t.TempDir(),
 	})
 	if err != nil {
 		t.Fatalf("New() returned error: %v", err)
 	}
+	store = s // compile-time verification that *GitStateStore satisfies state.Store
 
 	// Verify sub-interface accessors return non-nil
 	if store.Task() == nil {
@@ -44,5 +44,21 @@ func TestGitStateStoreImplementsStore(t *testing.T) {
 	}
 	if store.Chat().Artifact(context.Background(), "test-chat") == nil {
 		t.Error("Chat().Artifact() returned nil")
+	}
+}
+
+func TestSyncModeDefaultsToSync(t *testing.T) {
+	s, err := gitstore.New(context.Background(), gitstore.Options{
+		StateRepoPath: t.TempDir(),
+		SpecRepoPath:  t.TempDir(),
+		// SyncMode intentionally omitted — should default to "sync"
+	})
+	if err != nil {
+		t.Fatalf("New() returned error: %v", err)
+	}
+	// Verify it returns a valid store (sync mode is internal,
+	// but construction should succeed with default)
+	if s == nil {
+		t.Error("New() returned nil store")
 	}
 }

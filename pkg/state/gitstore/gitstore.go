@@ -12,19 +12,46 @@ import (
 
 var errNotImplemented = errors.New("gitstore: not implemented")
 
+// SyncMode controls how the git backend synchronizes with the remote.
+type SyncMode string
+
+const (
+	// SyncModeSync pulls before reads and pushes after writes.
+	// This is the safe default for multi-host/distributed agent setups.
+	SyncModeSync SyncMode = "sync"
+
+	// SyncModeLocal operates only on the local clone — no pull/push per
+	// operation. The caller is responsible for periodic sync with the remote.
+	// Ideal for single-host setups where all agents share one local clone.
+	SyncModeLocal SyncMode = "local"
+)
+
+// Options holds git-backend-specific configuration.
+type Options struct {
+	StateRepoPath string
+	SpecRepoPath  string
+	SyncMode      SyncMode // defaults to SyncModeSync if empty
+}
+
 // GitStateStore is the git-backed implementation of state.Store.
 // It maps interface methods to file operations, markdown rendering,
 // and atomic commit-and-push in a state repository.
 type GitStateStore struct {
 	stateRepoPath string
 	specRepoPath  string
+	syncMode      SyncMode
 }
 
-// New creates a new GitStateStore. This is the StoreFactory for the git backend.
-func New(ctx context.Context, opts state.StoreOptions) (state.Store, error) {
+// New creates a new GitStateStore with git-backend-specific options.
+func New(ctx context.Context, opts Options) (state.Store, error) {
+	syncMode := opts.SyncMode
+	if syncMode == "" {
+		syncMode = SyncModeSync
+	}
 	return &GitStateStore{
 		stateRepoPath: opts.StateRepoPath,
 		specRepoPath:  opts.SpecRepoPath,
+		syncMode:      syncMode,
 	}, nil
 }
 
