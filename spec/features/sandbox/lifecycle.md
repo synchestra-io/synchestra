@@ -242,24 +242,35 @@ Container enters `failed` when health checks detect unresponsiveness or when the
 - Container OOM-killed (Docker event)
 
 **Automatic recovery sequence:**
-```
-1. Container marked 'failed' in DB
-2. Emit event: container.failed (includes exit code, OOM flag)
-3. Check restart budget: restart_count < MAX_RESTARTS_PER_HOUR (3)
-   - If budget exhausted → stay in 'failed', alert admin, stop
-4. Wait backoff period: 5s, 15s, 45s (exponential, 3× multiplier)
-5. Stop container (if still running)
-6. Remove container (Docker rm)
-7. Create new container with same config
-8. Start container → entrypoint runs
-9. Poll Ping() (startup timeout: 60s)
-10. On success:
-    a. DB: status = 'running', restart_count++, last_restart_at = now()
-    b. gRPC connection re-established
-    c. Emit event: container.restarted
-11. On failure:
-    a. DB: status = 'failed', restart_count++
-    b. Go to step 3 (next attempt with longer backoff)
+```mermaid
+graph TD
+    A["Container marked failed"] --> B["Emit event: container.failed"]
+    B --> C["Check restart budget<br/>restart_count < 3 per hour?"]
+
+    C -->|Budget exhausted| D["Stay in failed state"]
+    D --> E["Alert admin"]
+    E --> Z["Stop"]
+
+    C -->|Budget available| F["Wait backoff period<br/>5s → 15s → 45s"]
+    F --> G["Stop container if running"]
+    G --> H["Remove container"]
+    H --> I["Create new container<br/>same config"]
+    I --> J["Start container"]
+    J --> K["Poll Ping()<br/>timeout: 60s"]
+
+    K --> L{Ping<br/>succeeds?}
+
+    L -->|Yes| M["Update DB: status=running"]
+    M --> N["Increment restart_count"]
+    N --> O["Update last_restart_at"]
+    O --> P["Re-establish gRPC"]
+    P --> Q["Emit event: container.restarted"]
+    Q --> R["Done"]
+
+    L -->|No| S["Update DB: status=failed"]
+    S --> T["Increment restart_count"]
+    T --> U["Go to step 3<br/>next attempt"]
+    U --> C
 ```
 
 **What survives restart:**
@@ -287,17 +298,27 @@ Explicit destruction of a container and its resources.
 - Capacity eviction (Phase 8)
 
 **Termination sequence:**
-```
-1. If container is running or paused:
-   a. Graceful shutdown (Phase 5)
-2. Docker API: remove container
-3. Socket file removed: /var/run/synchestra-{project_id}.sock
-4. Workspace cache decision:
-   a. Default: cache preserved at {WORKSPACE_ROOT}/{project_id}/
-   b. If clear_cache=true: cache directory deleted immediately
-5. DB update: status = 'terminated', terminated_at = now()
-6. gRPC connection removed from pool (if present)
-7. Emit event: container.terminated
+```mermaid
+graph TD
+    A["Termination triggered"] --> B{Container<br/>running or<br/>paused?}
+
+    B -->|Yes| C["Graceful shutdown<br/>Phase 5"]
+    B -->|No| D["Remove container<br/>Docker rm"]
+
+    C --> D
+
+    D --> E["Clean up socket file"]
+    E --> F{clear_cache<br/>flag set?}
+
+    F -->|No| G["Preserve cache at<br/>WORKSPACE_ROOT/project_id"]
+    F -->|Yes| H["Delete cache<br/>immediately"]
+
+    G --> I["Update DB:<br/>status=terminated"]
+    H --> I
+
+    I --> J["Remove gRPC from pool<br/>if present"]
+    J --> K["Emit event:<br/>container.terminated"]
+    K --> L["Done"]
 ```
 
 **Post-termination behavior:**
@@ -311,17 +332,29 @@ Explicit destruction of a container and its resources.
 When container count reaches `MAX_CONTAINERS` (default 50) and a new container is needed.
 
 **Eviction algorithm:**
-```
-1. New container requested but count >= MAX_CONTAINERS
-2. Identify eviction candidates:
-   - Status: 'paused' or 'stopped'
-   - No active sessions
-   - Never evict 'running' containers with active sessions
-3. Sort candidates by idle_since ASC (oldest idle first = LRU)
-4. Select first candidate
-5. Evict: stop container → preserve workspace cache → remove container
-6. Free slot now available for new container
-7. Emit event: container.evicted (includes evicted project_id, idle duration)
+```mermaid
+graph TD
+    A["New container requested"] --> B{Container count<br/>at MAX?}
+
+    B -->|No| C["Create new container"]
+    C --> D["Done"]
+
+    B -->|Yes| E["Identify eviction candidates:<br/>status: paused/stopped<br/>no active sessions"]
+
+    E --> F{Candidates<br/>found?}
+
+    F -->|No| G["Return RESOURCE_EXHAUSTED"]
+    G --> H["Done"]
+
+    F -->|Yes| I["Sort by idle_since ASC<br/>oldest first = LRU"]
+    I --> J["Select first candidate"]
+    J --> K["Stop container"]
+    K --> L["Preserve workspace cache"]
+    L --> M["Remove container"]
+    M --> N["Free slot available"]
+    N --> O["Create new container"]
+    O --> P["Emit event: container.evicted"]
+    P --> Q["Done"]
 ```
 
 **If no evictable candidates:**
@@ -368,16 +401,19 @@ When container count reaches `MAX_CONTAINERS` (default 50) and a new container i
 
 ### Cache Lifecycle
 
-```
-Phase 1 (Provision)     → Cache created (or reused if exists)
-Phase 2 (Active)        → Cache grows (repos cloned, deps installed)
-Phase 3 (Paused)        → Cache unchanged (frozen with container)
-Phase 4 (Resumed)       → Cache continues growing
-Phase 5 (Stopped)       → Cache persists on host
-Phase 6 (Failed/Restart)→ Cache persists, reused by new container
-Phase 7 (Terminated)    → Cache preserved (default) or cleared
-                           If preserved: TTL countdown begins
-Phase 8 (Evicted)       → Cache always preserved
+```mermaid
+graph LR
+    A["Phase 1<br/>Provision"] -->|Create/Reuse| B["Phase 2<br/>Active"]
+    B -->|Grow| C["Phase 3<br/>Paused"]
+    C -->|Frozen| D["Phase 4<br/>Resumed"]
+    D -->|Continue| E["Phase 5<br/>Stopped"]
+    E -->|Persist| F["Phase 6<br/>Failed/Restart"]
+    F -->|Reuse| B
+    F -->|Or to| G["Phase 7<br/>Terminated"]
+    G -->|clear_cache=false| H["Cache Preserved<br/>TTL: 7 days"]
+    G -->|clear_cache=true| I["Cache Deleted"]
+    H --> J["Phase 8<br/>Evicted"]
+    J -->|Always| H
 ```
 
 **TTL-based cleanup:**
