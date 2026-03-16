@@ -587,8 +587,8 @@ func TestPathTraversalDetection(t *testing.T) {
 
 ## Outstanding Questions
 
-1. Should credential decryption cache temporarily decrypted values for repeated use in same session?
+1. ~~Should credential decryption cache temporarily decrypted values for repeated use in same session?~~ **Resolved**: Yes, temporarily cache decrypted values for repeated use within the same session.
 2. Should we support credential rotation (re-encrypt all with new key)?
 3. Should cgroup v2 be mandatory or fallback to v1/no limits?
-4. How long should session logs be retained after completion?
-5. Should we implement process limits (memory per command, not just cgroup limits)?
+4. ~~How long should session logs be retained after completion?~~ **Resolved**: Retain logs only for the last N hours; default is 24 hours. Configurable per host.
+5. Should we implement process limits (memory per command, not just cgroup limits)? **Needs clarification**: Cgroups already limit memory per Docker container. What is meant by "memory per command" — per-process limits within the container (e.g., ulimits), or something else?

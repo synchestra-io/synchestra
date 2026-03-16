@@ -76,7 +76,7 @@ Monitoring, logging, and alerting specification: Prometheus metrics catalog (hos
 ## Outstanding Questions
 
 1. Should credentials support expiry/auto-rotation? Timeline for this feature?
-2. Should audit logs be retained indefinitely or with retention policy?
+2. ~~Should audit logs be retained indefinitely or with retention policy?~~ **Resolved**: Retain logs only for the last N hours; default is 24 hours. The retention window is configurable per host.
 3. Are there compliance requirements (HIPAA, PCI-DSS, SOC 2) affecting credential handling?
-4. Should container images be signed (Docker Content Trust)?
-5. Should containers auto-terminate after idle period (e.g., 24 hours)?
+4. ~~Should container images be signed (Docker Content Trust)?~~ **Resolved**: The requirement for signed Docker images is configurable per host.
+5. ~~Should containers auto-terminate after idle period (e.g., 24 hours)?~~ **Resolved**: Yes, containers auto-terminate after an idle timeout that is configurable per host.

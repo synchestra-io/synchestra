@@ -430,9 +430,9 @@ Disk:      50 GB (default)
 
 1. **HSM integration**: Should we support external HSM for key storage? Which platforms (AWS CloudHSM, Azure Key Vault, etc.)?
 2. **Key rotation**: How often should decryption keys rotate? Should old keys be retained for decrypting old credentials?
-3. **Audit retention**: How long should audit logs be retained? Where should they be stored (local, remote)?
+3. ~~**Audit retention**: How long should audit logs be retained? Where should they be stored (local, remote)?~~ **Resolved**: Retain logs only for the last N hours; default is 24 hours. Configurable per host. Storage location remains open.
 4. **Compliance scope**: Are there specific compliance requirements (HIPAA, PCI-DSS, SOC 2)? These affect credential handling and audit trails.
 5. **Secrets sharing across projects**: Should User A in Project A be able to store a secret that User B in Project B can access? Requires cross-project credential store.
 6. **Credential revocation**: If a credential is compromised, can it be revoked immediately? Or only on next container restart?
-7. **Supply chain security**: Should container image be signed (Docker Content Trust)? How to verify authenticity?
-8. **Ephemeral containers**: Should containers be destroyed after idle timeout to reduce credential exposure window?
+7. ~~**Supply chain security**: Should container image be signed (Docker Content Trust)? How to verify authenticity?~~ **Resolved**: The requirement for signed Docker images is configurable per host.
+8. ~~**Ephemeral containers**: Should containers be destroyed after idle timeout to reduce credential exposure window?~~ **Resolved**: Yes, containers auto-terminate after an idle timeout configurable per host.
