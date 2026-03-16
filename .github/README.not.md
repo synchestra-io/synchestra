@@ -6,4 +6,4 @@ on the repository's main page **instead of** the root `README.md`.
 Because this project's root `README.md` is the canonical entry point for both
 humans and agents, a `.github/README.md` must never be committed.
 
-The [`.git-hooks/pre-commit`](../.git-hooks/pre-commit) hook enforces this rule automatically.
+The [`.github/hooks/pre-commit`](hooks/pre-commit) hook enforces this rule automatically.

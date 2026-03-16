@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+# Pre-commit hook for Synchestra
+# Setup: git config core.hooksPath .github/hooks
+
+set -euo pipefail
+
+echo "Running .github/hooks/pre-commit..."
+
+# ---------------------------------------------------------------------------
+# 1. Block .github/README.md — it overrides root README on GitHub
+# ---------------------------------------------------------------------------
+if git diff --name-only --cached | grep -qi "^\.github/readme\.md$"; then
+  echo "ERROR: .github/README.md must NOT exist — it overrides the root README.md on GitHub."
+  echo "See .github/README.not.md for details."
+  exit 1
+fi
+
+# ---------------------------------------------------------------------------
+# 2. Every directory must have a README.md (AGENTS.md rule)
+#    Exempt: .github/ itself (not its subdirectories)
+# ---------------------------------------------------------------------------
+new_dirs=$(git diff --cached --name-only --diff-filter=A | xargs -I{} dirname {} | sort -u)
+
+for dir in $new_dirs; do
+    [[ "$dir" == "." ]] && continue
+    [[ "$dir" == ".github" ]] && continue
+
+    if ! git ls-files --cached "$dir/README.md" | grep -q .; then
+        echo "ERROR: Directory '$dir/' is missing a README.md (required by AGENTS.md)"
+        echo "  Every directory must have a README.md with an Outstanding Questions section."
+        echo ""
+        echo "  To fix: create $dir/README.md before committing."
+        exit 1
+    fi
+done
+
+# ---------------------------------------------------------------------------
+# 3. Go validation (if any .go / go.mod / go.sum changed)
+# ---------------------------------------------------------------------------
+if git diff --name-only --cached | grep -qE '\.(go|mod|sum)$|^go\.(mod|sum)$'; then
+  if git diff --name-only --cached | grep -qE '^go\.mod$'; then
+    gomodlint
+    exit_code=$?
+    if [ $exit_code -ne 0 ]; then
+      exit $exit_code
+    fi
+  fi
+
+  go mod tidy
+  go fmt ./...
+  go build ./...
+  go test ./...
+  golangci-lint run
+fi
