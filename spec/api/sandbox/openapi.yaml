@@ -1,0 +1,699 @@
+openapi: 3.1.0
+info:
+  title: Synchestra Sandbox API
+  description: |
+    REST API for sandbox container management — command execution, session streaming,
+    credential storage, and admin lifecycle operations.
+
+    Served by `synchestra serve --http`. All sandbox endpoints are scoped to a project.
+    See the [feature spec](../../features/sandbox/orchestrator/http-api.md) for full behavioral details.
+
+    ## Authentication
+    All requests require a Bearer token in the `Authorization` header.
+    WebSocket endpoints also accept `?token=<token>` for browser clients.
+
+    ## Access Levels
+    - `read` — view container status, list sessions, stream logs
+    - `read_write` — execute commands and manage credentials
+    - `admin` — destroy containers and access admin endpoints
+  version: 0.1.0
+  license:
+    name: MIT
+
+servers:
+  - url: /api/v1
+    description: API v1
+
+tags:
+  - name: sandbox-read
+    description: Read-only sandbox operations
+  - name: sandbox-execute
+    description: Command execution
+  - name: sandbox-credentials
+    description: Credential management
+  - name: sandbox-admin
+    description: Admin container lifecycle operations
+
+paths:
+  # ---------------------------------------------------------------------------
+  # Sandbox Operations
+  # ---------------------------------------------------------------------------
+
+  /sandbox/{project_id}/execute:
+    post:
+      operationId: sandboxExecute
+      summary: Execute a command in the sandbox
+      description: |
+        Execute a command in the project's sandbox container. If the container does not
+        exist, it is auto-provisioned before the command runs (transparent to the client).
+
+        Returns immediately with a `session_id`. Connect to the WebSocket `stream_url`
+        for real-time stdout/stderr output.
+
+        **Required access level:** `read_write`
+      tags: [sandbox-execute]
+      parameters:
+        - $ref: '#/components/parameters/ProjectIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecuteRequest'
+      responses:
+        '201':
+          description: Command accepted and session created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+        '504':
+          $ref: '#/components/responses/DeadlineExceeded'
+
+  /sandbox/{project_id}/status:
+    get:
+      operationId: sandboxStatus
+      summary: Get container status
+      description: |
+        Get the container's current status and resource usage.
+
+        If the container does not exist, returns `container_status: "unprovisioned"`.
+
+        **Required access level:** `read`
+      tags: [sandbox-read]
+      parameters:
+        - $ref: '#/components/parameters/ProjectIdParam'
+      responses:
+        '200':
+          description: Container status retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+
+  /sandbox/{project_id}/sessions:
+    get:
+      operationId: sandboxSessionList
+      summary: List sessions
+      description: |
+        List sessions for this project with optional filtering and cursor-based pagination.
+
+        **Required access level:** `read`
+      tags: [sandbox-read]
+      parameters:
+        - $ref: '#/components/parameters/ProjectIdParam'
+        - name: user_id
+          in: query
+          description: Filter sessions by the user who started them.
+          schema:
+            type: string
+        - name: status
+          in: query
+          description: Filter by session status.
+          schema:
+            $ref: '#/components/schemas/SessionStatus'
+        - name: page_size
+          in: query
+          description: Results per page (default 50, max 100).
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+        - name: page_token
+          in: query
+          description: Opaque pagination token from a previous response.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Session list retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+
+  /sandbox/{project_id}/sessions/{session_id}:
+    get:
+      operationId: sandboxSessionGet
+      summary: Get session details
+      description: |
+        Get detailed information for a single session. Primary reconnection endpoint —
+        works from any device, any host instance, at any time.
+
+        **Required access level:** `read`
+      tags: [sandbox-read]
+      parameters:
+        - $ref: '#/components/parameters/ProjectIdParam'
+        - $ref: '#/components/parameters/SessionIdParam'
+      responses:
+        '200':
+          description: Session details retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /sandbox/{project_id}/sessions/{session_id}/logs:
+    get:
+      operationId: sandboxSessionLogs
+      summary: Stream session logs (WebSocket)
+      description: |
+        Real-time log streaming via WebSocket upgrade. Supports reconnection with
+        `?since` for timestamp-based resume.
+
+        Server sends JSON text frames: `stdout`, `stderr`, and `exit` messages.
+        Server pings every 30s; client must pong within 10s.
+
+        **Required access level:** `read`
+      tags: [sandbox-read]
+      parameters:
+        - $ref: '#/components/parameters/ProjectIdParam'
+        - $ref: '#/components/parameters/SessionIdParam'
+        - name: token
+          in: query
+          description: Bearer token (alternative to Authorization header for WebSocket).
+          schema:
+            type: string
+        - name: since
+          in: query
+          description: |
+            ISO 8601 timestamp. Skip replay and stream only output produced after
+            this time. If omitted, replay from session start.
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '101':
+          description: WebSocket upgrade successful.
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /sandbox/{project_id}/credentials:
+    post:
+      operationId: sandboxCredentialStore
+      summary: Store or update a credential
+      description: |
+        Store or update an encrypted credential for use in sandbox commands.
+        Upsert semantics — if a credential with the same identifier exists, it is overwritten.
+
+        **Required access level:** `read_write`
+      tags: [sandbox-credentials]
+      parameters:
+        - $ref: '#/components/parameters/ProjectIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CredentialStoreRequest'
+      responses:
+        '200':
+          description: Credential stored successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+
+  /sandbox/{project_id}/credentials/{identifier}:
+    delete:
+      operationId: sandboxCredentialDelete
+      summary: Delete a credential
+      description: |
+        Delete a stored credential by identifier.
+
+        **Required access level:** `read_write`
+      tags: [sandbox-credentials]
+      parameters:
+        - $ref: '#/components/parameters/ProjectIdParam'
+        - name: identifier
+          in: path
+          required: true
+          description: Credential identifier.
+          schema:
+            type: string
+            pattern: '^[a-zA-Z0-9_-]+$'
+      responses:
+        '200':
+          description: Credential deleted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /sandbox/{project_id}:
+    delete:
+      operationId: sandboxDestroy
+      summary: Destroy sandbox container
+      description: |
+        Destroy the project's sandbox container and optionally clear the workspace cache.
+        Idempotent — returns 200 even if no container exists.
+
+        **Required access level:** `admin`
+      tags: [sandbox-admin]
+      parameters:
+        - $ref: '#/components/parameters/ProjectIdParam'
+        - name: clear_cache
+          in: query
+          description: If true, also remove the cached workspace data.
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Container destroyed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+
+  # ---------------------------------------------------------------------------
+  # Admin Operations
+  # ---------------------------------------------------------------------------
+
+  /admin/sandbox/containers:
+    get:
+      operationId: adminSandboxContainerList
+      summary: List all containers
+      description: List all containers across all projects.
+      tags: [sandbox-admin]
+      responses:
+        '200':
+          description: Container list retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+
+  /admin/sandbox/{project_id}/stop:
+    post:
+      operationId: adminSandboxStop
+      summary: Force-stop a container
+      description: |
+        Send SIGTERM; SIGKILL after 10 seconds if container does not exit.
+        All running sessions are terminated.
+      tags: [sandbox-admin]
+      parameters:
+        - $ref: '#/components/parameters/ProjectIdParam'
+      responses:
+        '200':
+          description: Container stopped.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /admin/sandbox/{project_id}/restart:
+    post:
+      operationId: adminSandboxRestart
+      summary: Force-restart a container
+      description: Stop (SIGTERM → SIGKILL) followed by immediate start.
+      tags: [sandbox-admin]
+      parameters:
+        - $ref: '#/components/parameters/ProjectIdParam'
+      responses:
+        '200':
+          description: Container restarted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /admin/sandbox/{project_id}/evict:
+    post:
+      operationId: adminSandboxEvict
+      summary: Evict container from active pool
+      description: |
+        Stop the container and remove from pool, but preserve workspace cache on disk.
+        Used by LRU eviction or manual operator cleanup.
+      tags: [sandbox-admin]
+      parameters:
+        - $ref: '#/components/parameters/ProjectIdParam'
+      responses:
+        '200':
+          description: Container evicted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /admin/sandbox/{project_id}/config:
+    patch:
+      operationId: adminSandboxConfigUpdate
+      summary: Update resource limits
+      description: |
+        Update resource limits for a project's container.
+        Changes take effect on the next container restart.
+      tags: [sandbox-admin]
+      parameters:
+        - $ref: '#/components/parameters/ProjectIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfigUpdateRequest'
+      responses:
+        '200':
+          description: Configuration updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /admin/sandbox/{project_id}/image:
+    patch:
+      operationId: adminSandboxImageUpdate
+      summary: Update container image
+      description: |
+        Update the container image for a project.
+        Takes effect on the next container restart.
+      tags: [sandbox-admin]
+      parameters:
+        - $ref: '#/components/parameters/ProjectIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImageUpdateRequest'
+      responses:
+        '200':
+          description: Image updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  parameters:
+    ProjectIdParam:
+      name: project_id
+      in: path
+      required: true
+      description: Project identifier.
+      schema:
+        type: string
+        pattern: '^[a-zA-Z0-9_-]+$'
+
+    SessionIdParam:
+      name: session_id
+      in: path
+      required: true
+      description: Session identifier.
+      schema:
+        type: string
+
+  schemas:
+    # --- Request Bodies ---
+
+    ExecuteRequest:
+      type: object
+      required: [command]
+      properties:
+        command:
+          type: array
+          items:
+            type: string
+          minItems: 1
+          description: Command to execute. First element is the executable, rest are arguments.
+        working_dir:
+          type: string
+          description: Working directory inside the container.
+        env:
+          type: object
+          additionalProperties:
+            type: string
+          description: Additional environment variables for this command only.
+        timeout_seconds:
+          type: integer
+          minimum: 1
+          maximum: 86400
+          default: 1800
+          description: Command timeout in seconds.
+        credentials:
+          type: array
+          items:
+            type: string
+          description: Credential identifiers to inject for this command.
+
+    CredentialStoreRequest:
+      type: object
+      required: [identifier, credential_type, credential_value]
+      properties:
+        identifier:
+          type: string
+          pattern: '^[a-zA-Z0-9_-]+$'
+          description: Unique name for this credential within the project.
+        credential_type:
+          $ref: '#/components/schemas/CredentialType'
+        credential_value:
+          type: string
+          description: The secret value. Encrypted at rest, never returned in responses.
+        description:
+          type: string
+          description: Human-readable description.
+        expires_at:
+          type: string
+          format: date-time
+          description: Expiration timestamp. Null for non-expiring credentials.
+
+    ConfigUpdateRequest:
+      type: object
+      properties:
+        memory_limit_mb:
+          type: integer
+          description: Memory limit in MB.
+        cpu_limit:
+          type: number
+          description: CPU limit (number of cores).
+        disk_quota_gb:
+          type: integer
+          description: Disk quota in GB.
+
+    ImageUpdateRequest:
+      type: object
+      required: [image]
+      properties:
+        image:
+          type: string
+          description: Full image reference (registry/repo:tag).
+
+    # --- Enums ---
+
+    ContainerStatus:
+      type: string
+      enum:
+        - unprovisioned
+        - creating
+        - starting
+        - running
+        - paused
+        - resuming
+        - stopping
+        - stopped
+        - failed
+        - terminated
+
+    SessionStatus:
+      type: string
+      enum: [pending, running, completed, failed]
+
+    CredentialType:
+      type: string
+      enum: [git_token, ssh_key, api_key, env_var]
+
+    AccessLevel:
+      type: string
+      enum: [read, read_write, admin]
+
+    # --- Response Envelope ---
+
+    SuccessEnvelope:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          description: Response payload (varies by endpoint).
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+
+    ErrorEnvelope:
+      type: object
+      required: [error, meta]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              description: Machine-readable error code matching gRPC code name.
+            message:
+              type: string
+              description: Human-readable error description.
+            details:
+              type: object
+              description: Optional structured context (varies by error code).
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+
+    ResponseMeta:
+      type: object
+      required: [request_id, timestamp]
+      properties:
+        request_id:
+          type: string
+          description: Unique request identifier for cross-layer tracing.
+        timestamp:
+          type: string
+          format: date-time
+          description: Host wall-clock time when response was serialized (UTC).
+
+  responses:
+    BadRequest:
+      description: Missing or invalid parameters.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+
+    Unauthenticated:
+      description: Invalid or missing authentication token.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+
+    PermissionDenied:
+      description: Insufficient access level.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+
+    NotFound:
+      description: Resource not found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+
+    RateLimited:
+      description: Rate limit or resource limit exceeded.
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+          description: Seconds until the rate limit window resets.
+        X-RateLimit-Limit:
+          schema:
+            type: integer
+        X-RateLimit-Remaining:
+          schema:
+            type: integer
+        X-RateLimit-Reset:
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+
+    Unavailable:
+      description: Container temporarily unreachable.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+
+    DeadlineExceeded:
+      description: Command or provisioning timed out.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'

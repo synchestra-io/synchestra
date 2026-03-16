@@ -2,7 +2,7 @@
 
 ## Overview
 
-> **Related documents:** [protocol.md](protocol.md) (gRPC service definition), [credentials.md](credentials.md) (encryption architecture — authoritative), [agent.proto](agent.proto) (protobuf source), [outstanding-questions.md](outstanding-questions.md) (open design questions).
+> **Related documents:** [README.md](README.md) (gRPC service definition), [credentials.md](credentials.md) (encryption architecture — authoritative), [agent.proto](agent.proto) (protobuf source), [outstanding-questions.md](../outstanding-questions.md) (open design questions).
 
 The gRPC Agent is a Go service that runs inside each Synchestra sandbox container. It listens on a Unix socket and implements the `SandboxAgent` service defined in `agent.proto`.
 

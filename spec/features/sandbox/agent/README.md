@@ -2,7 +2,15 @@
 
 ## Overview
 
-> **Related documents:** [agent.proto](agent.proto) (protobuf source for code generation), [http-api.md](http-api.md) (REST API that proxies to these RPCs), [agent-implementation-guide.md](agent-implementation-guide.md) (Go server implementation), [outstanding-questions.md](outstanding-questions.md) (open design questions).
+> **Related documents:** [agent.proto](agent.proto) (protobuf source for code generation), [http-api.md](../orchestrator/http-api.md) (REST API that proxies to these RPCs), [implementation-guide.md](implementation-guide.md) (Go server implementation), [outstanding-questions.md](../outstanding-questions.md) (open design questions).
+
+## Contents
+
+| Document | Description |
+|----------|-------------|
+| [agent.proto](agent.proto) | Protobuf 3 service definition for SandboxAgent gRPC service |
+| [credentials.md](credentials.md) | Credential vault: AES256-GCM encryption, injection patterns, key rotation |
+| [implementation-guide.md](implementation-guide.md) | Go implementation patterns for the container-side agent |
 
 The gRPC service specification for container-side agent (`SandboxAgent`). Defines all RPCs, message types, and communication semantics.
 

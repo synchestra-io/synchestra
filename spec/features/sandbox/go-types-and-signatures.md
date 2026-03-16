@@ -3,13 +3,13 @@
 All Go type definitions, interface definitions, and function signatures for the sandbox feature. Extracted from the spec documents. **No implementation code — only types, signatures, and call graphs.**
 
 **Sources:**
-- [orchestrator-implementation-guide.md](orchestrator-implementation-guide.md)
-- [agent-implementation-guide.md](agent-implementation-guide.md)
-- [testing.md](testing.md)
-- [orchestrator.md](orchestrator.md)
-- [http-api.md](http-api.md)
-- [database-schema.md](database-schema.md)
-- [monitoring.md](monitoring.md)
+- [orchestrator-implementation-guide.md](orchestrator/implementation-guide.md)
+- [agent-implementation-guide.md](agent/implementation-guide.md)
+- [testing.md](observability/testing.md)
+- [orchestrator.md](orchestrator/README.md)
+- [http-api.md](orchestrator/http-api.md)
+- [database-schema.md](orchestrator/database-schema.md)
+- [monitoring.md](observability/README.md)
 
 ---
 

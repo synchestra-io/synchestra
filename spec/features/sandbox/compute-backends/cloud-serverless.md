@@ -2,7 +2,7 @@
 
 Comprehensive architecture for running Synchestra sandbox containers on cloud serverless platforms (Google Cloud Run, AWS Fargate, Azure Container Instances).
 
-> **Related documents:** [compute-backends.md](compute-backends.md) (backend selection and `ComputeBackend` interface), [orchestrator.md](orchestrator.md) (orchestrator state machine), [lifecycle.md](lifecycle.md) (container lifecycle phases), [credentials.md](credentials.md) (credential encryption), [http-api.md](http-api.md) (REST API), [outstanding-questions.md](outstanding-questions.md) (open design questions).
+> **Related documents:** [compute-backends](README.md) (backend selection and `ComputeBackend` interface), [orchestrator](../orchestrator/README.md) (orchestrator state machine), [lifecycle](../orchestrator/lifecycle.md) (container lifecycle phases), [credentials](../agent/credentials.md) (credential encryption), [http-api](../orchestrator/http-api.md) (REST API), [outstanding-questions](../outstanding-questions.md) (open design questions).
 
 ---
 
@@ -232,10 +232,10 @@ sandbox:
 
 ### Container Image Compatibility
 
-The user's endpoint must run a gRPC server compatible with [agent.proto](agent.proto). Options:
+The user's endpoint must run a gRPC server compatible with [agent.proto](../agent/agent.proto). Options:
 
 1. **Use the official `synchestra/sandbox-agent` image** — deploy it on any platform that runs Docker containers.
-2. **Build a custom agent** — implement the `SandboxAgent` gRPC service (see [protocol.md](protocol.md)). Must support at least `ExecuteCommand`, `GetStatus`, `Ping`.
+2. **Build a custom agent** — implement the `SandboxAgent` gRPC service (see [protocol](../agent/README.md)). Must support at least `ExecuteCommand`, `GetStatus`, `Ping`.
 3. **Use a sidecar pattern** — run the official agent as a sidecar alongside custom tooling.
 
 ### Pros & Cons
@@ -321,13 +321,13 @@ Cloud serverless containers have cold start latency (2-10s). Strategies to minim
 
 2. **Workspace pre-warming**: Start workspace download before the first RPC arrives (triggered by HTTP health check).
 
-3. **Slim container image**: Keep the sandbox agent image small (< 200MB). Use multi-stage builds (already defined in [Dockerfile.spec](Dockerfile.spec)).
+3. **Slim container image**: Keep the sandbox agent image small (< 200MB). Use multi-stage builds (already defined in [Dockerfile.spec](../container-image/Dockerfile.spec)).
 
 4. **Lazy workspace loading**: Start accepting commands immediately; download workspace in the background. Commands that need workspace files wait for sync to complete.
 
 ### Lifecycle Mapping
 
-How the 10-state lifecycle (from [orchestrator.md](orchestrator.md)) maps to cloud serverless:
+How the 10-state lifecycle (from [orchestrator](../orchestrator/README.md)) maps to cloud serverless:
 
 | Orchestrator State | Cloud Serverless Equivalent |
 |---|---|
@@ -433,7 +433,7 @@ K8s backend should come later, when:
 - Cross-provider abstraction layer (if patterns diverge)
 
 ### Phase 5: Kubernetes Backend (separate from this doc)
-**Effort: 4-6 weeks.** See [compute-backends.md](compute-backends.md) Mode 3.
+**Effort: 4-6 weeks.** See [compute-backends](README.md) Mode 3.
 
 ---
 

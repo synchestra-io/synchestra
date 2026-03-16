@@ -29,7 +29,7 @@ intervention.
 
 ### 2. Should there be a `ListCredentials` RPC that returns identifiers (not values) for UI display?
 
-**Source:** [credentials.md](credentials.md)
+**Source:** [credentials.md](agent/credentials.md)
 
 Without a list operation, UIs and CLI tools have no way to show which credentials exist
 for a given container without attempting to read each by name.
@@ -40,7 +40,7 @@ for a given container without attempting to read each by name.
 
 ### 3. Should credential expiry trigger a notification/event via the event bus?
 
-**Source:** [credentials.md](credentials.md)
+**Source:** [credentials.md](agent/credentials.md)
 
 If credentials silently expire, commands that depend on them will fail with opaque errors.
 Proactive notification lets project owners rotate before breakage.
@@ -51,7 +51,7 @@ Proactive notification lets project owners rotate before breakage.
 
 ### 4. Should the encryption key be derivable from a user-provided passphrase (PBKDF2/Argon2)?
 
-**Source:** [credentials.md](credentials.md)
+**Source:** [credentials.md](agent/credentials.md)
 
 Deriving the encryption key from a passphrase adds a layer of defense: even if the host
 database leaks, credentials stay encrypted under a secret only the user knows.
@@ -65,7 +65,7 @@ database leaks, credentials stay encrypted under a secret only the user knows.
 
 ### 5. Should `DeleteCredential` be added as an explicit RPC?
 
-**Source:** [credentials.md](credentials.md)
+**Source:** [credentials.md](agent/credentials.md)
 
 Currently credentials can be overwritten via `SetCredential` but not explicitly removed.
 Without delete, stale credentials linger as environment variables inside the container.
@@ -75,7 +75,7 @@ Without delete, stale credentials linger as environment variables inside the con
 
 ### 6. What is the convention for mapping `api_key` identifiers to environment variable names?
 
-**Source:** [credentials.md](credentials.md)
+**Source:** [credentials.md](agent/credentials.md)
 
 Credentials are injected as environment variables, but the mapping from an identifier like
 `github_token` to `GITHUB_TOKEN` needs to be deterministic and documented.
@@ -86,7 +86,7 @@ Credentials are injected as environment variables, but the mapping from an ident
 
 ### 7. Should we support credential rotation (re-encrypt all credentials with a new key)?
 
-**Source:** [agent-implementation-guide.md](agent-implementation-guide.md)
+**Source:** [agent-implementation-guide.md](agent/implementation-guide.md)
 
 If the encryption key is compromised or rotated as policy, all stored credentials need
 re-encryption. Without a bulk operation this is painful and error-prone.
@@ -104,7 +104,7 @@ Questions about container states, auto-pause behavior, resource management, and 
 
 ### 8. Should there be a "maintenance" state where the container is running but not accepting new commands?
 
-**Source:** [lifecycle.md](lifecycle.md)
+**Source:** [lifecycle.md](orchestrator/lifecycle.md)
 
 During image updates or workspace migrations, the container is alive but shouldn't accept
 user commands. Without a dedicated state, the orchestrator must choose between "running"
@@ -117,7 +117,7 @@ user commands. Without a dedicated state, the orchestrator must choose between "
 
 ### 9. Should auto-pause be disabled for specific high-priority projects?
 
-**Source:** [lifecycle.md](lifecycle.md)
+**Source:** [lifecycle.md](orchestrator/lifecycle.md)
 
 Some projects run long-lived background services (dev servers, watchers) where pausing
 would be disruptive. A blanket auto-pause policy doesn't fit all workloads.
@@ -129,7 +129,7 @@ would be disruptive. A blanket auto-pause policy doesn't fit all workloads.
 
 ### 10. Should the workspace cache TTL be per-project configurable, or global only?
 
-**Source:** [lifecycle.md](lifecycle.md)
+**Source:** [lifecycle.md](orchestrator/lifecycle.md)
 
 Different projects have different workspace sizes and rebuild costs. A global TTL either
 wastes disk on small projects or evicts large projects too aggressively.
@@ -141,7 +141,7 @@ wastes disk on small projects or evicts large projects too aggressively.
 
 ### 11. Should lifecycle hooks support custom scripts (pre-start, post-stop) for project-specific initialization?
 
-**Source:** [lifecycle.md](lifecycle.md)
+**Source:** [lifecycle.md](orchestrator/lifecycle.md)
 
 Projects may need to run database migrations, install extra tools, or warm caches before
 the container is ready for user commands.
@@ -156,7 +156,7 @@ the container is ready for user commands.
 
 ### 12. Should eviction emit a user-facing notification to the project owner?
 
-**Source:** [lifecycle.md](lifecycle.md)
+**Source:** [lifecycle.md](orchestrator/lifecycle.md)
 
 If a container is evicted due to resource pressure, the project owner may not know until
 their next command fails. Silent eviction degrades trust.
@@ -168,7 +168,7 @@ their next command fails. Silent eviction degrades trust.
 
 ### 13. What happens when a paused container's host runs low on memory — evict or OOM?
 
-**Source:** [lifecycle.md](lifecycle.md)
+**Source:** [lifecycle.md](orchestrator/lifecycle.md)
 
 Paused containers (SIGSTOP'd / frozen cgroups) still consume memory. Under memory pressure
 the kernel OOM killer may terminate them unpredictably, or the orchestrator can proactively
@@ -188,7 +188,7 @@ Questions about the HTTP API surface, WebSocket behavior, and gRPC protocol exte
 
 ### 14. Should the execute endpoint support SSE (Server-Sent Events) as an alternative to WebSocket?
 
-**Source:** [http-api.md](http-api.md)
+**Source:** [http-api.md](orchestrator/http-api.md)
 
 SSE is simpler to implement for clients (plain HTTP, auto-reconnect built into browsers)
 but is unidirectional (server → client only). WebSocket supports bidirectional
@@ -201,7 +201,7 @@ communication.
 
 ### 15. Should the WebSocket connection support client→server messages (stdin for interactive processes)?
 
-**Source:** [http-api.md](http-api.md)
+**Source:** [http-api.md](orchestrator/http-api.md)
 
 Without stdin support, interactive tools (REPLs, editors, debuggers) cannot be used
 through the WebSocket connection.
@@ -213,7 +213,7 @@ through the WebSocket connection.
 
 ### 16. Should session output replay on WebSocket reconnection support byte-offset–based resume?
 
-**Source:** [http-api.md](http-api.md)
+**Source:** [http-api.md](orchestrator/http-api.md)
 
 On reconnect, clients need to resume from where they left off. Byte offsets are precise
 but require the server to track output position; sequence numbers are simpler but coarser.
@@ -225,7 +225,7 @@ but require the server to track output position; sequence numbers are simpler bu
 
 ### 17. Should we add Prometheus metrics support (command execution count, latencies)?
 
-**Source:** [protocol.md](protocol.md)
+**Source:** [protocol.md](agent/README.md)
 
 Metrics at the gRPC layer provide visibility into command execution patterns, error rates,
 and latency distributions.
@@ -237,7 +237,7 @@ and latency distributions.
 
 ### 18. Should we support streaming from multiple log streams (stdout + stderr merged)?
 
-**Source:** [protocol.md](protocol.md)
+**Source:** [protocol.md](agent/README.md)
 
 Currently it's unclear whether stdout and stderr are delivered as separate tagged streams
 or merged. Separate streams allow clients to render errors differently; merged streams
@@ -256,7 +256,7 @@ Questions about metrics collection, log aggregation, tracing, and alerting.
 
 ### 19. Should container-side metrics be pushed (via event bus) or pulled (via orchestrator proxy)?
 
-**Source:** [monitoring.md](monitoring.md)
+**Source:** [monitoring.md](observability/README.md)
 
 Push-based metrics (container → event bus → collector) work well for ephemeral containers
 that may disappear before a scrape. Pull-based (Prometheus scraping a proxy) is the
@@ -269,7 +269,7 @@ standard Prometheus model.
 
 ### 20. Should there be a dedicated log aggregation pipeline (ELK/Loki) or stdout-based collection?
 
-**Source:** [monitoring.md](monitoring.md)
+**Source:** [monitoring.md](observability/README.md)
 
 A dedicated pipeline provides search, retention, and dashboards. Stdout-based collection
 (Docker log driver → external collector) is simpler but less capable.
@@ -281,7 +281,7 @@ A dedicated pipeline provides search, retention, and dashboards. Stdout-based co
 
 ### 21. Should session command output be indexed for search?
 
-**Source:** [monitoring.md](monitoring.md)
+**Source:** [monitoring.md](observability/README.md)
 
 Indexing command output would allow users and operators to search past session history
 ("find the session where the build failed on Tuesday").
@@ -295,7 +295,7 @@ Indexing command output would allow users and operators to search past session h
 
 ### 22. What OpenTelemetry exporter should be the default?
 
-**Source:** [monitoring.md](monitoring.md)
+**Source:** [monitoring.md](observability/README.md)
 
 OpenTelemetry supports multiple exporters (OTLP, Jaeger, Zipkin, stdout). The default
 affects out-of-the-box experience and documentation.
@@ -308,7 +308,7 @@ affects out-of-the-box experience and documentation.
 
 ### 23. Should alert thresholds be configurable at runtime or fixed at deploy time?
 
-**Source:** [monitoring.md](monitoring.md)
+**Source:** [monitoring.md](observability/README.md)
 
 Runtime-configurable thresholds allow operators to tune alerting without redeploying.
 Deploy-time thresholds are simpler and less prone to accidental misconfiguration.
@@ -327,7 +327,7 @@ Questions about schema design, audit logging, retention, and tenant isolation.
 
 ### 24. What is the retention policy for access mapping history?
 
-**Source:** [database-schema.md](database-schema.md)
+**Source:** [database-schema.md](orchestrator/database-schema.md)
 
 Access mappings (which users accessed which containers) accumulate over time. Without a
 retention policy, the table grows unboundedly.
@@ -339,7 +339,7 @@ retention policy, the table grows unboundedly.
 
 ### 25. Should we add a separate audit/event log table?
 
-**Source:** [database-schema.md](database-schema.md)
+**Source:** [database-schema.md](orchestrator/database-schema.md)
 
 Currently lifecycle events and credential operations are logged to stdout. A database
 table provides queryable, durable audit history.
@@ -351,7 +351,7 @@ table provides queryable, durable audit history.
 
 ### 26. For multi-tenant deployments, do we need tenant_id isolation at the database level?
 
-**Source:** [database-schema.md](database-schema.md)
+**Source:** [database-schema.md](orchestrator/database-schema.md)
 
 If multiple organizations share a Synchestra deployment, data isolation must be enforced.
 Database-level isolation (tenant_id column + row-level security) is the standard approach.
@@ -364,7 +364,7 @@ Database-level isolation (tenant_id column + row-level security) is the standard
 
 ### 27. Should resource_quota fields be enforced at database layer or application layer?
 
-**Source:** [database-schema.md](database-schema.md)
+**Source:** [database-schema.md](orchestrator/database-schema.md)
 
 Resource quotas (CPU, memory, disk) can be enforced via database constraints (CHECK,
 triggers) or in application code. Database enforcement is harder to bypass but less
@@ -384,7 +384,7 @@ Questions about testing strategy, CI pipeline, and test infrastructure.
 
 ### 28. Should there be a chaos testing framework for simulating Docker daemon failures?
 
-**Source:** [testing.md](testing.md)
+**Source:** [testing.md](observability/testing.md)
 
 The orchestrator must handle Docker daemon crashes, network partitions, and hung
 containers gracefully. Without chaos testing, these code paths are exercised only in
@@ -398,7 +398,7 @@ production.
 
 ### 29. Should performance benchmarks be included as part of CI?
 
-**Source:** [testing.md](testing.md)
+**Source:** [testing.md](observability/testing.md)
 
 Benchmarks in CI catch performance regressions early. However, CI environments have
 variable performance, leading to flaky benchmark results.
@@ -411,7 +411,7 @@ variable performance, leading to flaky benchmark results.
 
 ### 30. Should there be snapshot/golden-file tests for gRPC protocol messages?
 
-**Source:** [testing.md](testing.md)
+**Source:** [testing.md](observability/testing.md)
 
 Golden-file tests catch unintended changes to the wire format of gRPC messages, which
 could break backward compatibility.
@@ -423,7 +423,7 @@ could break backward compatibility.
 
 ### 31. Should integration tests use a dedicated Docker network?
 
-**Source:** [testing.md](testing.md)
+**Source:** [testing.md](observability/testing.md)
 
 A dedicated network prevents test containers from interfering with the host or other test
 runs, and enables predictable DNS resolution between test containers.
@@ -435,7 +435,7 @@ runs, and enables predictable DNS resolution between test containers.
 
 ### 32. What is the retention policy for test container images in the CI registry?
 
-**Source:** [testing.md](testing.md)
+**Source:** [testing.md](observability/testing.md)
 
 CI builds produce container images that accumulate in the registry. Without cleanup,
 storage costs grow indefinitely.
@@ -467,7 +467,7 @@ and key management procedures. The answer shapes many other design decisions.
 
 ### 34. Should cgroup v2 be mandatory or fallback to v1/no limits?
 
-**Source:** [agent-implementation-guide.md](agent-implementation-guide.md)
+**Source:** [agent-implementation-guide.md](agent/implementation-guide.md)
 
 cgroup v2 provides unified resource control and is the default on modern Linux
 distributions. Older hosts may only support cgroup v1 or have no cgroup support.
@@ -480,7 +480,7 @@ distributions. Older hosts may only support cgroup v1 or have no cgroup support.
 
 ### 35. Should we implement per-process memory limits (ulimits) beyond container cgroup limits?
 
-**Source:** [agent-implementation-guide.md](agent-implementation-guide.md)
+**Source:** [agent-implementation-guide.md](agent/implementation-guide.md)
 
 Container-level cgroup limits cap total memory for the container. Per-process ulimits add
 defense-in-depth against a single runaway process consuming the container's entire
@@ -501,7 +501,7 @@ Questions about deployment topologies, cloud serverless architecture, and backen
 
 ### 36. Should Synchestra pre-warm cloud containers (min-instances=1) or accept cold-start latency?
 
-**Source:** [compute-backends.md](compute-backends.md), [cloud-serverless.md](cloud-serverless.md)
+**Source:** [compute-backends.md](compute-backends/README.md), [cloud-serverless.md](compute-backends/cloud-serverless.md)
 
 Cloud serverless platforms have cold starts of 1-5 seconds. Pre-warming keeps at least one
 instance running, eliminating latency but incurring idle cost.
@@ -513,7 +513,7 @@ instance running, eliminating latency but incurring idle cost.
 
 ### 37. Should the `external` backend support any lifecycle operations beyond `Connect()`?
 
-**Source:** [compute-backends.md](compute-backends.md)
+**Source:** [compute-backends.md](compute-backends/README.md)
 
 The external backend (user-provided endpoint) currently only defines `Connect()`. Users
 might want Synchestra to report health, restart on failure, or manage workspace sync.
@@ -525,7 +525,7 @@ might want Synchestra to report health, restart on failure, or manage workspace 
 
 ### 38. Should backend selection be immutable per-project, or should projects migrate between backends?
 
-**Source:** [compute-backends.md](compute-backends.md)
+**Source:** [compute-backends.md](compute-backends/README.md)
 
 A project starts on Single Host but outgrows it. Can it move to Cloud Serverless without
 recreating the sandbox?
@@ -538,7 +538,7 @@ recreating the sandbox?
 
 ### 39. For Kubernetes mode, CRD+operator pattern or simpler Deployment-per-project?
 
-**Source:** [compute-backends.md](compute-backends.md)
+**Source:** [compute-backends.md](compute-backends/README.md)
 
 CRD+operator gives the most Kubernetes-native experience (custom resources, reconciliation
 loops, `kubectl` integration) but is significantly more complex to build.
@@ -549,7 +549,7 @@ loops, `kubectl` integration) but is significantly more complex to build.
 
 ### 40. Should cloud workspace sync be full snapshots or incremental (rsync-style diffs)?
 
-**Source:** [compute-backends.md](compute-backends.md), [cloud-serverless.md](cloud-serverless.md)
+**Source:** [compute-backends.md](compute-backends/README.md), [cloud-serverless.md](compute-backends/cloud-serverless.md)
 
 Full snapshots are simple but slow for large workspaces. Incremental sync is faster but
 adds complexity (tracking changed files, partial failure handling).
@@ -561,7 +561,7 @@ adds complexity (tracking changed files, partial failure handling).
 
 ### 41. For Submode A (Fully Managed), what pricing model works best?
 
-**Source:** [cloud-serverless.md](cloud-serverless.md)
+**Source:** [cloud-serverless.md](compute-backends/cloud-serverless.md)
 
 Synchestra pays the cloud bill and charges users. The pricing model must cover costs with
 margin while remaining competitive.
@@ -573,7 +573,7 @@ margin while remaining competitive.
 
 ### 42. For Submode B (Delegated), support GCP Workload Identity Federation as alternative to service account keys?
 
-**Source:** [cloud-serverless.md](cloud-serverless.md)
+**Source:** [cloud-serverless.md](compute-backends/cloud-serverless.md)
 
 Service account JSON keys are a security liability (long-lived credentials). Workload
 Identity Federation provides keyless auth via OIDC tokens.
@@ -584,7 +584,7 @@ Identity Federation provides keyless auth via OIDC tokens.
 
 ### 43. What is the maximum acceptable cold start latency before auto-warming is triggered?
 
-**Source:** [cloud-serverless.md](cloud-serverless.md)
+**Source:** [cloud-serverless.md](compute-backends/cloud-serverless.md)
 
 Need a threshold to decide when a project's cold starts are unacceptable and should trigger
 pre-warming (if opted in).
@@ -595,7 +595,7 @@ pre-warming (if opted in).
 
 ### 44. For Submode C (External), should Synchestra verify agent protocol compatibility on first connection?
 
-**Source:** [cloud-serverless.md](cloud-serverless.md)
+**Source:** [cloud-serverless.md](compute-backends/cloud-serverless.md)
 
 The user manages their own agent. If the agent runs an incompatible protocol version,
 commands will fail with confusing errors.
@@ -607,7 +607,7 @@ commands will fail with confusing errors.
 
 ### 45. Should there be a Submode B setup wizard in the WebUI?
 
-**Source:** [cloud-serverless.md](cloud-serverless.md)
+**Source:** [cloud-serverless.md](compute-backends/cloud-serverless.md)
 
 Setting up delegated access to a user's cloud account requires multiple steps (create
 service account, grant roles, configure billing). A wizard could generate the

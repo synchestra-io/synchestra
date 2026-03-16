@@ -2,6 +2,15 @@
 
 ## Overview
 
+## Contents
+
+| Document | Description |
+|----------|-------------|
+| [Dockerfile.spec](Dockerfile.spec) | Multi-stage Dockerfile specification |
+| [docker-entrypoint.sh](docker-entrypoint.sh) | Container entrypoint script |
+| [build-deployment.md](build-deployment.md) | Image building, scanning, and deployment procedures |
+| [build-automation.md](build-automation.md) | CI/CD automation (Makefile targets, GitHub Actions) |
+
 Multi-stage Docker image that builds the gRPC agent and runtime environment. Optimized for security (minimal base, non-root user, read-only filesystem where possible) and performance.
 
 ## Build Arguments

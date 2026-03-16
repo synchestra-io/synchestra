@@ -2,7 +2,16 @@
 
 ## Overview
 
-> **Related documents:** [lifecycle.md](lifecycle.md) (lifecycle phases and timing), [orchestrator-implementation-guide.md](orchestrator-implementation-guide.md) (Go implementation patterns), [http-api.md](http-api.md) (admin API endpoints), [monitoring.md](monitoring.md) (health checks and metrics), [outstanding-questions.md](outstanding-questions.md) (open design questions).
+> **Related documents:** [lifecycle.md](lifecycle.md) (lifecycle phases and timing), [implementation-guide.md](implementation-guide.md) (Go implementation patterns), [http-api.md](http-api.md) (admin API endpoints), [monitoring.md](../observability/README.md) (health checks and metrics), [outstanding-questions.md](../outstanding-questions.md) (open design questions).
+
+## Contents
+
+| Document | Description |
+|----------|-------------|
+| [lifecycle.md](lifecycle.md) | Container lifecycle phases, state transitions, and timing |
+| [database-schema.md](database-schema.md) | Host-side SQLite schema for container metadata and access control |
+| [http-api.md](http-api.md) | REST API endpoints for sandbox operations and admin lifecycle |
+| [implementation-guide.md](implementation-guide.md) | Go implementation patterns and package structure |
 
 The Container Orchestrator is the host-side service component responsible for managing the lifecycle of sandbox containers, maintaining gRPC connections to container agents, performing health monitoring, and routing requests from the HTTP API layer to the appropriate container. It runs as part of `synchestra serve --http`.
 
@@ -136,7 +145,7 @@ grpc.WithKeepaliveParams(keepalive.ClientParameters{
 - A single background goroutine iterates all running containers on each tick.
 - Interval: 30 seconds (configurable via `SYNCHESTRA_SANDBOX_HEALTH_INTERVAL`).
 - Timeout per check: 5 seconds (configurable via `SYNCHESTRA_SANDBOX_HEALTH_TIMEOUT`).
-- Uses the `Ping()` RPC defined in [agent.proto](agent.proto).
+- Uses the `Ping()` RPC defined in [agent.proto](../agent/agent.proto).
 
 ### Health Check Logic
 

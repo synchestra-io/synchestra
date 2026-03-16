@@ -2,7 +2,7 @@
 
 ## Overview
 
-> **Related documents:** [orchestrator.md](orchestrator.md) (container metadata usage), [lifecycle.md](lifecycle.md) (state transitions that update the database), [outstanding-questions.md](outstanding-questions.md) (open design questions).
+> **Related documents:** [orchestrator.md](README.md) (container metadata usage), [lifecycle.md](lifecycle.md) (state transitions that update the database), [outstanding-questions.md](../outstanding-questions.md) (open design questions).
 
 The host-side database (`synchestra serve --http`) stores **minimal data**: only user↔project access mappings and container metadata for lifecycle management. **All state, secrets, and execution data remain inside containers.**
 

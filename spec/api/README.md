@@ -10,6 +10,7 @@ The feature description and design principles live in [`spec/features/api/`](../
 |---|---|---|
 | [task/](task/README.md) | Task lifecycle operations | In Progress |
 | [project/](project/README.md) | Server project management | In Progress |
+| [sandbox/](sandbox/README.md) | Sandbox container management | In Progress |
 
 Future resources (not yet specified):
 
@@ -27,6 +28,10 @@ Task lifecycle operations — create, query, and transition tasks through the st
 ### project
 
 Server project management — list and add projects to a running server or server configuration. Endpoints map to `synchestra server project` CLI commands. See [`project/README.md`](project/README.md).
+
+### sandbox
+
+Sandbox container management — command execution, session streaming, credential storage, and admin lifecycle operations. Endpoints proxy through the Container Orchestrator to per-project gRPC agents. See [`sandbox/README.md`](sandbox/README.md).
 
 ## Common Conventions
 

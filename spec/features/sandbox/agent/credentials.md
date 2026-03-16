@@ -4,16 +4,16 @@
 
 Container-managed encrypted credential vault for the Synchestra sandbox. The host is **stateless** — it never sees, stores, or decrypts credentials. Each container autonomously manages its own vault using AES256-GCM encryption with a per-container persistent key.
 
-> **Related documents:** [protocol.md](protocol.md) (gRPC messages), [agent-implementation-guide.md](agent-implementation-guide.md) (Go implementation), [http-api.md](http-api.md) (REST endpoints), [outstanding-questions.md](outstanding-questions.md) (open design questions).
+> **Related documents:** [README.md](README.md) (gRPC messages), [implementation-guide.md](implementation-guide.md) (Go implementation), [http-api.md](../orchestrator/http-api.md) (REST endpoints), [outstanding-questions.md](../outstanding-questions.md) (open design questions).
 
-This document is the **authoritative, consolidated** credential management reference. For gRPC message definitions and RPC behavior, see [protocol.md](protocol.md). For Go implementation patterns (structs, functions, tests), see [agent-implementation-guide.md](agent-implementation-guide.md).
+This document is the **authoritative, consolidated** credential management reference. For gRPC message definitions and RPC behavior, see [README.md](README.md). For Go implementation patterns (structs, functions, tests), see [implementation-guide.md](implementation-guide.md).
 
 **Related specs:**
 
-- [protocol.md](protocol.md) — `StoreCredential` / `GetCredential` RPCs, message definitions, behavior
-- [agent-implementation-guide.md](agent-implementation-guide.md) — `CredentialVault` interface, AES256-GCM Go implementation
+- [README.md](README.md) — `StoreCredential` / `GetCredential` RPCs, message definitions, behavior
+- [implementation-guide.md](implementation-guide.md) — `CredentialVault` interface, AES256-GCM Go implementation
 - [agent.proto](agent.proto) — Protobuf message schemas
-- [orchestrator.md](orchestrator.md) — Host statelessness design principle
+- [orchestrator](../orchestrator/README.md) — Host statelessness design principle
 
 ## Design Principles
 
@@ -118,7 +118,7 @@ The vault is a single JSON file with per-entry encryption:
 
 Each entry is independently encrypted — updating one credential does not require re-encrypting the others.
 
-> **Implementation note:** The `ciphertext` field contains `base64(nonce || gcm_ciphertext)`. On decryption, split the decoded bytes: the first 12 bytes are the GCM nonce, the remainder is the ciphertext. See [agent-implementation-guide.md](agent-implementation-guide.md) for the Go implementation — note that the implementation guide currently stores nonce and ciphertext as separate fields; reconcile to use the combined format defined here.
+> **Implementation note:** The `ciphertext` field contains `base64(nonce || gcm_ciphertext)`. On decryption, split the decoded bytes: the first 12 bytes are the GCM nonce, the remainder is the ciphertext. See [implementation-guide.md](implementation-guide.md) for the Go implementation — note that the implementation guide currently stores nonce and ciphertext as separate fields; reconcile to use the combined format defined here.
 
 ## Credential Lifecycle
 
@@ -131,7 +131,7 @@ Each entry is independently encrypted — updating one credential does not requi
 5. Audit log: `credential.stored {identifier} {type} {user_id}` (never the value).
 6. Returns `StoreCredentialResponse` with success confirmation.
 
-> See [protocol.md](protocol.md) for `StoreCredentialRequest` / `StoreCredentialResponse` message definitions and RPC behavior.
+> See [README.md](README.md) for `StoreCredentialRequest` / `StoreCredentialResponse` message definitions and RPC behavior.
 
 ### Retrieve (for Command Execution)
 
@@ -144,7 +144,7 @@ Each entry is independently encrypted — updating one credential does not requi
 7. Temp files (e.g., SSH key file) are removed immediately after command.
 8. Audit log: `credential.accessed {identifier} {type} {session_id}`.
 
-> See [protocol.md](protocol.md) for `GetCredentialRequest` / `GetCredentialResponse` message definitions.
+> See [README.md](README.md) for `GetCredentialRequest` / `GetCredentialResponse` message definitions.
 
 ### Delete
 
@@ -266,7 +266,7 @@ Use cases: shared deploy keys, CI tokens, team API keys.
 
 - gRPC over Unix socket — credentials never traverse a network.
 - User → host API is HTTPS — encrypted in transit.
-- See [protocol.md](protocol.md) for transport details.
+- See [README.md](README.md) for transport details.
 
 ## Audit Log
 

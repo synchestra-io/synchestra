@@ -4,7 +4,7 @@ Testing strategy for the sandbox feature covering unit tests, integration tests,
 
 **Location in repo**: `internal/sandbox/` (tests co-located with source)
 
-> **API paths**: All endpoint paths follow the conventions defined in [http-api.md](http-api.md). Admin endpoints use `/api/v1/admin/sandbox/{project_id}/...`.
+> **API paths**: All endpoint paths follow the conventions defined in [http-api.md](../orchestrator/http-api.md). Admin endpoints use `/api/v1/admin/sandbox/{project_id}/...`.
 
 ## Test Categories
 

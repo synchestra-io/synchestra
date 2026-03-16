@@ -2,7 +2,7 @@
 
 ## Overview
 
-> **Related documents:** [orchestrator.md](orchestrator.md) (state machine, transitions), [monitoring.md](monitoring.md) (lifecycle events and metrics), [credentials.md](credentials.md) (credential persistence across restarts), [outstanding-questions.md](outstanding-questions.md) (open design questions).
+> **Related documents:** [orchestrator.md](README.md) (state machine, transitions), [monitoring.md](../observability/README.md) (lifecycle events and metrics), [credentials.md](../agent/credentials.md) (credential persistence across restarts), [outstanding-questions.md](../outstanding-questions.md) (open design questions).
 
 This specification details the hybrid lifecycle model for sandbox containers. Containers are **persistent** (always exist in some state) but **resource-efficient** (auto-pause when idle, auto-resume on demand). The orchestrator manages all transitions; containers themselves are passive.
 
@@ -17,9 +17,9 @@ The lifecycle model is "hybrid" because it combines:
 - The **orchestrator is the sole authority** on state transitions — no container self-reports its state
 
 **Relationship to other specs:**
-- [`orchestrator.md`](orchestrator.md) defines the state machine (10 states, 17 transitions), gRPC connection pool, and routing logic
+- [`orchestrator.md`](README.md) defines the state machine (10 states, 17 transitions), gRPC connection pool, and routing logic
 - [`database-schema.md`](database-schema.md) defines the `sandbox_container_metadata` table that persists container status
-- [`protocol.md`](protocol.md) defines the `Ping()` RPC used for health checks and readiness
+- [`protocol.md`](../agent/README.md) defines the `Ping()` RPC used for health checks and readiness
 - This document **consolidates and details** the lifecycle behaviors, adding operational guidance
 
 ---
@@ -221,7 +221,7 @@ graph TD
     M --> N["Done"]
 ```
 
-> **Note:** The admin force-stop endpoint in [orchestrator.md](orchestrator.md) uses a shorter 10-second timeout before SIGKILL, compared to the 60-second graceful shutdown timeout above. The 10s timeout applies only to the admin force-stop API; the 60s timeout applies to all other stop triggers (idle timeout, system shutdown, user-initiated stop).
+> **Note:** The admin force-stop endpoint in [orchestrator.md](README.md) uses a shorter 10-second timeout before SIGKILL, compared to the 60-second graceful shutdown timeout above. The 10s timeout applies only to the admin force-stop API; the 60s timeout applies to all other stop triggers (idle timeout, system shutdown, user-initiated stop).
 
 **What's preserved after stop:**
 - Workspace volume on host (repos, cache, credentials, encryption key)

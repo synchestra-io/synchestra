@@ -2,7 +2,9 @@
 
 ## Overview
 
-> **Related documents:** [protocol.md](protocol.md) (gRPC service that the API proxies to), [orchestrator.md](orchestrator.md) (orchestrator interface), [credentials.md](credentials.md) (credential management details), [testing.md](testing.md) (API test specifications), [outstanding-questions.md](outstanding-questions.md) (open design questions).
+> **Related documents:** [protocol.md](../agent/README.md) (gRPC service that the API proxies to), [orchestrator.md](README.md) (orchestrator interface), [credentials.md](../agent/credentials.md) (credential management details), [testing.md](../observability/testing.md) (API test specifications), [outstanding-questions.md](../outstanding-questions.md) (open design questions).
+>
+> **OpenAPI contract:** The formal OpenAPI 3.1 specification lives at [`spec/api/sandbox/`](../../../api/sandbox/README.md).
 
 The sandbox HTTP API is served by `synchestra serve --http` and provides RESTful endpoints for the web application to interact with sandbox containers. All sandbox endpoints are prefixed with `/api/v1/sandbox/`. Admin endpoints are prefixed with `/api/v1/admin/sandbox/`.
 

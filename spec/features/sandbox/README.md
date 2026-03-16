@@ -4,90 +4,37 @@ Safe, isolated execution environments for running user-initiated commands from t
 
 ## Contents
 
-| Document | Description |
+| Directory / Document | Description |
 |---|---|
-| [database-schema.md](database-schema.md) | Host database schema: minimal, access mappings only |
-| [protocol.md](protocol.md) | gRPC service protocol and message definitions |
-| [agent.proto](agent.proto) | Protobuf 3 service definition |
-| [agent-implementation-guide.md](agent-implementation-guide.md) | Detailed Go implementation patterns for gRPC agent |
-| [Dockerfile.md](Dockerfile.md) | Container image overview, build arguments, runtime configuration |
-| [Dockerfile.spec](Dockerfile.spec) | Complete multi-stage Dockerfile specification |
-| [docker-entrypoint.sh](docker-entrypoint.sh) | Container entrypoint script for initialization |
-| [container-build-deployment.md](container-build-deployment.md) | Image building, scanning, deployment (Docker, Compose, K8s) |
-| [container-build-automation.md](container-build-automation.md) | Build scripts, Makefile targets, CI/CD pipeline (GitHub Actions) |
-| [orchestrator.md](orchestrator.md) | Container Orchestrator: lifecycle state machine, gRPC pool, health monitoring, routing |
-| [orchestrator-implementation-guide.md](orchestrator-implementation-guide.md) | Go implementation patterns for Container Orchestrator |
-| [credentials.md](credentials.md) | Credential encryption, vault format, injection patterns, rotation, audit |
-| [lifecycle.md](lifecycle.md) | Container lifecycle phases, workspace cache, timing parameters, runbook |
-| [http-api.md](http-api.md) | HTTP REST API specification: sandbox and admin endpoints, auth, error mapping, rate limiting |
-| [testing.md](testing.md) | Integration testing strategy: unit, integration, and end-to-end test specifications |
-| [monitoring.md](monitoring.md) | Monitoring, logging, alerting: Prometheus metrics, structured logging, tracing, dashboards |
+| [orchestrator/](orchestrator/README.md) | Host-side Container Orchestrator: lifecycle state machine, gRPC pool, health monitoring, routing, database schema, HTTP API |
+| [agent/](agent/README.md) | Container-side gRPC agent: protocol, protobuf definitions, credential vault, implementation patterns |
+| [container-image/](container-image/README.md) | Docker image build, security hardening, entrypoint, deployment procedures, CI/CD automation |
+| [compute-backends/](compute-backends/README.md) | Pluggable compute backends: Single Host, Cloud Serverless, Kubernetes |
+| [observability/](observability/README.md) | Monitoring, logging, alerting, distributed tracing, and testing strategy |
+| [go-types-and-signatures.md](go-types-and-signatures.md) | Go type/interface definitions, function signatures, and call graphs across all packages |
 | [outstanding-questions.md](outstanding-questions.md) | Consolidated outstanding questions with context and recommendations |
-| [go-types-and-signatures.md](go-types-and-signatures.md) | Go type/interface definitions, function signatures, and call graphs |
-| [compute-backends.md](compute-backends.md) | Pluggable compute backends: Single Host, Cloud Serverless, Kubernetes |
-| [cloud-serverless.md](cloud-serverless.md) | Cloud Serverless deep-dive: 3 submodes (managed, delegated, external), workspace sync, cold starts, cloud-vs-K8s comparison |
 
-## Document Summaries
+## Subsystem Summaries
 
-### [database-schema.md](database-schema.md)
-Host-side database schema for container metadata and access control.
+### [orchestrator/](orchestrator/README.md)
 
-### [protocol.md](protocol.md)
-Complete gRPC service specification for host↔container communication.
+Container Orchestrator specification: the host-side service component that manages sandbox container lifecycles through a 10-state state machine (17 transitions), maintains a gRPC connection pool, performs health monitoring with circuit breakers, handles idle detection and auto-pause/resume, enforces resource quotas and LRU eviction, and routes HTTP API requests to the appropriate container. Includes the host-side SQLite database schema (`sandbox_container_metadata`, `sandbox_user_project_access`), the full HTTP REST API specification (sandbox and admin endpoints, auth, error mapping, rate limiting), container lifecycle phases with operational runbook, and Go implementation patterns.
 
-### [agent.proto](agent.proto)
-Protobuf 3 service definition for code generation.
+### [agent/](agent/README.md)
 
-### [agent-implementation-guide.md](agent-implementation-guide.md)
-Go implementation patterns for the gRPC agent.
+Container-side gRPC agent (`SandboxAgent` service) that runs inside each sandbox container. Defines the complete gRPC protocol over Unix sockets — command execution with streaming output, session management, credential storage and retrieval via AES256-GCM encrypted vault, task state queries against the local `.synchestra/` git repo, and health checks. Includes the protobuf 3 service definition (`agent.proto`), credential management specification (encryption architecture, vault format, injection patterns, key rotation, audit logging), and Go implementation patterns.
 
-### [Dockerfile.spec](Dockerfile.spec)
-Multi-stage Dockerfile for sandbox container image.
+### [container-image/](container-image/README.md)
 
-### [Dockerfile.md](Dockerfile.md)
-Container build arguments and runtime configuration documentation.
+Multi-stage Docker image specification for the sandbox agent. Covers the Dockerfile (Alpine-based, non-root user, read-only filesystem, dropped capabilities), entrypoint script (environment validation, workspace setup, state repo clone, encryption key management, agent startup), image building and scanning (Trivy, Docker Content Trust), deployment procedures (Docker, Compose, Kubernetes), and CI/CD automation (Makefile targets, GitHub Actions workflow).
 
-### [docker-entrypoint.sh](docker-entrypoint.sh)
-Container initialization and setup script.
+### [compute-backends/](compute-backends/README.md)
 
-### [container-build-deployment.md](container-build-deployment.md)
-Build, scan, and deployment procedures.
+Pluggable compute backend architecture defining the `ComputeBackend` Go interface and three execution modes: Single Host (local Docker, SQLite, Unix sockets — the default), Cloud Serverless (Cloud Run/Fargate/ACI with three submodes: fully managed, delegated, external), and Kubernetes (CRD+operator, PVCs, K8s scheduler). Includes workspace persistence strategies, cold start optimization, and a comparison matrix across all modes.
 
-### [container-build-automation.md](container-build-automation.md)
-Makefile targets, build scripts, and CI/CD pipeline.
+### [observability/](observability/README.md)
 
-### [orchestrator.md](orchestrator.md)
-Container Orchestrator specification: lifecycle state machine, gRPC connection pool, health monitoring, idle detection, circuit breaker, request routing, and resource quota enforcement.
-
-### [orchestrator-implementation-guide.md](orchestrator-implementation-guide.md)
-Go implementation patterns for the Container Orchestrator — interfaces, state machine, connection pool, health manager, circuit breaker, and graceful shutdown.
-
-### [credentials.md](credentials.md)
-Credential management specification: AES256-GCM encryption architecture, vault format, credential injection patterns (git tokens, SSH keys, env vars), key rotation, and audit logging. Authoritative reference for all credential-related behavior.
-
-### [lifecycle.md](lifecycle.md)
-Container lifecycle specification: 8 lifecycle phases (provision through terminate), workspace cache with GitHub Actions-style persistence, resource management by state, timing parameters, and operational runbook for common scenarios.
-
-### [http-api.md](http-api.md)
-HTTP REST API specification served by `synchestra serve --http`. Defines all sandbox endpoints (execute, status, sessions, WebSocket logs, credentials, destroy) and admin endpoints (stop, restart, evict, config, image, container listing). Covers authentication, authorization matrix, gRPC-to-HTTP error mapping, rate limiting, and Go package structure.
-
-### [testing.md](testing.md)
-Integration testing strategy covering three tiers: unit tests (orchestrator state machine, credential vault, HTTP handlers), integration tests (Docker lifecycle, gRPC communication, session reconnection), and end-to-end tests (full HTTP→orchestrator→gRPC→container flows). Includes test infrastructure (mock Docker client, test container image), CI/CD integration, and security test cases.
-
-### [monitoring.md](monitoring.md)
-Monitoring, logging, and alerting specification: Prometheus metrics catalog (host-side and container-side), structured JSON logging with sensitive data policy, OpenTelemetry distributed tracing, alerting rules (critical/warning/info), dashboard specifications (overview, per-project, operations), and health endpoints.
-
-### [outstanding-questions.md](outstanding-questions.md)
-Consolidated summary of all unresolved design questions from across the sandbox spec. Grouped by theme (credential management, container lifecycle, API & protocol, observability, database, testing, security) with brief context and 1-2 recommended resolutions per question.
-
-### [go-types-and-signatures.md](go-types-and-signatures.md)
-All Go type definitions, interface definitions, and function signatures for the sandbox feature. Organized by package (orchestrator, agent, API, observability) with detailed call graphs for the main execution flows (command execution, credential management, health checking, idle detection, auto-resume, graceful shutdown).
-
-### [compute-backends.md](compute-backends.md)
-Pluggable compute backend architecture for running sandbox containers across different deployment topologies. Defines the `ComputeBackend` Go interface and three execution modes: Single Host (local Docker, SQLite, Unix sockets — the default), Cloud Serverless (Cloud Run/Fargate/ACI, HTTPS, pay-per-use), and Kubernetes (CRD+operator, PVCs, K8s scheduler). Includes a user-provided external endpoint variant and a comparison matrix across all modes.
-
-### [cloud-serverless.md](cloud-serverless.md)
-Comprehensive architecture for the Cloud Serverless backend. Defines three submodes: Fully Managed (Synchestra owns cloud infra, user pays Synchestra), Delegated (Synchestra manages lifecycle in user's cloud account, cloud bills user directly), and External (user provides a pre-running endpoint, Synchestra connects only). Covers gRPC-over-HTTPS transport, workspace persistence to cloud storage, cold start optimization, orchestrator-to-agent authentication, and a detailed cloud-vs-Kubernetes implementation cost/effort comparison with a phased roadmap.
+Observability strategy spanning both host-side (orchestrator, HTTP API) and container-side (gRPC agent). Covers Prometheus metrics catalog, structured JSON logging with sensitive data policy, OpenTelemetry distributed tracing, alerting rules (critical/warning/info), dashboard specifications, and health endpoints. Also includes the integration testing strategy: unit tests, integration tests (Docker lifecycle, gRPC communication, session reconnection), end-to-end tests, test infrastructure, and security test cases.
 
 ## Outstanding Questions
 

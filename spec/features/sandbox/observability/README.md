@@ -2,7 +2,13 @@
 
 ## Overview
 
-> **Related documents:** [orchestrator.md](orchestrator.md) (event bus and health checks), [lifecycle.md](lifecycle.md) (lifecycle events), [http-api.md](http-api.md) (admin health endpoints), [outstanding-questions.md](outstanding-questions.md) (open design questions).
+> **Related documents:** [orchestrator.md](../orchestrator/README.md) (event bus and health checks), [lifecycle.md](../orchestrator/lifecycle.md) (lifecycle events), [http-api.md](../orchestrator/http-api.md) (admin health endpoints), [outstanding-questions.md](../outstanding-questions.md) (open design questions).
+
+## Contents
+
+| Document | Description |
+|----------|-------------|
+| [testing.md](testing.md) | Integration and end-to-end testing strategy, test infrastructure, security test cases |
 
 Observability strategy for the sandbox feature covering metrics (Prometheus), structured logging (JSON), distributed tracing (OpenTelemetry), alerting rules, and dashboards. Monitoring spans both host-side (orchestrator, HTTP API) and container-side (gRPC agent, command execution).
 
@@ -18,11 +24,11 @@ The host is stateless — all durable state lives in containers and the database
 
 ### Related Specs
 
-- [orchestrator.md](orchestrator.md) — metrics definitions (source of truth for orchestrator counters/gauges/histograms)
-- [lifecycle.md](lifecycle.md) — lifecycle events that drive log entries and alert conditions
-- [http-api.md](http-api.md) — API endpoints that expose health checks and generate request metrics
-- [credentials.md](credentials.md) — credential operations referenced in logging policy
-- [protocol.md](protocol.md) — gRPC protocol between host and container agent
+- [orchestrator.md](../orchestrator/README.md) — metrics definitions (source of truth for orchestrator counters/gauges/histograms)
+- [lifecycle.md](../orchestrator/lifecycle.md) — lifecycle events that drive log entries and alert conditions
+- [http-api.md](../orchestrator/http-api.md) — API endpoints that expose health checks and generate request metrics
+- [credentials.md](../agent/credentials.md) — credential operations referenced in logging policy
+- [protocol.md](../agent/README.md) — gRPC protocol between host and container agent
 
 ---
 
@@ -30,7 +36,7 @@ The host is stateless — all durable state lives in containers and the database
 
 ### Host-Side Metrics (Orchestrator + HTTP API)
 
-Consolidates and extends the metrics defined in [orchestrator.md](orchestrator.md).
+Consolidates and extends the metrics defined in [orchestrator.md](../orchestrator/README.md).
 
 #### Counters
 
@@ -142,7 +148,7 @@ Context fields added when applicable: `project_id`, `session_id`, `request_id`, 
 
 | Category | Description | Key Fields |
 |----------|-------------|------------|
-| `orchestrator.lifecycle` | Container state transitions (maps to [lifecycle events](lifecycle.md)) | `project_id`, `from_state`, `to_state`, `duration_ms` |
+| `orchestrator.lifecycle` | Container state transitions (maps to [lifecycle events](../orchestrator/lifecycle.md)) | `project_id`, `from_state`, `to_state`, `duration_ms` |
 | `orchestrator.health` | Health check results | `project_id`, `result`, `latency_ms` |
 | `orchestrator.routing` | Request routing decisions | `project_id`, `action` (`route`, `queue`, `reject`) |
 | `api.request` | HTTP request/response | `method`, `path`, `status_code`, `latency_ms` |
@@ -325,7 +331,7 @@ HTTP status codes: `200` for ok, `503` for degraded/unhealthy.
 
 | Mechanism | Check | Interval |
 |-----------|-------|----------|
-| Docker `HEALTHCHECK` | `synchestra-sandbox-agent health` command | Defined in [Dockerfile.md](Dockerfile.md) |
+| Docker `HEALTHCHECK` | `synchestra-sandbox-agent health` command | Defined in [Dockerfile.md](../container-image/README.md) |
 | gRPC `Ping()` → `PingResponse` | Agent responds with `status: ok\|degraded\|unhealthy` | On demand (routing, readiness) |
 
 ---

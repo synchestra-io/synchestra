@@ -2,7 +2,7 @@
 
 ## Overview
 
-> **Related documents:** [orchestrator.md](orchestrator.md) (state machine and behavior spec — authoritative), [lifecycle.md](lifecycle.md) (lifecycle phases), [go-types-and-signatures.md](go-types-and-signatures.md) (consolidated type definitions and call graph), [outstanding-questions.md](outstanding-questions.md) (open design questions).
+> **Related documents:** [orchestrator.md](README.md) (state machine and behavior spec — authoritative), [lifecycle.md](lifecycle.md) (lifecycle phases), [go-types-and-signatures.md](../go-types-and-signatures.md) (consolidated type definitions and call graph), [outstanding-questions.md](../outstanding-questions.md) (open design questions).
 
 The Container Orchestrator manages the lifecycle of sandbox containers on the host side. It is initialized as part of `synchestra serve --http` and provides the bridge between HTTP API requests and gRPC container agents.
 
@@ -11,13 +11,13 @@ The Container Orchestrator manages the lifecycle of sandbox containers on the ho
 **Integration point**: Called from HTTP API handlers in `internal/api/sandbox/`  
 **Module**: `github.com/synchestra-io/synchestra`
 
-This guide provides practical Go code patterns and examples for building the orchestrator service. It complements the [orchestrator spec](orchestrator.md) (state machine, configuration, metrics) and the [agent implementation guide](agent-implementation-guide.md) (container-side agent).
+This guide provides practical Go code patterns and examples for building the orchestrator service. It complements the [orchestrator spec](README.md) (state machine, configuration, metrics) and the [agent implementation guide](../agent/implementation-guide.md) (container-side agent).
 
 **Related specs:**
-- [orchestrator.md](orchestrator.md) — State machine, transitions, Docker config, metrics
-- [protocol.md](protocol.md) — gRPC service definition (`SandboxAgent`)
+- [orchestrator.md](README.md) — State machine, transitions, Docker config, metrics
+- [protocol.md](../agent/README.md) — gRPC service definition (`SandboxAgent`)
 - [database-schema.md](database-schema.md) — Host-side DB tables (`sandbox_container_metadata`, `sandbox_user_project_access`)
-- [agent-implementation-guide.md](agent-implementation-guide.md) — Container-side agent implementation
+- [agent-implementation-guide.md](../agent/implementation-guide.md) — Container-side agent implementation
 
 ## Core Interface
 

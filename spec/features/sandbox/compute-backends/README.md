@@ -4,9 +4,15 @@
 
 Synchestra supports multiple compute backends for running sandbox containers. A project's configuration specifies which backend to use. The orchestrator delegates container lifecycle operations to the selected backend through a unified interface.
 
+## Contents
+
+| Document | Description |
+|----------|-------------|
+| [cloud-serverless.md](cloud-serverless.md) | Cloud serverless backend deep-dive: three submodes, workspace persistence, cold start optimization |
+
 This document defines the pluggable compute backend architecture: three execution modes and the abstraction layer that unifies them. The current sandbox spec assumes a single Docker host; this document extends the architecture to support multiple deployment topologies while keeping the same Orchestrator interface for upstream consumers (HTTP API, CLI).
 
-> **Related documents:** [orchestrator.md](orchestrator.md) (orchestrator interface and state machine), [lifecycle.md](lifecycle.md) (container lifecycle phases), [database-schema.md](database-schema.md) (host-side storage), [http-api.md](http-api.md) (API endpoints), [go-types-and-signatures.md](go-types-and-signatures.md) (type definitions).
+> **Related documents:** [orchestrator](../orchestrator/README.md) (orchestrator interface and state machine), [lifecycle](../orchestrator/lifecycle.md) (container lifecycle phases), [database-schema](../orchestrator/database-schema.md) (host-side storage), [http-api](../orchestrator/http-api.md) (API endpoints), [go-types-and-signatures](../go-types-and-signatures.md) (type definitions).
 
 ---
 
@@ -140,14 +146,14 @@ sandbox:
 
 ### Implementation
 
-This is the current default implementation described in [orchestrator.md](orchestrator.md) and [orchestrator-implementation-guide.md](orchestrator-implementation-guide.md). The `ComputeBackend` implementation wraps the Docker client directly.
+This is the current default implementation described in [orchestrator](../orchestrator/README.md) and [orchestrator implementation guide](../orchestrator/implementation-guide.md). The `ComputeBackend` implementation wraps the Docker client directly.
 
 ### Multi-tenant variant
 
 A single host can serve multiple tenants (users/organizations). Isolation is provided by:
 
 - Per-project containers with separate Docker namespaces
-- User-scoped access control via the access cache (see [database-schema.md](database-schema.md))
+- User-scoped access control via the access cache (see [database-schema](../orchestrator/database-schema.md))
 - Resource quotas per container
 
 No architectural changes needed — multi-tenancy is an authorization concern, not a compute concern.
@@ -314,17 +320,17 @@ sandbox:
 
 Adopting the `ComputeBackend` interface requires the following changes to existing documents:
 
-1. **[orchestrator.md](orchestrator.md)**: The `DockerClient` dependency becomes the `ComputeBackend` interface. The state machine, health checks, and idle management remain the same — they call backend methods instead of Docker API directly.
+1. **[orchestrator](../orchestrator/README.md)**: The `DockerClient` dependency becomes the `ComputeBackend` interface. The state machine, health checks, and idle management remain the same — they call backend methods instead of Docker API directly.
 
-2. **[database-schema.md](database-schema.md)**: For Kubernetes mode, the `sandbox_container_metadata` table needs an `endpoint` column (replacing `socket_path`) to support TCP/HTTPS endpoints, and a `node` column for placement tracking. SQLite remains the default for single-host; shared PostgreSQL for cloud/K8s.
+2. **[database-schema](../orchestrator/database-schema.md)**: For Kubernetes mode, the `sandbox_container_metadata` table needs an `endpoint` column (replacing `socket_path`) to support TCP/HTTPS endpoints, and a `node` column for placement tracking. SQLite remains the default for single-host; shared PostgreSQL for cloud/K8s.
 
-3. **[lifecycle.md](lifecycle.md)**: Pause/resume phases become conditional on `SupportsCapability(CapPause)`. Backends that do not support pause skip directly to stop/start.
+3. **[lifecycle](../orchestrator/lifecycle.md)**: Pause/resume phases become conditional on `SupportsCapability(CapPause)`. Backends that do not support pause skip directly to stop/start.
 
-4. **[protocol.md](protocol.md)**: Transport-agnostic — gRPC works over Unix sockets, TCP/TLS, and HTTPS. No protocol changes needed.
+4. **[protocol](../agent/README.md)**: Transport-agnostic — gRPC works over Unix sockets, TCP/TLS, and HTTPS. No protocol changes needed.
 
-5. **[credentials.md](credentials.md)**: No changes — credential encryption remains container-internal regardless of backend.
+5. **[credentials](../agent/credentials.md)**: No changes — credential encryption remains container-internal regardless of backend.
 
-6. **[http-api.md](http-api.md)**: Status responses gain a `node` field for K8s mode. A new admin endpoint `GET /api/v1/admin/sandbox/{project_id}/placement` reports backend and node info.
+6. **[http-api](../orchestrator/http-api.md)**: Status responses gain a `node` field for K8s mode. A new admin endpoint `GET /api/v1/admin/sandbox/{project_id}/placement` reports backend and node info.
 
 ---
 
