@@ -15,8 +15,8 @@ The test runner is built as `pkg/testscenario/` inside this repo, with the under
 
 - **ACs are never standalone executables.** They are verification blocks that always run as part of a test scenario — even a "single feature" test is a minimal scenario with at least one setup step plus ACs.
 - **Scenarios are human-readable markdown.** A product person or AI agent can map them to acceptance criteria without knowing bash.
-- **Inputs/outputs flow like GitHub Actions.** Steps declare outputs, downstream steps consume them by reference. No global mutable state.
-- **Parallel by default.** Steps without `Depends on` declarations can run concurrently.
+- **Inputs/outputs flow like GitHub Actions.** Steps declare outputs to context (global) or step scope, downstream steps consume them by reference.
+- **Sequential by default, parallel opt-in.** Steps execute in file order. Steps marked `Parallel: true` form concurrent groups.
 - **Composition via inclusion.** Scenarios can reference sub-flow `.md` files, enabling reuse without duplication.
 - **The spec root is configurable.** All paths resolve relative to the configured spec root (default: `spec`), supporting projects that use `specifications` or other names.
 
@@ -56,8 +56,8 @@ result=$(synchestra project list --format json)
 
 | Scenario | Step |
 |---|---|
-| [project-lifecycle](../../../tests/project-lifecycle.md) | Step 5 |
-| [remove-and-recreate](../_tests/remove-and-recreate.md) | Step 1 |
+| [project-lifecycle](../../../tests/project-lifecycle.md) | remove-project |
+| [remove-and-recreate](../_tests/remove-and-recreate.md) | delete-and-verify |
 ```
 
 ### AC statuses
@@ -155,7 +155,7 @@ Validation tooling (lint/pre-commit) should check:
 
 ### Scenario file structure
 
-A test scenario is a markdown file with ordered steps, dependency declarations, and AC references.
+A test scenario is a markdown file with named steps, dependency declarations, and AC references. Steps execute in file order by default (sequential), with opt-in parallel groups.
 
 ```markdown
 # Scenario: Project lifecycle
@@ -170,106 +170,74 @@ export SYNCHESTRA_HOME=$(mktemp -d)
 synchestra config set --key server.host --value localhost
 ```
 
-## 1. Create project
-
-**Depends on:** (none)
+## create-project
 
 **Outputs:**
 
-| Name | Extract |
-|---|---|
-| project_id | `jq -r '.id' $STEP_STDOUT` |
+| Name | Store | Extract |
+|---|---|---|
+| project_id | context | `jq -r '.id' $STEP_STDOUT` |
 
 **ACs:**
 
-| AC | |
+| Feature | ACs |
 |---|---|
-| cli/project/new/* | |
+| [cli/project/new](spec/features/cli/project/new/) | * |
 
 ```bash
 synchestra project new --repo https://github.com/example/test --format json
 ```
 
-## 2. Verify project in list
-
-**Depends on:** Step 1
-
-**Inputs:**
-
-| Name | Source |
-|---|---|
-| project_id | ${{ steps.1.outputs.project_id }} |
+## verify-project-in-list
 
 **ACs:**
-- cli/project/list/in-list
+
+| Feature | ACs |
+|---|---|
+| [cli/project/list](spec/features/cli/project/list/) | [in-list](spec/features/cli/project/list/acs/in-list.md) |
 
 ```bash
 synchestra project list --format json
 ```
 
-## 3. Start container
+## start-container
 
-**Depends on:** Step 1
 **Include:** [flows/container-start.md](flows/container-start.md)
 
-**Inputs:**
-
-| Name | Source |
-|---|---|
-| project_id | ${{ steps.1.outputs.project_id }} |
-
-## 4. Check container status
-
-**Depends on:** Step 3
-
-**Inputs:**
-
-| Name | Source |
-|---|---|
-| project_id | ${{ steps.1.outputs.project_id }} |
+## check-container-status
 
 **ACs:**
-- cli/server/project/status/*
+
+| Feature | ACs |
+|---|---|
+| [cli/server/project/status](spec/features/cli/server/project/status/) | * |
 
 ```bash
-synchestra server project status --project ${{ inputs.project_id }} --format json
+synchestra server project status --project ${{ context.project_id }} --format json
 ```
 
-## 5. Shutdown container
-
-**Depends on:** Step 4
-
-**Inputs:**
-
-| Name | Source |
-|---|---|
-| project_id | ${{ steps.1.outputs.project_id }} |
+## shutdown-container
 
 **ACs:**
-- cli/server/project/shutdown/*
+
+| Feature | ACs |
+|---|---|
+| [cli/server/project/shutdown](spec/features/cli/server/project/shutdown/) | * |
 
 ```bash
-synchestra server project shutdown --project ${{ inputs.project_id }}
+synchestra server project shutdown --project ${{ context.project_id }}
 ```
 
-## 6. Remove project
-
-**Depends on:** Step 5
-
-**Inputs:**
-
-| Name | Source |
-|---|---|
-| project_id | ${{ steps.1.outputs.project_id }} |
+## remove-project
 
 **ACs:**
 
-| AC | Note |
+| Feature | ACs |
 |---|---|
-| cli/project/remove/* | Validates full removal |
+| [cli/project/remove](spec/features/cli/project/remove/) | * |
 
 ```bash
-synchestra project remove --id ${{ inputs.project_id }}
+synchestra project remove --id ${{ context.project_id }}
 ```
 
 ## Teardown
@@ -283,11 +251,11 @@ rm -rf $SYNCHESTRA_HOME
 
 | Element | Required | Description |
 |---|---|---|
-| Heading | Yes | `## N. Name` — numbered, names the step |
-| Depends on | No | References to other steps by number. Absent = no dependencies (parallel-eligible) |
-| Inputs | No | Table of inputs consumed from upstream step outputs |
-| Outputs | No | Table of outputs extracted from step results (stdout, stderr, exit code) |
-| ACs | No | List or table of AC references to verify after the step executes |
+| Heading | Yes | `## {step-name}` — kebab-case, unique within the scenario |
+| Depends on | No | References to other steps by name. Used for data dependencies or ordering constraints beyond file order |
+| Parallel | No | `true` to mark this step as part of a concurrent group (see [Execution model](#execution-model)) |
+| Outputs | No | Table of outputs with storage scope (`context`, `step`, or `both`) |
+| ACs | No | Table of AC references to verify after the step executes |
 | Include | Conditional | Delegates to a sub-flow `.md` file. Mutually exclusive with Code block |
 | Code block | Conditional | Bash script to execute. Mutually exclusive with Include |
 
@@ -295,83 +263,116 @@ Every step must have exactly one of **Include** or **Code block**. A step with n
 
 ### AC reference syntax
 
-ACs can be referenced in two formats — the runner accepts either:
-
-**List format (simple):**
-
-```markdown
-**ACs:**
-- cli/project/remove/*
-- cli/project/list/in-list
-```
-
-**Table format (extended):**
+ACs are referenced using a **table format** with two required columns: Feature and ACs. The Feature column links to the feature spec, the ACs column lists which ACs to run (linked to their AC files) or `*` for all.
 
 ```markdown
 **ACs:**
 
-| AC | Note |
+| Feature | ACs |
 |---|---|
-| cli/project/remove/* | Validates full removal |
-| cli/project/list/in-list | Confirms absence from list |
+| [cli/project/remove](spec/features/cli/project/remove/) | * |
+| [cli/project/list](spec/features/cli/project/list/) | [in-list](spec/features/cli/project/list/acs/in-list.md), [has-metadata](spec/features/cli/project/list/acs/has-metadata.md) |
 ```
 
-The runner only parses column 1 of the table. Additional columns are for human readability — authors can name them whatever is useful (`Note`, `Status`, `Expected`, etc.).
+The runner parses these two columns. Additional columns are allowed for human readability — the runner ignores them:
+
+```markdown
+| Feature | ACs | Note |
+|---|---|---|
+| [cli/project/remove](spec/features/cli/project/remove/) | * | Validates full removal |
+```
 
 **Wildcards and selection:**
 
 | Pattern | Meaning |
 |---|---|
-| `cli/project/remove/*` | All ACs under `spec/features/cli/project/remove/acs/` |
-| `cli/project/remove/not-in-list` | Specific AC by slug |
+| `*` | All ACs under that feature's `acs/` directory |
+| `[ac-name](link)` | Specific AC by slug (linked to the AC file) |
+| `[ac1](link), [ac2](link)` | Multiple specific ACs, comma-separated in the ACs column |
 
-For multiple specific ACs, use separate list items or table rows — no comma syntax needed:
+When specific ACs are listed, they execute in the order specified in the table. When `*` is used, ACs execute in alphabetical order by slug.
+
+### Step naming and references
+
+Steps are identified by their name (the heading text). Names must be:
+
+- **Unique** within the scenario
+- **Kebab-case** (lowercase, hyphen-separated)
+- **Descriptive** — the name should convey what the step does
+
+References:
+
+- `**Depends on:**` references step names: `**Depends on:** create-project`
+- Multiple dependencies use comma separation: `**Depends on:** create-project, add-repo`
+- `${{ steps.{step-name}.outputs.{name} }}` for step-scoped outputs
+- `${{ context.{name} }}` for context-scoped outputs
+
+### Output model
+
+Steps can store outputs to **context** (global), **step** (local), or **both**:
 
 ```markdown
-**ACs:**
-- cli/project/remove/not-in-list
-- cli/project/remove/recreate-same-id
+**Outputs:**
+
+| Name | Store | Extract |
+|---|---|---|
+| project_id | context | `jq -r '.id' $STEP_STDOUT` |
+| raw_response | step | `cat $STEP_STDOUT` |
+| exit_status | both | `echo $STEP_EXIT_CODE` |
 ```
 
-### Step identification and references
+| Store | Access syntax | Scope |
+|---|---|---|
+| `context` | `${{ context.project_id }}` | Available to all subsequent steps. Context names must be unique across the scenario — duplicate writes are a validation error. |
+| `step` | `${{ steps.create-project.outputs.raw_response }}` | Available only to steps that declare `Depends on` this step (direct or transitive). |
+| `both` | Either syntax | Stored in both scopes. |
 
-Steps are identified by their number (the integer prefix in the heading). The canonical identifier is the number alone.
+Available variables in Extract expressions: `$STEP_STDOUT` (path to stdout file), `$STEP_STDERR` (path to stderr file), `$STEP_EXIT_CODE`.
 
-- `**Depends on:**` accepts `Step N` or just `N`. The `Step` prefix is optional syntactic sugar for readability.
-- `${{ steps.N.outputs.name }}` uses the number only.
-- Multiple dependencies use comma separation: `**Depends on:** Step 1, Step 3`
+Outputs (both context and step) are passed to AC verification scripts as environment variables.
 
-### Input/Output model
+### Execution model
 
-Modeled after GitHub Actions steps:
+Steps execute **sequentially in file order** by default. This is the simplest mental model — read top to bottom, that is the execution order.
 
-- **Outputs** are extracted from step results using shell expressions. Available variables: `$STEP_STDOUT` (path to stdout file), `$STEP_STDERR` (path to stderr file), `$STEP_EXIT_CODE`.
-- **Inputs** are resolved from upstream outputs via `${{ steps.N.outputs.name }}` syntax. A step can only reference outputs from steps listed in its `Depends on` (direct or transitive). Referencing an output from a non-dependency is a validation error.
-- Inputs are passed to both the step's code block and its AC verification scripts as environment variables.
+**Parallel groups:** Consecutive steps marked `**Parallel:** true` form a parallel group. The group starts after the preceding non-parallel step completes, and the next non-parallel step waits for all steps in the parallel group to finish.
+
+```markdown
+## create-project
+...
+
+## add-repo-a
+**Parallel:** true
+...
+
+## add-repo-b
+**Parallel:** true
+...
+
+## verify-both-repos
+...  ← waits for add-repo-a and add-repo-b to complete
+```
+
+**`Depends on` within parallel groups:** Steps in a parallel group can declare `Depends on` to establish ordering constraints within the group or reference earlier steps for data dependencies. A parallel step that declares `Depends on` a step outside its group implicitly waits for that dependency regardless of parallelism.
+
+**`Depends on` outside parallel groups:** For sequential steps, `Depends on` is primarily for declaring data dependencies (which step's outputs this step reads). It does not change execution order — file order already guarantees the dependency ran first. The runner validates that any referenced step appears earlier in the file.
 
 ### Include (sub-flows)
 
 A step can delegate to a sub-flow `.md` file instead of containing its own code block:
 
 ```markdown
-## 3. Start container
+## start-container
 
-**Depends on:** Step 1
 **Include:** [flows/container-start.md](flows/container-start.md)
-
-**Inputs:**
-
-| Name | Source |
-|---|---|
-| project_id | ${{ steps.1.outputs.project_id }} |
 ```
 
-The included file is a full scenario with its own steps. Inputs are passed down, outputs bubble up. Resolution is relative to the referencing file. Circular includes are detected and rejected.
+The included file is a full scenario with its own steps. Context is shared — the sub-flow can read and write to the same `context.*` namespace. Step outputs from the sub-flow are namespaced under the including step's name (e.g., `steps.start-container.outputs.*` exposes the sub-flow's step outputs). Resolution is relative to the referencing file. Circular includes are detected and rejected.
 
 ### Setup and Teardown
 
-- `## Setup` — runs before the first step. No step number, no dependencies, no inputs/outputs. Purely environment-level: sets env vars, creates temp dirs, starts services. Any state it creates is available to all steps via the shared environment.
-- `## Teardown` — runs after the last step completes (or after failure). Guaranteed execution for cleanup. No inputs/outputs. Has access to the same environment as Setup (e.g., `$SYNCHESTRA_HOME`).
+- `## Setup` — runs before the first step. No step name constraints, no outputs. Purely environment-level: sets env vars, creates temp dirs, starts services. Any state it creates is available to all steps via the shared environment.
+- `## Teardown` — runs after the last step completes (or after failure). Guaranteed execution for cleanup. No outputs. Has access to the same environment as Setup (e.g., `$SYNCHESTRA_HOME`).
 
 ### Tags
 
@@ -399,7 +400,7 @@ synchestra test run --tag cli,project
 pkg/
   testscenario/
     parser.go       ← markdown scenario parser
-    graph.go        ← dependency graph builder, cycle detection, topological sort
+    graph.go        ← step ordering, parallel group detection, validation
     runner.go       ← step execution, parallelization, input/output passing
     ac.go           ← AC reference resolution, verification script extraction/execution
     include.go      ← sub-flow resolution, recursive inclusion
@@ -427,21 +428,22 @@ The runner resolves the spec root from the project's `synchestra-spec.yaml` conf
 ### Execution model
 
 1. Parse the scenario markdown into a `Scenario` struct
-2. Build a dependency graph from `Depends on` declarations
-3. Detect cycles; reject if found
-4. Resolve `Include` references recursively (cycle-detected)
-5. Run `Setup` block
-6. Execute steps in topological order, parallelizing independent steps
-7. For each step:
-   a. Resolve inputs from upstream outputs
-   b. Execute the code block (or delegate to included sub-flow)
-   c. Capture stdout, stderr, exit code
-   d. Extract declared outputs
-   e. Resolve AC references → find AC `.md` files → extract verification scripts
-   f. Execute each AC verification script with step inputs + outputs as env vars
-   g. Record per-step and per-AC pass/fail
-8. Run `Teardown` block (always, even on failure)
-9. Report results
+2. Validate: unique step names, no circular includes, no duplicate context keys, `Depends on` references point to earlier steps
+3. Resolve `Include` references recursively (cycle-detected)
+4. Run `Setup` block
+5. Execute steps in file order:
+   - **Sequential steps:** execute one at a time in file order
+   - **Parallel groups:** consecutive `Parallel: true` steps execute concurrently; the runner waits for all to complete before continuing
+   - For each step:
+     a. Resolve context and step output references
+     b. Execute the code block (or delegate to included sub-flow)
+     c. Capture stdout, stderr, exit code
+     d. Extract declared outputs, store to context and/or step scope
+     e. Resolve AC references → find AC `.md` files → extract verification scripts
+     f. Execute each AC verification script with context + step outputs as env vars
+     g. Record per-step and per-AC pass/fail
+6. Run `Teardown` block (always, even on failure)
+7. Report results
 
 ### AC execution detail
 
