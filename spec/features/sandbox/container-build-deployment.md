@@ -494,4 +494,4 @@ docker system prune --all
 2. ~~Should we support container image registry signing (Notary/DCT)?~~ **Resolved**: The requirement for signed Docker images is configurable per host.
 3. What's the preferred container registry for production (Docker Hub, ECR, ACR)?
 4. Should containers support GPU/accelerator access (NVIDIA CUDA)?
-5. Should we implement container metrics export to external monitoring system?
+5. ~~Should we implement container metrics export to external monitoring system?~~ **Resolved**: Yes, eventually. Can plan for it but not first priority.

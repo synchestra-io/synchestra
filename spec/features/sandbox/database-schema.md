@@ -243,7 +243,7 @@ CREATE INDEX idx_user_projects ON sandbox_user_project_access(user_id);
 
 ## Outstanding Questions
 
-1. Should we retain soft-deleted container metadata for audit/recovery purposes?
+1. ~~Should we retain soft-deleted container metadata for audit/recovery purposes?~~ **Resolved**: Yes.
 2. What is the retention policy for access mapping history (audit trail of who had access when)?
 3. Should we add a separate audit/event log table (separate from these operational tables)?
 4. For multi-tenant deployments, do we need tenant_id isolation at the database level?

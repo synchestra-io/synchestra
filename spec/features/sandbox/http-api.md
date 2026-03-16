@@ -798,8 +798,8 @@ internal/api/sandbox/
 ## Outstanding Questions
 
 1. Should the execute endpoint support SSE (Server-Sent Events) as an alternative to WebSocket for simpler clients that cannot maintain a persistent WebSocket connection?
-2. Should there be a `GET /api/v1/sandbox/{project_id}/credentials` endpoint that lists stored credential identifiers and metadata (not values) for UI display?
+2. ~~Should there be a `GET /api/v1/sandbox/{project_id}/credentials` endpoint that lists stored credential identifiers and metadata (not values) for UI display?~~ **Resolved**: Yes.
 3. Should the WebSocket connection support client→server messages (e.g., sending stdin to the running command for interactive processes)?
-4. Should there be batch credential operations (store or delete multiple credentials in a single request)?
-5. Should the `GET /admin/sandbox/containers` endpoint support filtering (by status, by project_id prefix) and pagination for large deployments?
+4. ~~Should there be batch credential operations (store or delete multiple credentials in a single request)?~~ **Resolved**: Yes — consider batch-only mode where single-credential operations are a batch of one item. See also protocol.md Q2.
+5. ~~Should the `GET /admin/sandbox/containers` endpoint support filtering (by status, by project_id prefix) and pagination for large deployments?~~ **Resolved**: Not for now.
 6. Should session output replay on WebSocket reconnection support byte-offset–based resume (in addition to timestamp-based `?since`) for more precise deduplication?
