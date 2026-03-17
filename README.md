@@ -257,6 +257,34 @@ See [feature specifications](spec/features/README.md) for detailed specs and dep
 **For full control:**
 Install Synchestra on your own VM for persistent daemon mode, headless agent management, and full CLI access. For evaluation, Synchestra can provide a demo VM, or you can run it entirely within a GitHub Actions workflow.
 
+## Testing with Rehearse
+
+Synchestra uses [Rehearse](https://github.com/synchestra-io/rehearse) — a markdown-native test framework — to verify its own specifications. Test scenarios are human-readable `.md` files that double as documentation and executable test suites. Acceptance criteria are standalone markdown files with verification scripts that the runner resolves and executes automatically.
+
+Rehearse is developed as an independent product within the Synchestra ecosystem. Its specification lives in the [rehearse](https://github.com/synchestra-io/rehearse) repository, and Synchestra integrates it through the `synchestra test` CLI command group.
+
+### Running tests
+
+```bash
+# Run all test scenarios
+synchestra test run spec/tests/
+
+# Run a specific scenario
+synchestra test run spec/features/testing-framework/test-runner/_tests/runner-core.md
+
+# Filter by tag, JSON output for CI
+synchestra test run spec/tests/ --tag e2e --format json
+
+# Include manual/demo scenarios
+synchestra test run spec/tests/ --run-manual-tests
+```
+
+### Self-testing
+
+The test runner tests itself — its own dogfood scenario (`runner-core.md`) exercises parsing, execution, output propagation, and AC resolution. If the runner can execute a scenario that tests its own behavior, that is direct evidence of correctness.
+
+See [`spec/features/cli/test/`](spec/features/cli/test/README.md) for the full `synchestra test` command reference and [`spec/features/testing-framework/`](spec/features/testing-framework/README.md) for the framework overview.
+
 ## Dogfooding
 
 Synchestra's own development is managed by Synchestra. We build the tool with the tool — which means every rough edge gets felt immediately and fixed quickly.

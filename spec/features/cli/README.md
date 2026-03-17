@@ -141,6 +141,7 @@ All CLI command READMEs and skill READMEs link to the canonical `_args` document
 | [serve](serve/README.md) | Foreground dev server — HTTP, HTTPS, MCP |
 | [server](server/README.md) | Background daemon management |
 | [mcp](mcp/README.md) | stdio MCP server for AI agents |
+| [test](test/README.md) | Run and list markdown-native test scenarios |
 
 ### `_args`
 
@@ -169,6 +170,10 @@ Background daemon management — start, stop, restart, status, and project confi
 ### `mcp`
 
 Starts a stdio-based MCP server for AI agent tools (Claude Code, Cursor, etc.). Designed to be launched as a subprocess. See [mcp/README.md](mcp/README.md).
+
+### `test`
+
+Runs and lists markdown-native test scenarios powered by [Rehearse](https://github.com/synchestra-io/rehearse). Delegates to the test runner for scenario parsing, AC resolution, and execution. See [test/README.md](test/README.md).
 
 ## Outstanding Questions
 

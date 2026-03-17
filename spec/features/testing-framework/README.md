@@ -40,6 +40,12 @@ synchestra test list --tag e2e              — list filtered by tag
 
 These commands delegate to the Rehearse test runner under the hood. The spec root is resolved from `project_dirs.specifications` in `synchestra-spec.yaml` (default: `spec`).
 
+## Self-Testing
+
+The testing framework tests itself — the runner's own acceptance criteria and dogfood scenarios are executed by the runner it verifies. Synchestra inherits this capability through its integration with Rehearse.
+
+See [`cli/test`](../cli/test/README.md) for how to run Synchestra's own test scenarios and the runner's self-tests via the `synchestra test` command.
+
 ## Interaction with Other Features
 
 | Feature | Interaction |
