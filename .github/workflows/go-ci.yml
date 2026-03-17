@@ -21,31 +21,15 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  validate:
-    name: Build, vet, lint, and test
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
 
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v6
+  strongo_workflow:
+    permissions:
+      contents: write
+    uses: strongo/go-ci-action/.github/workflows/workflow.yml@main
 
-      - name: Set up Go
-        uses: actions/setup-go@v6
-        with:
-          go-version-file: go.mod
-          cache: true
-
-      - name: Build
-        run: go build ./...
-
-      - name: Vet
-        run: go vet ./...
-
-      - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v9
-        with:
-          version: latest
-
-      - name: Run tests
-        run: go test ./...
+    secrets:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    #      COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+#    with:
+#      code_coverage: true
+#      min_test_coverage_percent: 100
