@@ -26,7 +26,7 @@ Feature specifications for the Synchestra project, managed by Synchestra.
 | [onboarding](onboarding/README.md) | Conceptual | Guided wizard for first-time project setup — repo connection, GitHub App installation, AI-powered scaffolding, or demo launch |
 | [sandbox](sandbox/README.md) | Conceptual | Isolated Docker container environments per project for executing user-initiated commands from the chat interface |
 | [state-store](state-store/README.md) | Conceptual | Pluggable state storage abstraction — composable Go interface (`state.Store`) with git-backed default implementation |
-| [acceptance-criteria](acceptance-criteria/README.md) | Conceptual | First-class, individually addressable verification artifacts with status lifecycle, typed inputs, and executable bash scripts |
+| [acceptance-criteria](acceptance-criteria/README.md) | Conceptual | First-class verification artifacts — full specification in [synchestra-io/rehearse](https://github.com/synchestra-io/rehearse/blob/main/spec/features/acceptance-criteria/); Synchestra adds plan AC relationships and outstanding questions linkage |
 | [testing-framework](testing-framework/README.md) | Conceptual | Markdown-native testing framework — full specification in [synchestra-io/rehearse](https://github.com/synchestra-io/rehearse/blob/main/spec/features/testing-framework/) |
 
 ## Feature Summaries
@@ -114,7 +114,7 @@ The pluggable abstraction layer for all Synchestra project coordination state. D
 
 ### [Acceptance Criteria](acceptance-criteria/README.md)
 
-The contract between what a feature promises and what the system delivers. Each AC is a standalone markdown file — readable by product owners, auditable by reviewers, executable by the test runner. ACs live in `_acs/` directories alongside the features they verify, carry a status lifecycle (planned → wip → implemented → deprecated), declare typed inputs, and contain bash verification scripts. Every feature README must include a mandatory Acceptance Criteria section, forcing teams to think about verifiability at spec time. Feature ACs are long-lived and evolve with the feature; plan ACs follow the same format but are frozen on approval.
+The contract between what a feature promises and what the system delivers. The full specification — file format, supported languages, identification scheme, statuses, and validation rules — lives in [synchestra-io/rehearse](https://github.com/synchestra-io/rehearse/blob/main/spec/features/acceptance-criteria/). Synchestra extends the base spec with mandatory AC sections in feature READMEs, development plan AC relationships (feature ACs vs. frozen plan ACs), and outstanding questions linkage for missing ACs.
 
 ### [Testing Framework](testing-framework/README.md)
 
