@@ -27,7 +27,7 @@ Feature specifications for the Synchestra project, managed by Synchestra.
 | [sandbox](sandbox/README.md) | Conceptual | Isolated Docker container environments per project for executing user-initiated commands from the chat interface |
 | [state-store](state-store/README.md) | Conceptual | Pluggable state storage abstraction — composable Go interface (`state.Store`) with git-backed default implementation |
 | [acceptance-criteria](acceptance-criteria/README.md) | Conceptual | First-class, individually addressable verification artifacts with status lifecycle, typed inputs, and executable bash scripts |
-| [testing-framework](testing-framework/README.md) | Conceptual | Markdown-native testing framework: scenario format, Go-based runner, and CLI integration for composing ACs into E2E and integration test flows |
+| [testing-framework](testing-framework/README.md) | Conceptual | Markdown-native testing framework — full specification in [synchestra-io/rehearse](https://github.com/synchestra-io/rehearse/blob/main/spec/features/testing-framework/) |
 
 ## Feature Summaries
 
@@ -118,7 +118,7 @@ The contract between what a feature promises and what the system delivers. Each 
 
 ### [Testing Framework](testing-framework/README.md)
 
-Turns specifications into executable verification — without leaving markdown. Composes acceptance criteria into multi-step test workflows that read as documentation and execute as test suites. Contains two sub-features: [test-scenario](testing-framework/test-scenario/README.md) defines the human-readable scenario format (named steps, data passing between steps, AC references, sub-flow includes, parallel groups), and [test-runner](testing-framework/test-runner/README.md) is the Go execution engine that parses scenarios, resolves AC verification scripts from `_acs/` directories, and produces structured pass/fail reports. The framework dogfoods itself — the runner's own test scenarios are executed by the runner it verifies.
+Turns specifications into executable verification — without leaving markdown. Composes acceptance criteria into multi-step test workflows that read as documentation and execute as test suites. The full specification — including the [test-scenario](https://github.com/synchestra-io/rehearse/blob/main/spec/features/testing-framework/test-scenario/) format and [test-runner](https://github.com/synchestra-io/rehearse/blob/main/spec/features/testing-framework/test-runner/) engine — lives in the [synchestra-io/rehearse](https://github.com/synchestra-io/rehearse/blob/main/spec/features/testing-framework/) repository. Synchestra integrates Rehearse as its testing framework.
 
 ```
 feature → proposals, development-plan, outstanding-questions (features are the spec unit)
@@ -183,8 +183,8 @@ All diagrams in feature specifications should use **mermaid syntax** instead of 
 - [state-store](state-store/README.md): 4 outstanding questions
 - [acceptance-criteria](acceptance-criteria/README.md): 4 outstanding questions
 - [testing-framework](testing-framework/README.md): 3 outstanding questions
-- [testing-framework/test-scenario](testing-framework/test-scenario/README.md): 4 outstanding questions
-- [testing-framework/test-runner](testing-framework/test-runner/README.md): 4 outstanding questions
+- testing-framework/test-scenario: 4 outstanding questions — see [synchestra-io/rehearse](https://github.com/synchestra-io/rehearse/blob/main/spec/features/testing-framework/test-scenario/)
+- testing-framework/test-runner: 4 outstanding questions — see [synchestra-io/rehearse](https://github.com/synchestra-io/rehearse/blob/main/spec/features/testing-framework/test-runner/)
 - [ui](ui/README.md): 5 outstanding questions
 - [ui/web-app](ui/web-app/README.md): 5 outstanding questions
 - [ui/tui](ui/tui/README.md): 5 outstanding questions
