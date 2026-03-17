@@ -18,7 +18,6 @@ synchestra test run --tag e2e               — filter by tag
 synchestra test run --format json           — machine-readable output
 synchestra test run --run-manual-tests      — include scenarios tagged 'manual'
 synchestra test run --spec-root ./my-spec   — override spec root directory
-synchestra test run --fail-fast             — stop on first failure
 ```
 
 | Flag | Default | Description |
@@ -27,7 +26,6 @@ synchestra test run --fail-fast             — stop on first failure
 | `--spec-root` | from `synchestra-spec.yaml` | Override the spec root directory |
 | `--tag` | | Filter scenarios by tag (repeatable) |
 | `--run-manual-tests` | `false` | Include scenarios tagged `manual` in directory scans |
-| `--fail-fast` | `false` | Stop execution on first step failure |
 
 When no path is given, defaults to `{spec_root}/tests/`.
 
@@ -37,7 +35,6 @@ Lists available scenarios without executing them.
 
 ```
 synchestra test list                        — list all scenarios
-synchestra test list [path]                 — list scenarios in specified directory
 synchestra test list --tag e2e              — list filtered by tag
 ```
 
@@ -48,12 +45,6 @@ Synchestra uses [Rehearse](https://github.com/synchestra-io/rehearse) to test it
 ### Run all test scenarios
 
 ```bash
-synchestra test run spec/tests/
-```
-
-Or with the Go binary directly:
-
-```bash
 go run . test run spec/tests/
 ```
 
@@ -62,19 +53,19 @@ go run . test run spec/tests/
 The test runner's own acceptance criteria and dogfood scenarios verify the `synchestra test` command:
 
 ```bash
-# Run the runner's self-test scenario (dogfood)
-synchestra test run spec/features/testing-framework/test-runner/_tests/runner-core.md
+# Run the runner's self-test scenario (dogfood) — 8 steps, 8 ACs
+go run . test run spec/features/testing-framework/test-runner/_tests/runner-core.md
 
 # Run all test-runner scenarios including demos
-synchestra test run spec/features/testing-framework/test-runner/_tests/ --run-manual-tests
+go run . test run spec/features/testing-framework/test-runner/_tests/ --run-manual-tests
 ```
 
-These scenarios are defined in the [Rehearse](https://github.com/synchestra-io/rehearse) repository and referenced here. The runner tests itself — if it can parse and execute its own dogfood scenario, that is direct evidence of correctness.
+The runner tests itself — if it can parse and execute its own dogfood scenario, that is direct evidence of correctness.
 
 ### JSON output for CI
 
 ```bash
-synchestra test run spec/tests/ --format json
+go run . test run spec/tests/ --format json
 ```
 
 ## Interaction with Other Features

@@ -8,14 +8,12 @@ Synchestra's testing framework turns specifications into executable verification
 
 The full specification for this feature lives in the [synchestra-io/rehearse](https://github.com/synchestra-io/rehearse/blob/main/spec/features/testing-framework/) repository, where it is developed as an independent product. Synchestra integrates Rehearse as its testing framework.
 
-## Sub-features
+## Contents
 
-The testing framework defines two sub-features, both fully specified in the Rehearse repository:
-
-| Sub-feature | Description | Full Specification |
+| Directory | Description | Full Specification |
 |---|---|---|
-| test-scenario | The markdown scenario format: steps, outputs, AC references, includes | [synchestra-io/rehearse](https://github.com/synchestra-io/rehearse/blob/main/spec/features/testing-framework/test-scenario/) |
-| test-runner | The Go execution engine: parsing, AC resolution, shell execution, reporting | [synchestra-io/rehearse](https://github.com/synchestra-io/rehearse/blob/main/spec/features/testing-framework/test-runner/) |
+| [test-scenario](test-scenario/README.md) | The markdown scenario format: steps, outputs, AC references, includes | [synchestra-io/rehearse](https://github.com/synchestra-io/rehearse/blob/main/spec/features/testing-framework/test-scenario/) |
+| [test-runner](test-runner/README.md) | The Go execution engine: parsing, AC resolution, shell execution, reporting | [synchestra-io/rehearse](https://github.com/synchestra-io/rehearse/blob/main/spec/features/testing-framework/test-runner/) |
 
 ### test-scenario
 
@@ -42,9 +40,19 @@ These commands delegate to the Rehearse test runner under the hood. The spec roo
 
 ## Self-Testing
 
-The testing framework tests itself — the runner's own acceptance criteria and dogfood scenarios are executed by the runner it verifies. Synchestra inherits this capability through its integration with Rehearse.
+The testing framework tests itself — the runner's own [acceptance criteria](test-runner/_acs/README.md) and [dogfood scenarios](test-runner/_tests/README.md) are executed by the runner it verifies.
 
-See [`cli/test`](../cli/test/README.md) for how to run Synchestra's own test scenarios and the runner's self-tests via the `synchestra test` command.
+Run the self-tests:
+
+```bash
+# Dogfood scenario — exercises parsing, execution, outputs, AC resolution
+go run . test run spec/features/testing-framework/test-runner/_tests/runner-core.md
+
+# All test-runner scenarios including demos
+go run . test run spec/features/testing-framework/test-runner/_tests/ --run-manual-tests
+```
+
+See [`cli/test`](../cli/test/README.md) for the full `synchestra test` command reference.
 
 ## Interaction with Other Features
 
