@@ -12,9 +12,9 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/synchesta-io/synchestra/cli/gitops"
-	"github.com/synchesta-io/synchestra/cli/globalconfig"
-	"github.com/synchesta-io/synchestra/cli/reporef"
+	"github.com/synchesta-io/synchestra/pkg/cli/gitops"
+	"github.com/synchesta-io/synchestra/pkg/cli/globalconfig"
+	"github.com/synchesta-io/synchestra/pkg/cli/reporef"
 	"gopkg.in/yaml.v3"
 )
 

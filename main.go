@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/synchesta-io/synchestra/cli"
+	"github.com/synchesta-io/synchestra/pkg/cli"
 )
 
 var (
