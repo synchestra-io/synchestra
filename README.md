@@ -267,16 +267,16 @@ Rehearse is developed as an independent product within the Synchestra ecosystem.
 
 ```bash
 # Run all test scenarios
-go run . test run spec/tests/
+synchestra test run spec/tests/
 
 # Run the runner's self-test (dogfood) — 8 steps, 8 ACs
 go run . test run spec/features/cli/test/_tests/runner-core.md
 
 # Filter by tag, JSON output for CI
-go run . test run spec/tests/ --tag e2e --format json
+synchestra test run spec/tests/ --tag e2e --format json
 
 # Include manual/demo scenarios
-go run . test run spec/tests/ --run-manual-tests
+synchestra test run spec/tests/ --run-manual-tests
 ```
 
 ### Self-testing

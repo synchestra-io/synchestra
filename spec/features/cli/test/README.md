@@ -45,7 +45,7 @@ Synchestra uses [Rehearse](https://github.com/synchestra-io/rehearse) to test it
 ### Run all test scenarios
 
 ```bash
-go run . test run spec/tests/
+synchestra test run spec/tests/
 ```
 
 ### Run tests for the `test` command itself
@@ -65,7 +65,7 @@ The runner tests itself — if it can parse and execute its own dogfood scenario
 ### JSON output for CI
 
 ```bash
-go run . test run spec/tests/ --format json
+synchestra test run spec/tests/ --format json
 ```
 
 ## Interaction with Other Features
