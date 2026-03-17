@@ -269,9 +269,6 @@ Rehearse is developed as an independent product within the Synchestra ecosystem.
 # Run all test scenarios
 synchestra test run spec/tests/
 
-# Run the runner's self-test (dogfood) — 8 steps, 8 ACs
-go run . test run spec/features/cli/test/_tests/runner-core.md
-
 # Filter by tag, JSON output for CI
 synchestra test run spec/tests/ --tag e2e --format json
 
@@ -282,6 +279,11 @@ synchestra test run spec/tests/ --run-manual-tests
 ### Self-testing
 
 The test runner tests itself — its own dogfood scenario (`runner-core.md`) exercises parsing, execution, output propagation, and AC resolution. If the runner can execute a scenario that tests its own behavior, that is direct evidence of correctness.
+
+```bash
+# Run the runner's self-test (dogfood) — 8 steps, 8 ACs
+go run . test run spec/features/cli/test/_tests/runner-core.md
+```
 
 See [`spec/features/cli/test/`](spec/features/cli/test/README.md) for the full `synchestra test` command reference and [`spec/features/testing-framework/`](spec/features/testing-framework/README.md) for the framework overview.
 
