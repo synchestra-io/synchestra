@@ -76,7 +76,8 @@ For Synchestra's own development, the state repo is named `synchestra-state` as 
 
 ```
 acme-synchestra/
-  README.md                       # Auto-generated project overview
+  synchestra-state.yaml            # Lists spec repos managed by this state repo
+  README.md                        # Auto-generated project overview
   tasks/
     implement-auth/
       README.md                   # Task description, status, assignment
@@ -106,7 +107,14 @@ Code repos already exist — they're the user's actual project. Synchestra doesn
 
 User's choice. Synchestra doesn't impose naming on code repos.
 
-### Example
+### Example structure
+
+```
+acme-api/
+  synchestra-code.yaml           # Lists spec repos this code repo implements
+  src/
+    ...
+```
 
 For a project with multiple code repos:
 
