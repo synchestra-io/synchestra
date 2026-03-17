@@ -14,12 +14,12 @@ github.com/buger/jsonparser v1.1.1 h1:2PnMjfWD7wBILjqQbt530v576A/cAbQvEW9gGIpYMU
 github.com/buger/jsonparser v1.1.1/go.mod h1:6RYKKt7H4d4+iWqouImQ9R2FZql3VbhNgx27UK13J/0=
 github.com/charmbracelet/colorprofile v0.4.3 h1:QPa1IWkYI+AOB+fE+mg/5/4HRMZcaXex9t5KX76i20Q=
 github.com/charmbracelet/colorprofile v0.4.3/go.mod h1:/zT4BhpD5aGFpqQQqw7a+VtHCzu+zrQtt1zhMt9mR4Q=
-github.com/charmbracelet/ultraviolet v0.0.0-20260309091805-903bfd0cf188 h1:J8v4kWJYCaxv1SLhLunN74S+jMteZ1f7Dae99ioq4Bo=
-github.com/charmbracelet/ultraviolet v0.0.0-20260309091805-903bfd0cf188/go.mod h1:FzWNAbe1jEmI+GZljSnlaSA8wJjnNIZhWBLkTsAl6eg=
+github.com/charmbracelet/ultraviolet v0.0.0-20260316091819-b93f6a3b8502 h1:hzWNs3UQRSUTS6YCbLaQnwqKBFXT5Yh1OOw6+26apqg=
+github.com/charmbracelet/ultraviolet v0.0.0-20260316091819-b93f6a3b8502/go.mod h1:mkUCcxn9w9j89JJp3pOza5tmDQZPgIB75UfmQlFYvas=
 github.com/charmbracelet/x/ansi v0.11.6 h1:GhV21SiDz/45W9AnV2R61xZMRri5NlLnl6CVF7ihZW8=
 github.com/charmbracelet/x/ansi v0.11.6/go.mod h1:2JNYLgQUsyqaiLovhU2Rv/pb8r6ydXKS3NIttu3VGZQ=
-github.com/charmbracelet/x/exp/charmtone v0.0.0-20260315003922-bbd79dac4a98 h1:dy7Lkk/F1VfhLXRfFAat2eKp1mi76QuJ0uxIcldHtOA=
-github.com/charmbracelet/x/exp/charmtone v0.0.0-20260315003922-bbd79dac4a98/go.mod h1:nsExn0DGyX0lh9LwLHTn2Gg+hafdzfSXnC+QmEJTZFY=
+github.com/charmbracelet/x/exp/charmtone v0.0.0-20260316093931-f2fb44ab3145 h1:btzh82+J19XPOKCSIBuEGmfFVnSb6UNIg1xAkrUeeAU=
+github.com/charmbracelet/x/exp/charmtone v0.0.0-20260316093931-f2fb44ab3145/go.mod h1:nsExn0DGyX0lh9LwLHTn2Gg+hafdzfSXnC+QmEJTZFY=
 github.com/charmbracelet/x/exp/golden v0.0.0-20250806222409-83e3a29d542f h1:pk6gmGpCE7F3FcjaOEKYriCvpmIN4+6OS/RD0vm4uIA=
 github.com/charmbracelet/x/exp/golden v0.0.0-20250806222409-83e3a29d542f/go.mod h1:IfZAMTHB6XkZSeXUqriemErjAWCCzT0LwjKFYCZyw0I=
 github.com/charmbracelet/x/term v0.2.2 h1:xVRT/S2ZcKdhhOuSP4t5cLi5o+JxklsoEObBSgfgZRk=
@@ -119,8 +119,8 @@ github.com/stretchr/testify v1.11.1 h1:7s2iGBzp5EwR7/aIZr8ao5+dra3wiQyKjjFuvgVKu
 github.com/stretchr/testify v1.11.1/go.mod h1:wZwfW3scLgRK+23gO65QZefKpKQRnfz6sD981Nm4B6U=
 github.com/strongo/random v0.0.1 h1:OZHJBb/3uEa7OX8L2Dv2pLnSeewRmXMyTACoeto6O8I=
 github.com/strongo/random v0.0.1/go.mod h1:/pSI+SjBNLBkjljNtVdYr6ERddA+LqSa87o0/s+9iuU=
-github.com/synchestra-io/rehearse v0.1.1 h1:gElmyUkJAyAM7r9U4MO2vpUy0k5fdo7L4uJWfZgr/lE=
-github.com/synchestra-io/rehearse v0.1.1/go.mod h1:5aWUGBY1FzcBOObycC7d3X5kAP/b16dp6hZRJNL3G/8=
+github.com/synchestra-io/rehearse v0.2.0 h1:wVZuKc2lXLXJI1mFMPLsJ0z5+X79++0vR5zn9G7E4bU=
+github.com/synchestra-io/rehearse v0.2.0/go.mod h1:ddhxe7bLKJlEqx8S6CRr1aTI6r0oG5oByKkwxjZhRCI=
 github.com/tidwall/gjson v1.14.2/go.mod h1:/wbyibRr2FHMks5tjHJ5F8dMZh3AcwJEMf5vlfC0lxk=
 github.com/tidwall/gjson v1.18.0 h1:FIDeeyB800efLX89e5a8Y0BNH+LOngJyGrIWxG2FKQY=
 github.com/tidwall/gjson v1.18.0/go.mod h1:/wbyibRr2FHMks5tjHJ5F8dMZh3AcwJEMf5vlfC0lxk=
