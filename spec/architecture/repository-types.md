@@ -6,9 +6,9 @@ Synchestra operates with three kinds of repositories. Each has a distinct role, 
 
 | Repository type | What it holds | Who writes to it | Commit cadence |
 |---|---|---|---|
-| **Spec repository** | Requirements, architecture, documentation, `synchestra-spec.yaml` | Humans, agents (reviewed) | Low — deliberate, reviewed changes |
+| **Spec repository** (one or more) | Requirements, architecture, documentation, `synchestra-spec.yaml` | Humans, agents (reviewed) | Low — deliberate, reviewed changes |
 | **State repository** | Tasks, claims, coordination state, workflow artifacts | Synchestra CLI, agents (automated) | High — frequent machine commits |
-| **Code repository** (one or more) | Implementation and source code | Developers, agents | Medium — feature branches, PRs |
+| **Code repository** (one or more) | Implementation and source code, `synchestra-code.yaml` | Developers, agents | Medium — feature branches, PRs |
 
 ## Spec Repository
 
@@ -131,9 +131,22 @@ repos:
   - https://github.com/acme/acme-infra
 ```
 
-The **state repository** contains a minimal `synchestra-spec.yaml` with a back-reference to the spec repo, plus the auto-generated README.
+The **state repository** contains `synchestra-state.yaml` listing all spec repos that share this state repo:
 
-**Code repositories** are referenced by the spec repo's config. Agents discover them through `synchestra-spec.yaml` when they need to create branches or push implementation changes.
+```yaml
+spec_repos:
+  - https://github.com/acme/acme
+  - https://github.com/acme/acme-rehearse
+```
+
+**Code repositories** contain `synchestra-code.yaml` listing all spec repos they implement:
+
+```yaml
+spec_repos:
+  - https://github.com/acme/acme
+```
+
+Spec and code repos have a **many-to-many** relationship: one spec can be implemented by multiple code repos, and one code repo can implement multiple specs. Similarly, multiple spec repos can share a single state repo.
 
 ### Typical workflow
 
@@ -169,5 +182,4 @@ What **cannot** be combined: the state repo. Even for the simplest projects, coo
 
 ## Outstanding Questions
 
-- Should code repositories contain a lightweight `synchestra.yaml` pointer to the state repo for CLI auto-discovery when working from within a code repo?
-- How should the CLI resolve which project a code repo belongs to if the developer is working in the code repo and hasn't explicitly set `--project`?
+- How should the CLI resolve which project a code repo belongs to if the developer is working in the code repo and hasn't explicitly set `--project`? (The code repo's `synchestra-code.yaml` lists spec repos, which in turn reference the state repo.)
