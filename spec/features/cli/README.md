@@ -132,6 +132,8 @@ All CLI command READMEs and skill READMEs link to the canonical `_args` document
 
 ## Command Groups
 
+For an overview of which commands run in which environments (host, agent container, CI), see [Command Environments](command-environments.md).
+
 | Entry | Description |
 |---|---|
 | [_args](_args/README.md) | Global CLI arguments |
