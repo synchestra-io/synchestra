@@ -96,14 +96,14 @@ The spec root directory name is configurable via `project_dirs.specifications` i
 |---|---|---|---|
 | Readability for non-developers | Good (Given/When/Then) | Poor | Good (natural headings, tables, prose) |
 | Executable without tooling translation | No (needs step definitions in code) | No (needs a runner that maps keys to actions) | Yes (code blocks run directly) |
-| Script language flexibility | Depends on step definition language | Depends on runner | Bash, Python, and Starlark out of the box |
+| Script language flexibility | Depends on step definition language | Depends on runner | Bash, Python, SQL, and Starlark out of the box |
 | Version control friendliness | Good | Good | Good |
 | Renders natively on GitHub/GitLab | No | Partially | Yes — full rendering with diagrams, tables, links |
 | Extends to new assertion types | Requires step definition code | Requires schema changes | Add a new `_acs/*.md` file |
 | Learning curve | Moderate (Gherkin syntax + step definitions) | Low (but limited expressiveness) | Low (markdown + bash/python) |
 | AI agent authoring | Moderate | Easy | Easy — agents already write markdown fluently |
 
-The key insight: **Gherkin separates what from how** (Given/When/Then is the "what," step definitions are the "how"). Synchestra's format keeps them together in one file — the markdown describes the what, the code block is the how, and both are visible in the same document. This makes scenarios self-contained and auditable without jumping between files. And because code blocks support bash, Python, and Starlark, authors choose the right tool for each verification — shell commands for CLI checks, Python for data validation, Starlark for hermetic logic.
+The key insight: **Gherkin separates what from how** (Given/When/Then is the "what," step definitions are the "how"). Synchestra's format keeps them together in one file — the markdown describes the what, the code block is the how, and both are visible in the same document. This makes scenarios self-contained and auditable without jumping between files. And because code blocks support bash, Python, SQL, and Starlark, authors choose the right tool for each verification — shell commands for CLI checks, Python for data validation, SQL for schema and data state verification, Starlark for hermetic logic.
 
 ## Interaction with Other Features
 

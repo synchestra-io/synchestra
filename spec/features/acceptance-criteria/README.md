@@ -77,9 +77,10 @@ Verification scripts are not limited to bash. The code block's language annotati
 |---|---|---|---|
 | Bash | `` ```bash `` | `bash -c` | File checks, CLI invocations, simple assertions |
 | Python | `` ```python `` | `python3 -c` | Complex assertions, JSON/YAML parsing, data validation |
+| SQL | `` ```sql `` | Database CLI (`psql`, `sqlite3`, etc.) | Schema verification, data state checks, query result assertions |
 | Starlark | `` ```starlark `` | Starlark interpreter | Hermetic, sandboxed verification with no filesystem side effects |
 
-Bash is the default and the most common choice — it maps naturally to CLI-driven verification. Python is available when assertions require structured data manipulation that would be unwieldy in bash. Starlark provides a deterministic, sandboxed alternative for verification logic that must be side-effect-free and reproducible.
+Bash is the default and the most common choice — it maps naturally to CLI-driven verification. Python is available when assertions require structured data manipulation that would be unwieldy in bash. SQL verifies database schema and data state — schema existence, row counts, constraint validation, and data integrity after migrations or workflow steps. Starlark provides a deterministic, sandboxed alternative for verification logic that must be side-effect-free and reproducible.
 
 The runner detects the language from the code fence annotation. **The annotation is mandatory** — a code block without a language annotation is a validation error. This eliminates ambiguity and makes every script's execution environment explicit.
 

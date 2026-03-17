@@ -103,7 +103,7 @@ Each step is an `## {step-name}` heading. Steps contain a mix of optional metada
 | Outputs | No | Table with Name, Store, and Extract columns |
 | ACs | No | Table with Feature and ACs columns — links to [acceptance criteria](../../acceptance-criteria/README.md) to verify after this step |
 | Include | No | Delegates to a sub-flow `.md` file (mutually exclusive with code block) |
-| Code block | Conditional | Script to execute (required unless Include is specified). Supports `bash`, `python`, and `starlark` — see [Supported languages](../../acceptance-criteria/README.md#supported-languages). |
+| Code block | Conditional | Script to execute (required unless Include is specified). Supports `bash`, `python`, `sql`, and `starlark` — see [Supported languages](../../acceptance-criteria/README.md#supported-languages). |
 
 A step with neither a code block nor an Include directive is a validation error — every step must do something. The code block's language annotation is **mandatory** — a code block without an annotation (e.g., bare `` ``` `` instead of `` ```bash ``) is a validation error. This ensures every script's interpreter is explicit and unambiguous.
 
