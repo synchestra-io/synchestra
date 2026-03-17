@@ -165,6 +165,7 @@ For smaller projects, the spec and code repos can be combined into a single repo
 ```
 acme/                             # Combined spec + code repo
   synchestra-spec.yaml
+  synchestra-code.yaml
   spec/
     features/
       ...
