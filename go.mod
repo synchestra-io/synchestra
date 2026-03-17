@@ -4,13 +4,14 @@ go 1.26.1
 
 require (
 	charm.land/fang/v2 v2.0.1
-	charm.land/lipgloss/v2 v2.0.2
 	github.com/ingitdb/ingitdb-cli v0.53.1
 	github.com/spf13/cobra v1.10.2
+	github.com/synchestra-io/rehearse v0.1.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
+	charm.land/lipgloss/v2 v2.0.2 // indirect
 	github.com/RoaringBitmap/roaring/v2 v2.15.0 // indirect
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
 	github.com/bits-and-blooms/bitset v1.24.4 // indirect
