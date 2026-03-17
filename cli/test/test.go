@@ -5,7 +5,7 @@ package test
 
 import (
 	"github.com/spf13/cobra"
-	rehearse "github.com/synchestra-io/rehearse/cli"
+	rehearse "github.com/synchestra-io/rehearse/pkg/cli"
 )
 
 // Command returns the "test" cobra command backed by the Rehearse testing framework.

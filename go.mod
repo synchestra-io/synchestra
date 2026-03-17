@@ -6,7 +6,7 @@ require (
 	charm.land/fang/v2 v2.0.1
 	github.com/ingitdb/ingitdb-cli v0.53.1
 	github.com/spf13/cobra v1.10.2
-	github.com/synchestra-io/rehearse v0.1.0
+	github.com/synchestra-io/rehearse v0.1.1
 	gopkg.in/yaml.v3 v3.0.1
 )
 
