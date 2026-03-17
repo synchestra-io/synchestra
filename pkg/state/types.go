@@ -122,12 +122,12 @@ type ArtifactRef struct {
 
 // ProjectConfig holds the project-level configuration stored in the state store.
 type ProjectConfig struct {
-	Title    string
-	SpecRepo string
+	Title     string
+	SpecRepos []string
 }
 
 // StoreOptions holds configuration for constructing a Store.
 type StoreOptions struct {
-	SpecRepoPath  string
+	SpecRepoPaths []string
 	StateRepoPath string
 }

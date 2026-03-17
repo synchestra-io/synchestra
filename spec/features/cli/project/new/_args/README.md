@@ -10,7 +10,7 @@ Arguments specific to `synchestra project new`.
 |---|---|---|---|
 | [`--title`](title.md) | String | No | Project title |
 
-Also uses [`--spec-repo`](../../_args/spec-repo.md), [`--state-repo`](../../_args/state-repo.md), and [`--target-repo`](../../_args/target-repo.md).
+Also uses [`--spec-repo`](../../_args/spec-repo.md), [`--state-repo`](../../_args/state-repo.md), and [`--code-repo`](../../_args/code-repo.md).
 
 ### `--title`
 

@@ -98,7 +98,7 @@ package state
 type StoreFactory func(ctx context.Context, opts StoreOptions) (Store, error)
 
 type StoreOptions struct {
-    SpecRepoPath  string
+    SpecRepoPaths []string
     StateRepoPath string
 }
 ```

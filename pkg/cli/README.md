@@ -21,7 +21,7 @@ Thin wrapper around git CLI operations used by commands that mutate repositories
 
 ### `project`
 
-Implements the `synchestra project` command group. Currently contains the `new` subcommand which creates a Synchestra project by linking spec, state, and target repos.
+Implements the `synchestra project` command group. Currently contains the `new` subcommand which creates a Synchestra project by linking spec, state, and code repos.
 
 ### `reporef`
 

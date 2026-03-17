@@ -29,7 +29,7 @@ For `project new`, this is the repository where `synchestra-state.yaml` will be 
 # Create project
 synchestra project new --spec-repo github.com/acme/acme-spec \
   --state-repo github.com/acme/acme-synchestra \
-  --target-repo github.com/acme/acme-api
+  --code-repo github.com/acme/acme-api
 
 # Change state repo
 synchestra project set --state-repo github.com/acme/acme-synchestra-v2

@@ -9,10 +9,10 @@
 export TEST_DIR=$(mktemp -d)
 export SPEC_BARE=$(mktemp -d)/spec.git
 export STATE_BARE=$(mktemp -d)/state.git
-export TARGET_BARE=$(mktemp -d)/target.git
+export CODE_BARE=$(mktemp -d)/code.git
 git init --bare "$SPEC_BARE"
 git init --bare "$STATE_BARE"
-git init --bare "$TARGET_BARE"
+git init --bare "$CODE_BARE"
 # Seed spec repo with a README
 SEED=$(mktemp -d)
 git clone "$SPEC_BARE" "$SEED/spec"
@@ -36,7 +36,7 @@ export HOME="$TEST_DIR"
 synchestra project new \
   --spec-repo "$SPEC_BARE" \
   --state-repo "$STATE_BARE" \
-  --target-repo "$TARGET_BARE"
+  --code-repo "$CODE_BARE"
 ```
 
 ## verify-configs
@@ -54,5 +54,5 @@ echo "Verifying config files exist"
 ## Teardown
 
 ```bash
-rm -rf "$TEST_DIR" "$SPEC_BARE" "$STATE_BARE" "$TARGET_BARE"
+rm -rf "$TEST_DIR" "$SPEC_BARE" "$STATE_BARE" "$CODE_BARE"
 ```

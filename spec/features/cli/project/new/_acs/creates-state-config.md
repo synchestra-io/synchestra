@@ -6,7 +6,7 @@
 ## Description
 
 After `synchestra project new`, `synchestra-state.yaml` exists in the state repo
-with the spec_repo field pointing to the spec repo.
+with the spec_repos field pointing to the spec repo.
 
 ## Inputs
 
@@ -18,7 +18,7 @@ with the spec_repo field pointing to the spec repo.
 
 ```bash
 test -f "$state_repo_path/synchestra-state.yaml"
-grep -q 'spec_repo:' "$state_repo_path/synchestra-state.yaml"
+grep -q 'spec_repos:' "$state_repo_path/synchestra-state.yaml"
 ```
 
 ## Scenarios

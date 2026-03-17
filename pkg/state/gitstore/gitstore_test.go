@@ -17,7 +17,7 @@ func TestGitStateStoreImplementsStore(t *testing.T) {
 
 	s, err := gitstore.New(context.Background(), gitstore.Options{
 		StateRepoPath: t.TempDir(),
-		SpecRepoPath:  t.TempDir(),
+		SpecRepoPaths: []string{t.TempDir()},
 	})
 	if err != nil {
 		t.Fatalf("New() returned error: %v", err)
@@ -50,7 +50,7 @@ func TestGitStateStoreImplementsStore(t *testing.T) {
 func TestSyncModeDefaultsToSync(t *testing.T) {
 	s, err := gitstore.New(context.Background(), gitstore.Options{
 		StateRepoPath: t.TempDir(),
-		SpecRepoPath:  t.TempDir(),
+		SpecRepoPaths: []string{t.TempDir()},
 		// SyncMode intentionally omitted — should default to "sync"
 	})
 	if err != nil {

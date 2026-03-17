@@ -1805,7 +1805,7 @@ Create `spec/features/cli/project/new/_acs/creates-state-config.md`:
 ## Description
 
 After `synchestra project new`, `synchestra-state.yaml` exists in the state repo
-with the spec_repo field pointing to the spec repo.
+with the spec_repos field pointing to the spec repo.
 
 ## Inputs
 
@@ -1817,7 +1817,7 @@ with the spec_repo field pointing to the spec repo.
 
 ` ``bash
 test -f "$state_repo_path/synchestra-state.yaml"
-grep -q 'spec_repo:' "$state_repo_path/synchestra-state.yaml"
+grep -q 'spec_repos:' "$state_repo_path/synchestra-state.yaml"
 ` ``
 
 ## Scenarios
@@ -1854,10 +1854,10 @@ Add an Acceptance Criteria section before the Outstanding Questions section:
 export TEST_DIR=$(mktemp -d)
 export SPEC_BARE=$(mktemp -d)/spec.git
 export STATE_BARE=$(mktemp -d)/state.git
-export TARGET_BARE=$(mktemp -d)/target.git
+export CODE_BARE=$(mktemp -d)/code.git
 git init --bare "$SPEC_BARE"
 git init --bare "$STATE_BARE"
-git init --bare "$TARGET_BARE"
+git init --bare "$CODE_BARE"
 # Seed spec repo with a README
 SEED=$(mktemp -d)
 git clone "$SPEC_BARE" "$SEED/spec"
@@ -1881,7 +1881,7 @@ export HOME="$TEST_DIR"
 synchestra project new \
   --spec-repo "$SPEC_BARE" \
   --state-repo "$STATE_BARE" \
-  --target-repo "$TARGET_BARE"
+  --code-repo "$CODE_BARE"
 ` ``
 
 ## verify-configs
@@ -1899,7 +1899,7 @@ echo "Verifying config files exist"
 ## Teardown
 
 ` ``bash
-rm -rf "$TEST_DIR" "$SPEC_BARE" "$STATE_BARE" "$TARGET_BARE"
+rm -rf "$TEST_DIR" "$SPEC_BARE" "$STATE_BARE" "$CODE_BARE"
 ` ``
 ```
 

@@ -19,7 +19,7 @@ synchestra config clear
 synchestra project new
 synchestra project info
 synchestra project set
-synchestra project target add
+synchestra project code add
 synchestra task claim
 synchestra task status
 synchestra task release
@@ -153,7 +153,7 @@ Manages the global user configuration at `~/.synchestra.yaml` — show effective
 
 ### `project`
 
-Project creation and management — creating projects, viewing configuration, updating settings, and managing target repositories. See [project/README.md](project/README.md).
+Project creation and management — creating projects, viewing configuration, updating settings, and managing code repositories. See [project/README.md](project/README.md).
 
 ### `task`
 

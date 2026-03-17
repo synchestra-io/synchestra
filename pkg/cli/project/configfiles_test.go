@@ -42,7 +42,10 @@ func TestWriteSpecConfig(t *testing.T) {
 func TestWriteStateConfig(t *testing.T) {
 	dir := t.TempDir()
 	cfg := StateConfig{
-		SpecRepo: "https://github.com/acme/acme-spec",
+		SpecRepos: []string{
+			"https://github.com/acme/acme-spec",
+			"https://github.com/acme/acme-rehearse",
+		},
 	}
 	if err := WriteStateConfig(dir, cfg); err != nil {
 		t.Fatal(err)
@@ -52,26 +55,39 @@ func TestWriteStateConfig(t *testing.T) {
 		t.Fatal(err)
 	}
 	content := string(data)
-	if !strings.Contains(content, "spec_repo: https://github.com/acme/acme-spec") {
-		t.Errorf("state config missing spec_repo\ngot:\n%s", content)
+	for _, want := range []string{
+		"- https://github.com/acme/acme-spec",
+		"- https://github.com/acme/acme-rehearse",
+	} {
+		if !strings.Contains(content, want) {
+			t.Errorf("state config missing %q\ngot:\n%s", want, content)
+		}
 	}
 }
 
-func TestWriteTargetConfig(t *testing.T) {
+func TestWriteCodeConfig(t *testing.T) {
 	dir := t.TempDir()
-	cfg := TargetConfig{
-		SpecRepo: "https://github.com/acme/acme-spec",
+	cfg := CodeConfig{
+		SpecRepos: []string{
+			"https://github.com/acme/acme-spec",
+			"https://github.com/acme/acme-rehearse",
+		},
 	}
-	if err := WriteTargetConfig(dir, cfg); err != nil {
+	if err := WriteCodeConfig(dir, cfg); err != nil {
 		t.Fatal(err)
 	}
-	data, err := os.ReadFile(filepath.Join(dir, "synchestra-target.yaml"))
+	data, err := os.ReadFile(filepath.Join(dir, "synchestra-code.yaml"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	content := string(data)
-	if !strings.Contains(content, "spec_repo: https://github.com/acme/acme-spec") {
-		t.Errorf("target config missing spec_repo\ngot:\n%s", content)
+	for _, want := range []string{
+		"- https://github.com/acme/acme-spec",
+		"- https://github.com/acme/acme-rehearse",
+	} {
+		if !strings.Contains(content, want) {
+			t.Errorf("code config missing %q\ngot:\n%s", want, content)
+		}
 	}
 }
 
@@ -99,7 +115,7 @@ func TestReadSpecConfig_Exists(t *testing.T) {
 
 func TestReadStateConfig_Exists(t *testing.T) {
 	dir := t.TempDir()
-	content := "spec_repo: https://github.com/org/spec\n"
+	content := "spec_repos:\n  - https://github.com/org/spec\n  - https://github.com/org/rehearse\n"
 	if err := os.WriteFile(filepath.Join(dir, "synchestra-state.yaml"), []byte(content), 0644); err != nil {
 		t.Fatal(err)
 	}
@@ -107,22 +123,31 @@ func TestReadStateConfig_Exists(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if cfg.SpecRepo != "https://github.com/org/spec" {
-		t.Errorf("SpecRepo = %q", cfg.SpecRepo)
+	if len(cfg.SpecRepos) != 2 {
+		t.Fatalf("expected 2 spec repos, got %d: %v", len(cfg.SpecRepos), cfg.SpecRepos)
+	}
+	if cfg.SpecRepos[0] != "https://github.com/org/spec" {
+		t.Errorf("SpecRepos[0] = %q", cfg.SpecRepos[0])
+	}
+	if cfg.SpecRepos[1] != "https://github.com/org/rehearse" {
+		t.Errorf("SpecRepos[1] = %q", cfg.SpecRepos[1])
 	}
 }
 
-func TestReadTargetConfig_Exists(t *testing.T) {
+func TestReadCodeConfig_Exists(t *testing.T) {
 	dir := t.TempDir()
-	content := "spec_repo: https://github.com/org/spec\n"
-	if err := os.WriteFile(filepath.Join(dir, "synchestra-target.yaml"), []byte(content), 0644); err != nil {
+	content := "spec_repos:\n  - https://github.com/org/spec\n  - https://github.com/org/rehearse\n"
+	if err := os.WriteFile(filepath.Join(dir, "synchestra-code.yaml"), []byte(content), 0644); err != nil {
 		t.Fatal(err)
 	}
-	cfg, err := ReadTargetConfig(dir)
+	cfg, err := ReadCodeConfig(dir)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if cfg.SpecRepo != "https://github.com/org/spec" {
-		t.Errorf("SpecRepo = %q", cfg.SpecRepo)
+	if len(cfg.SpecRepos) != 2 {
+		t.Fatalf("expected 2 spec repos, got %d: %v", len(cfg.SpecRepos), cfg.SpecRepos)
+	}
+	if cfg.SpecRepos[0] != "https://github.com/org/spec" {
+		t.Errorf("SpecRepos[0] = %q", cfg.SpecRepos[0])
 	}
 }

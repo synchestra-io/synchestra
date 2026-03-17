@@ -71,20 +71,20 @@ func cloneAndConfigure(t *testing.T, bare, dest, fetchURL string) {
 func TestRunNew_ViaCobra(t *testing.T) {
 	specBare := initBareTestRepo(t, "spec")
 	stateBare := initBareTestRepo(t, "state")
-	targetBare := initBareTestRepo(t, "target")
+	codeBare := initBareTestRepo(t, "code")
 
 	seedBareRepo(t, specBare, "# My Test Project\n\nDescription.\n")
 	seedBareRepo(t, stateBare, "# State\n")
-	seedBareRepo(t, targetBare, "# Target\n")
+	seedBareRepo(t, codeBare, "# Code\n")
 
 	reposDir := filepath.Join(t.TempDir(), "repos")
 	specDir := filepath.Join(reposDir, "local", "test", "spec")
 	stateDir := filepath.Join(reposDir, "local", "test", "state")
-	targetDir := filepath.Join(reposDir, "local", "test", "target")
+	codeDir := filepath.Join(reposDir, "local", "test", "code")
 
 	cloneAndConfigure(t, specBare, specDir, "https://local/test/spec")
 	cloneAndConfigure(t, stateBare, stateDir, "https://local/test/state")
-	cloneAndConfigure(t, targetBare, targetDir, "https://local/test/target")
+	cloneAndConfigure(t, codeBare, codeDir, "https://local/test/code")
 
 	homeDir := t.TempDir()
 	if err := os.WriteFile(filepath.Join(homeDir, ".synchestra.yaml"), []byte("repos_dir: "+reposDir+"\n"), 0o644); err != nil {
@@ -100,7 +100,7 @@ func TestRunNew_ViaCobra(t *testing.T) {
 		"new",
 		"--spec-repo", "local/test/spec",
 		"--state-repo", "local/test/state",
-		"--target-repo", "local/test/target",
+		"--code-repo", "local/test/code",
 	})
 	if err := cmd.Execute(); err != nil {
 		t.Fatalf("command failed: %v\nstderr: %s", err, stderr.String())
@@ -116,7 +116,7 @@ func TestRunNew_ViaCobra(t *testing.T) {
 	if specCfg.StateRepo != "https://local/test/state" {
 		t.Errorf("StateRepo = %q", specCfg.StateRepo)
 	}
-	if len(specCfg.Repos) != 1 || specCfg.Repos[0] != "https://local/test/target" {
+	if len(specCfg.Repos) != 1 || specCfg.Repos[0] != "https://local/test/code" {
 		t.Errorf("Repos = %v", specCfg.Repos)
 	}
 
@@ -124,40 +124,40 @@ func TestRunNew_ViaCobra(t *testing.T) {
 	if err != nil {
 		t.Fatalf("reading state config: %v", err)
 	}
-	if stateCfg.SpecRepo != "https://local/test/spec" {
-		t.Errorf("state SpecRepo = %q", stateCfg.SpecRepo)
+	if len(stateCfg.SpecRepos) != 1 || stateCfg.SpecRepos[0] != "https://local/test/spec" {
+		t.Errorf("state SpecRepos = %v", stateCfg.SpecRepos)
 	}
 
-	targetCfg, err := ReadTargetConfig(targetDir)
+	codeCfg, err := ReadCodeConfig(codeDir)
 	if err != nil {
-		t.Fatalf("reading target config: %v", err)
+		t.Fatalf("reading code config: %v", err)
 	}
-	if targetCfg.SpecRepo != "https://local/test/spec" {
-		t.Errorf("target SpecRepo = %q", targetCfg.SpecRepo)
+	if len(codeCfg.SpecRepos) != 1 || codeCfg.SpecRepos[0] != "https://local/test/spec" {
+		t.Errorf("code SpecRepos = %v", codeCfg.SpecRepos)
 	}
 }
 
-func TestRunNew_MultipleTargets(t *testing.T) {
+func TestRunNew_MultipleCodeRepos(t *testing.T) {
 	specBare := initBareTestRepo(t, "spec2")
 	stateBare := initBareTestRepo(t, "state2")
-	target1Bare := initBareTestRepo(t, "target2a")
-	target2Bare := initBareTestRepo(t, "target2b")
+	code1Bare := initBareTestRepo(t, "code2a")
+	code2Bare := initBareTestRepo(t, "code2b")
 
-	seedBareRepo(t, specBare, "# Multi Target\n")
+	seedBareRepo(t, specBare, "# Multi Code\n")
 	seedBareRepo(t, stateBare, "# State\n")
-	seedBareRepo(t, target1Bare, "# T1\n")
-	seedBareRepo(t, target2Bare, "# T2\n")
+	seedBareRepo(t, code1Bare, "# C1\n")
+	seedBareRepo(t, code2Bare, "# C2\n")
 
 	reposDir := filepath.Join(t.TempDir(), "repos")
-	specDir := filepath.Join(reposDir, "local", "mt", "spec")
-	stateDir := filepath.Join(reposDir, "local", "mt", "state")
-	target1Dir := filepath.Join(reposDir, "local", "mt", "t1")
-	target2Dir := filepath.Join(reposDir, "local", "mt", "t2")
+	specDir := filepath.Join(reposDir, "local", "mc", "spec")
+	stateDir := filepath.Join(reposDir, "local", "mc", "state")
+	code1Dir := filepath.Join(reposDir, "local", "mc", "c1")
+	code2Dir := filepath.Join(reposDir, "local", "mc", "c2")
 
-	cloneAndConfigure(t, specBare, specDir, "https://local/mt/spec")
-	cloneAndConfigure(t, stateBare, stateDir, "https://local/mt/state")
-	cloneAndConfigure(t, target1Bare, target1Dir, "https://local/mt/t1")
-	cloneAndConfigure(t, target2Bare, target2Dir, "https://local/mt/t2")
+	cloneAndConfigure(t, specBare, specDir, "https://local/mc/spec")
+	cloneAndConfigure(t, stateBare, stateDir, "https://local/mc/state")
+	cloneAndConfigure(t, code1Bare, code1Dir, "https://local/mc/c1")
+	cloneAndConfigure(t, code2Bare, code2Dir, "https://local/mc/c2")
 
 	homeDir := t.TempDir()
 	if err := os.WriteFile(filepath.Join(homeDir, ".synchestra.yaml"), []byte("repos_dir: "+reposDir+"\n"), 0o644); err != nil {
@@ -171,11 +171,11 @@ func TestRunNew_MultipleTargets(t *testing.T) {
 	cmd.SetErr(&stderr)
 	cmd.SetArgs([]string{
 		"new",
-		"--spec-repo", "local/mt/spec",
-		"--state-repo", "local/mt/state",
-		"--target-repo", "local/mt/t1",
-		"--target-repo", "local/mt/t2",
-		"--title", "Multi Target Project",
+		"--spec-repo", "local/mc/spec",
+		"--state-repo", "local/mc/state",
+		"--code-repo", "local/mc/c1",
+		"--code-repo", "local/mc/c2",
+		"--title", "Multi Code Project",
 	})
 	if err := cmd.Execute(); err != nil {
 		t.Fatalf("command failed: %v\nstderr: %s", err, stderr.String())
@@ -185,20 +185,20 @@ func TestRunNew_MultipleTargets(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if specCfg.Title != "Multi Target Project" {
-		t.Errorf("Title = %q, want Multi Target Project", specCfg.Title)
+	if specCfg.Title != "Multi Code Project" {
+		t.Errorf("Title = %q, want Multi Code Project", specCfg.Title)
 	}
 	if len(specCfg.Repos) != 2 {
 		t.Fatalf("expected 2 repos, got %d: %v", len(specCfg.Repos), specCfg.Repos)
 	}
 
-	for _, td := range []string{target1Dir, target2Dir} {
-		cfg, err := ReadTargetConfig(td)
+	for _, cd := range []string{code1Dir, code2Dir} {
+		cfg, err := ReadCodeConfig(cd)
 		if err != nil {
-			t.Fatalf("reading target config from %s: %v", td, err)
+			t.Fatalf("reading code config from %s: %v", cd, err)
 		}
-		if cfg.SpecRepo != "https://local/mt/spec" {
-			t.Errorf("target SpecRepo = %q", cfg.SpecRepo)
+		if len(cfg.SpecRepos) != 1 || cfg.SpecRepos[0] != "https://local/mc/spec" {
+			t.Errorf("code SpecRepos = %v", cfg.SpecRepos)
 		}
 	}
 }
@@ -211,18 +211,18 @@ func TestRunNew_MissingRequiredFlags(t *testing.T) {
 	}{
 		{
 			name: "missing spec repo",
-			args: []string{"new", "--state-repo", "local/test/state", "--target-repo", "local/test/target"},
+			args: []string{"new", "--state-repo", "local/test/state", "--code-repo", "local/test/code"},
 			want: "--spec-repo is required",
 		},
 		{
 			name: "missing state repo",
-			args: []string{"new", "--spec-repo", "local/test/spec", "--target-repo", "local/test/target"},
+			args: []string{"new", "--spec-repo", "local/test/spec", "--code-repo", "local/test/code"},
 			want: "--state-repo is required",
 		},
 		{
-			name: "missing target repo",
+			name: "missing code repo",
 			args: []string{"new", "--spec-repo", "local/test/spec", "--state-repo", "local/test/state"},
-			want: "at least one --target-repo is required",
+			want: "at least one --code-repo is required",
 		},
 	}
 
@@ -257,15 +257,15 @@ func TestRunNew_RejectsOverlappingRepos(t *testing.T) {
 	}{
 		{
 			name: "state equals spec",
-			args: []string{"new", "--spec-repo", "local/test/shared", "--state-repo", "local/test/shared", "--target-repo", "local/test/target"},
+			args: []string{"new", "--spec-repo", "local/test/shared", "--state-repo", "local/test/shared", "--code-repo", "local/test/code"},
 		},
 		{
-			name: "target equals spec",
-			args: []string{"new", "--spec-repo", "local/test/spec", "--state-repo", "local/test/state", "--target-repo", "local/test/spec"},
+			name: "code equals spec",
+			args: []string{"new", "--spec-repo", "local/test/spec", "--state-repo", "local/test/state", "--code-repo", "local/test/spec"},
 		},
 		{
-			name: "duplicate targets",
-			args: []string{"new", "--spec-repo", "local/test/spec", "--state-repo", "local/test/state", "--target-repo", "local/test/target", "--target-repo", "local/test/target"},
+			name: "duplicate code repos",
+			args: []string{"new", "--spec-repo", "local/test/spec", "--state-repo", "local/test/state", "--code-repo", "local/test/code", "--code-repo", "local/test/code"},
 		},
 	}
 
@@ -413,39 +413,6 @@ func TestCheckSpecConflict_DifferentProject(t *testing.T) {
 		t.Fatal(err)
 	}
 	err := checkSpecConflict(dir, "https://example.com/state")
-	if err == nil {
-		t.Error("different project should conflict")
-	}
-	var ee *exitError
-	if !errors.As(err, &ee) || ee.code != 1 {
-		t.Errorf("expected exit code 1, got %v", err)
-	}
-}
-
-func TestCheckBackrefConflict_NoFile(t *testing.T) {
-	err := checkBackrefConflict(t.TempDir(), StateConfigFile, "https://example.com/spec")
-	if err != nil {
-		t.Errorf("expected no error, got %v", err)
-	}
-}
-
-func TestCheckBackrefConflict_SameProject(t *testing.T) {
-	dir := t.TempDir()
-	if err := WriteStateConfig(dir, StateConfig{SpecRepo: "https://example.com/spec"}); err != nil {
-		t.Fatal(err)
-	}
-	err := checkBackrefConflict(dir, StateConfigFile, "https://example.com/spec")
-	if err != nil {
-		t.Errorf("same project should not conflict, got %v", err)
-	}
-}
-
-func TestCheckBackrefConflict_DifferentProject(t *testing.T) {
-	dir := t.TempDir()
-	if err := WriteStateConfig(dir, StateConfig{SpecRepo: "https://example.com/other-spec"}); err != nil {
-		t.Fatal(err)
-	}
-	err := checkBackrefConflict(dir, StateConfigFile, "https://example.com/spec")
 	if err == nil {
 		t.Error("different project should conflict")
 	}

@@ -97,7 +97,7 @@ Implement the pipeline that creates, versions, and commits artifacts produced du
 **Produces:**
   - Artifact producer that creates typed artifacts (proposal, feature, issue, commit, pull-request)
   - Artifact versioning within the chat (draft iterations)
-  - Artifact commit logic for each target repository
+  - Artifact commit logic for each destination repository
 
 **Acceptance criteria:**
 - Can create a proposal artifact: generates the proposal markdown following the proposal format, writes to `artifacts/` during drafting, commits to `spec/features/{feature}/proposals/{slug}/README.md` on finalization

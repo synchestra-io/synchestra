@@ -27,7 +27,7 @@ Every project managed by Synchestra has a `synchestra-spec.yaml` file as its ent
 
 | Field | Default | Description |
 |---|---|---|
-| `repos` | — | List of target repository URLs (code repos that agents work in) |
+| `repos` | — | List of code repository URLs (repos that agents work in) |
 | `project_dirs.specifications` | `spec` | Directory for technical specifications (features, architecture, etc.) |
 | `project_dirs.documents` | `docs` | Directory for user-facing documentation |
 
@@ -152,5 +152,5 @@ Synchestra checks for a `synchestra-spec.yaml` at the repository root. If found,
 ## Outstanding Questions
 
 - Should there be an explicit field in `synchestra-spec.yaml` to declare the layout, or is auto-detection (root file presence) sufficient?
-- Should `synchestra-spec.yaml` in the state repo contain a `spec_repo` back-reference field, or is the link only from spec repo → state repo?
+- Should `synchestra-spec.yaml` in the state repo contain a `spec_repos` back-reference field, or is the link only from spec repo → state repo?
 - Should code repositories also contain a lightweight `synchestra.yaml` pointer to the state repo for CLI auto-discovery?

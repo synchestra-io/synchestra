@@ -52,7 +52,7 @@ The user selects exactly **one** repository to hold project specifications:
 - The wizard lists repositories accessible via the GitHub App installation.
 - The user picks one. This becomes the spec repository referenced in `synchestra-spec.yaml`.
 
-#### Step 3 — Code / Target Repositories (Optional)
+#### Step 3 — Code Repositories (Optional)
 
 The user may add zero or more code repositories that agents will work in:
 

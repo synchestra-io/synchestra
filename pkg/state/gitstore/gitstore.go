@@ -29,7 +29,7 @@ const (
 // Options holds git-backend-specific configuration.
 type Options struct {
 	StateRepoPath string
-	SpecRepoPath  string
+	SpecRepoPaths []string
 	SyncMode      SyncMode // defaults to SyncModeSync if empty
 }
 
@@ -38,7 +38,7 @@ type Options struct {
 // and atomic commit-and-push in a state repository.
 type GitStateStore struct {
 	stateRepoPath string
-	specRepoPath  string
+	specRepoPaths []string
 	syncMode      SyncMode
 }
 
@@ -50,7 +50,7 @@ func New(ctx context.Context, opts Options) (state.Store, error) {
 	}
 	return &GitStateStore{
 		stateRepoPath: opts.StateRepoPath,
-		specRepoPath:  opts.SpecRepoPath,
+		specRepoPaths: opts.SpecRepoPaths,
 		syncMode:      syncMode,
 	}, nil
 }

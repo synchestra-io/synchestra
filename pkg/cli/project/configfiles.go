@@ -11,9 +11,9 @@ import (
 )
 
 const (
-	SpecConfigFile   = "synchestra-spec.yaml"
-	StateConfigFile  = "synchestra-state.yaml"
-	TargetConfigFile = "synchestra-target.yaml"
+	SpecConfigFile  = "synchestra-spec.yaml"
+	StateConfigFile = "synchestra-state.yaml"
+	CodeConfigFile  = "synchestra-code.yaml"
 )
 
 type SpecConfig struct {
@@ -23,11 +23,11 @@ type SpecConfig struct {
 }
 
 type StateConfig struct {
-	SpecRepo string `yaml:"spec_repo"`
+	SpecRepos []string `yaml:"spec_repos"`
 }
 
-type TargetConfig struct {
-	SpecRepo string `yaml:"spec_repo"`
+type CodeConfig struct {
+	SpecRepos []string `yaml:"spec_repos"`
 }
 
 func WriteSpecConfig(dir string, cfg SpecConfig) error {
@@ -38,8 +38,8 @@ func WriteStateConfig(dir string, cfg StateConfig) error {
 	return writeYAML(filepath.Join(dir, StateConfigFile), cfg)
 }
 
-func WriteTargetConfig(dir string, cfg TargetConfig) error {
-	return writeYAML(filepath.Join(dir, TargetConfigFile), cfg)
+func WriteCodeConfig(dir string, cfg CodeConfig) error {
+	return writeYAML(filepath.Join(dir, CodeConfigFile), cfg)
 }
 
 func ReadSpecConfig(dir string) (SpecConfig, error) {
@@ -66,14 +66,14 @@ func ReadStateConfig(dir string) (StateConfig, error) {
 	return cfg, nil
 }
 
-func ReadTargetConfig(dir string) (TargetConfig, error) {
-	var cfg TargetConfig
-	data, err := os.ReadFile(filepath.Join(dir, TargetConfigFile))
+func ReadCodeConfig(dir string) (CodeConfig, error) {
+	var cfg CodeConfig
+	data, err := os.ReadFile(filepath.Join(dir, CodeConfigFile))
 	if err != nil {
-		return cfg, fmt.Errorf("reading target config: %w", err)
+		return cfg, fmt.Errorf("reading code config: %w", err)
 	}
 	if err := yaml.Unmarshal(data, &cfg); err != nil {
-		return cfg, fmt.Errorf("parsing target config: %w", err)
+		return cfg, fmt.Errorf("parsing code config: %w", err)
 	}
 	return cfg, nil
 }

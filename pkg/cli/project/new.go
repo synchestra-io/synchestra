@@ -9,13 +9,13 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/synchesta-io/synchestra/pkg/cli/gitops"
 	"github.com/synchesta-io/synchestra/pkg/cli/globalconfig"
 	"github.com/synchesta-io/synchestra/pkg/cli/reporef"
-	"gopkg.in/yaml.v3"
 )
 
 func newCommand() *cobra.Command {
@@ -23,14 +23,14 @@ func newCommand() *cobra.Command {
 		Use:   "new",
 		Short: "Create a new Synchestra project",
 		Long: `Creates a new Synchestra project by linking a spec repo, state repo, and
-one or more target repos. Resolves all repo references, clones any that are
+one or more code repos. Resolves all repo references, clones any that are
 not already on disk, validates they are git repos, writes config files to
 each, and commits and pushes the changes.`,
 		RunE: runNew,
 	}
 	cmd.Flags().String("spec-repo", "", "spec repository reference (required)")
 	cmd.Flags().String("state-repo", "", "state repository reference (required)")
-	cmd.Flags().StringArray("target-repo", nil, "target repository reference (repeatable, at least one required)")
+	cmd.Flags().StringArray("code-repo", nil, "code repository reference (repeatable, at least one required)")
 	cmd.Flags().String("title", "", "project title (default: derived from spec repo README)")
 	return cmd
 }
@@ -38,10 +38,10 @@ each, and commits and pushes the changes.`,
 func runNew(cmd *cobra.Command, _ []string) error {
 	specRepoStr, _ := cmd.Flags().GetString("spec-repo")
 	stateRepoStr, _ := cmd.Flags().GetString("state-repo")
-	targetRepoStrs, _ := cmd.Flags().GetStringArray("target-repo")
+	codeRepoStrs, _ := cmd.Flags().GetStringArray("code-repo")
 	titleFlag, _ := cmd.Flags().GetString("title")
 
-	if err := validateRequiredRepoFlags(specRepoStr, stateRepoStr, targetRepoStrs); err != nil {
+	if err := validateRequiredRepoFlags(specRepoStr, stateRepoStr, codeRepoStrs); err != nil {
 		return err
 	}
 
@@ -54,16 +54,16 @@ func runNew(cmd *cobra.Command, _ []string) error {
 		return &exitError{code: 2, msg: fmt.Sprintf("invalid --state-repo: %v", err)}
 	}
 
-	targetRefs := make([]reporef.Ref, 0, len(targetRepoStrs))
-	for _, s := range targetRepoStrs {
+	codeRefs := make([]reporef.Ref, 0, len(codeRepoStrs))
+	for _, s := range codeRepoStrs {
 		ref, err := reporef.Parse(s)
 		if err != nil {
-			return &exitError{code: 2, msg: fmt.Sprintf("invalid --target-repo %q: %v", s, err)}
+			return &exitError{code: 2, msg: fmt.Sprintf("invalid --code-repo %q: %v", s, err)}
 		}
-		targetRefs = append(targetRefs, ref)
+		codeRefs = append(codeRefs, ref)
 	}
 
-	if err := validateDistinctRepoRoles(specRef, stateRef, targetRefs); err != nil {
+	if err := validateDistinctRepoRoles(specRef, stateRef, codeRefs); err != nil {
 		return err
 	}
 
@@ -77,7 +77,7 @@ func runNew(cmd *cobra.Command, _ []string) error {
 	}
 	reposDir := globalconfig.ResolveReposDir(cfg.ReposDir, homeDir)
 
-	allRefs := append([]reporef.Ref{specRef, stateRef}, targetRefs...)
+	allRefs := append([]reporef.Ref{specRef, stateRef}, codeRefs...)
 	allPaths := make([]string, len(allRefs))
 	for i, ref := range allRefs {
 		allPaths[i] = ref.DiskPath(reposDir)
@@ -86,7 +86,7 @@ func runNew(cmd *cobra.Command, _ []string) error {
 		}
 	}
 	specPath, statePath := allPaths[0], allPaths[1]
-	targetPaths := allPaths[2:]
+	codePaths := allPaths[2:]
 
 	for i, ref := range allRefs {
 		p := allPaths[i]
@@ -119,39 +119,38 @@ func runNew(cmd *cobra.Command, _ []string) error {
 	if err := checkSpecConflict(specPath, stateRef.OriginURL()); err != nil {
 		return err
 	}
-	if err := checkBackrefConflict(statePath, StateConfigFile, specRef.OriginURL()); err != nil {
-		return err
-	}
-	for _, tp := range targetPaths {
-		if err := checkBackrefConflict(tp, TargetConfigFile, specRef.OriginURL()); err != nil {
-			return err
-		}
-	}
 
 	title := DeriveTitle(titleFlag, specPath, specRef.Repo)
-	targetOriginURLs := make([]string, len(targetRefs))
-	for i, ref := range targetRefs {
-		targetOriginURLs[i] = ref.OriginURL()
+	codeOriginURLs := make([]string, len(codeRefs))
+	for i, ref := range codeRefs {
+		codeOriginURLs[i] = ref.OriginURL()
 	}
 
 	specCfg := SpecConfig{
 		Title:     title,
 		StateRepo: stateRef.OriginURL(),
-		Repos:     targetOriginURLs,
+		Repos:     codeOriginURLs,
 	}
 	if err := WriteSpecConfig(specPath, specCfg); err != nil {
 		return &exitError{code: 10, msg: fmt.Sprintf("writing spec config: %v", err)}
 	}
 
-	stateCfg := StateConfig{SpecRepo: specRef.OriginURL()}
+	stateCfg, _ := ReadStateConfig(statePath) // ignore error: file may not exist yet
+	specOrigin := specRef.OriginURL()
+	if !slices.Contains(stateCfg.SpecRepos, specOrigin) {
+		stateCfg.SpecRepos = append(stateCfg.SpecRepos, specOrigin)
+	}
 	if err := WriteStateConfig(statePath, stateCfg); err != nil {
 		return &exitError{code: 10, msg: fmt.Sprintf("writing state config: %v", err)}
 	}
 
-	for _, tp := range targetPaths {
-		targetCfg := TargetConfig{SpecRepo: specRef.OriginURL()}
-		if err := WriteTargetConfig(tp, targetCfg); err != nil {
-			return &exitError{code: 10, msg: fmt.Sprintf("writing target config: %v", err)}
+	for _, cp := range codePaths {
+		codeCfg, _ := ReadCodeConfig(cp) // ignore error: file may not exist yet
+		if !slices.Contains(codeCfg.SpecRepos, specOrigin) {
+			codeCfg.SpecRepos = append(codeCfg.SpecRepos, specOrigin)
+		}
+		if err := WriteCodeConfig(cp, codeCfg); err != nil {
+			return &exitError{code: 10, msg: fmt.Sprintf("writing code config: %v", err)}
 		}
 	}
 
@@ -162,9 +161,9 @@ func runNew(cmd *cobra.Command, _ []string) error {
 	if err := gitops.CommitAndPush(statePath, []string{StateConfigFile}, commitMsg); err != nil {
 		return &exitError{code: 10, msg: fmt.Sprintf("committing state repo: %v", err)}
 	}
-	for i, tp := range targetPaths {
-		if err := gitops.CommitAndPush(tp, []string{TargetConfigFile}, commitMsg); err != nil {
-			return &exitError{code: 10, msg: fmt.Sprintf("committing target repo %s: %v", targetRefs[i].Identifier(), err)}
+	for i, cp := range codePaths {
+		if err := gitops.CommitAndPush(cp, []string{CodeConfigFile}, commitMsg); err != nil {
+			return &exitError{code: 10, msg: fmt.Sprintf("committing code repo %s: %v", codeRefs[i].Identifier(), err)}
 		}
 	}
 
@@ -172,20 +171,20 @@ func runNew(cmd *cobra.Command, _ []string) error {
 	return nil
 }
 
-func validateRequiredRepoFlags(specRepoStr, stateRepoStr string, targetRepoStrs []string) error {
+func validateRequiredRepoFlags(specRepoStr, stateRepoStr string, codeRepoStrs []string) error {
 	switch {
 	case strings.TrimSpace(specRepoStr) == "":
 		return &exitError{code: 2, msg: "--spec-repo is required"}
 	case strings.TrimSpace(stateRepoStr) == "":
 		return &exitError{code: 2, msg: "--state-repo is required"}
-	case len(targetRepoStrs) == 0:
-		return &exitError{code: 2, msg: "at least one --target-repo is required"}
+	case len(codeRepoStrs) == 0:
+		return &exitError{code: 2, msg: "at least one --code-repo is required"}
 	default:
 		return nil
 	}
 }
 
-func validateDistinctRepoRoles(specRef, stateRef reporef.Ref, targetRefs []reporef.Ref) error {
+func validateDistinctRepoRoles(specRef, stateRef reporef.Ref, codeRefs []reporef.Ref) error {
 	if specRef == stateRef {
 		return &exitError{code: 2, msg: fmt.Sprintf("invalid repository layout: state repo %s must differ from spec repo %s", stateRef.Identifier(), specRef.Identifier())}
 	}
@@ -194,12 +193,12 @@ func validateDistinctRepoRoles(specRef, stateRef reporef.Ref, targetRefs []repor
 		specRef.Identifier():  "spec repo",
 		stateRef.Identifier(): "state repo",
 	}
-	for i, ref := range targetRefs {
+	for i, ref := range codeRefs {
 		id := ref.Identifier()
 		if prevRole, ok := seen[id]; ok {
-			return &exitError{code: 2, msg: fmt.Sprintf("invalid repository layout: target repo %s must differ from %s", id, prevRole)}
+			return &exitError{code: 2, msg: fmt.Sprintf("invalid repository layout: code repo %s must differ from %s", id, prevRole)}
 		}
-		seen[id] = fmt.Sprintf("target repo #%d", i+1)
+		seen[id] = fmt.Sprintf("code repo #%d", i+1)
 	}
 	return nil
 }
@@ -296,32 +295,6 @@ func checkSpecConflict(dir, expectedStateRepo string) error {
 		return &exitError{
 			code: 1,
 			msg:  fmt.Sprintf("conflict: %s in %s already points to state repo %s", SpecConfigFile, dir, cfg.StateRepo),
-		}
-	}
-	return nil
-}
-
-// checkBackrefConflict checks if a state or target config file exists and
-// its spec_repo field points to a different spec repo.
-func checkBackrefConflict(dir, filename, expectedSpecRepo string) error {
-	path := filepath.Join(dir, filename)
-	data, err := os.ReadFile(path)
-	if err != nil {
-		if errors.Is(err, fs.ErrNotExist) {
-			return nil
-		}
-		return &exitError{code: 10, msg: fmt.Sprintf("reading %s: %v", path, err)}
-	}
-	var backref struct {
-		SpecRepo string `yaml:"spec_repo"`
-	}
-	if err := yaml.Unmarshal(data, &backref); err != nil {
-		return &exitError{code: 10, msg: fmt.Sprintf("parsing %s: %v", path, err)}
-	}
-	if backref.SpecRepo != "" && backref.SpecRepo != expectedSpecRepo {
-		return &exitError{
-			code: 1,
-			msg:  fmt.Sprintf("conflict: %s in %s already points to spec repo %s", filename, dir, backref.SpecRepo),
 		}
 	}
 	return nil

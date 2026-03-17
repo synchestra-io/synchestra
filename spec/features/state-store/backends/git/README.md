@@ -96,7 +96,7 @@ const (
 
 type GitStoreOptions struct {
     StateRepoPath string
-    SpecRepoPath  string
+    SpecRepoPaths []string
     SyncMode      SyncMode // defaults to SyncModeSync
 }
 ```

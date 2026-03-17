@@ -55,7 +55,7 @@ The AI produces the edit. For spec documents, this is a direct modification. For
 
 Runs project-configured checks against the modified content:
 - For spec documents: spell check, linting, link validation
-- For code files: the target repo's CI pipeline via PR
+- For code files: the code repo's CI pipeline via PR
 
 Failures are surfaced to the user with actionable output. The user can iterate on the change until checks pass.
 

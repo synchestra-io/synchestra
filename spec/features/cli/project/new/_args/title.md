@@ -27,13 +27,13 @@ Sets the `title` field in `synchestra-spec.yaml`. If omitted, the CLI derives th
 # Explicit title
 synchestra project new --spec-repo github.com/acme/acme-spec \
   --state-repo github.com/acme/acme-synchestra \
-  --target-repo github.com/acme/acme-api \
+  --code-repo github.com/acme/acme-api \
   --title "Acme Platform"
 
 # Derived title (from README.md or repo name)
 synchestra project new --spec-repo github.com/acme/acme-spec \
   --state-repo github.com/acme/acme-synchestra \
-  --target-repo github.com/acme/acme-api
+  --code-repo github.com/acme/acme-api
 ```
 
 ## Outstanding Questions

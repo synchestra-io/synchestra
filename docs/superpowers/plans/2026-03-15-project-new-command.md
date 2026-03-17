@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Implement the `synchestra project new` CLI command that creates a Synchestra project by linking spec, state, and target repos — resolving references, cloning missing repos, writing config YAML files, and committing/pushing changes.
+**Goal:** Implement the `synchestra project new` CLI command that creates a Synchestra project by linking spec, state, and code repos — resolving references, cloning missing repos, writing config YAML files, and committing/pushing changes.
 
 **Architecture:** Three focused packages under `cli/`: `globalconfig` (reads `~/.synchestra.yaml`), `reporef` (parses and resolves repo references), and `project` (Cobra command group with `new` subcommand). Each package has clear boundaries and is independently testable. Git operations use `os/exec` calling the `git` binary directly.
 
@@ -37,7 +37,7 @@ cli/
     project.go                    # Cobra "project" command group
     new.go                        # "project new" command implementation
     new_test.go
-    configfiles.go                # YAML struct types + write functions for spec/state/target configs
+    configfiles.go                # YAML struct types + write functions for spec/state/code configs
     configfiles_test.go
   gitops/
     gitops.go                     # Git operations: clone, is-git-repo, get-origin-url, commit-and-push
@@ -89,7 +89,7 @@ git add -A
 git commit -m "spec: rename synchestra-project.yaml to synchestra-spec.yaml
 
 The spec repo config file is now synchestra-spec.yaml, matching the
-naming pattern of synchestra-state.yaml and synchestra-target.yaml."
+naming pattern of synchestra-state.yaml and synchestra-code.yaml."
 ```
 
 ---
@@ -823,7 +823,7 @@ func TestWriteSpecConfig(t *testing.T) {
 func TestWriteStateConfig(t *testing.T) {
 	dir := t.TempDir()
 	cfg := StateConfig{
-		SpecRepo: "https://github.com/acme/acme-spec",
+		SpecRepos: []string{"https://github.com/acme/acme-spec"},
 	}
 	if err := WriteStateConfig(dir, cfg); err != nil {
 		t.Fatal(err)
@@ -833,26 +833,26 @@ func TestWriteStateConfig(t *testing.T) {
 		t.Fatal(err)
 	}
 	content := string(data)
-	if !strings.Contains(content, "spec_repo: https://github.com/acme/acme-spec") {
-		t.Errorf("state config missing spec_repo\ngot:\n%s", content)
+	if !strings.Contains(content, "spec_repos:") {
+		t.Errorf("state config missing spec_repos\ngot:\n%s", content)
 	}
 }
 
-func TestWriteTargetConfig(t *testing.T) {
+func TestWriteCodeConfig(t *testing.T) {
 	dir := t.TempDir()
-	cfg := TargetConfig{
-		SpecRepo: "https://github.com/acme/acme-spec",
+	cfg := CodeConfig{
+		SpecRepos: []string{"https://github.com/acme/acme-spec"},
 	}
-	if err := WriteTargetConfig(dir, cfg); err != nil {
+	if err := WriteCodeConfig(dir, cfg); err != nil {
 		t.Fatal(err)
 	}
-	data, err := os.ReadFile(filepath.Join(dir, "synchestra-target.yaml"))
+	data, err := os.ReadFile(filepath.Join(dir, "synchestra-code.yaml"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	content := string(data)
-	if !strings.Contains(content, "spec_repo: https://github.com/acme/acme-spec") {
-		t.Errorf("target config missing spec_repo\ngot:\n%s", content)
+	if !strings.Contains(content, "spec_repos:") {
+		t.Errorf("code config missing spec_repos\ngot:\n%s", content)
 	}
 }
 
@@ -880,7 +880,7 @@ func TestReadSpecConfig_Exists(t *testing.T) {
 
 func TestReadStateConfig_Exists(t *testing.T) {
 	dir := t.TempDir()
-	content := "spec_repo: https://github.com/org/spec\n"
+	content := "spec_repos:\n  - https://github.com/org/spec\n"
 	if err := os.WriteFile(filepath.Join(dir, "synchestra-state.yaml"), []byte(content), 0644); err != nil {
 		t.Fatal(err)
 	}
@@ -888,23 +888,23 @@ func TestReadStateConfig_Exists(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if cfg.SpecRepo != "https://github.com/org/spec" {
-		t.Errorf("SpecRepo = %q", cfg.SpecRepo)
+	if len(cfg.SpecRepos) != 1 || cfg.SpecRepos[0] != "https://github.com/org/spec" {
+		t.Errorf("SpecRepos = %v", cfg.SpecRepos)
 	}
 }
 
-func TestReadTargetConfig_Exists(t *testing.T) {
+func TestReadCodeConfig_Exists(t *testing.T) {
 	dir := t.TempDir()
-	content := "spec_repo: https://github.com/org/spec\n"
-	if err := os.WriteFile(filepath.Join(dir, "synchestra-target.yaml"), []byte(content), 0644); err != nil {
+	content := "spec_repos:\n  - https://github.com/org/spec\n"
+	if err := os.WriteFile(filepath.Join(dir, "synchestra-code.yaml"), []byte(content), 0644); err != nil {
 		t.Fatal(err)
 	}
-	cfg, err := ReadTargetConfig(dir)
+	cfg, err := ReadCodeConfig(dir)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if cfg.SpecRepo != "https://github.com/org/spec" {
-		t.Errorf("SpecRepo = %q", cfg.SpecRepo)
+	if len(cfg.SpecRepos) != 1 || cfg.SpecRepos[0] != "https://github.com/org/spec" {
+		t.Errorf("SpecRepos = %v", cfg.SpecRepos)
 	}
 }
 
@@ -933,7 +933,7 @@ import (
 const (
 	SpecConfigFile   = "synchestra-spec.yaml"
 	StateConfigFile  = "synchestra-state.yaml"
-	TargetConfigFile = "synchestra-target.yaml"
+	CodeConfigFile = "synchestra-code.yaml"
 )
 
 // SpecConfig is the project definition written to the spec repo.
@@ -945,12 +945,12 @@ type SpecConfig struct {
 
 // StateConfig is the back-reference written to the state repo.
 type StateConfig struct {
-	SpecRepo string `yaml:"spec_repo"`
+	SpecRepos []string `yaml:"spec_repos"`
 }
 
-// TargetConfig is the pointer written to each target repo.
-type TargetConfig struct {
-	SpecRepo string `yaml:"spec_repo"`
+// CodeConfig is the pointer written to each code repo.
+type CodeConfig struct {
+	SpecRepos []string `yaml:"spec_repos"`
 }
 
 // WriteSpecConfig writes synchestra-spec.yaml to the given directory.
@@ -963,9 +963,9 @@ func WriteStateConfig(dir string, cfg StateConfig) error {
 	return writeYAML(filepath.Join(dir, StateConfigFile), cfg)
 }
 
-// WriteTargetConfig writes synchestra-target.yaml to the given directory.
-func WriteTargetConfig(dir string, cfg TargetConfig) error {
-	return writeYAML(filepath.Join(dir, TargetConfigFile), cfg)
+// WriteCodeConfig writes synchestra-code.yaml to the given directory.
+func WriteCodeConfig(dir string, cfg CodeConfig) error {
+	return writeYAML(filepath.Join(dir, CodeConfigFile), cfg)
 }
 
 // ReadSpecConfig reads synchestra-spec.yaml from the given directory.
@@ -994,15 +994,15 @@ func ReadStateConfig(dir string) (StateConfig, error) {
 	return cfg, nil
 }
 
-// ReadTargetConfig reads synchestra-target.yaml from the given directory.
-func ReadTargetConfig(dir string) (TargetConfig, error) {
-	var cfg TargetConfig
-	data, err := os.ReadFile(filepath.Join(dir, TargetConfigFile))
+// ReadCodeConfig reads synchestra-code.yaml from the given directory.
+func ReadCodeConfig(dir string) (CodeConfig, error) {
+	var cfg CodeConfig
+	data, err := os.ReadFile(filepath.Join(dir, CodeConfigFile))
 	if err != nil {
-		return cfg, fmt.Errorf("reading target config: %w", err)
+		return cfg, fmt.Errorf("reading code config: %w", err)
 	}
 	if err := yaml.Unmarshal(data, &cfg); err != nil {
-		return cfg, fmt.Errorf("parsing target config: %w", err)
+		return cfg, fmt.Errorf("parsing code config: %w", err)
 	}
 	return cfg, nil
 }
@@ -1028,7 +1028,7 @@ Expected: PASS
 
 ```bash
 git add cli/project/configfiles.go cli/project/configfiles_test.go
-git commit -m "feat: add config file types and writers for spec/state/target repos"
+git commit -m "feat: add config file types and writers for spec/state/code repos"
 ```
 
 ---
@@ -1234,29 +1234,29 @@ func newCommand() *cobra.Command {
 		Use:   "new",
 		Short: "Create a new Synchestra project",
 		Long: `Creates a new Synchestra project by linking a spec repo, state repo, and
-one or more target repos. Resolves all repo references, clones any that are
+one or more code repos. Resolves all repo references, clones any that are
 not already on disk, validates they are git repos, writes config files to
 each, and commits and pushes the changes.`,
 		RunE: runNew,
 	}
 	cmd.Flags().String("spec-repo", "", "spec repository reference (required)")
 	cmd.Flags().String("state-repo", "", "state repository reference (required)")
-	cmd.Flags().StringArray("target-repo", nil, "target repository reference (repeatable, at least one required)")
+	cmd.Flags().StringArray("code-repo", nil, "code repository reference (repeatable, at least one required)")
 	cmd.Flags().String("title", "", "project title (default: derived from spec repo README)")
 	_ = cmd.MarkFlagRequired("spec-repo")
 	_ = cmd.MarkFlagRequired("state-repo")
-	_ = cmd.MarkFlagRequired("target-repo")
+	_ = cmd.MarkFlagRequired("code-repo")
 	return cmd
 }
 
 func runNew(cmd *cobra.Command, _ []string) error {
 	specRepoStr, _ := cmd.Flags().GetString("spec-repo")
 	stateRepoStr, _ := cmd.Flags().GetString("state-repo")
-	targetRepoStrs, _ := cmd.Flags().GetStringArray("target-repo")
+	codeRepoStrs, _ := cmd.Flags().GetStringArray("code-repo")
 	titleFlag, _ := cmd.Flags().GetString("title")
 
-	if len(targetRepoStrs) == 0 {
-		return &exitError{code: 2, msg: "at least one --target-repo is required"}
+	if len(codeRepoStrs) == 0 {
+		return &exitError{code: 2, msg: "at least one --code-repo is required"}
 	}
 
 	// Parse repo references
@@ -1268,13 +1268,13 @@ func runNew(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return &exitError{code: 2, msg: fmt.Sprintf("invalid --state-repo: %v", err)}
 	}
-	var targetRefs []reporef.Ref
-	for _, s := range targetRepoStrs {
+	var codeRefs []reporef.Ref
+	for _, s := range codeRepoStrs {
 		ref, err := reporef.Parse(s)
 		if err != nil {
-			return &exitError{code: 2, msg: fmt.Sprintf("invalid --target-repo %q: %v", s, err)}
+			return &exitError{code: 2, msg: fmt.Sprintf("invalid --code-repo %q: %v", s, err)}
 		}
-		targetRefs = append(targetRefs, ref)
+		codeRefs = append(codeRefs, ref)
 	}
 
 	// Load global config
@@ -1289,13 +1289,13 @@ func runNew(cmd *cobra.Command, _ []string) error {
 	reposDir := globalconfig.ResolveReposDir(cfg.ReposDir, homeDir)
 
 	// Resolve disk paths
-	allRefs := append([]reporef.Ref{specRef, stateRef}, targetRefs...)
+	allRefs := append([]reporef.Ref{specRef, stateRef}, codeRefs...)
 	allPaths := make([]string, len(allRefs))
 	for i, ref := range allRefs {
 		allPaths[i] = ref.DiskPath(reposDir)
 	}
 	specPath, statePath := allPaths[0], allPaths[1]
-	targetPaths := allPaths[2:]
+	codePaths := allPaths[2:]
 
 	// Clone repos that don't exist on disk
 	for i, ref := range allRefs {
@@ -1325,8 +1325,8 @@ func runNew(cmd *cobra.Command, _ []string) error {
 	if err := checkBackrefConflict(statePath, StateConfigFile, specRef.OriginURL()); err != nil {
 		return err
 	}
-	for _, tp := range targetPaths {
-		if err := checkBackrefConflict(tp, TargetConfigFile, specRef.OriginURL()); err != nil {
+	for _, cp := range codePaths {
+		if err := checkBackrefConflict(cp, CodeConfigFile, specRef.OriginURL()); err != nil {
 			return err
 		}
 	}
@@ -1334,31 +1334,31 @@ func runNew(cmd *cobra.Command, _ []string) error {
 	// Derive title
 	title := DeriveTitle(titleFlag, specPath, specRef.Repo)
 
-	// Collect target origin URLs
-	targetOriginURLs := make([]string, len(targetRefs))
-	for i, ref := range targetRefs {
-		targetOriginURLs[i] = ref.OriginURL()
+	// Collect code origin URLs
+	codeOriginURLs := make([]string, len(codeRefs))
+	for i, ref := range codeRefs {
+		codeOriginURLs[i] = ref.OriginURL()
 	}
 
 	// Write config files
 	specCfg := SpecConfig{
 		Title:     title,
 		StateRepo: stateRef.OriginURL(),
-		Repos:     targetOriginURLs,
+		Repos:     codeOriginURLs,
 	}
 	if err := WriteSpecConfig(specPath, specCfg); err != nil {
 		return &exitError{code: 10, msg: fmt.Sprintf("writing spec config: %v", err)}
 	}
 
-	stateCfg := StateConfig{SpecRepo: specRef.OriginURL()}
+	stateCfg := StateConfig{SpecRepos: []string{specRef.OriginURL()}}
 	if err := WriteStateConfig(statePath, stateCfg); err != nil {
 		return &exitError{code: 10, msg: fmt.Sprintf("writing state config: %v", err)}
 	}
 
-	for _, tp := range targetPaths {
-		targetCfg := TargetConfig{SpecRepo: specRef.OriginURL()}
-		if err := WriteTargetConfig(tp, targetCfg); err != nil {
-			return &exitError{code: 10, msg: fmt.Sprintf("writing target config: %v", err)}
+	for _, cp := range codePaths {
+		codeCfg := CodeConfig{SpecRepos: []string{specRef.OriginURL()}}
+		if err := WriteCodeConfig(cp, codeCfg); err != nil {
+			return &exitError{code: 10, msg: fmt.Sprintf("writing code config: %v", err)}
 		}
 	}
 
@@ -1371,9 +1371,9 @@ func runNew(cmd *cobra.Command, _ []string) error {
 	if err := gitops.CommitAndPush(statePath, []string{StateConfigFile}, commitMsg); err != nil {
 		return &exitError{code: 10, msg: fmt.Sprintf("committing state repo: %v", err)}
 	}
-	for i, tp := range targetPaths {
-		if err := gitops.CommitAndPush(tp, []string{TargetConfigFile}, commitMsg); err != nil {
-			return &exitError{code: 10, msg: fmt.Sprintf("committing target repo %s: %v", targetRefs[i].Identifier(), err)}
+	for i, cp := range codePaths {
+		if err := gitops.CommitAndPush(cp, []string{CodeConfigFile}, commitMsg); err != nil {
+			return &exitError{code: 10, msg: fmt.Sprintf("committing code repo %s: %v", codeRefs[i].Identifier(), err)}
 		}
 	}
 
@@ -1400,7 +1400,7 @@ func checkSpecConflict(dir, expectedStateRepo string) error {
 	return nil
 }
 
-// checkBackrefConflict checks if a state or target config file exists and
+// checkBackrefConflict checks if a state or code config file exists and
 // its spec_repo field points to a different spec repo.
 func checkBackrefConflict(dir, filename, expectedSpecRepo string) error {
 	path := filepath.Join(dir, filename)
@@ -1513,7 +1513,7 @@ Expected: ALL PASS
 - [ ] **Step 8: Verify CLI recognizes the command**
 
 Run: `cd /Users/alexandertrakhimenok/projects/synchestra-io/synchestra/.claude/worktrees/config-opus && go run . project new --help`
-Expected: Shows usage with `--spec-repo`, `--state-repo`, `--target-repo`, `--title` flags
+Expected: Shows usage with `--spec-repo`, `--state-repo`, `--code-repo`, `--title` flags
 
 - [ ] **Step 9: Commit**
 
@@ -1522,7 +1522,7 @@ git add cli/project/project.go cli/project/new.go cli/main.go main.go go.mod go.
 git commit -m "feat: implement synchestra project new command
 
 Creates a project by resolving repo references, cloning missing repos,
-writing synchestra-spec.yaml / synchestra-state.yaml / synchestra-target.yaml,
+writing synchestra-spec.yaml / synchestra-state.yaml / synchestra-code.yaml,
 and committing + pushing changes to all repos."
 ```
 
@@ -1609,22 +1609,22 @@ func TestRunNew_ViaCobra(t *testing.T) {
 	// Create bare repos to act as remotes
 	specBare := initBareTestRepo(t, "spec")
 	stateBare := initBareTestRepo(t, "state")
-	targetBare := initBareTestRepo(t, "target")
+	codeBare := initBareTestRepo(t, "code")
 
 	// Seed each with an initial commit (spec gets a README with heading)
 	seedBareRepo(t, specBare, "# My Test Project\n\nDescription.\n")
 	seedBareRepo(t, stateBare, "# State\n")
-	seedBareRepo(t, targetBare, "# Target\n")
+	seedBareRepo(t, codeBare, "# Code\n")
 
 	// Set up repos_dir structure with clones
 	reposDir := filepath.Join(t.TempDir(), "repos")
 	specDir := filepath.Join(reposDir, "local", "test", "spec")
 	stateDir := filepath.Join(reposDir, "local", "test", "state")
-	targetDir := filepath.Join(reposDir, "local", "test", "target")
+	codeDir := filepath.Join(reposDir, "local", "test", "code")
 
 	cloneAndConfigure(t, specBare, specDir)
 	cloneAndConfigure(t, stateBare, stateDir)
-	cloneAndConfigure(t, targetBare, targetDir)
+	cloneAndConfigure(t, codeBare, codeDir)
 
 	// Write global config pointing to our reposDir
 	homeDir := t.TempDir()
@@ -1645,7 +1645,7 @@ func TestRunNew_ViaCobra(t *testing.T) {
 		"new",
 		"--spec-repo", "local/test/spec",
 		"--state-repo", "local/test/state",
-		"--target-repo", "local/test/target",
+		"--code-repo", "local/test/code",
 	})
 	if err := cmd.Execute(); err != nil {
 		t.Fatalf("command failed: %v\nstderr: %s", err, stderr.String())
@@ -1662,7 +1662,7 @@ func TestRunNew_ViaCobra(t *testing.T) {
 	if specCfg.StateRepo != "https://local/test/state" {
 		t.Errorf("StateRepo = %q", specCfg.StateRepo)
 	}
-	if len(specCfg.Repos) != 1 || specCfg.Repos[0] != "https://local/test/target" {
+	if len(specCfg.Repos) != 1 || specCfg.Repos[0] != "https://local/test/code" {
 		t.Errorf("Repos = %v", specCfg.Repos)
 	}
 
@@ -1671,42 +1671,42 @@ func TestRunNew_ViaCobra(t *testing.T) {
 	if err != nil {
 		t.Fatalf("reading state config: %v", err)
 	}
-	if stateCfg.SpecRepo != "https://local/test/spec" {
-		t.Errorf("state SpecRepo = %q", stateCfg.SpecRepo)
+	if len(stateCfg.SpecRepos) != 1 || stateCfg.SpecRepos[0] != "https://local/test/spec" {
+		t.Errorf("state SpecRepos = %v", stateCfg.SpecRepos)
 	}
 
-	// Verify target config
-	targetCfg, err := ReadTargetConfig(targetDir)
+	// Verify code config
+	codeCfg, err := ReadCodeConfig(codeDir)
 	if err != nil {
-		t.Fatalf("reading target config: %v", err)
+		t.Fatalf("reading code config: %v", err)
 	}
-	if targetCfg.SpecRepo != "https://local/test/spec" {
-		t.Errorf("target SpecRepo = %q", targetCfg.SpecRepo)
+	if len(codeCfg.SpecRepos) != 1 || codeCfg.SpecRepos[0] != "https://local/test/spec" {
+		t.Errorf("code SpecRepos = %v", codeCfg.SpecRepos)
 	}
 }
 
-func TestRunNew_MultipleTargets(t *testing.T) {
+func TestRunNew_MultipleCodeRepos(t *testing.T) {
 	// Create bare repos
 	specBare := initBareTestRepo(t, "spec2")
 	stateBare := initBareTestRepo(t, "state2")
-	target1Bare := initBareTestRepo(t, "target2a")
-	target2Bare := initBareTestRepo(t, "target2b")
+	code1Bare := initBareTestRepo(t, "code2a")
+	code2Bare := initBareTestRepo(t, "code2b")
 
-	seedBareRepo(t, specBare, "# Multi Target\n")
+	seedBareRepo(t, specBare, "# Multi Code\n")
 	seedBareRepo(t, stateBare, "# State\n")
-	seedBareRepo(t, target1Bare, "# T1\n")
-	seedBareRepo(t, target2Bare, "# T2\n")
+	seedBareRepo(t, code1Bare, "# C1\n")
+	seedBareRepo(t, code2Bare, "# C2\n")
 
 	reposDir := filepath.Join(t.TempDir(), "repos")
 	specDir := filepath.Join(reposDir, "local", "mt", "spec")
 	stateDir := filepath.Join(reposDir, "local", "mt", "state")
-	target1Dir := filepath.Join(reposDir, "local", "mt", "t1")
-	target2Dir := filepath.Join(reposDir, "local", "mt", "t2")
+	code1Dir := filepath.Join(reposDir, "local", "mt", "c1")
+	code2Dir := filepath.Join(reposDir, "local", "mt", "c2")
 
 	cloneAndConfigure(t, specBare, specDir)
 	cloneAndConfigure(t, stateBare, stateDir)
-	cloneAndConfigure(t, target1Bare, target1Dir)
-	cloneAndConfigure(t, target2Bare, target2Dir)
+	cloneAndConfigure(t, code1Bare, code1Dir)
+	cloneAndConfigure(t, code2Bare, code2Dir)
 
 	homeDir := t.TempDir()
 	if err := os.WriteFile(filepath.Join(homeDir, ".synchestra.yaml"),
@@ -1723,34 +1723,34 @@ func TestRunNew_MultipleTargets(t *testing.T) {
 		"new",
 		"--spec-repo", "local/mt/spec",
 		"--state-repo", "local/mt/state",
-		"--target-repo", "local/mt/t1",
-		"--target-repo", "local/mt/t2",
-		"--title", "Multi Target Project",
+		"--code-repo", "local/mt/c1",
+		"--code-repo", "local/mt/c2",
+		"--title", "Multi Code Project",
 	})
 	if err := cmd.Execute(); err != nil {
 		t.Fatalf("command failed: %v\nstderr: %s", err, stderr.String())
 	}
 
-	// Verify spec config has both targets
+	// Verify spec config has both code repos
 	specCfg, err := ReadSpecConfig(specDir)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if specCfg.Title != "Multi Target Project" {
-		t.Errorf("Title = %q, want Multi Target Project", specCfg.Title)
+	if specCfg.Title != "Multi Code Project" {
+		t.Errorf("Title = %q, want Multi Code Project", specCfg.Title)
 	}
 	if len(specCfg.Repos) != 2 {
 		t.Fatalf("expected 2 repos, got %d: %v", len(specCfg.Repos), specCfg.Repos)
 	}
 
-	// Verify both targets have config
-	for _, td := range []string{target1Dir, target2Dir} {
-		cfg, err := ReadTargetConfig(td)
+	// Verify both code repos have config
+	for _, cd := range []string{code1Dir, code2Dir} {
+		cfg, err := ReadCodeConfig(cd)
 		if err != nil {
-			t.Fatalf("reading target config from %s: %v", td, err)
+			t.Fatalf("reading code config from %s: %v", cd, err)
 		}
-		if cfg.SpecRepo != "https://local/mt/spec" {
-			t.Errorf("target SpecRepo = %q", cfg.SpecRepo)
+		if len(cfg.SpecRepos) != 1 || cfg.SpecRepos[0] != "https://local/mt/spec" {
+			t.Errorf("code SpecRepos = %v", cfg.SpecRepos)
 		}
 	}
 }
@@ -1801,7 +1801,7 @@ func TestCheckBackrefConflict_NoFile(t *testing.T) {
 
 func TestCheckBackrefConflict_SameProject(t *testing.T) {
 	dir := t.TempDir()
-	if err := WriteStateConfig(dir, StateConfig{SpecRepo: "https://example.com/spec"}); err != nil {
+	if err := WriteStateConfig(dir, StateConfig{SpecRepos: []string{"https://example.com/spec"}}); err != nil {
 		t.Fatal(err)
 	}
 	err := checkBackrefConflict(dir, StateConfigFile, "https://example.com/spec")
@@ -1812,7 +1812,7 @@ func TestCheckBackrefConflict_SameProject(t *testing.T) {
 
 func TestCheckBackrefConflict_DifferentProject(t *testing.T) {
 	dir := t.TempDir()
-	if err := WriteStateConfig(dir, StateConfig{SpecRepo: "https://example.com/other-spec"}); err != nil {
+	if err := WriteStateConfig(dir, StateConfig{SpecRepos: []string{"https://example.com/other-spec"}}); err != nil {
 		t.Fatal(err)
 	}
 	err := checkBackrefConflict(dir, StateConfigFile, "https://example.com/spec")

@@ -29,12 +29,12 @@ For `project new`, this is the repository where `synchestra-spec.yaml` will be c
 # Full URL
 synchestra project new --spec-repo https://github.com/acme/acme-spec \
   --state-repo https://github.com/acme/acme-synchestra \
-  --target-repo https://github.com/acme/acme-api
+  --code-repo https://github.com/acme/acme-api
 
 # Short path
 synchestra project new --spec-repo github.com/acme/acme-spec \
   --state-repo github.com/acme/acme-synchestra \
-  --target-repo github.com/acme/acme-api
+  --code-repo github.com/acme/acme-api
 
 # Re-point spec repo
 synchestra project set --spec-repo github.com/acme/acme-spec-v2

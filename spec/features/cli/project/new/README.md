@@ -5,20 +5,20 @@
 ## Synopsis
 
 ```
-synchestra project new --spec-repo <ref> --state-repo <ref> --target-repo <ref> [--target-repo <ref>...] [--title <title>]
+synchestra project new --spec-repo <ref> --state-repo <ref> --code-repo <ref> [--code-repo <ref>...] [--title <title>]
 ```
 
 ## Description
 
-Creates a new Synchestra project by linking a spec repo, state repo, and one or more target repos. The command resolves all repo references, clones any that are not already on disk, validates they are git repos, writes the appropriate config files to each, and commits and pushes the changes.
+Creates a new Synchestra project by linking a spec repo, state repo, and one or more code repos. The command resolves all repo references, clones any that are not already on disk, validates they are git repos, writes the appropriate config files to each, and commits and pushes the changes.
 
 Config files written:
 
 | Repo | File | Content |
 |---|---|---|
 | Spec | `synchestra-spec.yaml` | Full project definition: `title`, `state_repo`, `repos` |
-| State | `synchestra-state.yaml` | Back-reference: `spec_repo` |
-| Target(s) | `synchestra-target.yaml` | Pointer: `spec_repo` |
+| State | `synchestra-state.yaml` | Back-reference: `spec_repos` |
+| Code(s) | `synchestra-code.yaml` | Pointer: `spec_repos` |
 
 If a repo already contains a config file for a different project, the command fails with exit code `1`.
 
@@ -28,7 +28,7 @@ If a repo already contains a config file for a different project, the command fa
 |---|---|---|
 | [`--spec-repo`](../_args/spec-repo.md) | Yes | Spec repository reference |
 | [`--state-repo`](../_args/state-repo.md) | Yes | State repository reference |
-| [`--target-repo`](../_args/target-repo.md) | Yes (at least one) | Target repository reference (repeatable) |
+| [`--code-repo`](../_args/code-repo.md) | Yes (at least one) | Code repository reference (repeatable) |
 | [`--title`](_args/title.md) | No | Project title |
 
 ## Exit codes
@@ -50,8 +50,8 @@ If a repo already contains a config file for a different project, the command fa
 5. Check that no repo already has a config file pointing to a different project; exit `1` if so
 6. Derive project title: `--title` flag > first `# heading` in spec repo `README.md` > spec repo identifier
 7. Write `synchestra-spec.yaml` to spec repo with `title`, `state_repo` (origin URL), and `repos` (list of origin URLs)
-8. Write `synchestra-state.yaml` to state repo with `spec_repo` (origin URL)
-9. Write `synchestra-target.yaml` to each target repo with `spec_repo` (origin URL)
+8. Write `synchestra-state.yaml` to state repo with `spec_repos` (list of origin URLs)
+9. Write `synchestra-code.yaml` to each code repo with `spec_repos` (list of origin URLs)
 10. Commit and push changes to all affected repos
 11. On push conflict: pull, re-check, retry or fail
 

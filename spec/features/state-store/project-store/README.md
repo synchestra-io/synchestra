@@ -41,7 +41,7 @@ See [Project Definition](../../project-definition/) for the full configuration s
 ```go
 type ProjectConfig struct {
     Title    string
-    SpecRepo string
+    SpecRepos []string
 }
 ```
 
