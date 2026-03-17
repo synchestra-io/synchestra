@@ -270,7 +270,7 @@ Rehearse is developed as an independent product within the Synchestra ecosystem.
 go run . test run spec/tests/
 
 # Run the runner's self-test (dogfood) — 8 steps, 8 ACs
-go run . test run spec/features/testing-framework/test-runner/_tests/runner-core.md
+go run . test run spec/features/cli/test/_tests/runner-core.md
 
 # Filter by tag, JSON output for CI
 go run . test run spec/tests/ --tag e2e --format json

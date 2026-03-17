@@ -1,7 +1,7 @@
 # AC: executes-parallel-group
 
 **Status:** planned
-**Feature:** [testing-framework/test-runner](../README.md)
+**Feature:** [cli/test](../README.md)
 
 ## Description
 

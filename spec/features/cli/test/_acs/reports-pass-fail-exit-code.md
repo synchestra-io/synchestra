@@ -1,7 +1,7 @@
 # AC: reports-pass-fail-exit-code
 
 **Status:** planned
-**Feature:** [testing-framework/test-runner](../README.md)
+**Feature:** [cli/test](../README.md)
 
 ## Description
 

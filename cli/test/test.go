@@ -1,7 +1,7 @@
 package test
 
 // Features implemented: cli
-// Features depended on:  testing-framework/test-scenario, testing-framework/test-runner
+// Features depended on:  testing-framework (via rehearse)
 
 import (
 	"github.com/spf13/cobra"

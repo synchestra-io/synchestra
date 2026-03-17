@@ -50,14 +50,14 @@ go run . test run spec/tests/
 
 ### Run tests for the `test` command itself
 
-The test runner's own acceptance criteria and dogfood scenarios verify the `synchestra test` command:
+The dogfood scenarios verify the `synchestra test` command:
 
 ```bash
-# Run the runner's self-test scenario (dogfood) — 8 steps, 8 ACs
-go run . test run spec/features/testing-framework/test-runner/_tests/runner-core.md
+# Run the self-test scenario (dogfood) — 8 steps, 8 ACs
+go run . test run spec/features/cli/test/_tests/runner-core.md
 
-# Run all test-runner scenarios including demos
-go run . test run spec/features/testing-framework/test-runner/_tests/ --run-manual-tests
+# Run all test scenarios including demos
+go run . test run spec/features/cli/test/_tests/ --run-manual-tests
 ```
 
 The runner tests itself — if it can parse and execute its own dogfood scenario, that is direct evidence of correctness.
@@ -77,10 +77,21 @@ go run . test run spec/tests/ --format json
 
 ## Acceptance Criteria
 
-Not defined yet.
+| AC | Description | Status |
+|---|---|---|
+| [parses-valid-scenario](_acs/parses-valid-scenario.md) | Valid scenario file parsed into structured result | planned |
+| [rejects-malformed-scenario](_acs/rejects-malformed-scenario.md) | Malformed scenario rejected with line-number error | planned |
+| [executes-sequential-steps](_acs/executes-sequential-steps.md) | Steps execute in file order by default | planned |
+| [executes-parallel-group](_acs/executes-parallel-group.md) | Consecutive Parallel: true steps run concurrently | planned |
+| [resolves-ac-wildcard](_acs/resolves-ac-wildcard.md) | Wildcard (*) resolves all ACs in feature _acs/ directory | planned |
+| [resolves-ac-specific](_acs/resolves-ac-specific.md) | Named AC references resolve to correct _acs/ files | planned |
+| [runs-setup-before-steps](_acs/runs-setup-before-steps.md) | Setup block runs before all steps | planned |
+| [runs-teardown-on-failure](_acs/runs-teardown-on-failure.md) | Teardown runs even when steps fail | planned |
+| [propagates-context-outputs](_acs/propagates-context-outputs.md) | Context-scoped outputs accessible to subsequent steps | planned |
+| [reports-pass-fail-exit-code](_acs/reports-pass-fail-exit-code.md) | Exit 0 on all pass, non-zero on any failure | planned |
+| [detects-include-cycles](_acs/detects-include-cycles.md) | Circular includes rejected at validation | planned |
 
 ## Outstanding Questions
 
-- Acceptance criteria not yet defined for this feature.
 - Should `synchestra test run` without arguments default to `spec/tests/` or the current directory?
 - Should there be a `synchestra test init` command to scaffold example scenarios?

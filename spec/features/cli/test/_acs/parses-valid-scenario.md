@@ -1,7 +1,7 @@
 # AC: parses-valid-scenario
 
 **Status:** planned
-**Feature:** [testing-framework/test-runner](../README.md)
+**Feature:** [cli/test](../README.md)
 
 ## Description
 

@@ -82,7 +82,7 @@ go build -o "$BINARY_PATH" .
 
 | Feature | ACs |
 |---|---|
-| [testing-framework/test-runner]($SPEC_ROOT/features/testing-framework/test-runner/) | [parses-valid-scenario]($SPEC_ROOT/features/testing-framework/test-runner/_acs/parses-valid-scenario.md) |
+| [cli/test]($SPEC_ROOT/features/cli/test/) | [parses-valid-scenario]($SPEC_ROOT/features/cli/test/_acs/parses-valid-scenario.md) |
 
 ````bash
 # Create a valid scenario fixture
@@ -116,7 +116,7 @@ SCENARIO
 
 | Feature | ACs |
 |---|---|
-| [testing-framework/test-runner]($SPEC_ROOT/features/testing-framework/test-runner/) | [rejects-malformed-scenario]($SPEC_ROOT/features/testing-framework/test-runner/_acs/rejects-malformed-scenario.md) |
+| [cli/test]($SPEC_ROOT/features/cli/test/) | [rejects-malformed-scenario]($SPEC_ROOT/features/cli/test/_acs/rejects-malformed-scenario.md) |
 
 ````bash
 # Create a malformed scenario (duplicate step names)
@@ -158,7 +158,7 @@ echo "$output"
 
 | Feature | ACs |
 |---|---|
-| [testing-framework/test-runner]($SPEC_ROOT/features/testing-framework/test-runner/) | [executes-sequential-steps]($SPEC_ROOT/features/testing-framework/test-runner/_acs/executes-sequential-steps.md), [parses-valid-scenario]($SPEC_ROOT/features/testing-framework/test-runner/_acs/parses-valid-scenario.md) |
+| [cli/test]($SPEC_ROOT/features/cli/test/) | [executes-sequential-steps]($SPEC_ROOT/features/cli/test/_acs/executes-sequential-steps.md), [parses-valid-scenario]($SPEC_ROOT/features/cli/test/_acs/parses-valid-scenario.md) |
 
 ````bash
 # Create a scenario with 3 sequential steps that append to a file
@@ -208,7 +208,7 @@ echo "$result"
 
 | Feature | ACs |
 |---|---|
-| [testing-framework/test-runner]($SPEC_ROOT/features/testing-framework/test-runner/) | [propagates-context-outputs]($SPEC_ROOT/features/testing-framework/test-runner/_acs/propagates-context-outputs.md) |
+| [cli/test]($SPEC_ROOT/features/cli/test/) | [propagates-context-outputs]($SPEC_ROOT/features/cli/test/_acs/propagates-context-outputs.md) |
 
 ````bash
 # Create a scenario where step-a writes to context, step-b reads it.
@@ -256,7 +256,7 @@ echo '```' >> "$FIXTURE_DIR/context-scenario.md"
 
 | Feature | ACs |
 |---|---|
-| [testing-framework/test-runner]($SPEC_ROOT/features/testing-framework/test-runner/) | [resolves-ac-wildcard]($SPEC_ROOT/features/testing-framework/test-runner/_acs/resolves-ac-wildcard.md) |
+| [cli/test]($SPEC_ROOT/features/cli/test/) | [resolves-ac-wildcard]($SPEC_ROOT/features/cli/test/_acs/resolves-ac-wildcard.md) |
 
 ````bash
 # Create a scenario that uses wildcard AC reference against our fixture feature
@@ -302,7 +302,7 @@ SCENARIO
 
 | Feature | ACs |
 |---|---|
-| [testing-framework/test-runner]($SPEC_ROOT/features/testing-framework/test-runner/) | [runs-teardown-on-failure]($SPEC_ROOT/features/testing-framework/test-runner/_acs/runs-teardown-on-failure.md) |
+| [cli/test]($SPEC_ROOT/features/cli/test/) | [runs-teardown-on-failure]($SPEC_ROOT/features/cli/test/_acs/runs-teardown-on-failure.md) |
 
 ````bash
 cat > "$FIXTURE_DIR/teardown-scenario.md" << 'SCENARIO'
@@ -342,7 +342,7 @@ test -f "$FIXTURE_DIR/teardown-ran.marker" || { echo "Teardown did not run"; exi
 
 | Feature | ACs |
 |---|---|
-| [testing-framework/test-runner]($SPEC_ROOT/features/testing-framework/test-runner/) | [reports-pass-fail-exit-code]($SPEC_ROOT/features/testing-framework/test-runner/_acs/reports-pass-fail-exit-code.md) |
+| [cli/test]($SPEC_ROOT/features/cli/test/) | [reports-pass-fail-exit-code]($SPEC_ROOT/features/cli/test/_acs/reports-pass-fail-exit-code.md) |
 
 ````bash
 # Create passing scenario

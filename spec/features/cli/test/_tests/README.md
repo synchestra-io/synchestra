@@ -1,6 +1,6 @@
-# Tests: testing-framework/test-runner
+# Tests: cli/test
 
-Feature-scoped test scenarios for the [test runner](../README.md).
+Feature-scoped test scenarios for the [`synchestra test`](../README.md) command.
 
 These scenarios are executed by the runner itself (dogfooding).
 

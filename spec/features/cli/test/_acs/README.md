@@ -1,6 +1,6 @@
-# Acceptance Criteria: testing-framework/test-runner
+# Acceptance Criteria: cli/test
 
-Acceptance criteria for the [test runner](../README.md).
+Acceptance criteria for the [`synchestra test`](../README.md) command.
 
 | AC | Description | Status |
 |---|---|---|

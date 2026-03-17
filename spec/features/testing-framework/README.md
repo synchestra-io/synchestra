@@ -8,20 +8,12 @@ Synchestra's testing framework turns specifications into executable verification
 
 The full specification for this feature lives in the [synchestra-io/rehearse](https://github.com/synchestra-io/rehearse/blob/main/spec/features/testing-framework/) repository, where it is developed as an independent product. Synchestra integrates Rehearse as its testing framework.
 
-## Contents
+## Sub-features
 
-| Directory | Description | Full Specification |
-|---|---|---|
-| [test-scenario](test-scenario/README.md) | The markdown scenario format: steps, outputs, AC references, includes | [synchestra-io/rehearse](https://github.com/synchestra-io/rehearse/blob/main/spec/features/testing-framework/test-scenario/) |
-| [test-runner](test-runner/README.md) | The Go execution engine: parsing, AC resolution, shell execution, reporting | [synchestra-io/rehearse](https://github.com/synchestra-io/rehearse/blob/main/spec/features/testing-framework/test-runner/) |
+The test-scenario format and test-runner engine are defined and developed in [synchestra-io/rehearse](https://github.com/synchestra-io/rehearse/blob/main/spec/features/testing-framework/). Synchestra does not duplicate those sub-features — see the canonical specs:
 
-### test-scenario
-
-Defines the markdown scenario format — a human-readable `.md` file with named steps, dependency declarations, input/output passing, AC references, and sub-flow includes. Steps execute sequentially by default with opt-in parallel groups. Every scenario doubles as documentation: a product owner reads the step descriptions; the runner executes the bash blocks. Same file, two audiences.
-
-### test-runner
-
-The execution engine that brings scenarios to life. Parses scenario markdown, resolves AC verification scripts from feature `_acs/` directories, executes bash steps, and produces structured pass/fail reports for both humans and CI. Self-contained Go package (`pkg/testscenario/`) with no Synchestra-specific dependencies — give it a spec root path and it handles the rest.
+- [test-scenario](https://github.com/synchestra-io/rehearse/blob/main/spec/features/testing-framework/test-scenario/) — the markdown scenario format
+- [test-runner](https://github.com/synchestra-io/rehearse/blob/main/spec/features/testing-framework/test-runner/) — the Go execution engine
 
 ## Synchestra Integration
 
@@ -40,16 +32,16 @@ These commands delegate to the Rehearse test runner under the hood. The spec roo
 
 ## Self-Testing
 
-The testing framework tests itself — the runner's own [acceptance criteria](test-runner/_acs/README.md) and [dogfood scenarios](test-runner/_tests/README.md) are executed by the runner it verifies.
+The `synchestra test` command's own [acceptance criteria](../cli/test/_acs/) and [dogfood scenarios](../cli/test/_tests/) are executed by the runner it wraps.
 
 Run the self-tests:
 
 ```bash
 # Dogfood scenario — exercises parsing, execution, outputs, AC resolution
-go run . test run spec/features/testing-framework/test-runner/_tests/runner-core.md
+go run . test run spec/features/cli/test/_tests/runner-core.md
 
-# All test-runner scenarios including demos
-go run . test run spec/features/testing-framework/test-runner/_tests/ --run-manual-tests
+# All test scenarios including demos
+go run . test run spec/features/cli/test/_tests/ --run-manual-tests
 ```
 
 See [`cli/test`](../cli/test/README.md) for the full `synchestra test` command reference.
