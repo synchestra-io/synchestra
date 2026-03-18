@@ -48,6 +48,8 @@ The **state repository** contains `synchestra-state-repo.yaml` listing all spec 
 
 ```yaml
 # synchestra-state-repo.yaml (in the state repo root)
+title: Acme Platform
+main_repo: https://github.com/acme/acme
 spec_repos:
   - https://github.com/acme/acme
   - https://github.com/acme/acme-rehearse

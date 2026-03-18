@@ -42,6 +42,8 @@ func TestWriteSpecConfig(t *testing.T) {
 func TestWriteStateConfig(t *testing.T) {
 	dir := t.TempDir()
 	cfg := StateConfig{
+		Title:    "Acme Platform",
+		MainRepo: "https://github.com/acme/acme-spec",
 		SpecRepos: []string{
 			"https://github.com/acme/acme-spec",
 			"https://github.com/acme/acme-rehearse",
@@ -59,6 +61,8 @@ func TestWriteStateConfig(t *testing.T) {
 	}
 	content := string(data)
 	for _, want := range []string{
+		"title: Acme Platform",
+		"main_repo: https://github.com/acme/acme-spec",
 		"- https://github.com/acme/acme-spec",
 		"- https://github.com/acme/acme-rehearse",
 		"- https://github.com/acme/acme-api",
@@ -119,13 +123,19 @@ func TestReadSpecConfig_Exists(t *testing.T) {
 
 func TestReadStateConfig_Exists(t *testing.T) {
 	dir := t.TempDir()
-	content := "spec_repos:\n  - https://github.com/org/spec\n  - https://github.com/org/rehearse\ncode_repos:\n  - https://github.com/org/api\n"
+	content := "title: Test\nmain_repo: https://github.com/org/spec\nspec_repos:\n  - https://github.com/org/spec\n  - https://github.com/org/rehearse\ncode_repos:\n  - https://github.com/org/api\n"
 	if err := os.WriteFile(filepath.Join(dir, "synchestra-state-repo.yaml"), []byte(content), 0644); err != nil {
 		t.Fatal(err)
 	}
 	cfg, err := ReadStateConfig(dir)
 	if err != nil {
 		t.Fatal(err)
+	}
+	if cfg.Title != "Test" {
+		t.Errorf("Title = %q, want Test", cfg.Title)
+	}
+	if cfg.MainRepo != "https://github.com/org/spec" {
+		t.Errorf("MainRepo = %q", cfg.MainRepo)
 	}
 	if len(cfg.SpecRepos) != 2 {
 		t.Fatalf("expected 2 spec repos, got %d: %v", len(cfg.SpecRepos), cfg.SpecRepos)

@@ -23,6 +23,8 @@ type SpecConfig struct {
 }
 
 type StateConfig struct {
+	Title     string   `yaml:"title"`
+	MainRepo  string   `yaml:"main_repo"`
 	SpecRepos []string `yaml:"spec_repos"`
 	CodeRepos []string `yaml:"code_repos,omitempty"`
 }
