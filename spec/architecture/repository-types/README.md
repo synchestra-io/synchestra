@@ -44,13 +44,16 @@ repos:
   - https://github.com/acme/acme-infra
 ```
 
-The **state repository** contains `synchestra-state-repo.yaml` listing all spec repos that share this state repo:
+The **state repository** contains `synchestra-state-repo.yaml` listing all spec repos that share this state repo, and optionally code repos when a repository serves both roles:
 
 ```yaml
 # synchestra-state-repo.yaml (in the state repo root)
 spec_repos:
   - https://github.com/acme/acme
   - https://github.com/acme/acme-rehearse
+code_repos:
+  - https://github.com/acme/acme-api
+  - https://github.com/acme/acme-web
 ```
 
 **Code repositories** contain `synchestra-code-repo.yaml` listing all spec repos they implement:

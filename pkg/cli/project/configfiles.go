@@ -24,6 +24,7 @@ type SpecConfig struct {
 
 type StateConfig struct {
 	SpecRepos []string `yaml:"spec_repos"`
+	CodeRepos []string `yaml:"code_repos,omitempty"`
 }
 
 type CodeConfig struct {

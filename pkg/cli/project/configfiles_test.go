@@ -46,6 +46,9 @@ func TestWriteStateConfig(t *testing.T) {
 			"https://github.com/acme/acme-spec",
 			"https://github.com/acme/acme-rehearse",
 		},
+		CodeRepos: []string{
+			"https://github.com/acme/acme-api",
+		},
 	}
 	if err := WriteStateConfig(dir, cfg); err != nil {
 		t.Fatal(err)
@@ -58,6 +61,7 @@ func TestWriteStateConfig(t *testing.T) {
 	for _, want := range []string{
 		"- https://github.com/acme/acme-spec",
 		"- https://github.com/acme/acme-rehearse",
+		"- https://github.com/acme/acme-api",
 	} {
 		if !strings.Contains(content, want) {
 			t.Errorf("state config missing %q\ngot:\n%s", want, content)
@@ -115,7 +119,7 @@ func TestReadSpecConfig_Exists(t *testing.T) {
 
 func TestReadStateConfig_Exists(t *testing.T) {
 	dir := t.TempDir()
-	content := "spec_repos:\n  - https://github.com/org/spec\n  - https://github.com/org/rehearse\n"
+	content := "spec_repos:\n  - https://github.com/org/spec\n  - https://github.com/org/rehearse\ncode_repos:\n  - https://github.com/org/api\n"
 	if err := os.WriteFile(filepath.Join(dir, "synchestra-state-repo.yaml"), []byte(content), 0644); err != nil {
 		t.Fatal(err)
 	}
@@ -131,6 +135,9 @@ func TestReadStateConfig_Exists(t *testing.T) {
 	}
 	if cfg.SpecRepos[1] != "https://github.com/org/rehearse" {
 		t.Errorf("SpecRepos[1] = %q", cfg.SpecRepos[1])
+	}
+	if len(cfg.CodeRepos) != 1 || cfg.CodeRepos[0] != "https://github.com/org/api" {
+		t.Errorf("CodeRepos = %v, want [https://github.com/org/api]", cfg.CodeRepos)
 	}
 }
 
