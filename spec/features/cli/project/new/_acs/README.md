@@ -4,8 +4,8 @@ Acceptance criteria for the [`synchestra project new`](../README.md) command.
 
 | AC | Description | Status |
 |---|---|---|
-| [creates-spec-config](creates-spec-config.md) | synchestra-spec-repo.yaml created in spec repo | implemented |
-| [creates-state-config](creates-state-config.md) | synchestra-state-repo.yaml created in state repo | implemented |
+| [creates-spec-config](creates-spec-config.ac.md) | synchestra-spec-repo.yaml created in spec repo | implemented |
+| [creates-state-config](creates-state-config.ac.md) | synchestra-state-repo.yaml created in state repo | implemented |
 
 ## Outstanding Questions
 

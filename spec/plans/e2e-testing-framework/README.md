@@ -1733,7 +1733,7 @@ git commit -m "feat(cli): add synchestra test run and test list commands"
 - Created: `spec/features/testing-framework/test-scenario/README.md`
 - Created: `spec/features/testing-framework/test-runner/README.md`
 - Created: `spec/features/testing-framework/test-runner/_acs/` (11 AC files + README)
-- Created: `spec/features/testing-framework/test-runner/_tests/runner-core.md` (dogfood scenario)
+- Created: `spec/features/testing-framework/test-runner/_tests/runner-core.test.md` (dogfood scenario)
 - Modified: `spec/features/feature/README.md` — added Acceptance Criteria section, `_acs/`/`_tests/` conventions, `_` prefix rules
 - Modified: `spec/features/README.md` — replaced test-scenario with acceptance-criteria and testing-framework in index
 - Created: `spec/tests/README.md`
@@ -1752,8 +1752,8 @@ All steps completed and committed across multiple commits:
 **Status: PARTIALLY COMPLETED** — AC files, E2E scenario, and flows directory created and committed (`06be288`). Step 5 (run the scenario) remains.
 
 **Files created/modified (done):**
-- Created: `spec/features/cli/project/new/_acs/creates-spec-config.md`
-- Created: `spec/features/cli/project/new/_acs/creates-state-config.md`
+- Created: `spec/features/cli/project/new/_acs/creates-spec-config.ac.md`
+- Created: `spec/features/cli/project/new/_acs/creates-state-config.ac.md`
 - Created: `spec/features/cli/project/new/_acs/README.md`
 - Created: `spec/tests/project-lifecycle.md`
 - Modified: `spec/features/cli/project/new/README.md` — added Acceptance Criteria section with table
@@ -1761,7 +1761,7 @@ All steps completed and committed across multiple commits:
 
 - [ ] **Step 1: Create AC files for `cli/project/new`**
 
-Create `spec/features/cli/project/new/_acs/creates-spec-config.md`:
+Create `spec/features/cli/project/new/_acs/creates-spec-config.ac.md`:
 
 ```markdown
 # AC: creates-spec-config
@@ -1794,7 +1794,7 @@ test "$title" = "$expected_title"
 (None yet.)
 ```
 
-Create `spec/features/cli/project/new/_acs/creates-state-config.md`:
+Create `spec/features/cli/project/new/_acs/creates-state-config.ac.md`:
 
 ```markdown
 # AC: creates-state-config
@@ -1836,8 +1836,8 @@ Add an Acceptance Criteria section before the Outstanding Questions section:
 
 | AC | Description | Status |
 |---|---|---|
-| [creates-spec-config](_acs/creates-spec-config.md) | synchestra-spec-repo.yaml created in spec repo | implemented |
-| [creates-state-config](_acs/creates-state-config.md) | synchestra-state-repo.yaml created in state repo | implemented |
+| [creates-spec-config](_acs/creates-spec-config.ac.md) | synchestra-spec-repo.yaml created in spec repo | implemented |
+| [creates-state-config](_acs/creates-state-config.ac.md) | synchestra-state-repo.yaml created in state repo | implemented |
 ```
 
 - [ ] **Step 3: Create `spec/tests/project-lifecycle.md`**

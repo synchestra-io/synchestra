@@ -59,8 +59,8 @@ If a repo already contains a config file for a different project, the command fa
 
 | AC | Description | Status |
 |---|---|---|
-| [creates-spec-config](_acs/creates-spec-config.md) | synchestra-spec-repo.yaml created in spec repo | implemented |
-| [creates-state-config](_acs/creates-state-config.md) | synchestra-state-repo.yaml created in state repo | implemented |
+| [creates-spec-config](_acs/creates-spec-config.ac.md) | synchestra-spec-repo.yaml created in spec repo | implemented |
+| [creates-state-config](_acs/creates-state-config.ac.md) | synchestra-state-repo.yaml created in state repo | implemented |
 
 ## Outstanding Questions
 

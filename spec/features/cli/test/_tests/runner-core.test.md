@@ -17,11 +17,11 @@ cat > "$FIXTURE_DIR/features/test-fixture/_acs/README.md" << 'ACREADME'
 # Acceptance Criteria: test-fixture
 | AC | Description | Status |
 |---|---|---|
-| [always-pass](always-pass.md) | Always passes | implemented |
-| [check-input](check-input.md) | Checks an input var | implemented |
+| [always-pass](always-pass.ac.md) | Always passes | implemented |
+| [check-input](check-input.ac.md) | Checks an input var | implemented |
 ACREADME
 
-cat > "$FIXTURE_DIR/features/test-fixture/_acs/always-pass.md" << 'AC1'
+cat > "$FIXTURE_DIR/features/test-fixture/_acs/always-pass.ac.md" << 'AC1'
 # AC: always-pass
 **Status:** implemented
 **Feature:** [test-fixture](../README.md)
@@ -38,7 +38,7 @@ exit 0
 (None yet.)
 AC1
 
-cat > "$FIXTURE_DIR/features/test-fixture/_acs/check-input.md" << 'AC2'
+cat > "$FIXTURE_DIR/features/test-fixture/_acs/check-input.ac.md" << 'AC2'
 # AC: check-input
 **Status:** implemented
 **Feature:** [test-fixture](../README.md)
@@ -82,7 +82,7 @@ go build -o "$BINARY_PATH" .
 
 | Feature | ACs |
 |---|---|
-| [cli/test]($SPEC_ROOT/features/cli/test/) | [parses-valid-scenario]($SPEC_ROOT/features/cli/test/_acs/parses-valid-scenario.md) |
+| [cli/test]($SPEC_ROOT/features/cli/test/) | [parses-valid-scenario]($SPEC_ROOT/features/cli/test/_acs/parses-valid-scenario.ac.md) |
 
 ````bash
 # Create a valid scenario fixture
@@ -116,7 +116,7 @@ SCENARIO
 
 | Feature | ACs |
 |---|---|
-| [cli/test]($SPEC_ROOT/features/cli/test/) | [rejects-malformed-scenario]($SPEC_ROOT/features/cli/test/_acs/rejects-malformed-scenario.md) |
+| [cli/test]($SPEC_ROOT/features/cli/test/) | [rejects-malformed-scenario]($SPEC_ROOT/features/cli/test/_acs/rejects-malformed-scenario.ac.md) |
 
 ````bash
 # Create a malformed scenario (duplicate step names)
@@ -158,7 +158,7 @@ echo "$output"
 
 | Feature | ACs |
 |---|---|
-| [cli/test]($SPEC_ROOT/features/cli/test/) | [executes-sequential-steps]($SPEC_ROOT/features/cli/test/_acs/executes-sequential-steps.md), [parses-valid-scenario]($SPEC_ROOT/features/cli/test/_acs/parses-valid-scenario.md) |
+| [cli/test]($SPEC_ROOT/features/cli/test/) | [executes-sequential-steps]($SPEC_ROOT/features/cli/test/_acs/executes-sequential-steps.ac.md), [parses-valid-scenario]($SPEC_ROOT/features/cli/test/_acs/parses-valid-scenario.ac.md) |
 
 ````bash
 # Create a scenario with 3 sequential steps that append to a file
@@ -208,7 +208,7 @@ echo "$result"
 
 | Feature | ACs |
 |---|---|
-| [cli/test]($SPEC_ROOT/features/cli/test/) | [propagates-context-outputs]($SPEC_ROOT/features/cli/test/_acs/propagates-context-outputs.md) |
+| [cli/test]($SPEC_ROOT/features/cli/test/) | [propagates-context-outputs]($SPEC_ROOT/features/cli/test/_acs/propagates-context-outputs.ac.md) |
 
 ````bash
 # Create a scenario where step-a writes to context, step-b reads it.
@@ -256,7 +256,7 @@ echo '```' >> "$FIXTURE_DIR/context-scenario.md"
 
 | Feature | ACs |
 |---|---|
-| [cli/test]($SPEC_ROOT/features/cli/test/) | [resolves-ac-wildcard]($SPEC_ROOT/features/cli/test/_acs/resolves-ac-wildcard.md) |
+| [cli/test]($SPEC_ROOT/features/cli/test/) | [resolves-ac-wildcard]($SPEC_ROOT/features/cli/test/_acs/resolves-ac-wildcard.ac.md) |
 
 ````bash
 # Create a scenario that uses wildcard AC reference against our fixture feature
@@ -302,7 +302,7 @@ SCENARIO
 
 | Feature | ACs |
 |---|---|
-| [cli/test]($SPEC_ROOT/features/cli/test/) | [runs-teardown-on-failure]($SPEC_ROOT/features/cli/test/_acs/runs-teardown-on-failure.md) |
+| [cli/test]($SPEC_ROOT/features/cli/test/) | [runs-teardown-on-failure]($SPEC_ROOT/features/cli/test/_acs/runs-teardown-on-failure.ac.md) |
 
 ````bash
 cat > "$FIXTURE_DIR/teardown-scenario.md" << 'SCENARIO'
@@ -342,7 +342,7 @@ test -f "$FIXTURE_DIR/teardown-ran.marker" || { echo "Teardown did not run"; exi
 
 | Feature | ACs |
 |---|---|
-| [cli/test]($SPEC_ROOT/features/cli/test/) | [reports-pass-fail-exit-code]($SPEC_ROOT/features/cli/test/_acs/reports-pass-fail-exit-code.md) |
+| [cli/test]($SPEC_ROOT/features/cli/test/) | [reports-pass-fail-exit-code]($SPEC_ROOT/features/cli/test/_acs/reports-pass-fail-exit-code.ac.md) |
 
 ````bash
 # Create passing scenario

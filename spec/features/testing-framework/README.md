@@ -38,7 +38,7 @@ Run the self-tests:
 
 ```bash
 # Dogfood scenario — exercises parsing, execution, outputs, AC resolution
-go run . test run spec/features/cli/test/_tests/runner-core.md
+go run . test run spec/features/cli/test/_tests/runner-core.test.md
 
 # All test scenarios including demos
 go run . test run spec/features/cli/test/_tests/ --run-manual-tests
