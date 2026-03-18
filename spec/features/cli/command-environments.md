@@ -8,6 +8,10 @@ Every Synchestra CLI command is designed to run in a specific execution environm
 
 Environment categorization matters because Synchestra coordinates work across heterogeneous environments: a host machine running the daemon, agent containers executing tasks, CI runners validating work, and developer laptops doing all of the above. Knowing which commands belong where prevents misconfiguration, clarifies deployment requirements, and helps agents understand their operational boundaries.
 
+### State store abstraction
+
+Coordination commands (`task *`) interact with project state through the [state store](../state-store/README.md) abstraction — a pluggable interface (`state.Store`) whose default implementation is git-backed (`gitstore`). Alternative backends (SQLite, PostgreSQL, cloud databases) can be used by satisfying the same interface. This document uses **"state store"** when describing what coordination commands require, not "git" — the storage backend is a project-level configuration choice, not an inherent requirement of the commands themselves.
+
 ## Environment Model
 
 ```mermaid
@@ -23,26 +27,26 @@ graph TB
         direction TB
         Setup["config, project, server project"]
         UserConfig["~/.synchestra.yaml"]
-        GitSetup["State repo (git)"]
+        StateSetup["State store"]
         Setup --- UserConfig
-        Setup --- GitSetup
+        Setup --- StateSetup
     end
 
     subgraph AgentContainer["🤖 Agent Container"]
         direction TB
         TaskCmds["task *"]
-        GitState["State repo (git)"]
-        TaskCmds --- GitState
+        StateStore["State store"]
+        TaskCmds --- StateStore
     end
 
     subgraph CIRunner["🤖 CI Runner"]
         direction TB
         TaskCmdsCI["task *"]
         TestCmds["test run / test list"]
-        GitStateCI["State repo (git)"]
+        StateStoreCI["State store"]
         CodeRepos["Code / Spec repos"]
-        TaskCmdsCI --- GitStateCI
-        TestCmds --- GitStateCI
+        TaskCmdsCI --- StateStoreCI
+        TestCmds --- StateStoreCI
         TestCmds --- CodeRepos
     end
 
@@ -100,14 +104,14 @@ One-time or infrequent commands that establish the working environment. Run by h
 
 **Environment requirements:**
 - `~/.synchestra.yaml` for config commands
-- Git access to the state repo for project commands
+- Git access to spec/code repositories for project commands (these repos are always git-backed)
 - `synchestra-server.yaml` for server project commands
 
 **Typical caller:** Human developer, setup/provisioning script, CI pipeline bootstrap step.
 
 ### 3. 🤖 Coordination — Agent environment (container, CI, local)
 
-The core workflow commands for task lifecycle management. These are what agents call most frequently. Mutations are atomic git commit-and-push operations; reads pull before querying.
+The core workflow commands for task lifecycle management. These are what agents call most frequently. All state operations go through the [state store](../state-store/README.md) abstraction — mutations are atomic (the backend determines the mechanism: git uses commit-and-push, SQL uses row-level locking), and reads ensure freshness before returning.
 
 | Command | Description | Type | Spec Reference |
 |---|---|---|---|
@@ -127,9 +131,9 @@ The core workflow commands for task lifecycle management. These are what agents 
 | `synchestra task info` | Show full task details and context | read | [task/info](task/info/README.md) |
 
 **Environment requirements:**
-- Git access to the state repository (clone, pull, commit, push)
-- Git credentials with write access (for mutations)
-- Network access to the git remote
+- Access to the project's [state store](../state-store/README.md) (git-backed by default, but backend-agnostic)
+- Write access to the state store (for mutations)
+- Network access when the state store backend requires it (e.g., git remote, database server)
 
 **Typical caller:** AI agent (via CLI or MCP), human developer, orchestration script.
 
@@ -145,7 +149,7 @@ Commands that operate on project content — running tests, validating specs. Re
 **Environment requirements:**
 - Spec repo checked out locally (for scenario definitions)
 - Code repos checked out locally (for test execution, when applicable)
-- Git access to the state repo (for result reporting)
+- Access to the state store (for result reporting)
 
 **Typical caller:** AI agent, CI pipeline, human developer.
 
@@ -172,25 +176,25 @@ Quick-reference table of every CLI command.
 | `config show` | 🔧 Setup | read | `~/.synchestra.yaml` |
 | `config set` | 🔧 Setup | mutation | `~/.synchestra.yaml` |
 | `config clear` | 🔧 Setup | mutation | `~/.synchestra.yaml` |
-| `project new` | 🔧 Setup | mutation | git (state repo) |
+| `project new` | 🔧 Setup | mutation | git (spec + code repos) |
 | `project info` | 🔧 Setup | read | `synchestra-spec.yaml` |
-| `project set` | 🔧 Setup | mutation | git (state repo) |
-| `project code add` | 🔧 Setup | mutation | git (state repo) |
-| `project code remove` | 🔧 Setup | mutation | git (state repo) |
-| `task create` | 🤖 Coordination | mutation | git (state repo) |
-| `task enqueue` | 🤖 Coordination | mutation | git (state repo) |
-| `task claim` | 🤖 Coordination | mutation | git (state repo) |
-| `task start` | 🤖 Coordination | mutation | git (state repo) |
-| `task status` | 🤖 Coordination | read | git (state repo) |
-| `task complete` | 🤖 Coordination | mutation | git (state repo) |
-| `task fail` | 🤖 Coordination | mutation | git (state repo) |
-| `task block` | 🤖 Coordination | mutation | git (state repo) |
-| `task unblock` | 🤖 Coordination | mutation | git (state repo) |
-| `task release` | 🤖 Coordination | mutation | git (state repo) |
-| `task abort` | 🤖 Coordination | mutation | git (state repo) |
-| `task aborted` | 🤖 Coordination | mutation | git (state repo) |
-| `task list` | 🤖 Coordination | read | git (state repo) |
-| `task info` | 🤖 Coordination | read | git (state repo) |
+| `project set` | 🔧 Setup | mutation | git (spec repo) |
+| `project code add` | 🔧 Setup | mutation | git (spec repo) |
+| `project code remove` | 🔧 Setup | mutation | git (spec repo) |
+| `task create` | 🤖 Coordination | mutation | state store |
+| `task enqueue` | 🤖 Coordination | mutation | state store |
+| `task claim` | 🤖 Coordination | mutation | state store |
+| `task start` | 🤖 Coordination | mutation | state store |
+| `task status` | 🤖 Coordination | read | state store |
+| `task complete` | 🤖 Coordination | mutation | state store |
+| `task fail` | 🤖 Coordination | mutation | state store |
+| `task block` | 🤖 Coordination | mutation | state store |
+| `task unblock` | 🤖 Coordination | mutation | state store |
+| `task release` | 🤖 Coordination | mutation | state store |
+| `task abort` | 🤖 Coordination | mutation | state store |
+| `task aborted` | 🤖 Coordination | mutation | state store |
+| `task list` | 🤖 Coordination | read | state store |
+| `task info` | 🤖 Coordination | read | state store |
 | `server start` | 🖥️ Infrastructure | mutation | host filesystem, `synchestra-server.yaml` |
 | `server stop` | 🖥️ Infrastructure | mutation | host filesystem (PID) |
 | `server restart` | 🖥️ Infrastructure | mutation | host filesystem, `synchestra-server.yaml` |
@@ -217,7 +221,7 @@ Valid values:
 |---|---|
 | `Infrastructure (Host-only)` | 🖥️ Server lifecycle, host machine only |
 | `Setup & Configuration` | 🔧 One-time setup, typically host or CI |
-| `Coordination (Agent)` | 🤖 Task lifecycle, any environment with git access |
+| `Coordination (Agent)` | 🤖 Task lifecycle, any environment with state store access |
 | `Execution (Agent)` | 🧪 Tests/validation, needs code/spec repos |
 | `Integration Bridge` | 🔌 Cross-cutting subprocess |
 
@@ -227,4 +231,4 @@ This annotation makes each spec self-describing — tools and agents can read a 
 
 - Should `test run` and `test list` get their own subdirectories (`test/run/`, `test/list/`), or remain documented in `test/README.md`?
 - Should the environment annotation proposed above be enforced by a linter or validation step?
-- Do any coordination commands need a "degraded mode" when git push is unavailable (e.g., local-only queueing)?
+- Do any coordination commands need a "degraded mode" when the state store is unreachable (e.g., local-only queueing)?
