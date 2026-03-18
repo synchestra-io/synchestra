@@ -21,7 +21,7 @@ This document defines the pluggable compute backend architecture: three executio
 Projects specify their compute backend in the project configuration (in the spec repo or via API). The backend is selected at container provisioning time and persists for the lifetime of the container (migration between backends is not supported in v1).
 
 ```yaml
-# In project's synchestra-spec.yaml or equivalent
+# In project's synchestra-spec-repo.yaml or equivalent
 sandbox:
   backend: single-host          # "single-host" | "cloud-serverless" | "kubernetes" | "external"
   backend_config:

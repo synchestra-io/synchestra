@@ -8,14 +8,14 @@ These are cross-cutting concerns that features and specifications build upon.
 
 | Document | Description |
 |---|---|
-| [repository-types.md](repository-types.md) | The three repository types (spec, state, code) — what they hold, why they're separate, how they connect |
+| [git-repo-types/](git-repo-types/README.md) | The three git repository types (spec, state, code) — what they hold, why they're separate, how they connect, and rules for each |
 | [spec-to-execution.md](spec-to-execution.md) | How features, development plans, and tasks connect across repository boundaries |
 | [sandbox-architecture.md](sandbox-architecture.md) | Sandbox feature design: stateless host, autonomous containers per project, gRPC communication, state management |
 | [sandbox-security.md](sandbox-security.md) | Security model for sandbox: credential encryption, container hardening, user isolation, threat analysis |
 
-### repository-types.md
+### git-repo-types/
 
-Defines the three kinds of repositories Synchestra operates with: the spec repository (requirements and documentation), the state repository (tasks and coordination), and the code repository (implementation). Explains why the state repo must be separate, naming conventions, how repos connect through `synchestra-spec.yaml`, and when spec+code repos can be combined.
+Defines the three kinds of repositories Synchestra operates with: the spec repository (requirements and documentation), the state repository (tasks and coordination), and the code repository (implementation). Each type has a dedicated subdirectory with mandatory rules, naming conventions, and example structures. Explains why the state repo must be separate, how repos connect through `synchestra-spec-repo.yaml`, and when spec+code repos can be combined.
 
 ### spec-to-execution.md
 

@@ -22,7 +22,7 @@ func TestWriteSpecConfig(t *testing.T) {
 	if err := WriteSpecConfig(dir, cfg); err != nil {
 		t.Fatal(err)
 	}
-	data, err := os.ReadFile(filepath.Join(dir, "synchestra-spec.yaml"))
+	data, err := os.ReadFile(filepath.Join(dir, "synchestra-spec-repo.yaml"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -50,7 +50,7 @@ func TestWriteStateConfig(t *testing.T) {
 	if err := WriteStateConfig(dir, cfg); err != nil {
 		t.Fatal(err)
 	}
-	data, err := os.ReadFile(filepath.Join(dir, "synchestra-state.yaml"))
+	data, err := os.ReadFile(filepath.Join(dir, "synchestra-state-repo.yaml"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -76,7 +76,7 @@ func TestWriteCodeConfig(t *testing.T) {
 	if err := WriteCodeConfig(dir, cfg); err != nil {
 		t.Fatal(err)
 	}
-	data, err := os.ReadFile(filepath.Join(dir, "synchestra-code.yaml"))
+	data, err := os.ReadFile(filepath.Join(dir, "synchestra-code-repo.yaml"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -101,7 +101,7 @@ func TestReadSpecConfig_NotExists(t *testing.T) {
 func TestReadSpecConfig_Exists(t *testing.T) {
 	dir := t.TempDir()
 	content := "title: Test\nstate_repo: https://github.com/org/state\nrepos:\n  - https://github.com/org/code\n"
-	if err := os.WriteFile(filepath.Join(dir, "synchestra-spec.yaml"), []byte(content), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "synchestra-spec-repo.yaml"), []byte(content), 0644); err != nil {
 		t.Fatal(err)
 	}
 	cfg, err := ReadSpecConfig(dir)
@@ -116,7 +116,7 @@ func TestReadSpecConfig_Exists(t *testing.T) {
 func TestReadStateConfig_Exists(t *testing.T) {
 	dir := t.TempDir()
 	content := "spec_repos:\n  - https://github.com/org/spec\n  - https://github.com/org/rehearse\n"
-	if err := os.WriteFile(filepath.Join(dir, "synchestra-state.yaml"), []byte(content), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "synchestra-state-repo.yaml"), []byte(content), 0644); err != nil {
 		t.Fatal(err)
 	}
 	cfg, err := ReadStateConfig(dir)
@@ -137,7 +137,7 @@ func TestReadStateConfig_Exists(t *testing.T) {
 func TestReadCodeConfig_Exists(t *testing.T) {
 	dir := t.TempDir()
 	content := "spec_repos:\n  - https://github.com/org/spec\n  - https://github.com/org/rehearse\n"
-	if err := os.WriteFile(filepath.Join(dir, "synchestra-code.yaml"), []byte(content), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "synchestra-code-repo.yaml"), []byte(content), 0644); err != nil {
 		t.Fatal(err)
 	}
 	cfg, err := ReadCodeConfig(dir)

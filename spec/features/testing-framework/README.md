@@ -28,7 +28,7 @@ synchestra test list                        — list available scenarios
 synchestra test list --tag e2e              — list filtered by tag
 ```
 
-These commands delegate to the Rehearse test runner under the hood. The spec root is resolved from `project_dirs.specifications` in `synchestra-spec.yaml` (default: `spec`).
+These commands delegate to the Rehearse test runner under the hood. The spec root is resolved from `project_dirs.specifications` in `synchestra-spec-repo.yaml` (default: `spec`).
 
 ## Self-Testing
 

@@ -41,12 +41,12 @@ At its core, Synchestra is a chain of small, automatable steps and background ch
 
 ## Repository Types
 
-Synchestra operates with three kinds of repositories, each with a distinct role. See [Repository Types](spec/architecture/repository-types.md) for the full description.
+Synchestra operates with three kinds of repositories, each with a distinct role. See [Repository Types](spec/architecture/git-repo-types/README.md) for the full description.
 
 | Repository type | What it holds | Naming convention |
 |---|---|---|
 | **State repository** | Tasks, claims, coordination state, workflow artifacts | `{project}-synchestra` |
-| **Spec repository** | Requirements, architecture, documentation, `synchestra-spec.yaml` | User's choice |
+| **Spec repository** | Requirements, architecture, documentation, `synchestra-spec-repo.yaml` | User's choice |
 | **Code repository** (one or more) | Implementation and source code | User's choice |
 
 The spec and code repos can be combined into a single repo. The state repository should always be separate — its high-frequency machine commits (task claims, status updates) would pollute the project's code history.
@@ -58,7 +58,7 @@ A spec repository (or combined spec+code repo) follows this structure:
 ```
 repo/
   README.md                          # Repository overview
-  synchestra-spec.yaml            # Project configuration (references the state repo)
+  synchestra-spec-repo.yaml            # Project configuration (references the state repo)
 
   spec/                              # Product specifications (configurable per project)
     features/
@@ -76,7 +76,7 @@ repo/
     ...
 ```
 
-`spec/` and `docs/` live at the repository root — they are the product's specification and documentation. The locations of `spec/` and `docs/` are configurable per project via [`synchestra-spec.yaml`](spec/features/project-definition/README.md).
+`spec/` and `docs/` live at the repository root — they are the product's specification and documentation. The locations of `spec/` and `docs/` are configurable per project via [`synchestra-spec-repo.yaml`](spec/features/project-definition/README.md).
 
 ### State repository structure
 
@@ -181,7 +181,7 @@ See the [agent-skills feature spec](spec/features/agent-skills/README.md) for de
 
 Every project has a dedicated **state repository** (`{project}-synchestra`) that holds tasks and coordination state. Beyond that, Synchestra adapts to how your project is organized:
 
-- **Simple project.** One spec+code repo and one state repo. The spec repo contains `synchestra-spec.yaml` pointing to the state repo.
+- **Simple project.** One spec+code repo and one state repo. The spec repo contains `synchestra-spec-repo.yaml` pointing to the state repo.
 - **Multi-repo projects.** If your project spans multiple repositories (frontend, backend, infrastructure), the spec repo references all target code repos. The state repo coordinates work across all of them. The branching strategy and cross-repo synchronization are defined in a dedicated specification file.
 - **Multiple projects.** For developers or teams working across multiple projects in parallel, a dedicated Synchestra org provides a single control plane across all of them.
 

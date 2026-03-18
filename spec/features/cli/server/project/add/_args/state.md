@@ -16,7 +16,7 @@ Path to the project's state repository.
 
 ## Description
 
-Specifies the path to a state repository containing `synchestra-state.yaml`. The path is stored in `synchestra-server.yaml` and used by the server to manage project runtime state (tasks, claims, etc.).
+Specifies the path to a state repository containing `synchestra-state-repo.yaml`. The path is stored in `synchestra-server.yaml` and used by the server to manage project runtime state (tasks, claims, etc.).
 
 Relative paths are resolved relative to the directory containing `synchestra-server.yaml`.
 

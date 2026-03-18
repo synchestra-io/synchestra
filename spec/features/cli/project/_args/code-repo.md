@@ -24,7 +24,7 @@ Accepts a full git URL (`https://github.com/org/repo`, `git@github.com:org/repo`
 
 This flag is repeatable — pass it multiple times to specify multiple code repos in a single command.
 
-Values are stored as origin URLs in the `repos` list of `synchestra-spec.yaml`.
+Values are stored as origin URLs in the `repos` list of `synchestra-spec-repo.yaml`.
 
 ## Examples
 

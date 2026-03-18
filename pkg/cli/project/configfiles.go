@@ -11,9 +11,9 @@ import (
 )
 
 const (
-	SpecConfigFile  = "synchestra-spec.yaml"
-	StateConfigFile = "synchestra-state.yaml"
-	CodeConfigFile  = "synchestra-code.yaml"
+	SpecConfigFile  = "synchestra-spec-repo.yaml"
+	StateConfigFile = "synchestra-state-repo.yaml"
+	CodeConfigFile  = "synchestra-code-repo.yaml"
 )
 
 type SpecConfig struct {

@@ -73,8 +73,8 @@ This backend requires no external infrastructure — only a git remote. It is th
 
 | Interface Method | Git Operation |
 |---|---|
-| `Project().Config()` | Read and parse `synchestra-state.yaml` |
-| `Project().UpdateConfig()` | Write `synchestra-state.yaml`, commit |
+| `Project().Config()` | Read and parse `synchestra-state-repo.yaml` |
+| `Project().UpdateConfig()` | Write `synchestra-state-repo.yaml`, commit |
 | `Project().RebuildREADME()` | Regenerate root `README.md` from project state |
 
 ## Sync Mode

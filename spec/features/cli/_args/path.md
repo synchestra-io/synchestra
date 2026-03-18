@@ -26,8 +26,8 @@ Specifies the working directory for commands that resolve a Synchestra context.
 Overrides the current working directory for directory resolution. The CLI traverses up from this path (or CWD if omitted) looking for one of the following marker files:
 
 - `synchestra-server.yaml` — server directory (multi-project)
-- `synchestra-spec.yaml` — spec repo
-- `synchestra-state.yaml` — state repo
+- `synchestra-spec-repo.yaml` — spec repo
+- `synchestra-state-repo.yaml` — state repo
 
 If no marker file is found before reaching the filesystem root, the command exits with code `3`.
 

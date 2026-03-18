@@ -49,7 +49,7 @@ Build the parser that reads workflow YAML definitions and validates them against
 
 ### 2. Implement project customization loader
 
-Build the loader that reads project-level workflow customizations from `synchestra-spec.yaml` and merges them with the built-in workflow definitions.
+Build the loader that reads project-level workflow customizations from `synchestra-spec-repo.yaml` and merges them with the built-in workflow definitions.
 
 **Depends on:** Step 1
 **Produces:**
@@ -57,7 +57,7 @@ Build the loader that reads project-level workflow customizations from `synchest
   - Merged workflow definition model (built-in + project overrides)
 
 **Acceptance criteria:**
-- Reads `workflows:` section from `synchestra-spec.yaml`
+- Reads `workflows:` section from `synchestra-spec-repo.yaml`
 - Merges project-level `context.guidelines` into the workflow's context
 - Merges project-level `checks` into the workflow's finalization pipeline
 - Merges project-level `prompts.additional-questions` into the workflow's conversational steps

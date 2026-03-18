@@ -281,7 +281,7 @@ func ensureCheckoutMatchesRef(dir string, expected reporef.Ref) error {
 	return nil
 }
 
-// checkSpecConflict checks if synchestra-spec.yaml exists and points to a
+// checkSpecConflict checks if synchestra-spec-repo.yaml exists and points to a
 // different state repo (i.e., belongs to a different project).
 func checkSpecConflict(dir, expectedStateRepo string) error {
 	cfg, err := ReadSpecConfig(dir)

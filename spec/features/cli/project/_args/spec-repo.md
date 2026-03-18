@@ -17,11 +17,11 @@ Reference to the project's spec repository.
 
 ## Description
 
-Identifies the spec repository for the project. The spec repo holds `synchestra-spec.yaml` (the full project definition), feature specifications, architecture documents, and product documentation.
+Identifies the spec repository for the project. The spec repo holds `synchestra-spec-repo.yaml` (the full project definition), feature specifications, architecture documents, and product documentation.
 
 Accepts a full git URL (`https://github.com/org/repo`, `git@github.com:org/repo`) or a short path (`github.com/org/repo`). Both forms resolve to `{repos_dir}/{hosting}/{org}/{repo}` on disk.
 
-For `project new`, this is the repository where `synchestra-spec.yaml` will be created. For `project set`, this re-points the project to a different spec repo.
+For `project new`, this is the repository where `synchestra-spec-repo.yaml` will be created. For `project set`, this re-points the project to a different spec repo.
 
 ## Examples
 

@@ -5,7 +5,7 @@
 
 ## Description
 
-After `synchestra project new`, `synchestra-spec.yaml` exists in the spec repo
+After `synchestra project new`, `synchestra-spec-repo.yaml` exists in the spec repo
 with the correct title and state_repo fields.
 
 ## Inputs
@@ -18,8 +18,8 @@ with the correct title and state_repo fields.
 ## Verification
 
 ```bash
-test -f "$spec_repo_path/synchestra-spec.yaml"
-title=$(grep 'title:' "$spec_repo_path/synchestra-spec.yaml" | head -1 | sed 's/title: *//')
+test -f "$spec_repo_path/synchestra-spec-repo.yaml"
+title=$(grep 'title:' "$spec_repo_path/synchestra-spec-repo.yaml" | head -1 | sed 's/title: *//')
 test "$title" = "$expected_title"
 ```
 

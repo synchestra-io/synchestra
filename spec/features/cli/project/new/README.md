@@ -16,9 +16,9 @@ Config files written:
 
 | Repo | File | Content |
 |---|---|---|
-| Spec | `synchestra-spec.yaml` | Full project definition: `title`, `state_repo`, `repos` |
-| State | `synchestra-state.yaml` | Back-reference: `spec_repos` |
-| Code(s) | `synchestra-code.yaml` | Pointer: `spec_repos` |
+| Spec | `synchestra-spec-repo.yaml` | Full project definition: `title`, `state_repo`, `repos` |
+| State | `synchestra-state-repo.yaml` | Back-reference: `spec_repos` |
+| Code(s) | `synchestra-code-repo.yaml` | Pointer: `spec_repos` |
 
 If a repo already contains a config file for a different project, the command fails with exit code `1`.
 
@@ -49,9 +49,9 @@ If a repo already contains a config file for a different project, the command fa
 4. Validate all resolved directories are git repos
 5. Check that no repo already has a config file pointing to a different project; exit `1` if so
 6. Derive project title: `--title` flag > first `# heading` in spec repo `README.md` > spec repo identifier
-7. Write `synchestra-spec.yaml` to spec repo with `title`, `state_repo` (origin URL), and `repos` (list of origin URLs)
-8. Write `synchestra-state.yaml` to state repo with `spec_repos` (list of origin URLs)
-9. Write `synchestra-code.yaml` to each code repo with `spec_repos` (list of origin URLs)
+7. Write `synchestra-spec-repo.yaml` to spec repo with `title`, `state_repo` (origin URL), and `repos` (list of origin URLs)
+8. Write `synchestra-state-repo.yaml` to state repo with `spec_repos` (list of origin URLs)
+9. Write `synchestra-code-repo.yaml` to each code repo with `spec_repos` (list of origin URLs)
 10. Commit and push changes to all affected repos
 11. On push conflict: pull, re-check, retry or fail
 
@@ -59,10 +59,10 @@ If a repo already contains a config file for a different project, the command fa
 
 | AC | Description | Status |
 |---|---|---|
-| [creates-spec-config](_acs/creates-spec-config.md) | synchestra-spec.yaml created in spec repo | implemented |
-| [creates-state-config](_acs/creates-state-config.md) | synchestra-state.yaml created in state repo | implemented |
+| [creates-spec-config](_acs/creates-spec-config.md) | synchestra-spec-repo.yaml created in spec repo | implemented |
+| [creates-state-config](_acs/creates-state-config.md) | synchestra-state-repo.yaml created in state repo | implemented |
 
 ## Outstanding Questions
 
-- Should the command validate that the spec repo does not already have a `synchestra-spec.yaml`, or should it allow overwriting/updating?
+- Should the command validate that the spec repo does not already have a `synchestra-spec-repo.yaml`, or should it allow overwriting/updating?
 - Should there be a `--no-clone` flag to skip cloning and only operate on repos already on disk?

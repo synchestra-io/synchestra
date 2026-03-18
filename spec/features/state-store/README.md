@@ -6,7 +6,7 @@
 
 The state store is the abstraction layer for all Synchestra project coordination state. It defines a composable, hierarchical Go interface (`state.Store`) that formally specifies every operation the system can perform on project state — tasks, artifacts, chat, and project configuration.
 
-The default implementation is a git-backed store (`gitstore`) that maps directly to the current [state repository](../../architecture/repository-types.md#state-repository) design. Future implementations (SQLite, PostgreSQL, cloud databases) can be added by satisfying the same interface.
+The default implementation is a git-backed store (`gitstore`) that maps directly to the current [state repository](../../architecture/git-repo-types/state-repo/README.md) design. Future implementations (SQLite, PostgreSQL, cloud databases) can be added by satisfying the same interface.
 
 ## Problem
 
@@ -70,7 +70,7 @@ Manages chat lifecycle (create, finalize, abandon), append-only message history,
 
 ### Project Store
 
-Thin interface for project-level configuration (the `synchestra-state.yaml` back-reference) and auto-generated README rebuilding. See [Project Store](project-store/).
+Thin interface for project-level configuration (the `synchestra-state-repo.yaml` back-reference) and auto-generated README rebuilding. See [Project Store](project-store/).
 
 ### Backends
 

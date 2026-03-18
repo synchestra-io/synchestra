@@ -36,8 +36,8 @@ Cross-linked with the API endpoint [`POST /api/v1/project/add`](../../../../../a
 
 1. Resolve directory via `--path` or CWD traversal
 2. Find and parse `synchestra-server.yaml`; exit `3` if not found
-3. Validate that `--spec` points to a directory with `synchestra-spec.yaml`
-4. Validate that `--state` points to a directory with `synchestra-state.yaml`
+3. Validate that `--spec` points to a directory with `synchestra-spec-repo.yaml`
+4. Validate that `--state` points to a directory with `synchestra-state-repo.yaml`
 5. Check if the project already exists in the config; exit `1` if so
 6. Append the new project entry to `synchestra-server.yaml`
 7. Exit `0`

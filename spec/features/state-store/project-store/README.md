@@ -24,7 +24,7 @@ type ProjectStore interface {
 
 ### `Config`
 
-Returns the project configuration stored in the state store. In the git backend, this reads `synchestra-state.yaml` which contains the back-reference to the spec repository.
+Returns the project configuration stored in the state store. In the git backend, this reads `synchestra-state-repo.yaml` which contains the back-reference to the spec repository.
 
 ### `UpdateConfig`
 

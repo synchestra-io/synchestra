@@ -83,7 +83,7 @@ updated: 2026-03-14
 | set | omitted | Code repo, default branch (existing file) |
 | set | set | Code repo, specific branch (tweak in progress) |
 
-The `repo` field uses the same repository identifiers configured in `synchestra-spec.yaml` under code repo URLs.
+The `repo` field uses the same repository identifiers configured in `synchestra-spec-repo.yaml` under code repo URLs.
 
 ### Lifecycle
 
@@ -139,7 +139,7 @@ What happens to a chat after finalization is configurable per project or per wor
 | `dispose` | Delete the chat directory after artifacts are committed |
 
 ```yaml
-# synchestra-spec.yaml
+# synchestra-spec-repo.yaml
 chat:
   retention: archive    # default retention policy: archive | summarize | dispose
   abandon_timeout: 7d   # time before inactive chats are abandoned
@@ -173,7 +173,7 @@ The system implements the change during the conversation and produces a developm
 
 ## Project Configuration
 
-All chat-level settings in `synchestra-spec.yaml`:
+All chat-level settings in `synchestra-spec-repo.yaml`:
 
 ```yaml
 chat:
@@ -203,7 +203,7 @@ Workflow-specific configuration is documented in the [Workflow](workflow/README.
 | [CLI](../cli/README.md) | `synchestra chat list`, `synchestra chat info {id}` for admin and debugging. Chats are primarily a web UI concept. |
 | [API](../api/README.md) | REST endpoints for chat lifecycle: create, send message, get status, finalize. The web UI consumes these. |
 | [UI](../ui/README.md) | The web UI renders workflow action buttons on documents and provides the chat interface. Button visibility depends on document type and user role. |
-| [Project Definition](../project-definition/README.md) | Chat and workflow configuration lives in `synchestra-spec.yaml`. |
+| [Project Definition](../project-definition/README.md) | Chat and workflow configuration lives in `synchestra-spec-repo.yaml`. |
 
 ## Outstanding Questions
 

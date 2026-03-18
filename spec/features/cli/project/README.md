@@ -25,9 +25,9 @@ Each repository type has a dedicated config file written to its root:
 
 | Repo type | Config file | Purpose |
 |---|---|---|
-| Spec | `synchestra-spec.yaml` | Full project definition (`title`, `state_repo`, `repos`) |
-| State | `synchestra-state.yaml` | Points to spec repos (`spec_repos`) |
-| Code | `synchestra-code.yaml` | Points to spec repos (`spec_repos`) |
+| Spec | `synchestra-spec-repo.yaml` | Full project definition (`title`, `state_repo`, `repos`) |
+| State | `synchestra-state-repo.yaml` | Points to spec repos (`spec_repos`) |
+| Code | `synchestra-code-repo.yaml` | Points to spec repos (`spec_repos`) |
 
 ## Commands
 
@@ -44,7 +44,7 @@ Creates a new project by linking a spec repo, state repo, and one or more code r
 
 ### `info`
 
-Displays the contents of the spec repo's `synchestra-spec.yaml` for the current project. See [info/README.md](info/README.md).
+Displays the contents of the spec repo's `synchestra-spec-repo.yaml` for the current project. See [info/README.md](info/README.md).
 
 ### `set`
 

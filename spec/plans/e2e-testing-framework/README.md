@@ -1553,7 +1553,7 @@ func runCommand() *cobra.Command {
 }
 
 func runRun(cmd *cobra.Command, args []string) error {
-	specRoot := "spec" // TODO: read from synchestra-spec.yaml project_dirs.specifications
+	specRoot := "spec" // TODO: read from synchestra-spec-repo.yaml project_dirs.specifications
 	tags, _ := cmd.Flags().GetStringSlice("tag")
 
 	// Determine target: file or directory
@@ -1658,7 +1658,7 @@ func listCommand() *cobra.Command {
 }
 
 func runList(cmd *cobra.Command, _ []string) error {
-	specRoot := "spec" // TODO: read from synchestra-spec.yaml
+	specRoot := "spec" // TODO: read from synchestra-spec-repo.yaml
 	tags, _ := cmd.Flags().GetStringSlice("tag")
 
 	// Collect from both spec/tests/ and spec/features/*/_tests/
@@ -1771,7 +1771,7 @@ Create `spec/features/cli/project/new/_acs/creates-spec-config.md`:
 
 ## Description
 
-After `synchestra project new`, `synchestra-spec.yaml` exists in the spec repo
+After `synchestra project new`, `synchestra-spec-repo.yaml` exists in the spec repo
 with the correct title and state_repo fields.
 
 ## Inputs
@@ -1784,8 +1784,8 @@ with the correct title and state_repo fields.
 ## Verification
 
 ` ``bash
-test -f "$spec_repo_path/synchestra-spec.yaml"
-title=$(grep 'title:' "$spec_repo_path/synchestra-spec.yaml" | head -1 | sed 's/title: *//')
+test -f "$spec_repo_path/synchestra-spec-repo.yaml"
+title=$(grep 'title:' "$spec_repo_path/synchestra-spec-repo.yaml" | head -1 | sed 's/title: *//')
 test "$title" = "$expected_title"
 ` ``
 
@@ -1804,7 +1804,7 @@ Create `spec/features/cli/project/new/_acs/creates-state-config.md`:
 
 ## Description
 
-After `synchestra project new`, `synchestra-state.yaml` exists in the state repo
+After `synchestra project new`, `synchestra-state-repo.yaml` exists in the state repo
 with the spec_repos field pointing to the spec repo.
 
 ## Inputs
@@ -1816,8 +1816,8 @@ with the spec_repos field pointing to the spec repo.
 ## Verification
 
 ` ``bash
-test -f "$state_repo_path/synchestra-state.yaml"
-grep -q 'spec_repos:' "$state_repo_path/synchestra-state.yaml"
+test -f "$state_repo_path/synchestra-state-repo.yaml"
+grep -q 'spec_repos:' "$state_repo_path/synchestra-state-repo.yaml"
 ` ``
 
 ## Scenarios
@@ -1836,8 +1836,8 @@ Add an Acceptance Criteria section before the Outstanding Questions section:
 
 | AC | Description | Status |
 |---|---|---|
-| [creates-spec-config](_acs/creates-spec-config.md) | synchestra-spec.yaml created in spec repo | implemented |
-| [creates-state-config](_acs/creates-state-config.md) | synchestra-state.yaml created in state repo | implemented |
+| [creates-spec-config](_acs/creates-spec-config.md) | synchestra-spec-repo.yaml created in spec repo | implemented |
+| [creates-state-config](_acs/creates-state-config.md) | synchestra-state-repo.yaml created in state repo | implemented |
 ```
 
 - [ ] **Step 3: Create `spec/tests/project-lifecycle.md`**

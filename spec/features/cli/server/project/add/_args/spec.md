@@ -16,7 +16,7 @@ Path to the project's spec repository.
 
 ## Description
 
-Specifies the path to a spec repository containing `synchestra-spec.yaml`. The path is stored in `synchestra-server.yaml` and used by the server to locate project specifications.
+Specifies the path to a spec repository containing `synchestra-spec-repo.yaml`. The path is stored in `synchestra-server.yaml` and used by the server to locate project specifications.
 
 Relative paths are resolved relative to the directory containing `synchestra-server.yaml`.
 

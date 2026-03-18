@@ -16,7 +16,7 @@ Human-readable project title.
 
 ## Description
 
-Sets the `title` field in `synchestra-spec.yaml`. If omitted, the CLI derives the title using this fallback chain:
+Sets the `title` field in `synchestra-spec-repo.yaml`. If omitted, the CLI derives the title using this fallback chain:
 
 1. First `# heading` in the spec repo's `README.md` (if it exists)
 2. The repo identifier (e.g., `acme-spec` from `github.com/acme/acme-spec`)

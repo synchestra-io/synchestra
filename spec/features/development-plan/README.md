@@ -280,7 +280,7 @@ Once a plan reaches `approved`, its content is frozen. The plan document is not 
 If the approach needs to change after approval, create a new plan that supersedes the current one rather than editing the approved plan. The superseded plan remains as a historical record.
 
 ```yaml
-# synchestra-spec.yaml
+# synchestra-spec-repo.yaml
 planning:
   enforce_freeze: warn  # warn | reject | off (default: warn)
 ```
@@ -358,7 +358,7 @@ Something initiates the need for a plan:
 **Auto-planning setting:** If `planning.auto_create` is enabled in project configuration, Synchestra automatically creates a `draft` plan when a feature spec or proposal reaches `approved` status. If disabled (the default), a human or external tool initiates plan creation explicitly.
 
 ```yaml
-# synchestra-spec.yaml
+# synchestra-spec-repo.yaml
 planning:
   auto_create: false          # create draft plan on spec/proposal approval
   auto_generate_tasks: false  # generate tasks on plan approval
@@ -606,7 +606,7 @@ The **Inputs** field tells the agent exactly what to read before starting work. 
 A completing task that declared artifacts in the plan can be validated:
 
 ```yaml
-# synchestra-spec.yaml
+# synchestra-spec-repo.yaml
 planning:
   validate_artifacts: warn  # warn | reject | off (default: warn)
 ```
@@ -674,7 +674,7 @@ spec/plans/{plan-slug}/
 
 ## Project Configuration
 
-All planning settings in `synchestra-spec.yaml`:
+All planning settings in `synchestra-spec-repo.yaml`:
 
 ```yaml
 planning:

@@ -10,9 +10,9 @@ synchestra project code remove [--project <id>] --code-repo <ref> [--code-repo <
 
 ## Description
 
-Removes one or more code repositories from the project's `repos` list in `synchestra-spec.yaml`.
+Removes one or more code repositories from the project's `repos` list in `synchestra-spec-repo.yaml`.
 
-This command does **not** delete `synchestra-code.yaml` from the code repos — it only removes them from the project's configuration.
+This command does **not** delete `synchestra-code-repo.yaml` from the code repos — it only removes them from the project's configuration.
 
 If a code repo is not in the project's `repos` list, it is skipped (not an error).
 
@@ -38,7 +38,7 @@ If a code repo is not in the project's `repos` list, it is skipped (not an error
 2. Pull latest state from the spec repo
 3. For each `--code-repo`:
    a. Resolve reference to origin URL
-   b. Remove matching entry from `repos` list in `synchestra-spec.yaml`
+   b. Remove matching entry from `repos` list in `synchestra-spec-repo.yaml`
    c. Skip silently if not found in the list
 4. Commit and push changes to spec repo
 5. On push conflict: pull, re-check, retry or fail

@@ -4,7 +4,7 @@
 
 ## Summary
 
-The `synchestra test` command group runs and lists markdown-native test scenarios. It delegates to the [Rehearse](https://github.com/synchestra-io/rehearse) test runner under the hood, resolving the spec root from `project_dirs.specifications` in `synchestra-spec.yaml`.
+The `synchestra test` command group runs and lists markdown-native test scenarios. It delegates to the [Rehearse](https://github.com/synchestra-io/rehearse) test runner under the hood, resolving the spec root from `project_dirs.specifications` in `synchestra-spec-repo.yaml`.
 
 ## Commands
 
@@ -23,7 +23,7 @@ synchestra test run --spec-root ./my-spec   — override spec root directory
 | Flag | Default | Description |
 |---|---|---|
 | `--format` | `text` | Output format: `text` (styled with live progress) or `json` |
-| `--spec-root` | from `synchestra-spec.yaml` | Override the spec root directory |
+| `--spec-root` | from `synchestra-spec-repo.yaml` | Override the spec root directory |
 | `--tag` | | Filter scenarios by tag (repeatable) |
 | `--run-manual-tests` | `false` | Include scenarios tagged `manual` in directory scans |
 

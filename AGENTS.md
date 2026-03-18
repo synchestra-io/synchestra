@@ -26,7 +26,7 @@ This repository is both the specification and the CLI implementation for Synches
 Key specification files:
 
 - `README.md` explains Synchestra as a git-backed coordination layer for multi-platform AI agents. It also defines the key ideas: hierarchical task trees, naming conventions as API, git as the database, token-efficient context loading, and claim-and-push concurrency.
-- `spec/features/project-definition/README.md` defines the three repository types (state, spec, code), the two supported layouts for spec repositories (dedicated or multi-project), and the `synchestra-spec.yaml` contract. The state repository (`{project}-synchestra`) is always separate and holds only tasks and coordination state.
+- `spec/features/project-definition/README.md` defines the three repository types (state, spec, code), the two supported layouts for spec repositories (dedicated or multi-project), and the `synchestra-spec-repo.yaml` contract. The state repository (`{project}-synchestra`) is always separate and holds only tasks and coordination state.
 - `spec/features/cli/README.md` defines the canonical CLI contract. The `synchestra` CLI is the shared interface for both agents and humans, and mutation commands are expected to perform atomic commit-and-push operations.
 - `spec/features/agent-skills/README.md` defines how skills are structured and distributed. Skills do not replace the CLI; they standardize when to call it, which parameters to pass, and how to interpret exit codes.
 - `spec/features/task-status-board/README.md` defines the markdown table claiming mechanism for optimistic locking, including the conflict resolution protocol for concurrent claims.

@@ -423,7 +423,7 @@ Follows the existing `synchestra <resource> <action>` command pattern.
 
 ### Spec root resolution
 
-The runner resolves the spec root from the project's `synchestra-spec.yaml` configuration (`project_dirs.specifications`, default: `spec`). All AC references (e.g., `cli/project/remove/*`) resolve to `{spec_root}/features/{ac_path}/_acs/`. This configuration is read once at runner initialization and passed to the AC resolver.
+The runner resolves the spec root from the project's `synchestra-spec-repo.yaml` configuration (`project_dirs.specifications`, default: `spec`). All AC references (e.g., `cli/project/remove/*`) resolve to `{spec_root}/features/{ac_path}/_acs/`. This configuration is read once at runner initialization and passed to the AC resolver.
 
 ### Execution model
 
@@ -482,7 +482,7 @@ Update the feature spec to include:
 
 ### Configurable spec root
 
-The spec root directory name is configurable in `synchestra-spec.yaml`:
+The spec root directory name is configurable in `synchestra-spec-repo.yaml`:
 
 ```yaml
 project_dirs:

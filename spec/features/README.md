@@ -7,7 +7,7 @@ Feature specifications for the Synchestra project, managed by Synchestra.
 | Feature | Status | Description |
 |---|---|---|
 | [feature](feature/README.md) | Conceptual | Feature structure, metadata, lifecycle, and conventions — the atomic unit of product specification |
-| [project-definition](project-definition/README.md) | Conceptual | `synchestra-spec.yaml` format and supported repository layouts |
+| [project-definition](project-definition/README.md) | Conceptual | `synchestra-spec-repo.yaml` format and supported repository layouts |
 | [micro-tasks](micro-tasks/README.md) | Conceptual | Pre/post prompt micro-task chains and background automation |
 | [cross-repo-sync](cross-repo-sync/README.md) | Conceptual | Cross-repository branching, task coordination, and merge strategy |
 | [model-selection](model-selection/README.md) | Conceptual | Smart model routing based on task complexity and configuration |
@@ -37,7 +37,7 @@ Defines the atomic unit of product specification in Synchestra — a feature is 
 
 ### [Project Definition](project-definition/README.md)
 
-Defines the `synchestra-spec.yaml` format, mandatory and optional fields, the three repository types (state, spec, code), and the two supported layouts for spec repositories: multi-project (under `synchestra/projects/`) and dedicated (project files at root). Synchestra auto-detects the layout by checking for a project file at the repository root.
+Defines the `synchestra-spec-repo.yaml` format, mandatory and optional fields, the three repository types (state, spec, code), and the two supported layouts for spec repositories: multi-project (under `synchestra/projects/`) and dedicated (project files at root). Synchestra auto-detects the layout by checking for a project file at the repository root.
 
 ### [Micro-Tasks](micro-tasks/README.md)
 
@@ -102,7 +102,7 @@ The Synchestra GitHub App registered under the `synchestra-io` organization. Pro
 
 ### [Onboarding](onboarding/README.md)
 
-A guided wizard delivered through both the web app and the CLI that walks new users through first-time project setup. Offers two paths: "Connect your repositories" (GitHub App installation → spec repo selection → optional code repos → state repo provisioning → bring-your-own AI key → AI-powered repo analysis and scaffolding → project creation) and "Try the demo" (pre-built sample project with example features, tasks, and proposals). The wizard handles infrastructure bootstrapping — creating state repos, generating `synchestra-spec.yaml`, and scaffolding initial feature structures — so users reach a working project in minutes.
+A guided wizard delivered through both the web app and the CLI that walks new users through first-time project setup. Offers two paths: "Connect your repositories" (GitHub App installation → spec repo selection → optional code repos → state repo provisioning → bring-your-own AI key → AI-powered repo analysis and scaffolding → project creation) and "Try the demo" (pre-built sample project with example features, tasks, and proposals). The wizard handles infrastructure bootstrapping — creating state repos, generating `synchestra-spec-repo.yaml`, and scaffolding initial feature structures — so users reach a working project in minutes.
 
 ### [Sandbox](sandbox/README.md)
 

@@ -21,7 +21,7 @@ Identifies the state repository for the project. The state repo holds coordinati
 
 Accepts a full git URL (`https://github.com/org/repo`, `git@github.com:org/repo`) or a short path (`github.com/org/repo`). Both forms resolve to `{repos_dir}/{hosting}/{org}/{repo}` on disk.
 
-For `project new`, this is the repository where `synchestra-state.yaml` will be created. For `project set`, this re-points the project to a different state repo — if the new state repo has no `synchestra-state.yaml`, one is created; if it has one pointing to a different spec repo, the command fails with exit code `1`.
+For `project new`, this is the repository where `synchestra-state-repo.yaml` will be created. For `project set`, this re-points the project to a different state repo — if the new state repo has no `synchestra-state-repo.yaml`, one is created; if it has one pointing to a different spec repo, the command fails with exit code `1`.
 
 ## Examples
 

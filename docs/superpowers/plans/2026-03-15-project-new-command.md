@@ -14,7 +14,7 @@
 
 ## Design Decisions
 
-- **`synchestra-project.yaml` renamed to `synchestra-spec.yaml`** — each repo type gets a distinctly named config file. This plan includes updating all spec references.
+- **`synchestra-project.yaml` renamed to `synchestra-spec-repo.yaml`** — each repo type gets a distinctly named config file. This plan includes updating all spec references.
 - **Git operations via `os/exec`** — keeps it simple, avoids adding a git library dependency. The `ingitdb-cli` dependency provides different abstractions not suited to basic clone/commit/push.
 - **No `internal/` directory** — packages live directly under `cli/` to stay close to the command wiring. Can be restructured later when more commands exist.
 - **Config YAML types use plain value fields** — all fields are required strings or string slices; no need for pointer-based optionality.
@@ -46,15 +46,15 @@ cli/
 
 ---
 
-## Chunk 1: Rename `synchestra-project.yaml` → `synchestra-spec.yaml` in Specs
+## Chunk 1: Rename `synchestra-project.yaml` → `synchestra-spec-repo.yaml` in Specs
 
-### Task 1: Update all spec references from `synchestra-project.yaml` to `synchestra-spec.yaml`
+### Task 1: Update all spec references from `synchestra-project.yaml` to `synchestra-spec-repo.yaml`
 
 **Files (modify all 21 files that reference `synchestra-project.yaml`):**
 - `spec/features/project-definition/README.md`
 - `spec/features/README.md`
 - `spec/architecture/README.md`
-- `spec/architecture/repository-types.md`
+- `spec/architecture/git-repo-types/README.md`
 - `spec/features/cli/_args/path.md`
 - `spec/features/cli/_args/project.md`
 - `spec/features/cli/_args/README.md`
@@ -73,9 +73,9 @@ cli/
 - `README.md`
 - `.github/copilot-instructions.md`
 
-- [ ] **Step 1: Replace all occurrences of `synchestra-project.yaml` with `synchestra-spec.yaml`**
+- [ ] **Step 1: Replace all occurrences of `synchestra-project.yaml` with `synchestra-spec-repo.yaml`**
 
-In every file listed above, replace the string `synchestra-project.yaml` with `synchestra-spec.yaml`. No other content changes.
+In every file listed above, replace the string `synchestra-project.yaml` with `synchestra-spec-repo.yaml`. No other content changes.
 
 - [ ] **Step 2: Verify no remaining references**
 
@@ -86,10 +86,10 @@ Expected: No matches
 
 ```bash
 git add -A
-git commit -m "spec: rename synchestra-project.yaml to synchestra-spec.yaml
+git commit -m "spec: rename synchestra-project.yaml to synchestra-spec-repo.yaml
 
-The spec repo config file is now synchestra-spec.yaml, matching the
-naming pattern of synchestra-state.yaml and synchestra-code.yaml."
+The spec repo config file is now synchestra-spec-repo.yaml, matching the
+naming pattern of synchestra-state-repo.yaml and synchestra-code-repo.yaml."
 ```
 
 ---
@@ -803,7 +803,7 @@ func TestWriteSpecConfig(t *testing.T) {
 	if err := WriteSpecConfig(dir, cfg); err != nil {
 		t.Fatal(err)
 	}
-	data, err := os.ReadFile(filepath.Join(dir, "synchestra-spec.yaml"))
+	data, err := os.ReadFile(filepath.Join(dir, "synchestra-spec-repo.yaml"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -828,7 +828,7 @@ func TestWriteStateConfig(t *testing.T) {
 	if err := WriteStateConfig(dir, cfg); err != nil {
 		t.Fatal(err)
 	}
-	data, err := os.ReadFile(filepath.Join(dir, "synchestra-state.yaml"))
+	data, err := os.ReadFile(filepath.Join(dir, "synchestra-state-repo.yaml"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -846,7 +846,7 @@ func TestWriteCodeConfig(t *testing.T) {
 	if err := WriteCodeConfig(dir, cfg); err != nil {
 		t.Fatal(err)
 	}
-	data, err := os.ReadFile(filepath.Join(dir, "synchestra-code.yaml"))
+	data, err := os.ReadFile(filepath.Join(dir, "synchestra-code-repo.yaml"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -866,7 +866,7 @@ func TestReadSpecConfig_NotExists(t *testing.T) {
 func TestReadSpecConfig_Exists(t *testing.T) {
 	dir := t.TempDir()
 	content := "title: Test\nstate_repo: https://github.com/org/state\nrepos:\n  - https://github.com/org/code\n"
-	if err := os.WriteFile(filepath.Join(dir, "synchestra-spec.yaml"), []byte(content), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "synchestra-spec-repo.yaml"), []byte(content), 0644); err != nil {
 		t.Fatal(err)
 	}
 	cfg, err := ReadSpecConfig(dir)
@@ -881,7 +881,7 @@ func TestReadSpecConfig_Exists(t *testing.T) {
 func TestReadStateConfig_Exists(t *testing.T) {
 	dir := t.TempDir()
 	content := "spec_repos:\n  - https://github.com/org/spec\n"
-	if err := os.WriteFile(filepath.Join(dir, "synchestra-state.yaml"), []byte(content), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "synchestra-state-repo.yaml"), []byte(content), 0644); err != nil {
 		t.Fatal(err)
 	}
 	cfg, err := ReadStateConfig(dir)
@@ -896,7 +896,7 @@ func TestReadStateConfig_Exists(t *testing.T) {
 func TestReadCodeConfig_Exists(t *testing.T) {
 	dir := t.TempDir()
 	content := "spec_repos:\n  - https://github.com/org/spec\n"
-	if err := os.WriteFile(filepath.Join(dir, "synchestra-code.yaml"), []byte(content), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "synchestra-code-repo.yaml"), []byte(content), 0644); err != nil {
 		t.Fatal(err)
 	}
 	cfg, err := ReadCodeConfig(dir)
@@ -931,9 +931,9 @@ import (
 )
 
 const (
-	SpecConfigFile   = "synchestra-spec.yaml"
-	StateConfigFile  = "synchestra-state.yaml"
-	CodeConfigFile = "synchestra-code.yaml"
+	SpecConfigFile   = "synchestra-spec-repo.yaml"
+	StateConfigFile  = "synchestra-state-repo.yaml"
+	CodeConfigFile = "synchestra-code-repo.yaml"
 )
 
 // SpecConfig is the project definition written to the spec repo.
@@ -953,22 +953,22 @@ type CodeConfig struct {
 	SpecRepos []string `yaml:"spec_repos"`
 }
 
-// WriteSpecConfig writes synchestra-spec.yaml to the given directory.
+// WriteSpecConfig writes synchestra-spec-repo.yaml to the given directory.
 func WriteSpecConfig(dir string, cfg SpecConfig) error {
 	return writeYAML(filepath.Join(dir, SpecConfigFile), cfg)
 }
 
-// WriteStateConfig writes synchestra-state.yaml to the given directory.
+// WriteStateConfig writes synchestra-state-repo.yaml to the given directory.
 func WriteStateConfig(dir string, cfg StateConfig) error {
 	return writeYAML(filepath.Join(dir, StateConfigFile), cfg)
 }
 
-// WriteCodeConfig writes synchestra-code.yaml to the given directory.
+// WriteCodeConfig writes synchestra-code-repo.yaml to the given directory.
 func WriteCodeConfig(dir string, cfg CodeConfig) error {
 	return writeYAML(filepath.Join(dir, CodeConfigFile), cfg)
 }
 
-// ReadSpecConfig reads synchestra-spec.yaml from the given directory.
+// ReadSpecConfig reads synchestra-spec-repo.yaml from the given directory.
 func ReadSpecConfig(dir string) (SpecConfig, error) {
 	var cfg SpecConfig
 	data, err := os.ReadFile(filepath.Join(dir, SpecConfigFile))
@@ -981,7 +981,7 @@ func ReadSpecConfig(dir string) (SpecConfig, error) {
 	return cfg, nil
 }
 
-// ReadStateConfig reads synchestra-state.yaml from the given directory.
+// ReadStateConfig reads synchestra-state-repo.yaml from the given directory.
 func ReadStateConfig(dir string) (StateConfig, error) {
 	var cfg StateConfig
 	data, err := os.ReadFile(filepath.Join(dir, StateConfigFile))
@@ -994,7 +994,7 @@ func ReadStateConfig(dir string) (StateConfig, error) {
 	return cfg, nil
 }
 
-// ReadCodeConfig reads synchestra-code.yaml from the given directory.
+// ReadCodeConfig reads synchestra-code-repo.yaml from the given directory.
 func ReadCodeConfig(dir string) (CodeConfig, error) {
 	var cfg CodeConfig
 	data, err := os.ReadFile(filepath.Join(dir, CodeConfigFile))
@@ -1381,7 +1381,7 @@ func runNew(cmd *cobra.Command, _ []string) error {
 	return nil
 }
 
-// checkSpecConflict checks if synchestra-spec.yaml exists and points to a
+// checkSpecConflict checks if synchestra-spec-repo.yaml exists and points to a
 // different state repo (i.e., belongs to a different project).
 func checkSpecConflict(dir, expectedStateRepo string) error {
 	cfg, err := ReadSpecConfig(dir)
@@ -1522,7 +1522,7 @@ git add cli/project/project.go cli/project/new.go cli/main.go main.go go.mod go.
 git commit -m "feat: implement synchestra project new command
 
 Creates a project by resolving repo references, cloning missing repos,
-writing synchestra-spec.yaml / synchestra-state.yaml / synchestra-code.yaml,
+writing synchestra-spec-repo.yaml / synchestra-state-repo.yaml / synchestra-code-repo.yaml,
 and committing + pushing changes to all repos."
 ```
 

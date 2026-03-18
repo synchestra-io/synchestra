@@ -177,7 +177,7 @@ Quick-reference table of every CLI command.
 | `config set` | 🔧 Setup | mutation | `~/.synchestra.yaml` |
 | `config clear` | 🔧 Setup | mutation | `~/.synchestra.yaml` |
 | `project new` | 🔧 Setup | mutation | git (spec + code repos) |
-| `project info` | 🔧 Setup | read | `synchestra-spec.yaml` |
+| `project info` | 🔧 Setup | read | `synchestra-spec-repo.yaml` |
 | `project set` | 🔧 Setup | mutation | git (spec repo) |
 | `project code add` | 🔧 Setup | mutation | git (spec repo) |
 | `project code remove` | 🔧 Setup | mutation | git (spec repo) |
@@ -229,6 +229,5 @@ This annotation makes each spec self-describing — tools and agents can read a 
 
 ## Outstanding Questions
 
-- Should `test run` and `test list` get their own subdirectories (`test/run/`, `test/list/`), or remain documented in `test/README.md`?
 - Should the environment annotation proposed above be enforced by a linter or validation step?
 - Do any coordination commands need a "degraded mode" when the state store is unreachable (e.g., local-only queueing)?

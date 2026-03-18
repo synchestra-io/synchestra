@@ -34,7 +34,7 @@ Operates in single-project mode, determined by the resolved directory.
 ## Behaviour
 
 1. Resolve directory via `--path` or CWD traversal
-2. Find `synchestra-state.yaml`, `synchestra-spec.yaml`, or `synchestra-server.yaml`; exit `3` if not found
+2. Find `synchestra-state-repo.yaml`, `synchestra-spec-repo.yaml`, or `synchestra-server.yaml`; exit `3` if not found
 3. If spec/state repo: resolve counterpart, operate as single-project
 4. If server dir: operate as single-project using the first project in config
 5. Start MCP server on stdio (stdin for requests, stdout for responses)
