@@ -41,7 +41,7 @@ At its core, Synchestra is a chain of small, automatable steps and background ch
 
 ## Repository Types
 
-Synchestra operates with three kinds of repositories, each with a distinct role. See [Repository Types](spec/architecture/git-repo-types/README.md) for the full description.
+Synchestra operates with three kinds of repositories, each with a distinct role. See [Repository Types](spec/architecture/repository-types/README.md) for the full description.
 
 | Repository type | What it holds | Naming convention |
 |---|---|---|

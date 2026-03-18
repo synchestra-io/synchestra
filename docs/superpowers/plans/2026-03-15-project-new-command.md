@@ -54,7 +54,7 @@ cli/
 - `spec/features/project-definition/README.md`
 - `spec/features/README.md`
 - `spec/architecture/README.md`
-- `spec/architecture/git-repo-types/README.md`
+- `spec/architecture/repository-types/README.md`
 - `spec/features/cli/_args/path.md`
 - `spec/features/cli/_args/project.md`
 - `spec/features/cli/_args/README.md`

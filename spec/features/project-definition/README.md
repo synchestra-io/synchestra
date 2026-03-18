@@ -4,7 +4,7 @@ How Synchestra discovers and configures projects.
 
 ## Repository Types
 
-Synchestra operates with three kinds of repositories — spec, state, and code. See [Repository Types](../../architecture/git-repo-types/README.md) for the full description of each type, why they're separate, and how they connect.
+Synchestra operates with three kinds of repositories — spec, state, and code. See [Repository Types](../../architecture/repository-types/README.md) for the full description of each type, why they're separate, and how they connect.
 
 | Repository type | What it holds | Naming convention | Example |
 |---|---|---|---|
