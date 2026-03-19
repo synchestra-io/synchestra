@@ -1,3 +1,8 @@
+---
+name: synchestra-feature-tree
+description: Displays the feature hierarchy as an indented tree. Use when exploring project structure, navigating features, or generating an overview.
+---
+
 # Skill: synchestra-feature-tree
 
 Display the feature hierarchy as an indented tree to understand project structure at a glance.

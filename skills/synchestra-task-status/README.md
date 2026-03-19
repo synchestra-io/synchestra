@@ -1,3 +1,8 @@
+---
+name: synchestra-task-status
+description: Queries or updates task status. Use when checking task state, transitioning status, reporting progress, or checking for abort requests.
+---
+
 # Skill: synchestra-task-status
 
 Query or update the status of a task. Use this to check task state, report progress, mark completion, or handle failures.

@@ -1,3 +1,8 @@
+---
+name: synchestra-feature-deps
+description: Lists dependencies of a feature. Use when checking prerequisites, planning work order, or analyzing the dependency chain of a feature.
+---
+
 # Skill: synchestra-feature-deps
 
 Show what a feature depends on — list the features it requires to function or be built.

@@ -1,3 +1,8 @@
+---
+name: synchestra-task-fail
+description: Marks a task as failed with a reason. Use when a task cannot be completed due to errors, missing dependencies, or unclear requirements.
+---
+
 # Skill: synchestra-task-fail
 
 Mark a task as failed when you cannot complete the work. This records why the task failed so another agent or human can understand what happened and decide on next steps.

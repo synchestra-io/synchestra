@@ -1,3 +1,8 @@
+---
+name: synchestra-feature-list
+description: Lists all features in a project. Use when listing features, exploring feature structure, or checking what features exist.
+---
+
 # Skill: synchestra-feature-list
 
 List all features in a project to get an overview of what capabilities exist and how they're organized.

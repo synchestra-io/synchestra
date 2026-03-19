@@ -1,3 +1,8 @@
+---
+name: synchestra-task-abort
+description: Requests abort of a claimed or in-progress task. Use when cancelling a task due to changed priorities or superseded work.
+---
+
 # Skill: synchestra-task-abort
 
 Request that a task be aborted. This sets the `abort_requested` flag on the task so the working agent knows to wrap up — it does not change the task's status directly.

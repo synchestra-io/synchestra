@@ -1,3 +1,8 @@
+---
+name: synchestra-task-enqueue
+description: Enqueues a task from planning to queued status. Use when a task is fully defined and ready for agents to discover and claim.
+---
+
 # Skill: synchestra-task-enqueue
 
 **CLI reference:** [synchestra task enqueue](../../spec/features/cli/task/enqueue/README.md)

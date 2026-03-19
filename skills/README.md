@@ -4,6 +4,22 @@ Synchestra skills for AI agents. Each skill wraps a single Synchestra CLI comman
 
 See the [agent-skills feature spec](../spec/features/agent-skills/README.md) for design principles and the full skill format.
 
+## Skill File Format
+
+Every `README.md` inside a skill directory **MUST** begin with a YAML frontmatter header containing `name` and `description` fields. This is required by the [Claude Code skills format](https://code.claude.com/docs/en/skills.md).
+
+```yaml
+---
+name: synchestra-feature-list
+description: Lists all features in a project. Use when listing features, exploring feature structure, or checking what features exist.
+---
+```
+
+- **`name`** — the skill identifier (must match the directory name).
+- **`description`** — a concise, action-oriented sentence describing what the skill does and when to invoke it. Include trigger phrases like "Use when…" so agents can match user intent to the right skill.
+
+The rest of the file follows the standard skill body format (heading, context, parameters, exit codes, etc.).
+
 ## Available Skills
 
 | Skill | Description | CLI Command |

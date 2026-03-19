@@ -1,3 +1,8 @@
+---
+name: synchestra-task-list
+description: Lists tasks in a project with optional filters. Use when finding available work, checking progress, or surveying task state.
+---
+
 # Skill: synchestra-task-list
 
 List tasks in a project to find available work, check what's in progress, or review overall task state.

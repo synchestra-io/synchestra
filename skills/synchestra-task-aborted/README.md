@@ -1,3 +1,8 @@
+---
+name: synchestra-task-aborted
+description: Confirms a task abort after cleanup. Use after detecting abort_requested, wrapping up in-flight work, and finalizing the abort.
+---
+
 # Skill: synchestra-task-aborted
 
 Confirm that a task has been aborted after wrapping up in-flight work. This is the last thing an agent does after it sees `abort_requested: true` and has finished cleaning up.

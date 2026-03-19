@@ -1,3 +1,8 @@
+---
+name: synchestra-task-create
+description: Creates a new task in a project. Use when adding tasks, breaking down work into subtasks, or setting up a task board.
+---
+
 # Skill: synchestra-task-create
 
 Create a new task in a project. The task is created in `planning` status by default, with its own directory and `README.md`. The parent's task board is updated automatically.

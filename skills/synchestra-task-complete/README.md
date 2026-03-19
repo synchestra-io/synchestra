@@ -1,3 +1,8 @@
+---
+name: synchestra-task-complete
+description: Marks a task as completed after successful work. Use when all task work is done, tests pass, and you want to signal completion.
+---
+
 # Skill: synchestra-task-complete
 
 Mark a task as completed after finishing work successfully. This is the last thing an agent does when it has accomplished everything the task required.

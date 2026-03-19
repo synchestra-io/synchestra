@@ -1,3 +1,8 @@
+---
+name: synchestra-task-block
+description: Marks a task as blocked with a reason. Use when a dependency, missing information, or external issue prevents progress.
+---
+
 # Skill: synchestra-task-block
 
 Mark a task as blocked when you cannot proceed. This tells the orchestrator and other agents that the task needs something resolved before work can continue.

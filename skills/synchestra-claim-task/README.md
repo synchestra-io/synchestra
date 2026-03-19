@@ -1,3 +1,8 @@
+---
+name: synchestra-claim-task
+description: Claims a task for an agent to work on. Use when you've selected a task and want to reserve it before starting work.
+---
+
 # Skill: synchestra-claim-task
 
 Claim a task so you can begin working on it. This is the first thing an agent does before starting any work on a Synchestra-managed task.

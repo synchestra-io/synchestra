@@ -1,3 +1,8 @@
+---
+name: synchestra-task-release
+description: Releases a claimed task back to the queue. Use when you cannot complete a claimed task and want another agent to pick it up.
+---
+
 # Skill: synchestra-task-release
 
 Release a claimed task back to the queue when you decide not to work on it. This returns the task to `queued` so another agent can claim it.

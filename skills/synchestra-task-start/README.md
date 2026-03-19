@@ -1,3 +1,8 @@
+---
+name: synchestra-task-start
+description: Starts a claimed task by transitioning it to in-progress. Use after claiming a task and before beginning actual work.
+---
+
 # Skill: synchestra-task-start
 
 Transition a claimed task to in-progress. This is what an agent calls after claiming a task and before beginning actual work.

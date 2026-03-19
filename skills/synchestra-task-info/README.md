@@ -1,3 +1,8 @@
+---
+name: synchestra-task-info
+description: Displays full task context including status, parent chain, siblings, and outstanding questions. Use when inspecting a task, understanding requirements, or deciding whether to claim it.
+---
+
 # Skill: synchestra-task-info
 
 Display the full context for a task — description, status, parent chain, siblings, outstanding questions, and linked feature spec. Use this to understand what a task requires before claiming or starting it.

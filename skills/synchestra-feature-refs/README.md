@@ -1,3 +1,8 @@
+---
+name: synchestra-feature-refs
+description: Lists features that depend on a given feature. Use for impact analysis, priority assessment, or understanding downstream effects of changes.
+---
+
 # Skill: synchestra-feature-refs
 
 Show what depends on a feature — list the features that reference it as a dependency.

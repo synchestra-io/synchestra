@@ -1,3 +1,8 @@
+---
+name: synchestra-task-unblock
+description: Resumes a blocked task by transitioning it back to in-progress. Use when a blocker has been resolved and work can continue.
+---
+
 # Skill: synchestra-task-unblock
 
 Resume a blocked task when the blocking condition has been resolved.
