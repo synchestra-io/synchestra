@@ -10,6 +10,7 @@ import (
 	"charm.land/fang/v2"
 	"github.com/ingitdb/ingitdb-cli/cmd/ingitdb/commands"
 	"github.com/spf13/cobra"
+	"github.com/synchesta-io/synchestra/pkg/cli/feature"
 	"github.com/synchesta-io/synchestra/pkg/cli/project"
 	testcmd "github.com/synchesta-io/synchestra/pkg/cli/test"
 )
@@ -52,6 +53,7 @@ func Run(
 		commands.Migrate(),
 		project.Command(),
 		testcmd.Command(),
+		feature.Command(),
 	)
 
 	rootCmd.SetArgs(args[1:])
