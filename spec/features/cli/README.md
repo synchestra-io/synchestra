@@ -140,6 +140,7 @@ For an overview of which commands run in which environments (host, agent contain
 | [config](config/README.md) | Global user configuration management |
 | [project](project/README.md) | Project creation and management |
 | [task](task/README.md) | Task management — claiming, status, progress |
+| [feature](feature/README.md) | Feature queries — listing, hierarchy, dependencies, references |
 | [serve](serve/README.md) | Foreground dev server — HTTP, HTTPS, MCP |
 | [server](server/README.md) | Background daemon management |
 | [mcp](mcp/README.md) | stdio MCP server for AI agents |
@@ -160,6 +161,10 @@ Project creation and management — creating projects, viewing configuration, up
 ### `task`
 
 See each command group for its subcommands and linked skills.
+
+### `feature`
+
+Read-only commands for querying features — flat listing, hierarchical tree, dependency lookup (`deps`), and reverse-reference lookup (`refs`). Features are identified by their directory path under the features directory using `/` as separator. See [feature/README.md](feature/README.md).
 
 ### `serve`
 

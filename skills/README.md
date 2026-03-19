@@ -22,6 +22,10 @@ See the [agent-skills feature spec](../spec/features/agent-skills/README.md) for
 | [synchestra-task-aborted](synchestra-task-aborted/README.md) | Report a task has been aborted | [task aborted](../spec/features/cli/task/aborted/README.md) |
 | [synchestra-task-list](synchestra-task-list/README.md) | List tasks with filtering | [task list](../spec/features/cli/task/list/README.md) |
 | [synchestra-task-info](synchestra-task-info/README.md) | Show full task details and context | [task info](../spec/features/cli/task/info/README.md) |
+| [synchestra-feature-list](synchestra-feature-list/README.md) | List all features in a project | [feature list](../spec/features/cli/feature/list/README.md) |
+| [synchestra-feature-tree](synchestra-feature-tree/README.md) | Display feature hierarchy as a tree | [feature tree](../spec/features/cli/feature/tree/README.md) |
+| [synchestra-feature-deps](synchestra-feature-deps/README.md) | Show features a feature depends on | [feature deps](../spec/features/cli/feature/deps/README.md) |
+| [synchestra-feature-refs](synchestra-feature-refs/README.md) | Show features that reference a feature | [feature refs](../spec/features/cli/feature/refs/README.md) |
 
 ## Outstanding Questions
 
