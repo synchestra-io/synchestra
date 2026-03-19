@@ -109,6 +109,13 @@ examples, edge cases.
 
 (Optional) How this feature relates to other features.
 
+## Dependencies
+
+- feature-slug-1
+- feature-slug-2
+
+(Or omit the section entirely if the feature is independent.)
+
 ## Acceptance Criteria
 
 Not defined yet.
@@ -144,6 +151,7 @@ Features may include additional sections as needed. Common patterns seen across 
 
 | Section                       | When to use                                              |
 |-------------------------------|----------------------------------------------------------|
+| Dependencies                  | When the feature depends on other features. A bullet list of feature IDs. Consumed by `synchestra feature deps`. Omit if the feature is independent. |
 | Design Principles             | When the feature has guiding architectural constraints    |
 | Interaction with Other Features | When the feature has notable dependencies or touchpoints |
 | Configuration                 | When the feature introduces project settings             |
@@ -271,11 +279,20 @@ These rules are enforced by schema validation and pre-commit hooks:
 Features are a spec-repo concern. The CLI provides read operations for agent consumption:
 
 ```
-synchestra feature list --project my-project
+synchestra feature list [--project <project_id>]
+synchestra feature tree [--project <project_id>]
+synchestra feature deps <feature_id> [--project <project_id>]
+synchestra feature refs <feature_id> [--project <project_id>]
 synchestra feature info --project my-project --feature cli
 ```
 
-`feature list` returns the feature index. `feature info` returns the full feature README content along with metadata: status, child features, proposal count, linked plans, and outstanding question count.
+- **`feature list`** — flat alphabetical listing of all feature IDs, one per line.
+- **`feature tree`** — hierarchical view with tab indentation per nesting level.
+- **`feature deps`** — shows features that the given feature depends on, read from its `## Dependencies` section.
+- **`feature refs`** — shows features that reference (depend on) the given feature. Computed dynamically by scanning all features' `## Dependencies` sections — no static `Referrers` section is needed.
+- **`feature info`** — returns the full feature README content along with metadata: status, child features, proposal count, linked plans, and outstanding question count.
+
+See the [feature command group spec](../cli/feature/README.md) for full details.
 
 ## Configuration
 
