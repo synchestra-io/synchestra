@@ -54,15 +54,14 @@ On non-zero exit, the CLI writes a human-readable explanation to stderr.
 
 ## Skill File Format
 
-Skills live in `skills/{skill-name}/README.md` in the main Synchestra repository.
+Skills live in `ai-plugin/skills/{skill-name}/README.md` in the main Synchestra repository.
 
 ```
-skills/
+ai-plugin/skills/
+  README.md                       ← skills index, vision, and available skills table
   synchestra-claim-task/
     README.md
-  synchestra-report-status/
-    README.md
-  synchestra-complete-task/
+  synchestra-feature-info/
     README.md
   ...
 ```
@@ -80,7 +79,13 @@ Each skill README follows a consistent structure:
 Skills are distributed to agents through:
 - **Synchestra CLI:** `synchestra skills list` and `synchestra skills show <name>` for on-demand access
 - **MCP server:** Skills exposed as MCP tools that agents can discover and call
-- **Direct file access:** Agents working in the Synchestra repo can read skills directly from `skills/`
+- **Direct file access:** Agents working in the Synchestra repo can read skills directly from `ai-plugin/skills/`
+
+## Plans
+
+- [Agent Skills Roadmap](../../plans/agent-skills-roadmap/README.md) — phased plan for building out navigation, mutation, and workflow skills
+
+See the [skills README](../../../ai-plugin/skills/README.md) for the full list of available skills, the vision for how skills transform agent workflows, and token cost analysis.
 
 ## Outstanding Questions
 

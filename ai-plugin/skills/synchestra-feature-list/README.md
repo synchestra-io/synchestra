@@ -1,6 +1,6 @@
 ---
 name: synchestra-feature-list
-description: Lists all features in a project. Use when listing features, exploring feature structure, or checking what features exist.
+description: Lists all features in a project, optionally with metadata fields. Use when surveying features, finding IDs, or getting a status overview.
 ---
 
 # Skill: synchestra-feature-list
@@ -12,14 +12,16 @@ List all features in a project to get an overview of what capabilities exist and
 ## When to use
 
 - **Surveying a project:** Get a complete list of all features in the project
-- **Finding a feature ID:** Look up the exact ID before using `deps` or `refs`
+- **Finding a feature ID:** Look up the exact ID before using `deps`, `refs`, or `info`
+- **Status overview:** Use `--fields=status` to see the state of every feature at once
 - **Checking feature coverage:** See what areas are already defined vs. missing
 
 ## Command
 
 ```bash
 synchestra feature list \
-  [--project <project_id>]
+  [--project <project_id>] \
+  [--fields <fields>]
 ```
 
 ## Parameters
@@ -27,6 +29,7 @@ synchestra feature list \
 | Parameter | Required | Description |
 |---|---|---|
 | [`--project`](../../spec/features/cli/_args/project.md) | No | Project identifier (e.g., `synchestra`). Autodetected from current directory if omitted |
+| [`--fields`](../../spec/features/cli/feature/_args/fields.md) | No | Inline metadata (e.g., `status,oq`). Auto-switches output to YAML |
 
 ## Exit codes
 
@@ -50,17 +53,24 @@ synchestra feature list --project synchestra
 # cli/task
 # conflict-resolution
 # cross-repo-sync
-# micro-tasks
-# model-selection
-# outstanding-questions
-# task-status-board
 ```
 
-### List features with autodetected project
+### List with status and outstanding questions
 
 ```bash
-cd ~/projects/synchestra
-synchestra feature list
+synchestra feature list --fields=status,oq
+```
+
+```yaml
+- path: agent-skills
+  status: "In Progress"
+  oq: 3
+- path: cli
+  status: "In Progress"
+  oq: 3
+- path: cli/feature
+  status: "Conceptual"
+  oq: 1
 ```
 
 ### Pipe to other tools
@@ -76,6 +86,7 @@ synchestra feature list --project synchestra | grep cli
 ## Notes
 
 - This is a **read-only** command — it never mutates state.
-- Output is plain text, one feature ID per line, sorted alphabetically. Easy to parse with standard Unix tools.
+- Without `--fields`: plain text, one feature ID per line, sorted alphabetically.
+- With `--fields`: output auto-switches to YAML with the requested metadata inline.
 - Both parent features (`cli`) and their children (`cli/task`) appear as separate entries.
 - Use `feature tree` for a hierarchical view, or `feature deps`/`feature refs` to trace relationships.

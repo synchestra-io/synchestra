@@ -279,20 +279,24 @@ These rules are enforced by schema validation and pre-commit hooks:
 Features are a spec-repo concern. The CLI provides read operations for agent consumption:
 
 ```
-synchestra feature list [--project <project_id>]
-synchestra feature tree [--project <project_id>]
-synchestra feature deps <feature_id> [--project <project_id>]
-synchestra feature refs <feature_id> [--project <project_id>]
-synchestra feature info --project my-project --feature cli
+synchestra feature info <feature_id> [--project <project_id>]
+synchestra feature list [--project <project_id>] [--fields <fields>]
+synchestra feature tree [<feature_id>] [--direction up|down] [--project <project_id>] [--fields <fields>]
+synchestra feature deps <feature_id> [--project <project_id>] [--fields <fields>] [--transitive]
+synchestra feature refs <feature_id> [--project <project_id>] [--fields <fields>] [--transitive]
 ```
 
-- **`feature list`** — flat alphabetical listing of all feature IDs, one per line.
-- **`feature tree`** — hierarchical view with tab indentation per nesting level.
+- **`feature info`** — structured metadata (status, parent, children, deps/refs counts) plus a section table-of-contents with line ranges. Enables surgical reading of specific sections instead of loading the full README. Default output: YAML (~500 tokens vs ~3,000 for the full README).
+- **`feature list`** — flat alphabetical listing of all feature IDs, one per line. Grep/pipe-friendly.
+- **`feature tree`** — hierarchical view with tab indentation. Can focus on a specific feature showing ancestors, subtree, or both via `--direction`.
 - **`feature deps`** — shows features that the given feature depends on, read from its `## Dependencies` section.
 - **`feature refs`** — shows features that reference (depend on) the given feature. Computed dynamically by scanning all features' `## Dependencies` sections — no static `Referrers` section is needed.
-- **`feature info`** — returns the full feature README content along with metadata: status, child features, proposal count, linked plans, and outstanding question count.
 
-See the [feature command group spec](../cli/feature/README.md) for full details.
+**Shared flags:**
+- **`--fields`** — inline metadata (e.g., `status,oq`) next to each feature in the output. Auto-switches to YAML.
+- **`--transitive`** — follow full dependency/reference chains in one call instead of recursive reads. Available on `deps` and `refs`.
+
+See the [feature command group spec](../cli/feature/README.md) for full details and [skills](../../../ai-plugin/skills/README.md) for agent-ready skill wrappers.
 
 ## Configuration
 

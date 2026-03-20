@@ -36,12 +36,21 @@ The `deps` command reads this section from the target feature. The `refs` comman
 
 | Command | Description | Skill |
 |---|---|---|
-| [list](list/README.md) | List all feature IDs, one per line | [synchestra-feature-list](../../../../skills/synchestra-feature-list/README.md) |
-| [tree](tree/README.md) | Display feature hierarchy as an indented tree | [synchestra-feature-tree](../../../../skills/synchestra-feature-tree/README.md) |
-| [deps](deps/README.md) | Show features that a given feature depends on | [synchestra-feature-deps](../../../../skills/synchestra-feature-deps/README.md) |
-| [refs](refs/README.md) | Show features that reference a given feature | [synchestra-feature-refs](../../../../skills/synchestra-feature-refs/README.md) |
+| [info](info/README.md) | Show feature metadata and section TOC with line ranges | [synchestra-feature-info](../../../../ai-plugin/skills/synchestra-feature-info/README.md) |
+| [list](list/README.md) | Flat list of all feature IDs — grep/pipe-friendly, full paths | [synchestra-feature-list](../../../../ai-plugin/skills/synchestra-feature-list/README.md) |
+| [tree](tree/README.md) | Indented hierarchy showing parent-child nesting; supports focus on a single feature with direction | [synchestra-feature-tree](../../../../ai-plugin/skills/synchestra-feature-tree/README.md) |
+| [deps](deps/README.md) | Show features that a given feature depends on | [synchestra-feature-deps](../../../../ai-plugin/skills/synchestra-feature-deps/README.md) |
+| [refs](refs/README.md) | Show features that reference a given feature | [synchestra-feature-refs](../../../../ai-plugin/skills/synchestra-feature-refs/README.md) |
+
+## Shared Arguments
+
+Arguments available across multiple `feature` subcommands. See [`_args/`](_args/README.md) for details.
+
+| Argument | Supported by | Description |
+|---|---|---|
+| [`--fields`](_args/fields.md) | list, tree, deps, refs | Inline selected metadata fields next to each feature |
+| [`--transitive`](_args/transitive.md) | deps, refs | Follow dependency/reference chains to full depth |
 
 ## Outstanding Questions
 
-- Should features support metadata beyond the `## Dependencies` section (e.g., status, owner, tags) in a machine-readable format like YAML frontmatter?
-- Should `deps` and `refs` support transitive dependency tracing (show the full chain, not just direct dependencies)?
+- Should features support metadata beyond the `## Dependencies` section (e.g., status, owner, tags) in a machine-readable format like YAML frontmatter? *(Partially addressed: `feature info` extracts metadata from README structure; YAML frontmatter is not yet required but remains an option.)*

@@ -1,6 +1,6 @@
 ---
 name: synchestra-feature-deps
-description: Lists dependencies of a feature. Use when checking prerequisites, planning work order, or analyzing the dependency chain of a feature.
+description: Lists dependencies of a feature, optionally with transitive resolution and metadata fields. Use when checking prerequisites, planning work order, or analyzing dependency chains.
 ---
 
 # Skill: synchestra-feature-deps
@@ -13,13 +13,16 @@ Show what a feature depends on — list the features it requires to function or 
 
 - **Planning work order:** Find out what must be built before starting on a feature
 - **Understanding prerequisites:** See what a feature requires before diving into its spec
-- **Dependency analysis:** Map out the dependency chain for a feature
+- **Dependency analysis:** Map out the full dependency chain with `--transitive`
+- **Status check:** Use `--fields=status` to see if dependencies are done
 
 ## Command
 
 ```bash
 synchestra feature deps <feature_id> \
-  [--project <project_id>]
+  [--project <project_id>] \
+  [--fields <fields>] \
+  [--transitive]
 ```
 
 ## Parameters
@@ -28,6 +31,8 @@ synchestra feature deps <feature_id> \
 |---|---|---|
 | `<feature_id>` | Yes | Feature ID to query (positional, e.g., `cross-repo-sync`, `cli/task`) |
 | [`--project`](../../spec/features/cli/_args/project.md) | No | Project identifier (e.g., `synchestra`). Autodetected from current directory if omitted |
+| [`--fields`](../../spec/features/cli/feature/_args/fields.md) | No | Inline metadata (e.g., `status,oq`). Auto-switches output to YAML |
+| [`--transitive`](../../spec/features/cli/feature/_args/transitive.md) | No | Follow the full dependency chain recursively |
 
 ## Exit codes
 
@@ -40,7 +45,7 @@ synchestra feature deps <feature_id> \
 
 ## Examples
 
-### Show dependencies
+### Show direct dependencies
 
 ```bash
 synchestra feature deps cross-repo-sync --project synchestra
@@ -48,11 +53,29 @@ synchestra feature deps cross-repo-sync --project synchestra
 # conflict-resolution
 ```
 
-### Feature with no dependencies
+### Transitive dependencies
 
 ```bash
-synchestra feature deps micro-tasks --project synchestra
-# (no output — feature is independent)
+synchestra feature deps cli/task --transitive
+# task-status-board
+#   conflict-resolution
+# state-store
+```
+
+### Dependencies with status
+
+```bash
+synchestra feature deps cli/task --transitive --fields=status
+```
+
+```yaml
+- path: task-status-board
+  status: "In Progress"
+  children:
+    - path: conflict-resolution
+      status: "Conceptual"
+- path: state-store
+  status: "Conceptual"
 ```
 
 ### Check before starting work
@@ -70,6 +93,8 @@ synchestra task list --project synchestra --status completed | grep claim-and-pu
 
 - This is a **read-only** command — it never mutates state.
 - Dependencies are declared in the feature's `README.md` under a `## Dependencies` section.
-- Output is plain text, one feature ID per line, sorted alphabetically.
+- Without `--fields`: plain text, one feature ID per line, sorted alphabetically.
+- With `--fields`: output auto-switches to YAML with the requested metadata inline.
+- `--transitive` resolves the full chain; cycles are detected and marked.
 - Empty output means the feature has no dependencies (it's independent).
 - For the reverse — finding what depends on a feature — use `feature refs`.

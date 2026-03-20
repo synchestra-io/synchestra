@@ -1,6 +1,6 @@
 ---
 name: synchestra-feature-refs
-description: Lists features that depend on a given feature. Use for impact analysis, priority assessment, or understanding downstream effects of changes.
+description: Lists features that depend on a given feature, optionally with transitive resolution and metadata fields. Use for impact analysis, priority assessment, or understanding downstream effects.
 ---
 
 # Skill: synchestra-feature-refs
@@ -14,12 +14,15 @@ Show what depends on a feature — list the features that reference it as a depe
 - **Impact analysis:** Before changing a feature, see what else depends on it
 - **Priority assessment:** Features with many refs are high-impact — changes affect downstream features
 - **Planning:** Understand the downstream consequences of delaying or modifying a feature
+- **Full blast radius:** Use `--transitive` to see the entire downstream chain
 
 ## Command
 
 ```bash
 synchestra feature refs <feature_id> \
-  [--project <project_id>]
+  [--project <project_id>] \
+  [--fields <fields>] \
+  [--transitive]
 ```
 
 ## Parameters
@@ -28,6 +31,8 @@ synchestra feature refs <feature_id> \
 |---|---|---|
 | `<feature_id>` | Yes | Feature ID to query (positional, e.g., `claim-and-push`, `cli/task`) |
 | [`--project`](../../spec/features/cli/_args/project.md) | No | Project identifier (e.g., `synchestra`). Autodetected from current directory if omitted |
+| [`--fields`](../../spec/features/cli/feature/_args/fields.md) | No | Inline metadata (e.g., `status,oq`). Auto-switches output to YAML |
+| [`--transitive`](../../spec/features/cli/feature/_args/transitive.md) | No | Follow the full reference chain recursively (features depending on features that depend on the target) |
 
 ## Exit codes
 
@@ -48,11 +53,32 @@ synchestra feature refs claim-and-push --project synchestra
 # cross-repo-sync
 ```
 
-### Feature with no references
+### Transitive references
 
 ```bash
-synchestra feature refs micro-tasks --project synchestra
-# (no output — nothing depends on this feature)
+synchestra feature refs state-store --transitive
+# cli/task
+#   agent-skills
+# task-status-board
+```
+
+### References with metadata
+
+```bash
+synchestra feature refs state-store --transitive --fields=status,oq
+```
+
+```yaml
+- path: cli/task
+  status: "Conceptual"
+  oq: 2
+  children:
+    - path: agent-skills
+      status: "In Progress"
+      oq: 3
+- path: task-status-board
+  status: "Conceptual"
+  oq: 4
 ```
 
 ### Assess impact before making changes
@@ -70,6 +96,8 @@ synchestra feature refs claim-and-push --project synchestra
 
 - This is a **read-only** command — it never mutates state.
 - This is the inverse of `feature deps`. If `A` lists `B` in its dependencies, then `feature refs B` will include `A`.
-- Output is plain text, one feature ID per line, sorted alphabetically.
+- Without `--fields`: plain text, one feature ID per line, sorted alphabetically.
+- With `--fields`: output auto-switches to YAML with the requested metadata inline.
+- `--transitive` resolves the full downstream chain; cycles are detected and marked.
 - Empty output means no other feature depends on this one.
 - For finding what a feature depends on (rather than what depends on it), use `feature deps`.

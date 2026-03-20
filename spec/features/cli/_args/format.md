@@ -12,8 +12,13 @@ Controls the output format of read commands.
 
 | Command | Allowed values | Default |
 |---|---|---|
-| [`list`](../task/list/README.md) | `yaml`, `json`, `md`, `csv` | `yaml` |
-| [`info`](../task/info/README.md) | `text`, `json`, `yaml` | `text` |
+| [`task list`](../task/list/README.md) | `yaml`, `json`, `md`, `csv` | `yaml` |
+| [`task info`](../task/info/README.md) | `text`, `json`, `yaml` | `text` |
+| [`feature info`](../feature/info/README.md) | `yaml`, `json`, `text` | `yaml` |
+| [`feature list`](../feature/list/README.md) | `yaml`, `json`, `text` | `text` (YAML with `--fields`) |
+| [`feature tree`](../feature/tree/README.md) | `yaml`, `json`, `text` | `text` (YAML with `--fields`) |
+| [`feature deps`](../feature/deps/README.md) | `yaml`, `json`, `text` | `text` (YAML with `--fields`) |
+| [`feature refs`](../feature/refs/README.md) | `yaml`, `json`, `text` | `text` (YAML with `--fields`) |
 | [`server status`](../server/status/README.md) | `text`, `json`, `yaml` | `text` |
 | [`server project list`](../server/project/list/README.md) | `yaml`, `json`, `md`, `csv` | `yaml` |
 

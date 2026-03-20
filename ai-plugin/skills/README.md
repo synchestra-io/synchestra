@@ -1,26 +1,51 @@
 # Skills
 
-Synchestra skills for AI agents. Each skill wraps a single Synchestra CLI command with clear trigger conditions, parameters, and exit code handling.
+Synchestra skills are focused, self-contained instructions that teach AI agents how to perform specific Synchestra operations. Each skill wraps a single CLI command with clear trigger conditions, parameters, and exit code handling.
 
 See the [agent-skills feature spec](../../spec/features/agent-skills/README.md) for design principles and the full skill format.
 
-## Skill File Format
+## How Skills Transform Agent Workflows
 
-Every `README.md` inside a skill directory **MUST** begin with a YAML frontmatter header containing `name` and `description` fields. This is required by the [Claude Code skills format](https://code.claude.com/docs/en/skills.md).
+### The Problem: Specification Navigation is Expensive
 
-```yaml
----
-name: synchestra-feature-list
-description: Lists all features in a project. Use when listing features, exploring feature structure, or checking what features exist.
----
-```
+When AI agents work on spec repos, they glob, view, and grep files one by one. Each file costs tokens. Understanding "what exists" across 24+ features can consume 10,000+ tokens before the agent does any real work.
 
-- **`name`** — the skill identifier (must match the directory name).
-- **`description`** — a concise, action-oriented sentence describing what the skill does and when to invoke it. Include trigger phrases like "Use when…" so agents can match user intent to the right skill.
+Concrete pain points:
 
-The rest of the file follows the standard skill body format (heading, context, parameters, exit codes, etc.).
+- **Feature discovery** — reading the feature index, then individual READMEs, just to answer "what depends on what?"
+- **Dependency traversal** — following `depends-on` links requires recursive file reads, each costing ~500–3,000 tokens
+- **Feature creation** — editing 3+ files (README, parent index, feature index), with agents missing steps ~30% of the time
+- **Context budget pressure** — agents that spend tokens on navigation have fewer tokens left for reasoning
+
+### How Skills Solve This
+
+- **Token efficiency** — `feature info` returns ~500 tokens of structured metadata vs. reading a 3,000-token README. `feature deps --transitive` resolves full dependency chains in one call instead of recursive reads.
+- **Structural safety** — mutation commands (future: `feature create`, `question add`) enforce spec conventions, eliminating missing OQ sections, forgotten index updates, and wrong status values.
+- **Progressive discovery** — YAML frontmatter lets agents discover skills by name and description only. Full instructions load on demand.
+- **Composable enrichment** — `--fields` and `--transitive` flags let agents request exactly the metadata they need without loading unnecessary content.
+
+### Token Cost Comparison
+
+| Operation | Without skills | With skills | Savings |
+|---|---|---|---|
+| List all features | ~4,000 tokens (read index) | ~500 tokens | 87% |
+| Feature metadata + sections | ~3,000 (read full README) | ~500 (`feature info`) | 83% |
+| Transitive deps | ~9,000 (recursive reads) | ~300 (`deps --transitive`) | 97% |
+| Full feature context | ~15,000 (multi-file reads) | ~2,000 (`info` + `deps --fields`) | 87% |
+
+## Skill Design Principles
+
+Core principles (see the [agent-skills spec](../../spec/features/agent-skills/README.md) for full details):
+
+- **One skill per CLI command** — no multi-purpose skills. Small, testable, easy to reason about.
+- **Skills wrap the CLI, not replace it** — each skill tells the agent *when* to use a command, *what* to run, and *what happens next* (exit codes + follow-up actions).
+- **Agent-first output** — YAML by default for structured parsing; `--format text` for human consumption.
+- **Composable flags over monolithic context** — `--fields`, `--transitive`, and `--direction` let agents request exactly what they need.
+- **Progressive context loading** — metadata first, content on demand. Agents start with cheap overviews and drill down only when needed.
 
 ## Available Skills
+
+### Task Management
 
 | Skill | Description | CLI Command |
 |---|---|---|
@@ -38,10 +63,44 @@ The rest of the file follows the standard skill body format (heading, context, p
 | [synchestra-task-aborted](synchestra-task-aborted/README.md) | Report a task has been aborted | [task aborted](../../spec/features/cli/task/aborted/README.md) |
 | [synchestra-task-list](synchestra-task-list/README.md) | List tasks with filtering | [task list](../../spec/features/cli/task/list/README.md) |
 | [synchestra-task-info](synchestra-task-info/README.md) | Show full task details and context | [task info](../../spec/features/cli/task/info/README.md) |
-| [synchestra-feature-list](synchestra-feature-list/README.md) | List all features in a project | [feature list](../../spec/features/cli/feature/list/README.md) |
-| [synchestra-feature-tree](synchestra-feature-tree/README.md) | Display feature hierarchy as a tree | [feature tree](../../spec/features/cli/feature/tree/README.md) |
-| [synchestra-feature-deps](synchestra-feature-deps/README.md) | Show features a feature depends on | [feature deps](../../spec/features/cli/feature/deps/README.md) |
-| [synchestra-feature-refs](synchestra-feature-refs/README.md) | Show features that reference a feature | [feature refs](../../spec/features/cli/feature/refs/README.md) |
+
+### Feature Navigation
+
+| Skill | Description | CLI Command |
+|---|---|---|
+| [synchestra-feature-info](synchestra-feature-info/README.md) | Show feature metadata, section TOC, and children | [feature info](../../spec/features/cli/feature/info/README.md) |
+| [synchestra-feature-list](synchestra-feature-list/README.md) | List all features with optional metadata fields | [feature list](../../spec/features/cli/feature/list/README.md) |
+| [synchestra-feature-tree](synchestra-feature-tree/README.md) | Display feature hierarchy with focus/direction support | [feature tree](../../spec/features/cli/feature/tree/README.md) |
+| [synchestra-feature-deps](synchestra-feature-deps/README.md) | Show dependencies with optional transitive resolution | [feature deps](../../spec/features/cli/feature/deps/README.md) |
+| [synchestra-feature-refs](synchestra-feature-refs/README.md) | Show reverse dependencies with optional transitive resolution | [feature refs](../../spec/features/cli/feature/refs/README.md) |
+
+## Roadmap
+
+**Implemented:** all task lifecycle commands (create through abort), feature list, feature tree, feature deps, feature refs.
+
+**Next up:** feature info, `--fields` flag for selective metadata, `--transitive` for dependency resolution, spec validate, feature create.
+
+See the [Agent Skills Roadmap](../../spec/plans/agent-skills-roadmap/README.md) for the phased plan and competitive analysis.
+
+## Competitive Context
+
+No existing tool combines structured specification management, git-backed multi-agent coordination, and an agent-native CLI interface. GitHub Spec Kit is the closest analog — but it's simpler, flat (no hierarchy), and doesn't support multi-agent workflows. Synchestra's skill layer gives agents a token-efficient, convention-enforcing interface that scales with spec complexity.
+
+## Skill File Format
+
+Every `README.md` inside a skill directory **MUST** begin with a YAML frontmatter header containing `name` and `description` fields. This is required by the [Claude Code skills format](https://code.claude.com/docs/en/skills.md).
+
+```yaml
+---
+name: synchestra-feature-list
+description: Lists all features in a project. Use when listing features, exploring feature structure, or checking what features exist.
+---
+```
+
+- **`name`** — the skill identifier (must match the directory name).
+- **`description`** — a concise, action-oriented sentence describing what the skill does and when to invoke it. Include trigger phrases like "Use when…" so agents can match user intent to the right skill.
+
+The rest of the file follows the standard skill body format (heading, context, parameters, exit codes, etc.).
 
 ## Outstanding Questions
 
