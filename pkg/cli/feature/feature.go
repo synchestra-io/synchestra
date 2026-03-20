@@ -13,6 +13,7 @@ func Command() *cobra.Command {
 		Short: "Query features — listing, hierarchy, dependencies, references",
 	}
 	cmd.AddCommand(
+		infoCommand(),
 		listCommand(),
 		treeCommand(),
 		depsCommand(),

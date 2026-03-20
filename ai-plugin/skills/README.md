@@ -87,7 +87,7 @@ Core principles (see the [agent-skills spec](../../spec/features/agent-skills/RE
 
 | Skill | Description | CLI Command |
 |---|---|---|
-| [synchestra-feature-info](synchestra-feature-info/README.md) | Show feature metadata, section TOC, and children | 🟥 [feature info](../../spec/features/cli/feature/info/README.md) |
+| [synchestra-feature-info](synchestra-feature-info/README.md) | Show feature metadata, section TOC, and children | ✅ [feature info](../../spec/features/cli/feature/info/README.md) |
 | [synchestra-feature-list](synchestra-feature-list/README.md) | List all features with optional metadata fields | ✅ [feature list](../../spec/features/cli/feature/list/README.md) |
 | [synchestra-feature-tree](synchestra-feature-tree/README.md) | Display feature hierarchy with focus/direction support | ✅ [feature tree](../../spec/features/cli/feature/tree/README.md) |
 | [synchestra-feature-deps](synchestra-feature-deps/README.md) | Show dependencies with optional transitive resolution | ✅ [feature deps](../../spec/features/cli/feature/deps/README.md) |
