@@ -10,7 +10,7 @@ Human-readable title for a new task.
 
 ## Supported by
 
-[`task create`](../README.md)
+[`task new`](../README.md)
 
 ## Description
 
@@ -19,10 +19,10 @@ A short, descriptive title that identifies the task. Displayed in task boards an
 ## Examples
 
 ```bash
-synchestra task create --project synchestra --task implement-cli \
+synchestra task new --project synchestra --task implement-cli \
   --title "Implement CLI framework"
 
-synchestra task create --project my-service --task fix-auth-bug \
+synchestra task new --project my-service --task fix-auth-bug \
   --title "Fix authentication bypass bug"
 ```
 

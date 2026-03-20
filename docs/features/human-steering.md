@@ -127,7 +127,7 @@ If you want to cancel a task and retry it with different parameters:
 ```bash
 synchestra task fail task_abc3 --reason "Changing approach"
 
-synchestra task create \
+synchestra task new \
   --title "Refactor DB layer (revised approach)" \
   --parent task_parent_abc \
   --description "Use repository pattern instead of active record" \
@@ -142,14 +142,14 @@ Rules let you bake human policy into the coordination layer, so agents don't nee
 
 ```bash
 # No production deploys without human approval
-synchestra rule create \
+synchestra rule new \
   --name "prod-deploy-approval" \
   --content "Before deploying to production, post a summary of changes and wait for explicit human approval via task comment or status update." \
   --scope project \
   --scope-id proj_abc123
 
 # Never delete data
-synchestra rule create \
+synchestra rule new \
   --name "no-data-deletion" \
   --content "Never DELETE records from the database. Use soft deletes (is_deleted flag) only." \
   --scope org \
@@ -166,7 +166,7 @@ For high-stakes steps, pattern your workflow to pause and wait for human action:
 
 ```bash
 # Orchestrator creates a "waiting for approval" task
-synchestra task create \
+synchestra task new \
   --title "APPROVAL NEEDED: Deploy v2.1.0 to production" \
   --description "Staging tests passed. Awaiting human approval to proceed." \
   --status pending \

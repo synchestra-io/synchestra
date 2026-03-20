@@ -66,7 +66,7 @@ Manage tasks — the core unit of work in Synchestra.
 }
 ```
 
-**See also:** [CLI: task create](../cli/task.md#create)
+**See also:** [CLI: task new](../cli/task.md#new)
 
 ---
 

@@ -98,9 +98,9 @@ They are complementary. `assignee` does not replace `agent_id`.
 ### Task Creation
 
 ```bash
-synchestra task create my-task --assignee "ai-agent:small"
-synchestra task create audit-task --assignee "tool:security-scanner:sonarqube"
-synchestra task create review --assignee "ai-agent|human:code_reviewer"
+synchestra task new my-task --assignee "ai-agent:small"
+synchestra task new audit-task --assignee "tool:security-scanner:sonarqube"
+synchestra task new review --assignee "ai-agent|human:code_reviewer"
 ```
 
 ### Task Claiming
@@ -163,7 +163,7 @@ New `Assignee` column appears after `Status` and before `Run`.
 
 ### Updates Required
 
-- `synchestra-task-create` — add `--assignee` parameter
+- `synchestra-task-new` — add `--assignee` parameter
 - `synchestra-claim-task` — add `--actor-type` requirement and type validation
 - `synchestra-task-list` — add `--assignee-type`, `--assignee-role`, `--assignee-id` filters
 - `synchestra-task-info` — display assignee field

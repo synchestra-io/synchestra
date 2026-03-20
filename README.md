@@ -166,7 +166,7 @@ This makes skills the lowest-friction entry point to Synchestra: add a few skill
 
 | Skill | What it does |
 |---|---|
-| [synchestra-task-create](ai-plugin/skills/synchestra-task-create/README.md) | Create a new task |
+| [synchestra-task-new](ai-plugin/skills/synchestra-task-new/README.md) | Create a new task |
 | [synchestra-task-enqueue](ai-plugin/skills/synchestra-task-enqueue/README.md) | Move a task from planning to queued |
 | [synchestra-claim-task](ai-plugin/skills/synchestra-claim-task/README.md) | Claim a task before starting work |
 | [synchestra-task-start](ai-plugin/skills/synchestra-task-start/README.md) | Begin work on a claimed task |

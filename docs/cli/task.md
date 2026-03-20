@@ -10,7 +10,7 @@ Manage tasks — the core unit of work in Synchestra.
 
 | Subcommand | Description |
 |---|---|
-| [create](#create) | Create a new task |
+| [new](#new) | Create a new task |
 | [list](#list) | List tasks with filters |
 | [get](#get) | Get task details |
 | [update](#update) | Update task fields |
@@ -21,12 +21,12 @@ Manage tasks — the core unit of work in Synchestra.
 
 ---
 
-## create
+## new
 
 Create a new task.
 
 ```
-synchestra task create [flags]
+synchestra task new [flags]
 ```
 
 ### Flags
@@ -44,10 +44,10 @@ synchestra task create [flags]
 
 ```bash
 # Minimal
-synchestra task create --title "Fix login redirect bug"
+synchestra task new --title "Fix login redirect bug"
 
 # Full
-synchestra task create \
+synchestra task new \
   --title "Implement password reset flow" \
   --description "User should be able to reset password via email link. Use existing email service." \
   --project my-app \
@@ -55,13 +55,13 @@ synchestra task create \
   --criteria "Password reset works end-to-end in staging; unit tests added"
 
 # Sub-task
-synchestra task create \
+synchestra task new \
   --title "Write unit tests for password reset" \
   --parent task_abc123 \
   --agent tester-agent
 
 # Capture ID for use in scripts
-TASK_ID=$(synchestra task create --title "Deploy hotfix" --output json | jq -r .id)
+TASK_ID=$(synchestra task new --title "Deploy hotfix" --output json | jq -r .id)
 ```
 
 **See also:** [POST /api/v1/tasks](../api/tasks.md#create-task)

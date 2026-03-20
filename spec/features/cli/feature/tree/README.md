@@ -156,7 +156,7 @@ synchestra feature tree cli/task --fields=status,oq
         - path: cli/task/claim
           status: "Conceptual"
           oq: 0
-        - path: cli/task/create
+        - path: cli/task/new
           status: "Conceptual"
           oq: 1
 ```

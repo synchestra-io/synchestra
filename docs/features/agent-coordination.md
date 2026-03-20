@@ -17,7 +17,7 @@ sequenceDiagram
     A->>S: register (name, skills, description)
     S-->>A: agent_id
 
-    H->>S: task create (assign to agent by skill)
+    H->>S: task new (assign to agent by skill)
     S-->>H: task_id
 
     S->>A: task assigned (via polling or webhook)
@@ -65,7 +65,7 @@ A task can be created with an `--agent` flag (direct assignment) or with a `--sk
 ### Defining a skill
 
 ```bash
-synchestra skill create \
+synchestra skill new \
   --name "go" \
   --description "Can write, test, and build Go code" \
   --input-schema '{"type": "object", "properties": {"repo_url": {"type": "string"}}}' \
@@ -93,10 +93,10 @@ Tasks can be assigned to a specific agent or routed by skill:
 
 ```bash
 # Direct assignment
-synchestra task create --title "Refactor auth module" --agent coder-agent-1
+synchestra task new --title "Refactor auth module" --agent coder-agent-1
 
 # Skill-based routing
-synchestra task create --title "Refactor auth module" --skill go
+synchestra task new --title "Refactor auth module" --skill go
 ```
 
 When skill-based routing is used, Synchestra assigns the task to an `active` agent that declares the required skill. If multiple agents qualify, the least-loaded is chosen.

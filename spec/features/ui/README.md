@@ -19,14 +19,14 @@ The graphical surface. A progressive web application that communicates with the 
 
 ### tui
 
-The terminal surface. Delivered as part of the [CLI](../cli/README.md) feature — not a separate runtime. Mutations delegate to existing CLI commands ([`task create`](../cli/task/create/README.md), [`task enqueue`](../cli/task/enqueue/README.md), etc.). Covers terminal rendering, keyboard navigation, and constraints of a text-only environment.
+The terminal surface. Delivered as part of the [CLI](../cli/README.md) feature — not a separate runtime. Mutations delegate to existing CLI commands ([`task new`](../cli/task/new/README.md), [`task enqueue`](../cli/task/enqueue/README.md), etc.). Covers terminal rendering, keyboard navigation, and constraints of a text-only environment.
 
 ## Problem
 
 Synchestra defines repository structure, task state, proposals, and CLI commands, but three gaps remain for human users:
 
 1. **Proposal creation** — the [Proposals](../proposals/README.md) feature requires a [UI flow](../proposals/README.md#synchestra-ui-behavior) from a feature screen to create, link, and manage proposals. No such flow exists yet.
-2. **Task creation and enqueueing** — creating a task today requires knowing the CLI syntax ([`task create`](../cli/task/create/README.md), [`task enqueue`](../cli/task/enqueue/README.md)). Users need a project-level interface that exposes these actions directly.
+2. **Task creation and enqueueing** — creating a task today requires knowing the CLI syntax ([`task new`](../cli/task/new/README.md), [`task enqueue`](../cli/task/enqueue/README.md)). Users need a project-level interface that exposes these actions directly.
 3. **Worker visibility** — users need to see which execution environments are available to run tasks. Workers are not yet defined as a standalone feature; this spec introduces the concept at the UI level and defers the full worker lifecycle to a future feature spec.
 
 The UI feature provides the [human-steering](../../../docs/features/human-steering.md) layer that sits on top of Synchestra's agent-first coordination primitives.
@@ -93,7 +93,7 @@ For MVP, the tasks screen supports:
 | Action | Underlying operation |
 |---|---|
 | View root tasks | Read the task board from `tasks/README.md` |
-| Create a task | [`synchestra task create`](../cli/task/create/README.md) / [synchestra-task-create skill](../../../skills/synchestra-task-create/README.md) |
+| Create a task | [`synchestra task new`](../cli/task/new/README.md) / [synchestra-task-new skill](../../../skills/synchestra-task-new/README.md) |
 | Enqueue a task | [`synchestra task enqueue`](../cli/task/enqueue/README.md) / [synchestra-task-enqueue skill](../../../skills/synchestra-task-enqueue/README.md) |
 
 The UI does not redefine task state or transitions. It must respect the existing [task lifecycle](../task-status-board/README.md#status-lifecycle) and mutation rules defined by the [CLI task commands](../cli/task/README.md).

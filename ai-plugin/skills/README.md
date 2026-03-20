@@ -66,7 +66,7 @@ Core principles (see the [agent-skills spec](../../spec/features/agent-skills/RE
 
 | Skill | Description | CLI Command |
 |---|---|---|
-| [synchestra-task-create](synchestra-task-create/README.md) | Create a new task | [task create](../../spec/features/cli/task/create/README.md) |
+| [synchestra-task-new](synchestra-task-new/README.md) | Create a new task | [task new](../../spec/features/cli/task/new/README.md) |
 | [synchestra-task-enqueue](synchestra-task-enqueue/README.md) | Move a task from planning to queued | [task enqueue](../../spec/features/cli/task/enqueue/README.md) |
 | [synchestra-claim-task](synchestra-claim-task/README.md) | Claim a task before starting work on it | [task claim](../../spec/features/cli/task/claim/README.md) |
 | [synchestra-task-start](synchestra-task-start/README.md) | Begin work on a claimed task | [task start](../../spec/features/cli/task/start/README.md) |

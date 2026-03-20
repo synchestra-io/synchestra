@@ -10,7 +10,7 @@ This document covers what is **unique to the terminal surface** — CLI integrat
 
 ## Problem
 
-Terminal-first users (developers, DevOps engineers, agents operating in headless mode) need structured project navigation without leaving the terminal. Raw CLI commands ([`task list`](../../cli/task/list/README.md), [`task create`](../../cli/task/create/README.md)) work for individual operations, but navigating features, browsing proposals, and managing tasks benefits from an interactive menu-driven interface.
+Terminal-first users (developers, DevOps engineers, agents operating in headless mode) need structured project navigation without leaving the terminal. Raw CLI commands ([`task list`](../../cli/task/list/README.md), [`task new`](../../cli/task/new/README.md)) work for individual operations, but navigating features, browsing proposals, and managing tasks benefits from an interactive menu-driven interface.
 
 ## Proposed Behavior
 
@@ -36,7 +36,7 @@ When the user performs a write action (create task, enqueue task, create proposa
 
 | Action | CLI command | Skill |
 |---|---|---|
-| Create task | [`synchestra task create`](../../cli/task/create/README.md) | [synchestra-task-create](../../../../skills/synchestra-task-create/README.md) |
+| Create task | [`synchestra task new`](../../cli/task/new/README.md) | [synchestra-task-new](../../../../skills/synchestra-task-new/README.md) |
 | Enqueue task | [`synchestra task enqueue`](../../cli/task/enqueue/README.md) | [synchestra-task-enqueue](../../../../skills/synchestra-task-enqueue/README.md) |
 | Create proposal | Via [Proposals UI behavior](../../proposals/README.md#synchestra-ui-behavior) | — |
 
@@ -64,5 +64,5 @@ The specific rendering library (e.g., Go's `bubbletea`, `tview`, or `tcell`) is 
 - What is the CLI entry point for the TUI — `synchestra ui`, `synchestra tui`, or something else? Should it also support `synchestra` with no arguments launching the TUI by default?
 - Should the TUI support the API as an alternative data source (for remote projects not cloned locally)?
 - Which Go terminal UI library should be used? This affects the interaction model and visual capabilities.
-- How should the TUI handle long-running mutations (e.g., `task create` with `--enqueue` that does commit-and-push)? Show a spinner? Stream CLI output?
+- How should the TUI handle long-running mutations (e.g., `task new` with `--enqueue` that does commit-and-push)? Show a spinner? Stream CLI output?
 - Should the TUI be available to agents in headless mode, or is it strictly for human interactive use?

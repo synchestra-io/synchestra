@@ -121,8 +121,8 @@ The [`synchestra task` commands](../cli/task/README.md) handle board updates ato
 
 | Board transition | CLI command | Skill |
 |---|---|---|
-| → `planning` | [`task create`](../cli/task/create/README.md) | [synchestra-task-create](../../../skills/synchestra-task-create/README.md) |
-| `planning` → `queued` | [`task enqueue`](../cli/task/enqueue/README.md) (or `task create --enqueue`) | [synchestra-task-enqueue](../../../skills/synchestra-task-enqueue/README.md) |
+| → `planning` | [`task new`](../cli/task/new/README.md) | [synchestra-task-new](../../../skills/synchestra-task-new/README.md) |
+| `planning` → `queued` | [`task enqueue`](../cli/task/enqueue/README.md) (or `task new --enqueue`) | [synchestra-task-enqueue](../../../skills/synchestra-task-enqueue/README.md) |
 | `queued` → `in_progress` | [`task claim`](../cli/task/claim/README.md) + [`task start`](../cli/task/start/README.md) | [synchestra-claim-task](../../../skills/synchestra-claim-task/README.md), [synchestra-task-start](../../../skills/synchestra-task-start/README.md) |
 | `in_progress` → `complete` | [`task complete`](../cli/task/complete/README.md) | [synchestra-task-complete](../../../skills/synchestra-task-complete/README.md) |
 | `in_progress` → `failed` | [`task fail`](../cli/task/fail/README.md) | [synchestra-task-fail](../../../skills/synchestra-task-fail/README.md) |

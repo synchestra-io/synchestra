@@ -22,7 +22,7 @@ export SYNCHESTRA_TOKEN=tok_your_token_here
 
 | Command | Description | Docs |
 |---|---|---|
-| `synchestra task create` | Create a new task | [task.md](task.md) |
+| `synchestra task new` | Create a new task | [task.md](task.md) |
 | `synchestra task list` | List tasks with filters | [task.md](task.md#list) |
 | `synchestra task get <id>` | Get task details | [task.md](task.md#get) |
 | `synchestra task update <id>` | Update task fields | [task.md](task.md#update) |
@@ -78,7 +78,7 @@ All commands support `--output json` for machine-readable output, useful in agen
 
 ```bash
 # Get task ID from creation output
-TASK_ID=$(synchestra task create --title "My task" --output json | jq -r .id)
+TASK_ID=$(synchestra task new --title "My task" --output json | jq -r .id)
 
 # Get agent status
 STATUS=$(synchestra agent get $AGENT_ID --output json | jq -r .status)

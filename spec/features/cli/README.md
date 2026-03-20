@@ -30,9 +30,11 @@ synchestra server project list
 synchestra server project add
 ```
 
-**Singular nouns** — resource names are always singular (`task`, `skill`, `project`), never plural. This matches the convention used by `gh` (`gh repo list`, `gh issue create`), `kubectl` (`kubectl pod list`), and most modern CLIs. The resource name identifies the *type*, not a collection.
+**Singular nouns** — resource names are always singular (`task`, `skill`, `project`), never plural. This matches the convention used by `gh` (`gh repo list`, `gh issue new`), `kubectl` (`kubectl pod list`), and most modern CLIs. The resource name identifies the *type*, not a collection.
 
-**Verb subcommands** — every action is an explicit subcommand. A bare resource name (e.g., `synchestra task`) shows help, never performs an implicit action like listing. Common verbs: `list`, `create`, `show`, `delete`, `update`.
+**Verb subcommands** — every action is an explicit subcommand. A bare resource name (e.g., `synchestra task`) shows help, never performs an implicit action like listing. Common verbs: `list`, `new`, `show`, `delete`, `update`.
+
+**Prefer `new` over `create`** — use `new` as the subcommand for creating resources (e.g., `task new`, `project new`, `skill new`). The word `create` is intentionally avoided to stay consistent across all Synchestra commands and to align with tools like `gh` (`gh issue new`, `gh pr new`).
 
 **Nesting** — sub-resources nest under their parent: `synchestra server project add`. Limit nesting to three levels (`<group> <resource> <action>`) to keep commands ergonomic.
 
@@ -100,7 +102,7 @@ CLI arguments are documented in `_args/` directories at the level where the argu
 
 - **Global arguments** — `spec/features/cli/_args/` — available to all commands (e.g., `--project`)
 - **Command-group arguments** — `spec/features/cli/task/_args/` — shared across subcommands (e.g., `--task`, `--reason`, `--format`)
-- **Command-specific arguments** — `spec/features/cli/task/create/_args/` — unique to one command (e.g., `--title`, `--enqueue`)
+- **Command-specific arguments** — `spec/features/cli/task/new/_args/` — unique to one command (e.g., `--title`, `--enqueue`)
 
 ### File format
 

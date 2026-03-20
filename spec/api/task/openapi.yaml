@@ -193,8 +193,8 @@ paths:
         Create a task in `planning` status (or `queued` if `enqueue` is true).
         Creates the task directory and README in the state repository.
 
-        **CLI equivalent:** `synchestra task create --project <id> --task <path> --title <title> [--description <desc>] [--depends-on <deps>] [--enqueue]`
-        — see [spec](../../features/cli/task/create/README.md)
+        **CLI equivalent:** `synchestra task new --project <id> --task <path> --title <title> [--description <desc>] [--depends-on <deps>] [--enqueue]`
+        — see [spec](../../features/cli/task/new/README.md)
       tags: [task-lifecycle]
       parameters:
         - $ref: '#/components/parameters/ProjectParam'

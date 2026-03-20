@@ -10,7 +10,7 @@ Declares task dependencies at creation time.
 
 ## Supported by
 
-[`task create`](../README.md)
+[`task new`](../README.md)
 
 ## Description
 
@@ -22,12 +22,12 @@ Each dependency path must refer to an existing task within the same project.
 
 ```bash
 # Single dependency
-synchestra task create --project my-service --task run-migrations \
+synchestra task new --project my-service --task run-migrations \
   --title "Run database migrations" \
   --depends-on setup-db
 
 # Multiple dependencies
-synchestra task create --project my-service --task deploy-staging \
+synchestra task new --project my-service --task deploy-staging \
   --title "Deploy to staging" \
   --depends-on setup-db,create-schema
 ```

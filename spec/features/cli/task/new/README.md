@@ -1,12 +1,12 @@
-# Command: `synchestra task create`
+# Command: `synchestra task new`
 
 **Parent:** [task](../README.md)
-**Skill:** [synchestra-task-create](../../../../../skills/synchestra-task-create/README.md)
+**Skill:** [synchestra-task-new](../../../../../skills/synchestra-task-new/README.md)
 
 ## Synopsis
 
 ```
-synchestra task create --project <project_id> --task <task_path> --title <title> [--description <description>] [--depends-on <deps>] [--enqueue]
+synchestra task new --project <project_id> --task <task_path> --title <title> [--description <description>] [--depends-on <deps>] [--enqueue]
 ```
 
 ## Description
@@ -17,7 +17,7 @@ If the `--enqueue` flag is passed, the task is created directly in `queued` stat
 
 The `--task` parameter accepts nested paths using `/` as a separator (e.g., `parent-task/new-subtask`), which creates the task as a subtask of the specified parent. The parent task must already exist; if it does not, the command fails with exit code `3`.
 
-Like all mutation commands, `task create` is atomic: the CLI commits the new task files and pushes to the state repository. If the push fails due to a remote conflict, the CLI pulls and checks whether the task can still be created. If yes, it retries. If no, it exits with code `1`.
+Like all mutation commands, `task new` is atomic: the CLI commits the new task files and pushes to the state repository. If the push fails due to a remote conflict, the CLI pulls and checks whether the task can still be created. If yes, it retries. If no, it exits with code `1`.
 
 ## Parameters
 

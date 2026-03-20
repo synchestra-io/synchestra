@@ -115,7 +115,7 @@ The core workflow commands for task lifecycle management. These are what agents 
 
 | Command | Description | Type | Spec Reference |
 |---|---|---|---|
-| `synchestra task create` | Create a new task in planning or queued | mutation | [task/create](task/create/README.md) |
+| `synchestra task new` | Create a new task in planning or queued | mutation | [task/new](task/new/README.md) |
 | `synchestra task enqueue` | Move task from planning to queued | mutation | [task/enqueue](task/enqueue/README.md) |
 | `synchestra task claim` | Claim a queued task (optimistic locking) | mutation | [task/claim](task/claim/README.md) |
 | `synchestra task start` | Begin work on claimed task → in_progress | mutation | [task/start](task/start/README.md) |
@@ -181,7 +181,7 @@ Quick-reference table of every CLI command.
 | `project set` | 🔧 Setup | mutation | git (spec repo) |
 | `project code add` | 🔧 Setup | mutation | git (spec repo) |
 | `project code remove` | 🔧 Setup | mutation | git (spec repo) |
-| `task create` | 🤖 Coordination | mutation | state store |
+| `task new` | 🤖 Coordination | mutation | state store |
 | `task enqueue` | 🤖 Coordination | mutation | state store |
 | `task claim` | 🤖 Coordination | mutation | state store |
 | `task start` | 🤖 Coordination | mutation | state store |

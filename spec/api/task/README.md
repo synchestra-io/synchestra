@@ -22,7 +22,7 @@ All endpoints are under `/api/v1/task/`. Project and task identifiers are passed
 
 | Method | Path | CLI Equivalent | Description |
 |---|---|---|---|
-| `POST` | `/task/create` | [`synchestra task create`](../../features/cli/task/create/README.md) | Create a new task |
+| `POST` | `/task/create` | [`synchestra task new`](../../features/cli/task/new/README.md) | Create a new task |
 | `POST` | `/task/enqueue` | [`synchestra task enqueue`](../../features/cli/task/enqueue/README.md) | Move task from `planning` → `queued` |
 | `POST` | `/task/claim` | [`synchestra task claim`](../../features/cli/task/claim/README.md) | Claim a queued task |
 | `POST` | `/task/start` | [`synchestra task start`](../../features/cli/task/start/README.md) | Begin work: `claimed` → `in_progress` |

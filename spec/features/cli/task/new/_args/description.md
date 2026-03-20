@@ -10,7 +10,7 @@ Task description included in the generated task `README.md`.
 
 ## Supported by
 
-[`task create`](../README.md)
+[`task new`](../README.md)
 
 ## Description
 
@@ -21,7 +21,7 @@ If omitted, the task `README.md` is created with the title only.
 ## Examples
 
 ```bash
-synchestra task create --project my-service --task fix-auth-bug \
+synchestra task new --project my-service --task fix-auth-bug \
   --title "Fix authentication bypass bug" \
   --description "Users can bypass auth by sending an empty token header. Fix the middleware to reject empty tokens."
 ```

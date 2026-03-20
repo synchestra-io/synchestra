@@ -12,7 +12,7 @@ Shared arguments for `synchestra task` subcommands are documented in the [_args]
 
 | Command | Description | Skill |
 |---|---|---|
-| [create](create/README.md) | Create a new task (in `planning` or `queued`) | [synchestra-task-create](../../../../skills/synchestra-task-create/README.md) |
+| [new](new/README.md) | Create a new task (in `planning` or `queued`) | [synchestra-task-new](../../../../skills/synchestra-task-new/README.md) |
 | [enqueue](enqueue/README.md) | Move a task from `planning` to `queued` | [synchestra-task-enqueue](../../../../skills/synchestra-task-enqueue/README.md) |
 | [claim](claim/README.md) | Claim a queued task for work | [synchestra-claim-task](../../../../skills/synchestra-claim-task/README.md) |
 | [start](start/README.md) | Begin work on a claimed task (claimed → in_progress) | [synchestra-task-start](../../../../skills/synchestra-task-start/README.md) |

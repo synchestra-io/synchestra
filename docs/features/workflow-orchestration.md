@@ -38,7 +38,7 @@ Every task can have a parent task (set via `--parent` at creation time). This cr
 ### Creating a parent task
 
 ```bash
-synchestra task create \
+synchestra task new \
   --title "Ship user authentication feature" \
   --project my-app \
   --criteria "Auth endpoints live in production and passing smoke tests"
@@ -48,13 +48,13 @@ synchestra task create \
 
 ```bash
 # The orchestrator agent creates sub-tasks and assigns them to specialists
-synchestra task create \
+synchestra task new \
   --title "Implement JWT middleware" \
   --parent task_parent_abc \
   --agent coder-agent \
   --criteria "JWT middleware passes unit tests"
 
-synchestra task create \
+synchestra task new \
   --title "Write auth integration tests" \
   --parent task_parent_abc \
   --agent tester-agent \
@@ -77,7 +77,7 @@ For sequential workflows (step B starts only after step A is complete), the simp
 # Orchestrator waits for coder task to complete
 synchestra task get task_code_abc123
 # When status == complete:
-synchestra task create \
+synchestra task new \
   --title "Review PR for auth feature" \
   --parent task_parent_abc \
   --agent reviewer-agent
@@ -118,7 +118,7 @@ graph TD
 ```bash
 # Orchestrator creates parallel sub-tasks
 for step in lint test build security-scan; do
-  synchestra task create \
+  synchestra task new \
     --title "CI: $step" \
     --parent task_ci_abc \
     --skill "ci-$step"
@@ -150,7 +150,7 @@ MAX_RETRIES=3
 ATTEMPT=0
 
 while [ $ATTEMPT -lt $MAX_RETRIES ]; do
-  TASK_ID=$(synchestra task create --title "Deploy to staging" --agent deployer-agent)
+  TASK_ID=$(synchestra task new --title "Deploy to staging" --agent deployer-agent)
   
   # Wait for completion
   while true; do
@@ -172,7 +172,7 @@ done
 [Rules](../cli/rule.md) can be attached at any level (human, org, project, repo) and are surfaced to agents when they pick up tasks. Rules shape behaviour without hardcoding it into the workflow:
 
 ```bash
-synchestra rule create \
+synchestra rule new \
   --name "no-direct-prod-deploy" \
   --content "Never deploy directly to production. Always deploy to staging first and wait for smoke tests." \
   --scope project \

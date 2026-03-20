@@ -1,8 +1,8 @@
-# `task create` Arguments
+# `task new` Arguments
 
-**Parent:** [create](../README.md)
+**Parent:** [new](../README.md)
 
-Arguments specific to the `synchestra task create` command.
+Arguments specific to the `synchestra task new` command.
 
 ## Arguments
 

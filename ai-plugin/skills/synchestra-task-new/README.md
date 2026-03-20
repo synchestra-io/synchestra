@@ -1,13 +1,13 @@
 ---
-name: synchestra-task-create
+name: synchestra-task-new
 description: Creates a new task in a project. Use when adding tasks, breaking down work into subtasks, or setting up a task board.
 ---
 
-# Skill: synchestra-task-create
+# Skill: synchestra-task-new
 
 Create a new task in a project. The task is created in `planning` status by default, with its own directory and `README.md`. The parent's task board is updated automatically.
 
-**CLI reference:** [synchestra task create](../../spec/features/cli/task/create/README.md)
+**CLI reference:** [synchestra task new](../../spec/features/cli/task/new/README.md)
 
 ## When to use
 
@@ -18,7 +18,7 @@ Create a new task in a project. The task is created in `planning` status by defa
 ## Command
 
 ```bash
-synchestra task create \
+synchestra task new \
   --project <project_id> \
   --task <task_path> \
   --title <title> \
@@ -33,10 +33,10 @@ synchestra task create \
 |---|---|---|
 | [`--project`](../../spec/features/cli/_args/project.md) | Yes | Project identifier (e.g., `synchestra`, `my-service`) |
 | [`--task`](../../spec/features/cli/task/_args/task.md) | Yes | Task path using `/` as separator (e.g., `new-task`, `parent-task/new-subtask`) |
-| [`--title`](../../spec/features/cli/task/create/_args/title.md) | Yes | Human-readable title for the task |
-| [`--description`](../../spec/features/cli/task/create/_args/description.md) | No | Task description; written into the task's `README.md` |
-| [`--depends-on`](../../spec/features/cli/task/create/_args/depends-on.md) | No | Comma-separated list of task paths this task depends on (e.g., `setup-db,create-schema`) |
-| [`--enqueue`](../../spec/features/cli/task/create/_args/enqueue.md) | No | Flag; creates the task in `queued` status instead of `planning` |
+| [`--title`](../../spec/features/cli/task/new/_args/title.md) | Yes | Human-readable title for the task |
+| [`--description`](../../spec/features/cli/task/new/_args/description.md) | No | Task description; written into the task's `README.md` |
+| [`--depends-on`](../../spec/features/cli/task/new/_args/depends-on.md) | No | Comma-separated list of task paths this task depends on (e.g., `setup-db,create-schema`) |
+| [`--enqueue`](../../spec/features/cli/task/new/_args/enqueue.md) | No | Flag; creates the task in `queued` status instead of `planning` |
 
 ## Exit codes
 
@@ -54,7 +54,7 @@ synchestra task create \
 ### Basic task creation
 
 ```bash
-synchestra task create \
+synchestra task new \
   --project synchestra \
   --task implement-cli \
   --title "Implement CLI framework"
@@ -63,7 +63,7 @@ synchestra task create \
 ### Create a task and enqueue it immediately
 
 ```bash
-synchestra task create \
+synchestra task new \
   --project synchestra \
   --task fix-auth-bug \
   --title "Fix authentication bypass bug" \
@@ -74,7 +74,7 @@ synchestra task create \
 ### Create a nested subtask
 
 ```bash
-synchestra task create \
+synchestra task new \
   --project synchestra \
   --task implement-cli/parse-arguments \
   --title "Parse CLI arguments" \
@@ -84,7 +84,7 @@ synchestra task create \
 ### Create a task with dependencies
 
 ```bash
-synchestra task create \
+synchestra task new \
   --project my-service \
   --task run-migrations \
   --title "Run database migrations" \
