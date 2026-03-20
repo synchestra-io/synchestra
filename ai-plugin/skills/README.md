@@ -6,6 +6,23 @@ See the [agent-skills feature spec](../../spec/features/agent-skills/README.md) 
 
 ## How Skills Transform Agent Workflows
 
+### An LSP for Specifications
+
+What [LSP](https://microsoft.github.io/language-server-protocol/) did for code navigation, Synchestra's `feature` commands do for specification navigation. LSP gives IDEs structured access to code — symbols, definitions, references, diagnostics. Synchestra's CLI gives AI agents (and humans) structured access to specifications — features, dependencies, sections, lifecycle status.
+
+| LSP concept | Synchestra equivalent |
+|---|---|
+| `textDocument/documentSymbol` | `feature info` (section TOC with line ranges) |
+| `textDocument/definition` | `feature deps` (go to dependency) |
+| `textDocument/references` | `feature refs` (find all referrers) |
+| `workspace/symbol` | `feature list` / `feature tree` |
+| Hover | `feature info` metadata (status, oq, children) |
+| Call hierarchy | `--transitive` flag (follow chains) |
+| Inlay hints | `--fields` flag (inline metadata) |
+| Type hierarchy | `feature tree --direction up\|down` |
+
+The difference: LSP serves IDEs via a persistent server and binary protocol. Synchestra serves AI agents via a stateless CLI and YAML output. But the semantic layer is the same — structured navigation over a domain-specific document tree.
+
 ### The Problem: Specification Navigation is Expensive
 
 When AI agents work on spec repos, they glob, view, and grep files one by one. Each file costs tokens. Understanding "what exists" across 24+ features can consume 10,000+ tokens before the agent does any real work.
@@ -104,4 +121,4 @@ The rest of the file follows the standard skill body format (heading, context, p
 
 ## Outstanding Questions
 
-None at this time.
+- Should Synchestra expose a proper [LSP server](https://microsoft.github.io/language-server-protocol/) for specification files? The CLI already provides the semantic layer (feature info → documentSymbol, deps → definition, refs → references). An LSP adapter would give humans live IDE integration: hover for feature metadata, autocomplete feature IDs in dependency sections, red squiggles for broken cross-references, rename refactoring across all specs. The Go packages powering the CLI could be reused — the incremental cost is the protocol adapter. But the primary audience today is agents (served by CLI), and an LSP would primarily benefit humans editing specs in IDEs. Worth considering for a later phase.

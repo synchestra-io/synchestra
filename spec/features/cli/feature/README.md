@@ -2,7 +2,7 @@
 
 **Parent:** [CLI](../README.md)
 
-Commands for querying features — listing, visualizing hierarchy, and tracing dependency and reference relationships.
+Commands for querying features — listing, visualizing hierarchy, and tracing dependency and reference relationships. These commands form an [LSP-like](https://microsoft.github.io/language-server-protocol/) semantic layer for specifications: `info` maps to document symbols, `deps`/`refs` map to go-to-definition/find-references, `tree` maps to type hierarchy, and `--fields`/`--transitive` enrich the output like inlay hints and call hierarchy. See the [skills README](../../../../ai-plugin/skills/README.md#an-lsp-for-specifications) for the full analogy.
 
 All commands in this group are **read-only**. They pull the latest state from the spec repository but do not mutate anything.
 
@@ -54,3 +54,4 @@ Arguments available across multiple `feature` subcommands. See [`_args/`](_args/
 ## Outstanding Questions
 
 - Should features support metadata beyond the `## Dependencies` section (e.g., status, owner, tags) in a machine-readable format like YAML frontmatter? *(Partially addressed: `feature info` extracts metadata from README structure; YAML frontmatter is not yet required but remains an option.)*
+- Should Synchestra expose a proper LSP server for specification files, reusing the same Go packages that power these commands? This would give IDE users live diagnostics, hover info, autocomplete for feature IDs, and rename refactoring. See [skills README](../../../../ai-plugin/skills/README.md#an-lsp-for-specifications) for the LSP analogy.
