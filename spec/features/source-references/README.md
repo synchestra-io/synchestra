@@ -27,62 +27,80 @@ Two concrete gaps exist:
 ### Notation format
 
 ```
-synchestra:{type}/{path}
-synchestra:{type}/{path}@{host}/{org}/{repo}
+synchestra:{reference}
+synchestra:{reference}@{host}/{org}/{repo}
 ```
 
-- **`{type}`** — resource type (see [Resource types](#resource-types))
-- **`{path}`** — resource identifier, using `/` as separator for hierarchical paths
+- **`{reference}`** — either a type-prefixed shortcut or a repo-root-relative path (see [Resolution](#short-notation-resolution))
 - **`@{host}/{org}/{repo}`** — optional; omitted when referencing resources in the same project. `{host}` is the repository host (e.g., `github.com`, `bitbucket.org`, `gitlab.mycompany.com`)
 
-### Resource types
+### Resource type shortcuts
 
-The initial set of resource types is fixed. User-configurable types may be added later via project configuration.
+Known type prefixes provide shorthand for common paths. User-configurable types may be added later via project configuration.
 
-| Type | Resolves to | Example |
+| Type prefix | Expands to repo path | Example shortcut | Resolved path |
+|---|---|---|---|
+| `feature/` | `spec/features/{path}` | `feature/cli/task/claim` | `spec/features/cli/task/claim` |
+| `plan/` | `spec/plans/{path}` | `plan/v2-migration` | `spec/plans/v2-migration` |
+| `doc/` | `docs/{path}` | `doc/api/rest` | `docs/api/rest` |
+
+### Short notation resolution
+
+When resolving a `synchestra:` reference, the following order is used:
+
+1. **Type prefix** — if the first segment matches a known type prefix (`feature`, `plan`, `doc`), expand it to the corresponding repo path
+2. **Fallback to path** — if the first segment is not a known prefix, or if type-based resolution fails (path does not exist), treat the entire value as a repo-root-relative path
+
+**Examples:**
+
+| Short notation | Resolution | Resolved repo path |
 |---|---|---|
-| `feature` | `spec/features/{path}/README.md` | `synchestra:feature/cli/task/claim` |
-| `plan` | `spec/plans/{path}/README.md` | `synchestra:plan/v2-migration` |
-| `doc` | `docs/{path}` | `synchestra:doc/api/rest` |
+| `synchestra:feature/cli/task/claim` | Type prefix `feature/` | `spec/features/cli/task/claim` |
+| `synchestra:plan/v2-migration` | Type prefix `plan/` | `spec/plans/v2-migration` |
+| `synchestra:doc/api/rest` | Type prefix `doc/` | `docs/api/rest` |
+| `synchestra:spec/features/cli/task/claim` | Not a known prefix → path | `spec/features/cli/task/claim` |
+| `synchestra:docs/api/rest` | Not a known prefix → path | `docs/api/rest` |
+| `synchestra:README.md` | Not a known prefix → path | `README.md` |
 
 ### Examples
 
-What developers type (authoring):
+What developers type (authoring — using type shortcuts or full paths):
 
 ```go
 // synchestra:feature/cli/task/claim
 // synchestra:feature/agent-skills@github.com/acme/orchestrator
+// synchestra:spec/features/cli/task/claim    (full path — equivalent to above)
 ```
 
 What gets committed after lint/pre-commit expansion:
 
 ```go
-// https://synchestra.io/github.com/synchestra-io/synchestra/feature/cli/task/claim
-// https://synchestra.io/github.com/acme/orchestrator/feature/agent-skills
+// https://synchestra.io/github.com/synchestra-io/synchestra/spec/features/cli/task/claim
+// https://synchestra.io/github.com/acme/orchestrator/spec/features/agent-skills
 ```
 
 ```python
-# https://synchestra.io/github.com/synchestra-io/synchestra/feature/model-selection
+# https://synchestra.io/github.com/synchestra-io/synchestra/spec/features/model-selection
 ```
 
 ```yaml
-# https://synchestra.io/github.com/synchestra-io/synchestra/feature/project-definition
+# https://synchestra.io/github.com/synchestra-io/synchestra/spec/features/project-definition
 ```
 
 ```sql
--- https://synchestra.io/bitbucket.org/acme/data-pipeline/feature/etl-config
+-- https://synchestra.io/bitbucket.org/acme/data-pipeline/spec/features/etl-config
 ```
 
 ### URL mapping
 
-Every short reference expands to a canonical URL on `synchestra.io`:
+Every short reference expands to a canonical URL on `synchestra.io`. The URL uses the **resolved repo-root-relative path** — the `{type}` prefix is not present in the URL.
 
 ```
-synchestra:{type}/{path}
-  → https://synchestra.io/{host}/{org}/{repo}/{type}/{path}
+synchestra:{reference}
+  → https://synchestra.io/{host}/{org}/{repo}/{resolved_path}
 
-synchestra:{type}/{path}@{host}/{org}/{repo}
-  → https://synchestra.io/{host}/{org}/{repo}/{type}/{path}
+synchestra:{reference}@{host}/{org}/{repo}
+  → https://synchestra.io/{host}/{org}/{repo}/{resolved_path}
 ```
 
 For same-repo references, `{host}/{org}/{repo}` is resolved at expansion time from git remote or project configuration.
@@ -91,10 +109,12 @@ For same-repo references, `{host}/{org}/{repo}` is resolved at expansion time fr
 
 | Short reference | Expanded URL |
 |---|---|
-| `synchestra:feature/cli/task/claim` | `https://synchestra.io/github.com/synchestra-io/synchestra/feature/cli/task/claim` |
-| `synchestra:feature/agent-skills@github.com/acme/orchestrator` | `https://synchestra.io/github.com/acme/orchestrator/feature/agent-skills` |
-| `synchestra:plan/v2-migration` | `https://synchestra.io/github.com/synchestra-io/synchestra/plan/v2-migration` |
-| `synchestra:doc/api/rest@bitbucket.org/acme/docs` | `https://synchestra.io/bitbucket.org/acme/docs/doc/api/rest` |
+| `synchestra:feature/cli/task/claim` | `https://synchestra.io/github.com/synchestra-io/synchestra/spec/features/cli/task/claim` |
+| `synchestra:spec/features/cli/task/claim` | `https://synchestra.io/github.com/synchestra-io/synchestra/spec/features/cli/task/claim` |
+| `synchestra:feature/agent-skills@github.com/acme/orchestrator` | `https://synchestra.io/github.com/acme/orchestrator/spec/features/agent-skills` |
+| `synchestra:plan/v2-migration` | `https://synchestra.io/github.com/synchestra-io/synchestra/spec/plans/v2-migration` |
+| `synchestra:doc/api/rest@bitbucket.org/acme/docs` | `https://synchestra.io/bitbucket.org/acme/docs/docs/api/rest` |
+| `synchestra:README.md` | `https://synchestra.io/github.com/synchestra-io/synchestra/README.md` |
 
 ### Canonical form and auto-expansion
 
@@ -105,7 +125,7 @@ The **expanded URL** is the canonical form stored in source files. The short `sy
 **Authoring workflow:**
 
 1. Developer writes `synchestra:feature/cli/task/claim` in a comment
-2. Pre-commit hook (or `synchestra lint refs --fix`) expands it to `https://synchestra.io/github.com/synchestra-io/synchestra/feature/cli/task/claim`
+2. Pre-commit hook (or `synchestra lint refs --fix`) resolves the type prefix and expands it to `https://synchestra.io/github.com/synchestra-io/synchestra/spec/features/cli/task/claim`
 3. The expanded URL is what gets committed and stored in the repository
 
 The short form is never persisted in committed source — it exists only between authoring and the next lint/commit cycle.
@@ -137,7 +157,7 @@ A valid source reference must be preceded on the same line by a recognized comme
 // synchestra:feature/cli/task/claim          ✓ (Go, JS)
 //synchestra:feature/cli/task/claim           ✓ (no space)
 #  synchestra:feature/model-selection         ✓ (Python, YAML)
--- https://synchestra.io/github.com/org/repo/feature/x   ✓ (SQL)
+-- https://synchestra.io/github.com/org/repo/spec/features/x   ✓ (SQL)
 ; synchestra:plan/v2-migration                ✓ (Lisp)
 ```
 
@@ -153,8 +173,8 @@ Users with uncommon comment syntax can open an issue to expand the prefix set, o
 
 **Two reference forms are recognized:**
 
-1. **Short notation** — `synchestra:` prefix, then `{type}/{path}[@{host}/{org}/{repo}]`
-2. **Expanded URLs** — `https://synchestra.io/` prefix, then `{host}/{org}/{repo}/{type}/{path}`
+1. **Short notation** — `synchestra:` prefix, then `{reference}[@{host}/{org}/{repo}]`
+2. **Expanded URLs** — `https://synchestra.io/` prefix, then `{host}/{org}/{repo}/{resolved_path}`
 
 The linter auto-expands short notation to URLs, so committed code should only contain expanded URLs. The short form is accepted as input for authoring convenience.
 
@@ -181,8 +201,7 @@ References are validated strictly — a reference to a non-existent resource is 
 
 | Check | Error condition |
 |---|---|
-| Resource type is known | Type is not in the fixed set (`feature`, `plan`, `doc`) |
-| Resource exists | The resolved path does not exist in the target repository |
+| Reference resolves | The resolved repo path does not exist in the target repository (after trying type prefix expansion and path fallback) |
 | Host/org/repo is resolvable | Same-repo reference but host/org/repo cannot be inferred (no git remote, no config override) |
 | Cross-repo is reachable | `@{host}/{org}/{repo}` points to a repository that is not accessible (optional — may be deferred to CI) |
 

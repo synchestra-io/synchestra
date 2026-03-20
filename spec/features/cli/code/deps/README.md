@@ -60,9 +60,9 @@ synchestra code deps pkg/cli/task/claim.go
 ```
 
 ```
-feature/cli/task/claim
-feature/state-sync/pull
-plan/v2-migration
+spec/features/cli/task/claim
+spec/features/state-sync/pull
+spec/plans/v2-migration
 ```
 
 ### Directory scan
@@ -73,13 +73,13 @@ synchestra code deps pkg/cli/task/
 
 ```
 pkg/cli/task/claim.go
-  feature/cli/task/claim
-  feature/state-sync/pull
-  plan/v2-migration
+  spec/features/cli/task/claim
+  spec/features/state-sync/pull
+  spec/plans/v2-migration
 
 pkg/cli/task/update.go
-  feature/cli/task/update
-  feature/state-sync/pull
+  spec/features/cli/task/update
+  spec/features/state-sync/pull
 ```
 
 ### Filtered by type
@@ -90,12 +90,12 @@ synchestra code deps --type=feature
 
 ```
 pkg/cli/task/claim.go
-  feature/cli/task/claim
-  feature/state-sync/pull
+  spec/features/cli/task/claim
+  spec/features/state-sync/pull
 
 pkg/cli/task/update.go
-  feature/cli/task/update
-  feature/state-sync/pull
+  spec/features/cli/task/update
+  spec/features/state-sync/pull
 ```
 
 ### Cross-repo references
@@ -105,8 +105,8 @@ synchestra code deps pkg/integration/orchestrator.go
 ```
 
 ```
-feature/agent-skills@github.com/acme/orchestrator
-feature/cli/task/claim
+spec/features/agent-skills@github.com/acme/orchestrator
+spec/features/cli/task/claim
 ```
 
 ### No references found
