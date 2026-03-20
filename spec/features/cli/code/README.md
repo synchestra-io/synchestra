@@ -30,5 +30,4 @@ The `code` and `feature` command groups are complementary views of the same depe
 
 ## Outstanding Questions
 
-- Should there be a `code list` command that lists all source files containing Synchestra references?
-- Should there be a `code refs` command (reverse of `code deps`) — given a source file, show what other source files reference the same resources?
+None at this time.

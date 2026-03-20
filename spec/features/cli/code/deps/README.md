@@ -5,7 +5,7 @@
 ## Synopsis
 
 ```
-synchestra code deps [<path>...] [--project <project_id>] [--type <type>]
+synchestra code deps [--path <pattern>] [--project <project_id>] [--type <type>]
 ```
 
 ## Description
@@ -20,7 +20,7 @@ This is a read-only command. It scans the working tree and does not mutate anyth
 
 | Parameter | Required | Description |
 |---|---|---|
-| `<path>...` | No | File(s) or directory(s) to scan. Defaults to the current working directory. When a directory is given, all files are scanned recursively |
+| `--path` | No | Glob pattern to select files to scan (e.g., `pkg/**/*.go`, `src/*/*_test.go`, `**/*.py`). Defaults to `**/*` (all files in the current directory, recursively). Standard glob wildcards apply: `*` matches within a segment, `**` matches across segments, `?` matches a single character |
 | [`--project`](../../../_args/project.md) | No | Project identifier (e.g., `synchestra`). Autodetected from current directory if omitted |
 | `--type` | No | Filter results to a specific resource type: `feature`, `plan`, or `doc`. Without this flag, all types are shown |
 
@@ -29,23 +29,22 @@ This is a read-only command. It scans the working tree and does not mutate anyth
 | Exit code | Meaning |
 |---|---|
 | `0` | Success (including when no references are found — outputs nothing) |
-| `2` | Invalid arguments (e.g., unknown `--type` value) |
-| `3` | Path not found |
+| `2` | Invalid arguments (e.g., unknown `--type` value, invalid glob pattern) |
 
 ## Behaviour
 
-1. Resolve the target path(s) — default to current working directory if none given
-2. Scan all files under the target path(s) for source references using the [comment-prefix detection rule](../../../source-references/README.md#detection-strategy)
-3. Parse each detected reference to extract `{type}` and `{path}` (and `{org}/{repo}` for cross-repo references)
+1. Expand the `--path` glob pattern to a list of matching files (default: `**/*`)
+2. Scan matched files for source references using the [comment-prefix detection rule](../../../source-references/README.md#detection-strategy)
+3. Parse each detected reference, resolving type shortcuts to full repo paths
 4. If `--type` is specified, filter to matching resource type
-5. Deduplicate and sort results alphabetically by type, then by path
+5. Deduplicate and sort results alphabetically by path
 6. Output each referenced resource, one per line
 
 If no source references are found, the command outputs nothing and exits with code `0`.
 
 ### Grouping by file
 
-When scanning multiple files, results are grouped by source file with the file path as a header. When scanning a single file, the file path header is omitted.
+When the glob matches multiple files, results are grouped by source file with the file path as a header. When only one file matches, the file path header is omitted.
 
 ### Cross-repo references
 
@@ -56,7 +55,7 @@ Cross-repo references (`@{host}/{org}/{repo}`) are included in the output with t
 ### Single file
 
 ```bash
-synchestra code deps pkg/cli/task/claim.go
+synchestra code deps --path=pkg/cli/task/claim.go
 ```
 
 ```
@@ -65,10 +64,10 @@ spec/features/state-sync/pull
 spec/plans/v2-migration
 ```
 
-### Directory scan
+### Glob pattern
 
 ```bash
-synchestra code deps pkg/cli/task/
+synchestra code deps --path="pkg/cli/task/*.go"
 ```
 
 ```
@@ -80,6 +79,20 @@ pkg/cli/task/claim.go
 pkg/cli/task/update.go
   spec/features/cli/task/update
   spec/features/state-sync/pull
+```
+
+### Test files only
+
+```bash
+synchestra code deps --path="src/*/*_test.go"
+```
+
+```
+src/auth/login_test.go
+  spec/features/auth/login
+
+src/task/claim_test.go
+  spec/features/cli/task/claim
 ```
 
 ### Filtered by type
@@ -101,7 +114,7 @@ pkg/cli/task/update.go
 ### Cross-repo references
 
 ```bash
-synchestra code deps pkg/integration/orchestrator.go
+synchestra code deps --path=pkg/integration/orchestrator.go
 ```
 
 ```
