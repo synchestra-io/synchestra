@@ -21,7 +21,7 @@ The gap is concrete:
 
 ## Acceptance criteria
 
-- All Phase 1 CLI commands (`feature info`, `spec validate`, `spec search`) pass end-to-end tests against the Synchestra spec repo itself
+- All Phase 1 CLI commands (`feature info`, `spec lint`, `spec search`) pass end-to-end tests against the Synchestra spec repo itself
 - `feature info` output is under 600 tokens for any feature in the repo
 - `--fields` and `--transitive` flags work composably (e.g., `feature deps --fields status,oq --transitive`)
 - Every new CLI command has a corresponding skill in `ai-plugin/skills/`
@@ -55,7 +55,7 @@ Before committing to this roadmap, the risks need to be named explicitly.
 
 2. **Git-as-database limitations.** Optimistic locking via git works for low-frequency operations (task claims happen at most every few minutes per agent). But if agent density increases — 50 agents claiming tasks simultaneously — git push conflicts become a bottleneck. A state store abstraction is needed before that scale, and this plan does not address it.
 
-3. **Naming conventions fragility.** The entire system assumes features have README.md files, OQ sections use a specific heading, and indexes follow a specific format. `spec validate` is critical infrastructure that must exist before mutation commands (Phase 2), not a nice-to-have. This plan sequences it correctly, but if Phase 1 slips, Phase 2 becomes unsafe.
+3. **Naming conventions fragility.** The entire system assumes features have README.md files, OQ sections use a specific heading, and indexes follow a specific format. `spec lint` is critical infrastructure that must exist before mutation commands (Phase 2), not a nice-to-have. This plan sequences it correctly, but if Phase 1 slips, Phase 2 becomes unsafe.
 
 4. **Agent platforms are evolving fast.** Every month brings new agent frameworks, new tool-calling conventions, new context window sizes. But they all optimize for code navigation (find function, read file, run test), not specification navigation (what features exist, what depends on what, what's the blast radius of this change). Synchestra's domain-specific value persists even as the underlying platforms shift.
 
@@ -76,7 +76,7 @@ Read-only commands. Highest ROI. Can be validated against existing spec files wi
 | Updated feature skills | Skill updates | Done | list/tree/deps/refs skills updated with --fields/--transitive docs |
 | `code deps` | CLI command | ✅ Implemented | Show Synchestra resources (features, plans, docs) that source files depend on via comment annotations |
 | `synchestra-code-deps` skill | Skill | ✅ Implemented | Wraps `code deps` for querying code-to-spec relationships |
-| `spec validate` | CLI command | Not specified | Structural convention checking (README exists, OQ section present, index up-to-date) |
+| `spec lint` | CLI command | Not specified | Structural convention checking (README exists, OQ section present, index up-to-date) |
 | `spec search` | CLI command | Not specified | Keyword/semantic search across spec documents |
 
 #### 1.1. Implement `feature info`
@@ -111,15 +111,15 @@ Add composable flags to `feature list`, `feature tree`, `feature deps`, and `fea
 - `--fields` auto-switches output to YAML; `--format text` overrides back to text
 - No `--transitive` on list/tree/info (those don't operate on relationship chains)
 
-#### 1.3. Implement `spec validate`
+#### 1.3. Implement `spec lint`
 
 Check structural conventions across the entire spec tree. This is prerequisite infrastructure for Phase 2 mutation commands.
 
 **Depends on:** (none)
 **Produces:**
-  - `spec validate` CLI command
-  - Validation rules: README exists, OQ section present, index references valid
-**Task mapping:** `agent-skills-roadmap/spec-validate`
+  - `spec lint` CLI command
+  - Linting rules: README exists, OQ section present, index references valid
+**Task mapping:** `agent-skills-roadmap/spec-lint`
 
 **Acceptance criteria:**
 - Reports all violations in a single run (does not fail-fast on first error)
@@ -145,11 +145,11 @@ Keyword search across spec documents with context snippets.
 
 #### 1.5. Create skills for new Phase 1 commands
 
-Wrap `spec validate` and `spec search` as agent skills.
+Wrap `spec lint` and `spec search` as agent skills.
 
 **Depends on:** Steps 1.3, 1.4
 **Produces:**
-  - `ai-plugin/skills/synchestra-spec-validate/README.md`
+  - `ai-plugin/skills/synchestra-spec-lint/README.md`
   - `ai-plugin/skills/synchestra-spec-search/README.md`
 **Task mapping:** `agent-skills-roadmap/phase1-skills`
 
@@ -200,7 +200,7 @@ Structural safety for spec editing. Builds on Phase 1 validation to ensure mutat
 
 Scaffold a new feature directory with README template, update parent feature's children list, and update the feature index. Local changes by default; `--commit` and `--push` flags for git operations. Returns `feature info`-compatible output with section line ranges.
 
-**Depends on:** Step 1.3 (spec validate — needed to verify post-mutation consistency)
+**Depends on:** Step 1.3 (spec lint — needed to verify post-mutation consistency)
 **Produces:**
   - `feature new` CLI command ([spec](../../features/cli/feature/new/README.md))
   - README template with standard sections (Summary, Problem, Behavior, Dependencies, Acceptance Criteria, Outstanding Questions)
@@ -213,7 +213,7 @@ Scaffold a new feature directory with README template, update parent feature's c
 - Returns `feature info`-compatible YAML output with section line ranges
 - `--commit` and `--push` flags for optional git operations (`--push` implies `--commit`)
 - Rollback on any failure
-- `spec validate` passes after creation
+- `spec lint` passes after creation
 
 #### 2.2. Implement `feature status`
 
@@ -350,7 +350,7 @@ graph TD
     subgraph "Phase 1: Navigation"
         A["1.1 feature info"]
         B["1.2 --fields / --transitive"]
-        C["1.3 spec validate"]
+        C["1.3 spec lint"]
         D["1.4 spec search"]
         E["1.5 Phase 1 skills"]
 
@@ -408,7 +408,7 @@ These decisions were made during feature specification and should not be revisit
 
 - **Git concurrency under load.** Optimistic locking works today at low agent density. If adoption grows to 50+ concurrent agents, push conflicts will spike. Mitigation path: abstract state store behind an interface, swap git for a proper database when needed.
 - **Skill discoverability at scale.** 36+ skills may overwhelm agent tool selectors. May need skill grouping, priority tiers, or a meta-skill that recommends which skill to use.
-- **Spec format evolution.** If feature README format changes (new required sections, renamed headings), all parsing commands break. `spec validate` partially mitigates this by catching drift early.
+- **Spec format evolution.** If feature README format changes (new required sections, renamed headings), all parsing commands break. `spec lint` partially mitigates this by catching drift early.
 
 ## Outstanding Questions
 
