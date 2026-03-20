@@ -17,7 +17,7 @@ Two concrete gaps exist:
 
 ## Design Philosophy
 
-- **Language-agnostic** — the notation must work in any language's comment syntax. Detection is a byte-level prefix search (`synchestra:` or `https://synchestra.io/`), not an AST operation.
+- **Language-agnostic** — the notation must work in any language's comment syntax. Detection requires a recognized comment prefix on the same line — no AST parsing, just a single-line regex match.
 - **Strict validation** — following Go's philosophy, references that point to non-existent resources are errors, not warnings. Invalid references are caught by linter, pre-commit hook, or PR check.
 - **Single prefix** — `synchestra:` covers all resource types (features, plans, docs, tasks). One prefix to search, one parser to maintain, one convention to learn.
 - **Graceful cross-repo** — same-repo references omit org/repo for brevity. Cross-repo references append `@{org}/{repo}`. Org/repo for the current context is inferred from git remote and can be overridden in project config.
@@ -109,12 +109,51 @@ The short form is never persisted in committed source — it exists only between
 
 ### Detection strategy
 
-Tools detect references using two byte-level prefix searches — no language-specific parsing required:
+A valid source reference must be preceded on the same line by a recognized comment prefix followed by optional whitespace. This eliminates false positives from string literals and non-comment code without requiring AST parsing.
 
-1. **Short notation** — scan for `synchestra:` prefix, then parse `{type}/{path}[@{org}/{repo}]`
-2. **Expanded URLs** — scan for `https://synchestra.io/` prefix, then extract `{org}/{repo}/{type}/{path}` from the URL path
+**Detection regex (single line):**
 
-Both forms are recognized by all tools. The linter auto-expands short notation to URLs, so committed code should only contain expanded URLs. The short form is accepted as input for authoring convenience and backward compatibility.
+```regex
+^\s*(//|#|--|[/*]|%|;)\s*(synchestra:|https://synchestra\.io/)
+```
+
+**Recognized comment prefixes:**
+
+| Prefix | Languages |
+|---|---|
+| `//` | Go, JS, TS, Java, C, C++, Rust, Swift, Kotlin |
+| `#` | Python, Ruby, YAML, Shell, Perl, Elixir |
+| `--` | SQL, Lua, Haskell |
+| `*` or `/*` | Block comments in C-family languages |
+| `%` | LaTeX, Erlang |
+| `;` | Lisp, Clojure, INI files |
+
+**Valid examples:**
+
+```
+// synchestra:feature/cli/task/claim          ✓ (Go, JS)
+//synchestra:feature/cli/task/claim           ✓ (no space)
+#  synchestra:feature/model-selection         ✓ (Python, YAML)
+-- https://synchestra.io/org/repo/feature/x   ✓ (SQL)
+; synchestra:plan/v2-migration                ✓ (Lisp)
+```
+
+**Invalid examples (not detected):**
+
+```
+synchestra:feature/cli/task/claim             ✗ (no comment prefix)
+fmt.Println("synchestra:feature/x")          ✗ (inside string literal)
+var x = "https://synchestra.io/org/repo/..." ✗ (inside string literal)
+```
+
+Users with uncommon comment syntax can open an issue to expand the prefix set, or override it in project configuration (future).
+
+**Two reference forms are recognized:**
+
+1. **Short notation** — `synchestra:` prefix, then `{type}/{path}[@{org}/{repo}]`
+2. **Expanded URLs** — `https://synchestra.io/` prefix, then `{org}/{repo}/{type}/{path}`
+
+The linter auto-expands short notation to URLs, so committed code should only contain expanded URLs. The short form is accepted as input for authoring convenience.
 
 ### Org/repo resolution
 
@@ -225,6 +264,5 @@ Not defined yet.
 
 ## Outstanding Questions
 
-- Should `synchestra:` references in non-comment contexts (e.g., string literals, documentation) be detected, or only in comments? Limiting to comments requires language-specific parsing, which conflicts with the language-agnostic detection goal.
 - How should `synchestra:task/...` references be validated, given that tasks live in a separate state repository that may not be locally available?
 - Should there be a `synchestra refs` top-level command (scanning all resource types) in addition to `synchestra feature refs` (feature-only)?
