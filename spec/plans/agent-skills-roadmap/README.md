@@ -69,11 +69,13 @@ Read-only commands. Highest ROI. Can be validated against existing spec files wi
 
 | Item | Type | Status | Description |
 |---|---|---|---|
-| `feature info` | CLI command | Specified | Metadata + section TOC with line ranges (~500 tokens vs ~3,000 for full README) |
+| `feature info` | CLI command | ✅ Implemented | Metadata + section TOC with line ranges (~500 tokens vs ~3,000 for full README) |
 | `--fields` flag | CLI flag | Specified | Composable metadata enrichment for list/tree/deps/refs. Auto-switches to YAML. |
 | `--transitive` flag | CLI flag | Specified | Follow full dep/ref chains in one call. Eliminates recursive agent reads. |
 | `synchestra-feature-info` skill | Skill | Created | Wraps `feature info` for agent discovery |
 | Updated feature skills | Skill updates | Done | list/tree/deps/refs skills updated with --fields/--transitive docs |
+| `code deps` | CLI command | ✅ Implemented | Show Synchestra resources (features, plans, docs) that source files depend on via comment annotations |
+| `synchestra-code-deps` skill | Skill | ✅ Implemented | Wraps `code deps` for querying code-to-spec relationships |
 | `spec validate` | CLI command | Not specified | Structural convention checking (README exists, OQ section present, index up-to-date) |
 | `spec search` | CLI command | Not specified | Keyword/semantic search across spec documents |
 
@@ -155,6 +157,31 @@ Wrap `spec validate` and `spec search` as agent skills.
 - Each skill has YAML frontmatter with name and description
 - Descriptions include trigger phrases matching common agent intents
 - Exit code tables match the CLI implementations
+
+#### 1.6. Implement `code deps` (COMPLETE)
+
+Show Synchestra resources (features, plans, docs) that source files depend on. Scans source files for `synchestra:` annotations and `https://synchestra.io/` URLs embedded in comments (multi-language support: Go, Python, SQL, Lisp, LaTeX, etc.), resolving type shortcuts and cross-repo references.
+
+**Status:** ✅ Implemented
+
+**Depends on:** (none)
+**Produces:**
+  - `code deps` CLI command in Go
+  - `pkg/sourceref/` package for reference scanning/parsing (reusable for future linting)
+  - 70+ unit tests covering all parsing scenarios
+  - `synchestra-code-deps` skill
+
+**Acceptance criteria:**
+- ✅ Multi-language comment detection
+- ✅ Short notation parsing (synchestra:feature/...)
+- ✅ Expanded URL parsing (https://synchestra.io/...)
+- ✅ Type shortcuts (feature/ → spec/features/, plan/ → spec/plans/, doc/ → docs/)
+- ✅ Cross-repo references (@host/org/repo)
+- ✅ Glob pattern support (--path parameter)
+- ✅ Type filtering (--type=feature|plan|doc)
+- ✅ Spec-compliant output formatting (single file flat vs. multiple files grouped)
+- ✅ Exit codes (0 success, 2 invalid args, 10+ errors)
+- ✅ Feature annotations in all source files
 
 ### Phase 2: Safe Mutation
 
