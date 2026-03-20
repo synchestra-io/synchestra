@@ -91,6 +91,12 @@ Core principles (see the [agent-skills spec](../../spec/features/agent-skills/RE
 | [synchestra-feature-deps](synchestra-feature-deps/README.md) | Show dependencies with optional transitive resolution | [feature deps](../../spec/features/cli/feature/deps/README.md) |
 | [synchestra-feature-refs](synchestra-feature-refs/README.md) | Show reverse dependencies with optional transitive resolution | [feature refs](../../spec/features/cli/feature/refs/README.md) |
 
+### Code Navigation
+
+| Skill | Description | CLI Command |
+|---|---|---|
+| [synchestra-code-deps](synchestra-code-deps/README.md) | Show Synchestra resources that source files depend on | [code deps](../../spec/features/cli/code/deps/README.md) |
+
 ## Roadmap
 
 **Implemented:** all task lifecycle commands (create through abort), feature list, feature tree, feature deps, feature refs.
