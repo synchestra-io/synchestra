@@ -40,6 +40,6 @@ func runTree(cmd *cobra.Command, _ []string) error {
 	var sb strings.Builder
 	printTree(&sb, roots, 0)
 
-	fmt.Fprint(cmd.OutOrStdout(), sb.String())
+	_, _ = fmt.Fprint(cmd.OutOrStdout(), sb.String())
 	return nil
 }

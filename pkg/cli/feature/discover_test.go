@@ -37,8 +37,8 @@ func TestDiscoverFeatures(t *testing.T) {
 
 	// Also create a reserved _args directory that should be skipped
 	argsDir := filepath.Join(featDir, "alpha", "_args")
-	os.MkdirAll(argsDir, 0o755)
-	os.WriteFile(filepath.Join(argsDir, "README.md"), []byte("# Args"), 0o644)
+	_ = os.MkdirAll(argsDir, 0o755)
+	_ = os.WriteFile(filepath.Join(argsDir, "README.md"), []byte("# Args"), 0o644)
 
 	features, err := discoverFeatures(featDir)
 	if err != nil {
@@ -111,7 +111,7 @@ func TestParseDependencies_BareIDs(t *testing.T) {
 None at this time.
 `
 	dir := t.TempDir()
-	os.WriteFile(filepath.Join(dir, "README.md"), []byte(content), 0o644)
+	_ = os.WriteFile(filepath.Join(dir, "README.md"), []byte(content), 0o644)
 
 	deps, err := parseDependencies(filepath.Join(dir, "README.md"))
 	if err != nil {
@@ -140,7 +140,7 @@ func TestParseDependencies_MarkdownLinks(t *testing.T) {
 ## Outstanding Questions
 `
 	dir := t.TempDir()
-	os.WriteFile(filepath.Join(dir, "README.md"), []byte(content), 0o644)
+	_ = os.WriteFile(filepath.Join(dir, "README.md"), []byte(content), 0o644)
 
 	deps, err := parseDependencies(filepath.Join(dir, "README.md"))
 	if err != nil {
@@ -171,7 +171,7 @@ Does its own thing.
 None at this time.
 `
 	dir := t.TempDir()
-	os.WriteFile(filepath.Join(dir, "README.md"), []byte(content), 0o644)
+	_ = os.WriteFile(filepath.Join(dir, "README.md"), []byte(content), 0o644)
 
 	deps, err := parseDependencies(filepath.Join(dir, "README.md"))
 	if err != nil {

@@ -62,7 +62,7 @@ func runRefs(cmd *cobra.Command, args []string) error {
 	sort.Strings(refs)
 	w := cmd.OutOrStdout()
 	for _, ref := range refs {
-		fmt.Fprintln(w, ref)
+		_, _ = fmt.Fprintln(w, ref)
 	}
 	return nil
 }

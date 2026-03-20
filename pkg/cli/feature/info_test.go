@@ -45,7 +45,7 @@ func TestParseFeatureStatus(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dir := t.TempDir()
 			path := filepath.Join(dir, "README.md")
-			os.WriteFile(path, []byte(tt.content), 0o644)
+			_ = os.WriteFile(path, []byte(tt.content), 0o644)
 
 			got, err := parseFeatureStatus(path)
 			if err != nil {
@@ -74,7 +74,7 @@ None at this time.
 `
 	dir := t.TempDir()
 	path := filepath.Join(dir, "README.md")
-	os.WriteFile(path, []byte(content), 0o644)
+	_ = os.WriteFile(path, []byte(content), 0o644)
 
 	entries, err := parseContentsTable(path)
 	if err != nil {
@@ -226,7 +226,7 @@ More steps.
 `
 	dir := t.TempDir()
 	path := filepath.Join(dir, "README.md")
-	os.WriteFile(path, []byte(content), 0o644)
+	_ = os.WriteFile(path, []byte(content), 0o644)
 
 	sections, err := parseSections(path)
 	if err != nil {
@@ -287,7 +287,7 @@ Line 9
 `
 	dir := t.TempDir()
 	path := filepath.Join(dir, "README.md")
-	os.WriteFile(path, []byte(content), 0o644)
+	_ = os.WriteFile(path, []byte(content), 0o644)
 
 	sections, err := parseSections(path)
 	if err != nil {

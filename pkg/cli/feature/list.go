@@ -37,7 +37,7 @@ func runList(cmd *cobra.Command, _ []string) error {
 
 	w := cmd.OutOrStdout()
 	for _, id := range features {
-		fmt.Fprintln(w, id)
+		_, _ = fmt.Fprintln(w, id)
 	}
 	return nil
 }

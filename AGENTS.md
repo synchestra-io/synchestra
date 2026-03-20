@@ -107,6 +107,18 @@ Task state names are canonical. Use the statuses defined in `spec/features/cli/R
 
 Some platform components (daemon, server, HTTP API, web UI) are implemented in separate repos. Before adding operational details for those, check whether the content belongs here as specification or in the appropriate runtime repo.
 
+## Go error handling requirements
+
+Every function call that returns an error **must** have its error value handled explicitly:
+
+- Capture error returns: `result, err := someFunction()`
+- Check or explicitly ignore errors:
+  - **Check**: `if err != nil { return err }` or `if err != nil { log.Fatal(err) }`
+  - **Explicitly ignore**: `_, _ = someFunction()` or `_ = someFunction()` (this tells linters the error was intentionally ignored)
+- Do **not** silently drop error returns: `someFunction()` without capturing or handling the error violates `errcheck` linter rules
+
+This applies to all I/O operations (`os.WriteFile`, `os.MkdirAll`, `f.Close`, `fmt.Fprintf`, `fmt.Fprintln`, etc.) and any function that documents error returns.
+
 ## Go validation after code changes
 
 After any change to `.go` files, agents must run the full Go validation sequence before considering the task complete:

@@ -45,9 +45,9 @@ func runDeps(cmd *cobra.Command, args []string) error {
 	errW := cmd.ErrOrStderr()
 	for _, dep := range deps {
 		if !featureExists(featuresDir, dep) {
-			fmt.Fprintf(errW, "%s (not found)\n", dep)
+			_, _ = fmt.Fprintf(errW, "%s (not found)\n", dep)
 		} else {
-			fmt.Fprintln(w, dep)
+			_, _ = fmt.Fprintln(w, dep)
 		}
 	}
 	return nil
