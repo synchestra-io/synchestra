@@ -20,7 +20,7 @@ Two concrete gaps exist:
 - **Language-agnostic** — the notation must work in any language's comment syntax. Detection requires a recognized comment prefix on the same line — no AST parsing, just a single-line regex match.
 - **Strict validation** — following Go's philosophy, references that point to non-existent resources are errors, not warnings. Invalid references are caught by linter, pre-commit hook, or PR check.
 - **Single prefix** — `synchestra:` covers all resource types (features, plans, docs, tasks). One prefix to search, one parser to maintain, one convention to learn.
-- **Graceful cross-repo** — same-repo references omit org/repo for brevity. Cross-repo references append `@{org}/{repo}`. Org/repo for the current context is inferred from git remote and can be overridden in project config.
+- **Graceful cross-repo** — same-repo references omit host/org/repo for brevity. Cross-repo references append `@{host}/{org}/{repo}`. Host, org, and repo for the current context are inferred from git remote and can be overridden in project config.
 
 ## Behavior
 
@@ -28,12 +28,12 @@ Two concrete gaps exist:
 
 ```
 synchestra:{type}/{path}
-synchestra:{type}/{path}@{org}/{repo}
+synchestra:{type}/{path}@{host}/{org}/{repo}
 ```
 
 - **`{type}`** — resource type (see [Resource types](#resource-types))
 - **`{path}`** — resource identifier, using `/` as separator for hierarchical paths
-- **`@{org}/{repo}`** — optional; omitted when referencing resources in the same project
+- **`@{host}/{org}/{repo}`** — optional; omitted when referencing resources in the same project. `{host}` is the repository host (e.g., `github.com`, `bitbucket.org`, `gitlab.mycompany.com`)
 
 ### Resource types
 
@@ -51,23 +51,26 @@ What developers type (authoring):
 
 ```go
 // synchestra:feature/cli/task/claim
-// synchestra:feature/agent-skills@acme/orchestrator
+// synchestra:feature/agent-skills@github.com/acme/orchestrator
 ```
 
 What gets committed after lint/pre-commit expansion:
 
 ```go
-// https://synchestra.io/synchestra-io/synchestra/feature/cli/task/claim
-// https://synchestra.io/acme/orchestrator/feature/agent-skills
+// https://synchestra.io/github.com/synchestra-io/synchestra/feature/cli/task/claim
+// https://synchestra.io/github.com/acme/orchestrator/feature/agent-skills
 ```
 
 ```python
-# https://synchestra.io/synchestra-io/synchestra/feature/model-selection
-# https://synchestra.io/synchestra-io/synchestra/task/chat-feature/implement-fast-path
+# https://synchestra.io/github.com/synchestra-io/synchestra/feature/model-selection
 ```
 
 ```yaml
-# https://synchestra.io/synchestra-io/synchestra/feature/project-definition
+# https://synchestra.io/github.com/synchestra-io/synchestra/feature/project-definition
+```
+
+```sql
+-- https://synchestra.io/bitbucket.org/acme/data-pipeline/feature/etl-config
 ```
 
 ### URL mapping
@@ -76,21 +79,22 @@ Every short reference expands to a canonical URL on `synchestra.io`:
 
 ```
 synchestra:{type}/{path}
-  → https://synchestra.io/{org}/{repo}/{type}/{path}
+  → https://synchestra.io/{host}/{org}/{repo}/{type}/{path}
 
-synchestra:{type}/{path}@{org}/{repo}
-  → https://synchestra.io/{org}/{repo}/{type}/{path}
+synchestra:{type}/{path}@{host}/{org}/{repo}
+  → https://synchestra.io/{host}/{org}/{repo}/{type}/{path}
 ```
 
-For same-repo references, `{org}/{repo}` is resolved at expansion time from git remote or project configuration.
+For same-repo references, `{host}/{org}/{repo}` is resolved at expansion time from git remote or project configuration.
 
 **Examples:**
 
 | Short reference | Expanded URL |
 |---|---|
-| `synchestra:feature/cli/task/claim` | `https://synchestra.io/synchestra-io/synchestra/feature/cli/task/claim` |
-| `synchestra:feature/agent-skills@acme/orchestrator` | `https://synchestra.io/acme/orchestrator/feature/agent-skills` |
-| `synchestra:plan/v2-migration` | `https://synchestra.io/synchestra-io/synchestra/plan/v2-migration` |
+| `synchestra:feature/cli/task/claim` | `https://synchestra.io/github.com/synchestra-io/synchestra/feature/cli/task/claim` |
+| `synchestra:feature/agent-skills@github.com/acme/orchestrator` | `https://synchestra.io/github.com/acme/orchestrator/feature/agent-skills` |
+| `synchestra:plan/v2-migration` | `https://synchestra.io/github.com/synchestra-io/synchestra/plan/v2-migration` |
+| `synchestra:doc/api/rest@bitbucket.org/acme/docs` | `https://synchestra.io/bitbucket.org/acme/docs/doc/api/rest` |
 
 ### Canonical form and auto-expansion
 
@@ -101,7 +105,7 @@ The **expanded URL** is the canonical form stored in source files. The short `sy
 **Authoring workflow:**
 
 1. Developer writes `synchestra:feature/cli/task/claim` in a comment
-2. Pre-commit hook (or `synchestra lint refs --fix`) expands it to `https://synchestra.io/synchestra-io/synchestra/feature/cli/task/claim`
+2. Pre-commit hook (or `synchestra lint refs --fix`) expands it to `https://synchestra.io/github.com/synchestra-io/synchestra/feature/cli/task/claim`
 3. The expanded URL is what gets committed and stored in the repository
 
 The short form is never persisted in committed source — it exists only between authoring and the next lint/commit cycle.
@@ -133,7 +137,7 @@ A valid source reference must be preceded on the same line by a recognized comme
 // synchestra:feature/cli/task/claim          ✓ (Go, JS)
 //synchestra:feature/cli/task/claim           ✓ (no space)
 #  synchestra:feature/model-selection         ✓ (Python, YAML)
--- https://synchestra.io/org/repo/feature/x   ✓ (SQL)
+-- https://synchestra.io/github.com/org/repo/feature/x   ✓ (SQL)
 ; synchestra:plan/v2-migration                ✓ (Lisp)
 ```
 
@@ -142,28 +146,29 @@ A valid source reference must be preceded on the same line by a recognized comme
 ```
 synchestra:feature/cli/task/claim             ✗ (no comment prefix)
 fmt.Println("synchestra:feature/x")          ✗ (inside string literal)
-var x = "https://synchestra.io/org/repo/..." ✗ (inside string literal)
+var x = "https://synchestra.io/github.com/org/repo/..." ✗ (inside string literal)
 ```
 
 Users with uncommon comment syntax can open an issue to expand the prefix set, or override it in project configuration (future).
 
 **Two reference forms are recognized:**
 
-1. **Short notation** — `synchestra:` prefix, then `{type}/{path}[@{org}/{repo}]`
-2. **Expanded URLs** — `https://synchestra.io/` prefix, then `{org}/{repo}/{type}/{path}`
+1. **Short notation** — `synchestra:` prefix, then `{type}/{path}[@{host}/{org}/{repo}]`
+2. **Expanded URLs** — `https://synchestra.io/` prefix, then `{host}/{org}/{repo}/{type}/{path}`
 
 The linter auto-expands short notation to URLs, so committed code should only contain expanded URLs. The short form is accepted as input for authoring convenience.
 
-### Org/repo resolution
+### Host/org/repo resolution
 
-When a reference omits `@{org}/{repo}`, the current project's org and repo must be inferred:
+When a reference omits `@{host}/{org}/{repo}`, the current project's host, org, and repo must be inferred:
 
-1. **Git remote** — parse `origin` remote URL to extract `{org}/{repo}`. This is the default.
-2. **Project config override** — `synchestra-spec-repo.yaml` may declare an explicit `org` and `repo` that overrides git remote inference. This handles forks, mirrors, and non-standard remote names.
+1. **Git remote** — parse `origin` remote URL to extract `{host}`, `{org}`, and `{repo}`. This is the default. For example, `git@github.com:synchestra-io/synchestra.git` yields `github.com/synchestra-io/synchestra`.
+2. **Project config override** — `synchestra-spec-repo.yaml` may declare explicit values that override git remote inference. This handles forks, mirrors, and non-standard remote names.
 
 ```yaml
 # synchestra-spec-repo.yaml
 project:
+  host: github.com
   org: synchestra-io
   repo: synchestra
 ```
@@ -176,10 +181,10 @@ References are validated strictly — a reference to a non-existent resource is 
 
 | Check | Error condition |
 |---|---|
-| Resource type is known | Type is not in the fixed set (`feature`, `plan`, `doc`, `task`) |
+| Resource type is known | Type is not in the fixed set (`feature`, `plan`, `doc`) |
 | Resource exists | The resolved path does not exist in the target repository |
-| Org/repo is resolvable | Same-repo reference but org/repo cannot be inferred (no git remote, no config override) |
-| Cross-repo is reachable | `@{org}/{repo}` points to a repository that is not accessible (optional — may be deferred to CI) |
+| Host/org/repo is resolvable | Same-repo reference but host/org/repo cannot be inferred (no git remote, no config override) |
+| Cross-repo is reachable | `@{host}/{org}/{repo}` points to a repository that is not accessible (optional — may be deferred to CI) |
 
 **Enforcement points:**
 

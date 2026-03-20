@@ -49,7 +49,7 @@ When scanning multiple files, results are grouped by source file with the file p
 
 ### Cross-repo references
 
-Cross-repo references (`@{org}/{repo}`) are included in the output with the `@{org}/{repo}` suffix. They are not validated against the remote repository by default (validation would require network access).
+Cross-repo references (`@{host}/{org}/{repo}`) are included in the output with the `@{host}/{org}/{repo}` suffix. They are not validated against the remote repository by default (validation would require network access).
 
 ## Output
 
@@ -105,7 +105,7 @@ synchestra code deps pkg/integration/orchestrator.go
 ```
 
 ```
-feature/agent-skills@acme/orchestrator
+feature/agent-skills@github.com/acme/orchestrator
 feature/cli/task/claim
 ```
 
