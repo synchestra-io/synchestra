@@ -48,20 +48,27 @@ The initial set of resource types is fixed. User-configurable types may be added
 
 ### Examples
 
+What developers type (authoring):
+
 ```go
 // synchestra:feature/cli/task/claim
 // synchestra:feature/agent-skills@acme/orchestrator
-// synchestra:plan/chat-feature
-// synchestra:doc/api/rest@acme/orchestrator
+```
+
+What gets committed after lint/pre-commit expansion:
+
+```go
+// https://synchestra.io/synchestra-io/synchestra/feature/cli/task/claim
+// https://synchestra.io/acme/orchestrator/feature/agent-skills
 ```
 
 ```python
-# synchestra:feature/model-selection
-# synchestra:task/chat-feature/implement-fast-path
+# https://synchestra.io/synchestra-io/synchestra/feature/model-selection
+# https://synchestra.io/synchestra-io/synchestra/task/chat-feature/implement-fast-path
 ```
 
 ```yaml
-# synchestra:feature/project-definition
+# https://synchestra.io/synchestra-io/synchestra/feature/project-definition
 ```
 
 ### URL mapping
@@ -86,6 +93,20 @@ For same-repo references, `{org}/{repo}` is resolved at expansion time from git 
 | `synchestra:feature/agent-skills@acme/orchestrator` | `https://synchestra.io/acme/orchestrator/feature/agent-skills` |
 | `synchestra:plan/v2-migration` | `https://synchestra.io/synchestra-io/synchestra/plan/v2-migration` |
 
+### Canonical form and auto-expansion
+
+The **expanded URL** is the canonical form stored in source files. The short `synchestra:` notation is an **authoring convenience** — developers type the short form, and the linter (or pre-commit hook) auto-expands it to the full URL before commit.
+
+**Rationale:** every `https://synchestra.io/...` URL in a codebase is a clickable entry point. Developers can open the feature specification in the Synchestra web app with one click — in any IDE, GitHub diff view, or `grep` output. No tooling is required to resolve the reference. This also serves as a platform discovery mechanism: new contributors encountering these URLs are directed to synchestra.io, improving adoption and engagement.
+
+**Authoring workflow:**
+
+1. Developer writes `synchestra:feature/cli/task/claim` in a comment
+2. Pre-commit hook (or `synchestra lint refs --fix`) expands it to `https://synchestra.io/synchestra-io/synchestra/feature/cli/task/claim`
+3. The expanded URL is what gets committed and stored in the repository
+
+The short form is never persisted in committed source — it exists only between authoring and the next lint/commit cycle.
+
 ### Detection strategy
 
 Tools detect references using two byte-level prefix searches — no language-specific parsing required:
@@ -93,7 +114,7 @@ Tools detect references using two byte-level prefix searches — no language-spe
 1. **Short notation** — scan for `synchestra:` prefix, then parse `{type}/{path}[@{org}/{repo}]`
 2. **Expanded URLs** — scan for `https://synchestra.io/` prefix, then extract `{org}/{repo}/{type}/{path}` from the URL path
 
-Both forms are equivalent. Tools that transform short notation into URLs (linters, pre-commit hooks) produce the expanded form. Tools that scan for references (e.g., `feature refs`) recognize both.
+Both forms are recognized by all tools. The linter auto-expands short notation to URLs, so committed code should only contain expanded URLs. The short form is accepted as input for authoring convenience and backward compatibility.
 
 ### Org/repo resolution
 
@@ -204,7 +225,6 @@ Not defined yet.
 
 ## Outstanding Questions
 
-- Should the linter auto-fix short references to expanded URLs in-place, or leave the short form and only expand in rendered output (e.g., GitHub, IDE hover)?
 - Should `synchestra:` references in non-comment contexts (e.g., string literals, documentation) be detected, or only in comments? Limiting to comments requires language-specific parsing, which conflicts with the language-agnostic detection goal.
 - How should `synchestra:task/...` references be validated, given that tasks live in a separate state repository that may not be locally available?
 - Should there be a `synchestra refs` top-level command (scanning all resource types) in addition to `synchestra feature refs` (feature-only)?
