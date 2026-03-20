@@ -7,7 +7,7 @@ description: Marks a task as failed with a reason. Use when a task cannot be com
 
 Mark a task as failed when you cannot complete the work. This records why the task failed so another agent or human can understand what happened and decide on next steps.
 
-**CLI reference:** [synchestra task fail](../../spec/features/cli/task/fail/README.md)
+**CLI reference:** [synchestra task fail](../../../spec/features/cli/task/fail/README.md)
 
 ## When to use
 

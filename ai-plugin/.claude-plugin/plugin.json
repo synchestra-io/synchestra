@@ -1,0 +1,8 @@
+{
+  "name": "synchestra-plugin",
+  "description": "Synchestra plugin with skills & agents",
+  "version": "0.0.1",
+  "author": {
+    "name": "Synchestra.io"
+  }
+}
