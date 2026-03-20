@@ -97,11 +97,11 @@ Core principles (see the [agent-skills spec](../../spec/features/agent-skills/RE
 
 | Skill | Description | CLI Command |
 |---|---|---|
-| [synchestra-code-deps](synchestra-code-deps/README.md) | Show Synchestra resources that source files depend on | 🟥 [code deps](../../spec/features/cli/code/deps/README.md) |
+| [synchestra-code-deps](synchestra-code-deps/README.md) | Show Synchestra resources that source files depend on | ✅ [code deps](../../spec/features/cli/code/deps/README.md) |
 
 ## Roadmap
 
-**Implemented:** all task lifecycle commands (create through abort), feature list, feature tree, feature deps, feature refs.
+**Implemented:** all task lifecycle commands (create through abort), feature list, feature tree, feature deps, feature refs, code deps.
 
 **Next up:** feature info, `--fields` flag for selective metadata, `--transitive` for dependency resolution, spec validate, feature new.
 
