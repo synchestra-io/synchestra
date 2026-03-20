@@ -207,4 +207,4 @@ All diagrams in feature specifications should use **mermaid syntax** instead of 
 - [bots](bots/README.md): 2 outstanding questions
 - [bots/synchestra-bot](bots/synchestra-bot/README.md): 5 outstanding questions
 - [lsp](lsp/README.md): 5 outstanding questions
-- [source-references](source-references/README.md): 2 outstanding questions
+- [source-references](source-references/README.md): 0 outstanding questions

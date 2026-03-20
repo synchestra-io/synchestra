@@ -13,6 +13,8 @@ synchestra feature deps <feature_id> [--project <project_id>] [--fields <fields>
 
 Shows the features that a given feature depends on. Dependencies are read from the `## Dependencies` section in the feature's `README.md`. Each dependency is output as a feature ID, one per line.
 
+This is the spec → spec counterpart to [`synchestra code deps`](../../code/deps/README.md), which shows code → spec dependencies via [source references](../../../source-references/README.md).
+
 This is a read-only command. It pulls the latest state from the spec repository but does not mutate anything.
 
 ## Parameters

@@ -44,7 +44,6 @@ The initial set of resource types is fixed. User-configurable types may be added
 | `feature` | `spec/features/{path}/README.md` | `synchestra:feature/cli/task/claim` |
 | `plan` | `spec/plans/{path}/README.md` | `synchestra:plan/v2-migration` |
 | `doc` | `docs/{path}` | `synchestra:doc/api/rest` |
-| `task` | Task in the state repository | `synchestra:task/plan-slug/task-slug` |
 
 ### Examples
 
@@ -253,7 +252,9 @@ With `--fields=type`:
 | Feature | Interaction |
 |---|---|
 | [Feature](../feature/README.md) | Source references point to features; `feature refs` consumes them |
-| [CLI](../cli/README.md) | `synchestra lint refs` validates references; `feature refs` scans for them |
+| [CLI](../cli/README.md) | `synchestra lint refs` validates references; `feature refs` and [`code deps`](../cli/code/deps/README.md) scan for them |
+| [CLI / code deps](../cli/code/deps/README.md) | Primary consumer — scans source files and lists referenced resources (code → spec direction) |
+| [CLI / feature deps](../cli/feature/deps/README.md) | Complementary — shows spec → spec dependencies; `code deps` shows code → spec dependencies |
 | [Project Definition](../project-definition/README.md) | `synchestra-spec-repo.yaml` provides org/repo override for resolution |
 | [LSP](../lsp/README.md) | LSP server can provide go-to-definition for `synchestra:` references in IDEs |
 | [Development Plan](../development-plan/README.md) | Plans are a referenceable resource type |
@@ -264,5 +265,4 @@ Not defined yet.
 
 ## Outstanding Questions
 
-- How should `synchestra:task/...` references be validated, given that tasks live in a separate state repository that may not be locally available?
-- Should there be a `synchestra refs` top-level command (scanning all resource types) in addition to `synchestra feature refs` (feature-only)?
+None at this time.
