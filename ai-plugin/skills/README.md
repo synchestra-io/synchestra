@@ -37,7 +37,7 @@ Concrete pain points:
 ### How Skills Solve This
 
 - **Token efficiency** — `feature info` returns ~500 tokens of structured metadata vs. reading a 3,000-token README. `feature deps --transitive` resolves full dependency chains in one call instead of recursive reads.
-- **Structural safety** — mutation commands (future: `feature create`, `question add`) enforce spec conventions, eliminating missing OQ sections, forgotten index updates, and wrong status values.
+- **Structural safety** — mutation commands (future: `feature new`, `question add`) enforce spec conventions, eliminating missing OQ sections, forgotten index updates, and wrong status values.
 - **Progressive discovery** — YAML frontmatter lets agents discover skills by name and description only. Full instructions load on demand.
 - **Composable enrichment** — `--fields` and `--transitive` flags let agents request exactly the metadata they need without loading unnecessary content.
 
@@ -95,7 +95,7 @@ Core principles (see the [agent-skills spec](../../spec/features/agent-skills/RE
 
 **Implemented:** all task lifecycle commands (create through abort), feature list, feature tree, feature deps, feature refs.
 
-**Next up:** feature info, `--fields` flag for selective metadata, `--transitive` for dependency resolution, spec validate, feature create.
+**Next up:** feature info, `--fields` flag for selective metadata, `--transitive` for dependency resolution, spec validate, feature new.
 
 See the [Agent Skills Roadmap](../../spec/plans/agent-skills-roadmap/README.md) for the phased plan and competitive analysis.
 

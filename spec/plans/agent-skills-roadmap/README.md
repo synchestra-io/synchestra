@@ -162,28 +162,30 @@ Structural safety for spec editing. Builds on Phase 1 validation to ensure mutat
 
 | Item | Type | Status | Description |
 |---|---|---|---|
-| `feature create` | CLI command | Not specified | Scaffold feature dir + README template + update parent + update index. Atomic commit-and-push. |
+| `feature new` | CLI command | Specified | Scaffold feature dir + README template + update parent + update index. Local by default; `--commit`/`--push` optional. Returns `feature info` output. |
 | `feature status` | CLI command | Not specified | Update feature status in README and index atomically |
 | `question add` | CLI command | Not specified | Add OQ to a feature with proper formatting |
 | `question resolve` | CLI command | Not specified | Move OQ from open to resolved with resolution text |
-| `proposal create` | CLI command | Not specified | Scaffold proposal directory under a feature |
-| `plan create` | CLI command | Not specified | Scaffold plan in spec/plans/ with template and feature references |
+| `proposal new` | CLI command | Not specified | Scaffold proposal directory under a feature |
+| `plan new` | CLI command | Not specified | Scaffold plan in spec/plans/ with template and feature references |
 
-#### 2.1. Implement `feature create`
+#### 2.1. Implement `feature new`
 
-Scaffold a new feature directory with README template, update parent feature's children list, and update the feature index. All changes in a single atomic commit.
+Scaffold a new feature directory with README template, update parent feature's children list, and update the feature index. Local changes by default; `--commit` and `--push` flags for git operations. Returns `feature info`-compatible output with section line ranges.
 
 **Depends on:** Step 1.3 (spec validate — needed to verify post-mutation consistency)
 **Produces:**
-  - `feature create` CLI command
-  - README template with standard sections (Summary, Problem, Dependencies, Outstanding Questions)
-**Task mapping:** `agent-skills-roadmap/feature-create`
+  - `feature new` CLI command ([spec](../../features/cli/feature/new/README.md))
+  - README template with standard sections (Summary, Problem, Behavior, Dependencies, Acceptance Criteria, Outstanding Questions)
+**Task mapping:** `agent-skills-roadmap/feature-new`
 
 **Acceptance criteria:**
 - Creates `spec/features/{id}/README.md` with all required sections
 - Updates parent feature's children list if creating a nested feature
 - Updates feature index
-- All changes in a single git commit; rollback on any failure
+- Returns `feature info`-compatible YAML output with section line ranges
+- `--commit` and `--push` flags for optional git operations (`--push` implies `--commit`)
+- Rollback on any failure
 - `spec validate` passes after creation
 
 #### 2.2. Implement `feature status`
@@ -216,19 +218,19 @@ Structured OQ management: add questions with proper formatting, resolve them wit
 - `question resolve` moves question from open to resolved with resolution text and date
 - Both commands handle the case where OQ section doesn't exist (create it)
 
-#### 2.4. Implement `proposal create` and `plan create`
+#### 2.4. Implement `proposal new` and `plan new`
 
 Scaffold proposal and plan directories with templates and cross-references.
 
 **Depends on:** Step 1.3
 **Produces:**
-  - `proposal create` CLI command
-  - `plan create` CLI command
+  - `proposal new` CLI command
+  - `plan new` CLI command
 **Task mapping:** `agent-skills-roadmap/scaffold-commands`
 
 **Acceptance criteria:**
-- `proposal create` scaffolds `spec/features/{feature}/proposals/{slug}/README.md`
-- `plan create` scaffolds `spec/plans/{slug}/README.md` with feature back-references
+- `proposal new` scaffolds `spec/features/{feature}/proposals/{slug}/README.md`
+- `plan new` scaffolds `spec/plans/{slug}/README.md` with feature back-references
 - Both update relevant indexes
 - Atomic commits; rollback on failure
 
@@ -238,7 +240,7 @@ Wrap all Phase 2 commands as agent skills.
 
 **Depends on:** Steps 2.1–2.4
 **Produces:**
-  - Skills for feature-create, feature-status, question-add, question-resolve, proposal-create, plan-create
+  - Skills for feature-new, feature-status, question-add, question-resolve, proposal-new, plan-new
 **Task mapping:** `agent-skills-roadmap/phase2-skills`
 
 **Acceptance criteria:**
@@ -331,10 +333,10 @@ graph TD
     end
 
     subgraph "Phase 2: Mutation"
-        F["2.1 feature create"]
+        F["2.1 feature new"]
         G["2.2 feature status"]
         H["2.3 question add/resolve"]
-        I["2.4 proposal/plan create"]
+        I["2.4 proposal/plan new"]
         J["2.5 Phase 2 skills"]
 
         C --> F

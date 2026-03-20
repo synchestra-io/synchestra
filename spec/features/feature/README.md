@@ -324,5 +324,5 @@ Features themselves have no project-level configuration. Related settings are ma
 
 - Should features have a machine-readable metadata format (YAML frontmatter) in addition to the markdown convention (`**Status:** X`), or is the markdown convention sufficient for both humans and parsers?
 - Should sub-feature status roll up to the parent? (e.g., if all sub-features are `Stable`, is the parent automatically `Stable`?)
-- Should there be a `synchestra feature create` CLI command that scaffolds the directory, README template, and updates the feature index, similar to `synchestra plan create`?
+- ~~Should there be a `synchestra feature create` CLI command that scaffolds the directory, README template, and updates the feature index, similar to `synchestra plan create`?~~ **Resolved:** Yes — specified as [`synchestra feature new`](../cli/feature/new/README.md). Uses `new` verb across all CLI commands for consistency. Scaffolds directory, generates README with all required sections, updates parent Contents and feature index. Returns `feature info`-compatible output with section line ranges so agents can immediately populate content.
 - How should features handle versioning? When a feature undergoes a major redesign, should the old spec be archived or superseded in place?

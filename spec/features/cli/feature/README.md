@@ -2,9 +2,9 @@
 
 **Parent:** [CLI](../README.md)
 
-Commands for querying features — listing, visualizing hierarchy, and tracing dependency and reference relationships. These commands form an [LSP-like](https://microsoft.github.io/language-server-protocol/) semantic layer for specifications: `info` maps to document symbols, `deps`/`refs` map to go-to-definition/find-references, `tree` maps to type hierarchy, and `--fields`/`--transitive` enrich the output like inlay hints and call hierarchy. See the [skills README](../../../../ai-plugin/skills/README.md#an-lsp-for-specifications) for the full analogy.
+Commands for querying and managing features — listing, visualizing hierarchy, tracing dependency and reference relationships, and scaffolding new features. The query commands form an [LSP-like](https://microsoft.github.io/language-server-protocol/) semantic layer for specifications: `info` maps to document symbols, `deps`/`refs` map to go-to-definition/find-references, `tree` maps to type hierarchy, and `--fields`/`--transitive` enrich the output like inlay hints and call hierarchy. See the [skills README](../../../../ai-plugin/skills/README.md#an-lsp-for-specifications) for the full analogy.
 
-All commands in this group are **read-only**. They pull the latest state from the spec repository but do not mutate anything.
+Query commands (`info`, `list`, `tree`, `deps`, `refs`) are **read-only** — they pull the latest state from the spec repository but do not mutate anything. Mutation commands (`new`) scaffold files and optionally commit and push.
 
 ## Feature IDs
 
@@ -34,6 +34,8 @@ The `deps` command reads this section from the target feature. The `refs` comman
 
 ## Commands
 
+### Query
+
 | Command | Description | Skill |
 |---|---|---|
 | [info](info/README.md) | Show feature metadata and section TOC with line ranges | [synchestra-feature-info](../../../../ai-plugin/skills/synchestra-feature-info/README.md) |
@@ -41,6 +43,12 @@ The `deps` command reads this section from the target feature. The `refs` comman
 | [tree](tree/README.md) | Indented hierarchy showing parent-child nesting; supports focus on a single feature with direction | [synchestra-feature-tree](../../../../ai-plugin/skills/synchestra-feature-tree/README.md) |
 | [deps](deps/README.md) | Show features that a given feature depends on | [synchestra-feature-deps](../../../../ai-plugin/skills/synchestra-feature-deps/README.md) |
 | [refs](refs/README.md) | Show features that reference a given feature | [synchestra-feature-refs](../../../../ai-plugin/skills/synchestra-feature-refs/README.md) |
+
+### Mutation
+
+| Command | Description | Skill |
+|---|---|---|
+| [new](new/README.md) | Scaffold a new feature directory with README template | — |
 
 ## Shared Arguments
 
