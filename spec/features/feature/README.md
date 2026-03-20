@@ -317,6 +317,7 @@ Features themselves have no project-level configuration. Related settings are ma
 | [Outstanding Questions](../outstanding-questions/README.md) | Every feature maintains an Outstanding Questions section with the standard question lifecycle. |
 | [UI](../ui/README.md)                             | The Features screen renders the feature index and individual feature specs.                          |
 | [CLI](../cli/README.md)                           | `synchestra feature list` and `synchestra feature info` provide programmatic access.                |
+| [LSP](../lsp/README.md)                            | LSP server reuses the same Go packages as the CLI to provide live IDE integration for spec editing. |
 | [API](../api/README.md)                           | Feature endpoints mirror CLI commands 1:1.                                                          |
 
 ## Outstanding Questions

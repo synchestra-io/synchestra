@@ -28,6 +28,7 @@ Feature specifications for the Synchestra project, managed by Synchestra.
 | [state-store](state-store/README.md) | Conceptual | Pluggable state storage abstraction — composable Go interface (`state.Store`) with git-backed default implementation |
 | [acceptance-criteria](acceptance-criteria/README.md) | Conceptual | First-class verification artifacts — full specification in [synchestra-io/rehearse](https://github.com/synchestra-io/rehearse/blob/main/spec/features/acceptance-criteria/); Synchestra adds plan AC relationships and outstanding questions linkage |
 | [testing-framework](testing-framework/README.md) | Conceptual | Markdown-native testing framework — full specification in [synchestra-io/rehearse](https://github.com/synchestra-io/rehearse/blob/main/spec/features/testing-framework/) |
+| [lsp](lsp/README.md) | Conceptual | LSP server exposing specification navigation to IDEs — reuses the same Go packages as `synchestra feature` CLI commands |
 | [bots](bots/README.md) | Conceptual | Messenger bots for conversational access to Synchestra — project management, container control, prompt relay, and notifications |
 
 ## Feature Summaries
@@ -121,6 +122,10 @@ The contract between what a feature promises and what the system delivers. The f
 
 Turns specifications into executable verification — without leaving markdown. Composes acceptance criteria into multi-step test workflows that read as documentation and execute as test suites. The full specification — including the [test-scenario](https://github.com/synchestra-io/rehearse/blob/main/spec/features/testing-framework/test-scenario/) format and [test-runner](https://github.com/synchestra-io/rehearse/blob/main/spec/features/testing-framework/test-runner/) engine — lives in the [synchestra-io/rehearse](https://github.com/synchestra-io/rehearse/blob/main/spec/features/testing-framework/) repository. Synchestra integrates Rehearse as its testing framework.
 
+### [LSP for Specifications](lsp/README.md)
+
+A Language Server Protocol server that wraps the same Go packages powering the `synchestra feature` CLI commands. Gives humans live IDE integration: document symbols from `feature info`, go-to-definition from `feature deps`, find-references from `feature refs`, diagnostics from `spec validate`, and autocomplete for feature IDs. The CLI serves agents; the LSP serves humans editing specs in VS Code, Neovim, JetBrains, or Emacs. A later-phase feature — depends on the CLI packages being implemented first.
+
 ### [Bots](bots/README.md)
 
 Messenger bots that serve as conversational interfaces to Synchestra. Three kinds are recognized: [SynchestraBot](bots/synchestra-bot/README.md) (platform-operated, embedded in the server, Telegram-first), in-container bots (user-defined, running inside sandbox containers), and host-level bots (user-defined, running on the host machine). Only SynchestraBot is specified at this time. It provides project management commands, sandbox container control, prompt relay to in-container agents, and bidirectional notifications — built on [bots-go-framework/bots-fw](https://github.com/bots-go-framework/bots-fw) for platform-agnostic messenger support.
@@ -144,6 +149,7 @@ github-app → api (callback endpoint)
 onboarding → github-app, project-definition, ui, cli, api (orchestrates first-time setup)
 sandbox → cli, api (containers execute commands, host routes via API)
 bots → sandbox, chat, api, state-store (SynchestraBot relays prompts to containers, routes complex workflows through chat, uses API for operations)
+lsp → cli/feature, feature (LSP server reuses CLI feature packages for IDE integration)
 state-store → task-status-board (board interface and claim atomicity), chat (chat persistence)
 state-store ← cli, api, agent-skills (all consumers of state go through state store)
 acceptance-criteria → feature (introduces mandatory AC section), development-plan (plan ACs can reference feature ACs)
@@ -194,3 +200,4 @@ All diagrams in feature specifications should use **mermaid syntax** instead of 
 - [ui/tui](ui/tui/README.md): 5 outstanding questions
 - [bots](bots/README.md): 2 outstanding questions
 - [bots/synchestra-bot](bots/synchestra-bot/README.md): 5 outstanding questions
+- [lsp](lsp/README.md): 5 outstanding questions
