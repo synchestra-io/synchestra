@@ -62,40 +62,42 @@ Core principles (see the [agent-skills spec](../../spec/features/agent-skills/RE
 
 ## Available Skills
 
+> **CLI Command status:** 🟩 implemented · 🟨 draft · 🟥 not implemented
+
 ### Task Management
 
 | Skill | Description | CLI Command |
 |---|---|---|
-| [synchestra-task-new](synchestra-task-new/README.md) | Create a new task | [task new](../../spec/features/cli/task/new/README.md) |
-| [synchestra-task-enqueue](synchestra-task-enqueue/README.md) | Move a task from planning to queued | [task enqueue](../../spec/features/cli/task/enqueue/README.md) |
-| [synchestra-claim-task](synchestra-claim-task/README.md) | Claim a task before starting work on it | [task claim](../../spec/features/cli/task/claim/README.md) |
-| [synchestra-task-start](synchestra-task-start/README.md) | Begin work on a claimed task | [task start](../../spec/features/cli/task/start/README.md) |
-| [synchestra-task-status](synchestra-task-status/README.md) | Query or update task status | [task status](../../spec/features/cli/task/status/README.md) |
-| [synchestra-task-complete](synchestra-task-complete/README.md) | Mark a task as completed | [task complete](../../spec/features/cli/task/complete/README.md) |
-| [synchestra-task-fail](synchestra-task-fail/README.md) | Mark a task as failed with reason | [task fail](../../spec/features/cli/task/fail/README.md) |
-| [synchestra-task-block](synchestra-task-block/README.md) | Mark a task as blocked | [task block](../../spec/features/cli/task/block/README.md) |
-| [synchestra-task-unblock](synchestra-task-unblock/README.md) | Resume a blocked task | [task unblock](../../spec/features/cli/task/unblock/README.md) |
-| [synchestra-task-release](synchestra-task-release/README.md) | Release a claimed task back to queued | [task release](../../spec/features/cli/task/release/README.md) |
-| [synchestra-task-abort](synchestra-task-abort/README.md) | Request abortion of a task | [task abort](../../spec/features/cli/task/abort/README.md) |
-| [synchestra-task-aborted](synchestra-task-aborted/README.md) | Report a task has been aborted | [task aborted](../../spec/features/cli/task/aborted/README.md) |
-| [synchestra-task-list](synchestra-task-list/README.md) | List tasks with filtering | [task list](../../spec/features/cli/task/list/README.md) |
-| [synchestra-task-info](synchestra-task-info/README.md) | Show full task details and context | [task info](../../spec/features/cli/task/info/README.md) |
+| [synchestra-task-new](synchestra-task-new/README.md) | Create a new task | 🟥 [task new](../../spec/features/cli/task/new/README.md) |
+| [synchestra-task-enqueue](synchestra-task-enqueue/README.md) | Move a task from planning to queued | 🟥 [task enqueue](../../spec/features/cli/task/enqueue/README.md) |
+| [synchestra-claim-task](synchestra-claim-task/README.md) | Claim a task before starting work on it | 🟥 [task claim](../../spec/features/cli/task/claim/README.md) |
+| [synchestra-task-start](synchestra-task-start/README.md) | Begin work on a claimed task | 🟥 [task start](../../spec/features/cli/task/start/README.md) |
+| [synchestra-task-status](synchestra-task-status/README.md) | Query or update task status | 🟥 [task status](../../spec/features/cli/task/status/README.md) |
+| [synchestra-task-complete](synchestra-task-complete/README.md) | Mark a task as completed | 🟥 [task complete](../../spec/features/cli/task/complete/README.md) |
+| [synchestra-task-fail](synchestra-task-fail/README.md) | Mark a task as failed with reason | 🟥 [task fail](../../spec/features/cli/task/fail/README.md) |
+| [synchestra-task-block](synchestra-task-block/README.md) | Mark a task as blocked | 🟥 [task block](../../spec/features/cli/task/block/README.md) |
+| [synchestra-task-unblock](synchestra-task-unblock/README.md) | Resume a blocked task | 🟥 [task unblock](../../spec/features/cli/task/unblock/README.md) |
+| [synchestra-task-release](synchestra-task-release/README.md) | Release a claimed task back to queued | 🟥 [task release](../../spec/features/cli/task/release/README.md) |
+| [synchestra-task-abort](synchestra-task-abort/README.md) | Request abortion of a task | 🟥 [task abort](../../spec/features/cli/task/abort/README.md) |
+| [synchestra-task-aborted](synchestra-task-aborted/README.md) | Report a task has been aborted | 🟥 [task aborted](../../spec/features/cli/task/aborted/README.md) |
+| [synchestra-task-list](synchestra-task-list/README.md) | List tasks with filtering | 🟥 [task list](../../spec/features/cli/task/list/README.md) |
+| [synchestra-task-info](synchestra-task-info/README.md) | Show full task details and context | 🟥 [task info](../../spec/features/cli/task/info/README.md) |
 
 ### Feature Navigation
 
 | Skill | Description | CLI Command |
 |---|---|---|
-| [synchestra-feature-info](synchestra-feature-info/README.md) | Show feature metadata, section TOC, and children | [feature info](../../spec/features/cli/feature/info/README.md) |
-| [synchestra-feature-list](synchestra-feature-list/README.md) | List all features with optional metadata fields | [feature list](../../spec/features/cli/feature/list/README.md) |
-| [synchestra-feature-tree](synchestra-feature-tree/README.md) | Display feature hierarchy with focus/direction support | [feature tree](../../spec/features/cli/feature/tree/README.md) |
-| [synchestra-feature-deps](synchestra-feature-deps/README.md) | Show dependencies with optional transitive resolution | [feature deps](../../spec/features/cli/feature/deps/README.md) |
-| [synchestra-feature-refs](synchestra-feature-refs/README.md) | Show reverse dependencies with optional transitive resolution | [feature refs](../../spec/features/cli/feature/refs/README.md) |
+| [synchestra-feature-info](synchestra-feature-info/README.md) | Show feature metadata, section TOC, and children | 🟥 [feature info](../../spec/features/cli/feature/info/README.md) |
+| [synchestra-feature-list](synchestra-feature-list/README.md) | List all features with optional metadata fields | 🟩 [feature list](../../spec/features/cli/feature/list/README.md) |
+| [synchestra-feature-tree](synchestra-feature-tree/README.md) | Display feature hierarchy with focus/direction support | 🟩 [feature tree](../../spec/features/cli/feature/tree/README.md) |
+| [synchestra-feature-deps](synchestra-feature-deps/README.md) | Show dependencies with optional transitive resolution | 🟩 [feature deps](../../spec/features/cli/feature/deps/README.md) |
+| [synchestra-feature-refs](synchestra-feature-refs/README.md) | Show reverse dependencies with optional transitive resolution | 🟩 [feature refs](../../spec/features/cli/feature/refs/README.md) |
 
 ### Code Navigation
 
 | Skill | Description | CLI Command |
 |---|---|---|
-| [synchestra-code-deps](synchestra-code-deps/README.md) | Show Synchestra resources that source files depend on | [code deps](../../spec/features/cli/code/deps/README.md) |
+| [synchestra-code-deps](synchestra-code-deps/README.md) | Show Synchestra resources that source files depend on | 🟥 [code deps](../../spec/features/cli/code/deps/README.md) |
 
 ## Roadmap
 
