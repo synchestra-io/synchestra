@@ -30,6 +30,7 @@ Feature specifications for the Synchestra project, managed by Synchestra.
 | [testing-framework](testing-framework/README.md) | Conceptual | Markdown-native testing framework — full specification in [synchestra-io/rehearse](https://github.com/synchestra-io/rehearse/blob/main/spec/features/testing-framework/) |
 | [lsp](lsp/README.md) | Conceptual | LSP server exposing specification navigation to IDEs — reuses the same Go packages as `synchestra feature` CLI commands |
 | [bots](bots/README.md) | Conceptual | Messenger bots for conversational access to Synchestra — project management, container control, prompt relay, and notifications |
+| [source-references](source-references/README.md) | Conceptual | Language-agnostic `synchestra:` annotations that link source code to Synchestra resources (features, plans, docs, tasks) with strict validation and URL expansion |
 
 ## Feature Summaries
 
@@ -130,6 +131,10 @@ A Language Server Protocol server that wraps the same Go packages powering the `
 
 Messenger bots that serve as conversational interfaces to Synchestra. Three kinds are recognized: [SynchestraBot](bots/synchestra-bot/README.md) (platform-operated, embedded in the server, Telegram-first), in-container bots (user-defined, running inside sandbox containers), and host-level bots (user-defined, running on the host machine). Only SynchestraBot is specified at this time. It provides project management commands, sandbox container control, prompt relay to in-container agents, and bidirectional notifications — built on [bots-go-framework/bots-fw](https://github.com/bots-go-framework/bots-fw) for platform-agnostic messenger support.
 
+### [Source References](source-references/README.md)
+
+Language-agnostic inline annotations using the `synchestra:` prefix that link source code to Synchestra resources — features, plans, docs, and tasks. A single `synchestra:{type}/{path}[@{org}/{repo}]` notation works in any language's comment syntax, is detectable by byte-level prefix search, and expands to clickable `synchestra.io` URLs. References are validated strictly: pointing to a non-existent resource is an error caught by linter, pre-commit hook, or PR check. Extends `synchestra feature refs` to include source-level references alongside spec-level dependency references.
+
 ```
 feature → proposals, development-plan, outstanding-questions (features are the spec unit)
 task-status-board ← conflict-resolution
@@ -154,6 +159,7 @@ state-store → task-status-board (board interface and claim atomicity), chat (c
 state-store ← cli, api, agent-skills (all consumers of state go through state store)
 acceptance-criteria → feature (introduces mandatory AC section), development-plan (plan ACs can reference feature ACs)
 testing-framework → acceptance-criteria (composes ACs into test flows), cli (new test command group), feature (_tests/ directory)
+source-references → feature, cli, project-definition (synchestra: annotations link code to spec resources, validated by linter)
 ```
 
 `feature` is the foundational spec-layer concept — proposals, plans, and outstanding questions all attach to features.
@@ -201,3 +207,4 @@ All diagrams in feature specifications should use **mermaid syntax** instead of 
 - [bots](bots/README.md): 2 outstanding questions
 - [bots/synchestra-bot](bots/synchestra-bot/README.md): 5 outstanding questions
 - [lsp](lsp/README.md): 5 outstanding questions
+- [source-references](source-references/README.md): 4 outstanding questions
