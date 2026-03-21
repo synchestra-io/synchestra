@@ -76,7 +76,7 @@ Read-only commands. Highest ROI. Can be validated against existing spec files wi
 | Updated feature skills | Skill updates | Done | list/tree/deps/refs skills updated with --fields/--transitive docs |
 | `code deps` | CLI command | ✅ Implemented | Show Synchestra resources (features, plans, docs) that source files depend on via comment annotations |
 | `synchestra-code-deps` skill | Skill | ✅ Implemented | Wraps `code deps` for querying code-to-spec relationships |
-| `spec lint` | CLI command | Not specified | Structural convention checking (README exists, OQ section present, index up-to-date) |
+| `spec lint` | CLI command | ✅ Implemented | Structural convention checking (README exists, OQ section present, index up-to-date) |
 | `spec search` | CLI command | Not specified | Keyword/semantic search across spec documents |
 
 #### 1.1. Implement `feature info`
@@ -214,7 +214,7 @@ Scaffold a new feature directory with README template, update parent feature's c
 - ✅ Returns `feature info`-compatible YAML output with section line ranges
 - ✅ `--commit` and `--push` flags for optional git operations (`--push` implies `--commit`)
 - ⬚ Rollback on any failure
-- ⬚ `spec lint` passes after creation (spec lint not yet implemented)
+- ✅ `spec lint` passes after creation
 
 #### 2.2. Implement `feature status`
 

@@ -100,11 +100,17 @@ Core principles (see the [agent-skills spec](../../spec/features/agent-skills/RE
 |---|---|---|
 | [synchestra-code-deps](synchestra-code-deps/README.md) | Show Synchestra resources that source files depend on | ✅ [code deps](../../spec/features/cli/code/deps/README.md) |
 
+### Spec Validation
+
+| Skill | Description | CLI Command |
+|---|---|---|
+| [synchestra-spec-lint](synchestra-spec-lint/README.md) | Validate spec tree for structural convention violations | ✅ [spec lint](../../spec/features/cli/spec/lint/README.md) |
+
 ## Roadmap
 
-**Implemented:** all task lifecycle commands (create through abort), feature list, feature tree, feature deps, feature refs, feature new, code deps.
+**Implemented:** all task lifecycle commands (create through abort), feature list, feature tree, feature deps, feature refs, feature new, code deps, spec lint.
 
-**Next up:** feature info, `--fields` flag for selective metadata, `--transitive` for dependency resolution, spec validate.
+**Next up:** `--fields` flag for selective metadata, `--transitive` for dependency resolution, spec search.
 
 See the [Agent Skills Roadmap](../../spec/plans/agent-skills-roadmap/README.md) for the phased plan and competitive analysis.
 
