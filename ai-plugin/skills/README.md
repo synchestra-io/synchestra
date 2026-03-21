@@ -37,7 +37,7 @@ Concrete pain points:
 ### How Skills Solve This
 
 - **Token efficiency** — `feature info` returns ~500 tokens of structured metadata vs. reading a 3,000-token README. `feature deps --transitive` resolves full dependency chains in one call instead of recursive reads.
-- **Structural safety** — mutation commands (future: `feature new`, `question add`) enforce spec conventions, eliminating missing OQ sections, forgotten index updates, and wrong status values.
+- **Structural safety** — mutation commands (`feature new`, future: `question add`) enforce spec conventions, eliminating missing OQ sections, forgotten index updates, and wrong status values.
 - **Progressive discovery** — YAML frontmatter lets agents discover skills by name and description only. Full instructions load on demand.
 - **Composable enrichment** — `--fields` and `--transitive` flags let agents request exactly the metadata they need without loading unnecessary content.
 
@@ -92,6 +92,7 @@ Core principles (see the [agent-skills spec](../../spec/features/agent-skills/RE
 | [synchestra-feature-tree](synchestra-feature-tree/README.md) | Display feature hierarchy with focus/direction support | ✅ [feature tree](../../spec/features/cli/feature/tree/README.md) |
 | [synchestra-feature-deps](synchestra-feature-deps/README.md) | Show dependencies with optional transitive resolution | ✅ [feature deps](../../spec/features/cli/feature/deps/README.md) |
 | [synchestra-feature-refs](synchestra-feature-refs/README.md) | Show reverse dependencies with optional transitive resolution | ✅ [feature refs](../../spec/features/cli/feature/refs/README.md) |
+| [synchestra-feature-new](synchestra-feature-new/README.md) | Scaffold a new feature directory with README template | ✅ [feature new](../../spec/features/cli/feature/new/README.md) |
 
 ### Code Navigation
 
@@ -101,9 +102,9 @@ Core principles (see the [agent-skills spec](../../spec/features/agent-skills/RE
 
 ## Roadmap
 
-**Implemented:** all task lifecycle commands (create through abort), feature list, feature tree, feature deps, feature refs, code deps.
+**Implemented:** all task lifecycle commands (create through abort), feature list, feature tree, feature deps, feature refs, feature new, code deps.
 
-**Next up:** feature info, `--fields` flag for selective metadata, `--transitive` for dependency resolution, spec validate, feature new.
+**Next up:** feature info, `--fields` flag for selective metadata, `--transitive` for dependency resolution, spec validate.
 
 See the [Agent Skills Roadmap](../../spec/plans/agent-skills-roadmap/README.md) for the phased plan and competitive analysis.
 

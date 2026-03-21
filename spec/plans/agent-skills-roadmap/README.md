@@ -189,31 +189,32 @@ Structural safety for spec editing. Builds on Phase 1 validation to ensure mutat
 
 | Item | Type | Status | Description |
 |---|---|---|---|
-| `feature new` | CLI command | Specified | Scaffold feature dir + README template + update parent + update index. Local by default; `--commit`/`--push` optional. Returns `feature info` output. |
+| `feature new` | CLI command | ✅ Implemented | Scaffold feature dir + README template + update parent + update index. Local by default; `--commit`/`--push` optional. Returns `feature info` output. |
 | `feature status` | CLI command | Not specified | Update feature status in README and index atomically |
 | `question add` | CLI command | Not specified | Add OQ to a feature with proper formatting |
 | `question resolve` | CLI command | Not specified | Move OQ from open to resolved with resolution text |
 | `proposal new` | CLI command | Not specified | Scaffold proposal directory under a feature |
 | `plan new` | CLI command | Not specified | Scaffold plan in spec/plans/ with template and feature references |
 
-#### 2.1. Implement `feature new`
+#### 2.1. Implement `feature new` — ✅ Done
 
 Scaffold a new feature directory with README template, update parent feature's children list, and update the feature index. Local changes by default; `--commit` and `--push` flags for git operations. Returns `feature info`-compatible output with section line ranges.
 
 **Depends on:** Step 1.3 (spec lint — needed to verify post-mutation consistency)
 **Produces:**
-  - `feature new` CLI command ([spec](../../features/cli/feature/new/README.md))
+  - `feature new` CLI command ([spec](../../features/cli/feature/new/README.md)) — ✅ implemented
+  - `synchestra-feature-new` skill ([skill](../../../ai-plugin/skills/synchestra-feature-new/SKILL.md)) — ✅ created
   - README template with standard sections (Summary, Problem, Behavior, Dependencies, Acceptance Criteria, Outstanding Questions)
 **Task mapping:** `agent-skills-roadmap/feature-new`
 
 **Acceptance criteria:**
-- Creates `spec/features/{id}/README.md` with all required sections
-- Updates parent feature's children list if creating a nested feature
-- Updates feature index
-- Returns `feature info`-compatible YAML output with section line ranges
-- `--commit` and `--push` flags for optional git operations (`--push` implies `--commit`)
-- Rollback on any failure
-- `spec lint` passes after creation
+- ✅ Creates `spec/features/{id}/README.md` with all required sections
+- ✅ Updates parent feature's children list if creating a nested feature
+- ✅ Updates feature index
+- ✅ Returns `feature info`-compatible YAML output with section line ranges
+- ✅ `--commit` and `--push` flags for optional git operations (`--push` implies `--commit`)
+- ⬚ Rollback on any failure
+- ⬚ `spec lint` passes after creation (spec lint not yet implemented)
 
 #### 2.2. Implement `feature status`
 
