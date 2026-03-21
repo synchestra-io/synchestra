@@ -127,6 +127,8 @@ func discoverFeatures(featuresDir string) ([]string, error) {
 // featureNode represents a feature in a tree structure.
 type featureNode struct {
 	name     string
+	id       string // full feature ID
+	focus    bool   // marked as target in focused tree
 	children []*featureNode
 }
 
@@ -138,7 +140,7 @@ func buildTree(featureIDs []string) []*featureNode {
 	for _, id := range featureIDs {
 		parts := strings.Split(id, "/")
 		name := parts[len(parts)-1]
-		node := &featureNode{name: name}
+		node := &featureNode{name: name, id: id}
 		nodeMap[id] = node
 
 		if len(parts) == 1 {
@@ -158,10 +160,14 @@ func buildTree(featureIDs []string) []*featureNode {
 }
 
 // printTree writes the tree to w with tab indentation.
+// If a node has focus set, it is prefixed with "* ".
 func printTree(w *strings.Builder, nodes []*featureNode, depth int) {
 	for _, node := range nodes {
 		for i := 0; i < depth; i++ {
 			w.WriteByte('\t')
+		}
+		if node.focus {
+			w.WriteString("* ")
 		}
 		w.WriteString(node.name)
 		w.WriteByte('\n')

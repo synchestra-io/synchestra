@@ -5,6 +5,7 @@ package feature
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -15,17 +16,32 @@ func refsCommand() *cobra.Command {
 		Short: "Show features that reference a given feature as a dependency",
 		Long: `Shows features that reference (depend on) a given feature. This is the
 inverse of deps — it scans all features' ## Dependencies sections to find
-those that list the given feature ID.`,
+those that list the given feature ID. Use --transitive to follow the full chain.`,
 		Args: cobra.ExactArgs(1),
 		RunE: runRefs,
 	}
 	cmd.Flags().String("project", "", "project identifier (autodetected from current directory if omitted)")
+	cmd.Flags().String("fields", "", "comma-separated metadata fields to include (e.g., status,oq)")
+	cmd.Flags().String("format", "", "output format: yaml, json, text (auto-selects yaml when --fields is set)")
+	cmd.Flags().Bool("transitive", false, "follow reference chain recursively")
 	return cmd
 }
 
 func runRefs(cmd *cobra.Command, args []string) error {
 	featureID := args[0]
 	projectFlag, _ := cmd.Flags().GetString("project")
+	fieldsFlag, _ := cmd.Flags().GetString("fields")
+	transitive, _ := cmd.Flags().GetBool("transitive")
+
+	fields, err := parseFieldNames(fieldsFlag)
+	if err != nil {
+		return &exitError{code: 2, msg: err.Error()}
+	}
+
+	format := effectiveFormat(cmd)
+	if err := validateFormat(format); err != nil {
+		return err
+	}
 
 	featuresDir, err := resolveFeaturesDir(projectFlag)
 	if err != nil {
@@ -36,6 +52,30 @@ func runRefs(cmd *cobra.Command, args []string) error {
 		return &exitError{code: 3, msg: fmt.Sprintf("feature not found: %s", featureID)}
 	}
 
+	w := cmd.OutOrStdout()
+
+	if transitive {
+		nodes := resolveTransitiveRefs(featuresDir, featureID)
+		if len(fields) > 0 {
+			enrichTransitiveNodes(featuresDir, nodes, fields)
+		}
+		switch format {
+		case "yaml":
+			return writeEnrichedYAML(w, nodes)
+		case "json":
+			return writeEnrichedJSON(w, nodes)
+		default:
+			if len(fields) > 0 {
+				return writeEnrichedText(w, nodes, fields)
+			}
+			var sb strings.Builder
+			printTransitiveText(&sb, nodes, 0)
+			_, _ = fmt.Fprint(w, sb.String())
+		}
+		return nil
+	}
+
+	// Non-transitive
 	allFeatures, err := discoverFeatures(featuresDir)
 	if err != nil {
 		return &exitError{code: 10, msg: fmt.Sprintf("discovering features: %v", err)}
@@ -49,7 +89,7 @@ func runRefs(cmd *cobra.Command, args []string) error {
 		readmePath := featureReadmePath(featuresDir, fID)
 		deps, err := parseDependencies(readmePath)
 		if err != nil {
-			continue // skip features with unreadable READMEs
+			continue
 		}
 		for _, dep := range deps {
 			if dep == featureID {
@@ -58,9 +98,17 @@ func runRefs(cmd *cobra.Command, args []string) error {
 			}
 		}
 	}
-
 	sort.Strings(refs)
-	w := cmd.OutOrStdout()
+
+	if len(fields) > 0 || format == "yaml" || format == "json" {
+		var enriched []*enrichedFeature
+		for _, ref := range refs {
+			ef := resolveFields(featuresDir, ref, fields)
+			enriched = append(enriched, ef)
+		}
+		return writeEnrichedOutput(w, enriched, fields, format)
+	}
+
 	for _, ref := range refs {
 		_, _ = fmt.Fprintln(w, ref)
 	}

@@ -70,8 +70,9 @@ Read-only commands. Highest ROI. Can be validated against existing spec files wi
 | Item | Type | Status | Description |
 |---|---|---|---|
 | `feature info` | CLI command | ✅ Implemented | Metadata + section TOC with line ranges (~500 tokens vs ~3,000 for full README) |
-| `--fields` flag | CLI flag | Specified | Composable metadata enrichment for list/tree/deps/refs. Auto-switches to YAML. |
-| `--transitive` flag | CLI flag | Specified | Follow full dep/ref chains in one call. Eliminates recursive agent reads. |
+| `--fields` flag | CLI flag | ✅ Implemented | Composable metadata enrichment for list/tree/deps/refs. Auto-switches to YAML. |
+| `--transitive` flag | CLI flag | ✅ Implemented | Follow full dep/ref chains in one call. Eliminates recursive agent reads. |
+| `--direction` flag | CLI flag | ✅ Implemented | Focused tree view: `up` (ancestors) or `down` (subtree). Requires feature_id. |
 | `synchestra-feature-info` skill | Skill | Created | Wraps `feature info` for agent discovery |
 | Updated feature skills | Skill updates | Done | list/tree/deps/refs skills updated with --fields/--transitive docs |
 | `code deps` | CLI command | ✅ Implemented | Show Synchestra resources (features, plans, docs) that source files depend on via comment annotations |

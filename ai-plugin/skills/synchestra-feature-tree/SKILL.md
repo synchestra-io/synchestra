@@ -34,6 +34,7 @@ synchestra feature tree \
 | `--direction` | No | `up` (ancestors only), `down` (subtree only). Default when `<feature_id>` given: both. Invalid without `<feature_id>` |
 | [`--project`](../../spec/features/cli/_args/project.md) | No | Project identifier (e.g., `synchestra`). Autodetected from current directory if omitted |
 | [`--fields`](../../spec/features/cli/feature/_args/fields.md) | No | Inline metadata (e.g., `status,oq`). Auto-switches output to YAML |
+| `--format` | No | Output format: `yaml`, `json`, `text`. Auto-selects `yaml` when `--fields` is set |
 
 ## Exit codes
 
