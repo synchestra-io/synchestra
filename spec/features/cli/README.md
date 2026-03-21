@@ -176,7 +176,7 @@ Read-only commands for querying source code relationships to Synchestra resource
 
 ### `spec`
 
-Commands for validating and searching Synchestra specification repositories. Includes structural convention checking (`lint`) and keyword search (`search`, future). See [spec/README.md](spec/README.md).
+Commands for validating and searching Synchestra specification repositories. Includes structural convention checking (`lint`) and keyword search with spec-aware scoping (`search`). See [spec/README.md](spec/README.md).
 
 ### `serve`
 

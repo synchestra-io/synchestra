@@ -19,6 +19,7 @@ Controls the output format of read commands.
 | [`feature tree`](../feature/tree/README.md) | `yaml`, `json`, `text` | `text` (YAML with `--fields`) |
 | [`feature deps`](../feature/deps/README.md) | `yaml`, `json`, `text` | `text` (YAML with `--fields`) |
 | [`feature refs`](../feature/refs/README.md) | `yaml`, `json`, `text` | `text` (YAML with `--fields`) |
+| [`spec search`](../spec/search/README.md) | `text`, `yaml`, `json` | `text` |
 | [`server status`](../server/status/README.md) | `text`, `json`, `yaml` | `text` |
 | [`server project list`](../server/project/list/README.md) | `yaml`, `json`, `md`, `csv` | `yaml` |
 

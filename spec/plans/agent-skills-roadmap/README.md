@@ -78,7 +78,7 @@ Read-only commands. Highest ROI. Can be validated against existing spec files wi
 | `code deps` | CLI command | ✅ Implemented | Show Synchestra resources (features, plans, docs) that source files depend on via comment annotations |
 | `synchestra-code-deps` skill | Skill | ✅ Implemented | Wraps `code deps` for querying code-to-spec relationships |
 | `spec lint` | CLI command | ✅ Implemented | Structural convention checking (README exists, OQ section present, index up-to-date) |
-| `spec search` | CLI command | Not specified | Keyword/semantic search across spec documents |
+| `spec search` | CLI command | Specified | Keyword search across spec documents with metadata filtering, section scoping, and cross-reference enrichment |
 
 #### 1.1. Implement `feature info`
 
@@ -130,19 +130,26 @@ Check structural conventions across the entire spec tree. This is prerequisite i
 
 #### 1.4. Implement `spec search`
 
-Keyword search across spec documents with context snippets.
+Keyword search across spec documents with spec-aware scoping, metadata enrichment, and cross-reference context.
 
 **Depends on:** (none)
 **Produces:**
-  - `spec search` CLI command
-  - Results include file path, line number, and surrounding context
+  - `spec search` CLI command ([spec](../../features/cli/spec/search/README.md))
+  - Results include file path, line number, section context, feature metadata, and optional cross-references
 **Task mapping:** `agent-skills-roadmap/spec-search`
 
 **Acceptance criteria:**
-- Searches all markdown files under `spec/`
-- Returns file path, line number, and ±2 lines of context per match
-- Supports `--feature` flag to scope search to a specific feature subtree
-- Results sorted by relevance (exact match > partial match)
+- Searches all `.md` files under `spec/`
+- Supports quoted exact-phrase and unquoted AND-terms search
+- Returns file path, line number, and ±N lines of context per match (`--context`, default: 2)
+- `--feature` flag scopes search to a specific feature subtree
+- `--section` flag restricts search to named markdown sections (case-insensitive partial match)
+- `--status` flag filters results by containing feature's status
+- `--type` flag filters by resource type (`feature`, `plan`, `proposal`)
+- `--refs` flag enriches results with dependency, reverse-dependency, and plan context
+- Results sorted by relevance (heading match > exact phrase > all-terms)
+- YAML/JSON output groups matches by feature
+- Exit code 0 = matches found, 1 = no matches, 2 = invalid args, 3 = feature not found
 
 #### 1.5. Create skills for new Phase 1 commands
 
@@ -415,7 +422,7 @@ These decisions were made during feature specification and should not be revisit
 ## Outstanding Questions
 
 - Should skills include platform-specific instructions (e.g., "in Claude Code, add this to your CLAUDE.md")?
-- Should `spec search` be keyword-based, semantic/embedding-based, or both with a flag?
+- ~~Should `spec search` be keyword-based, semantic/embedding-based, or both with a flag?~~ Resolved: keyword-first with spec-aware enrichment (`--section`, `--status`, `--type`, `--refs`). Semantic search deferred to a future iteration. See [spec search spec](../../features/cli/spec/search/README.md).
 - Should `feature info` support `--sections-only` / `--meta-only` for even more surgical token savings?
 - How deep should section TOC nesting go? Only h2+h3, or all heading levels?
 - What computed fields should `--fields` support beyond status/oq/deps/refs/children/plans/proposals?

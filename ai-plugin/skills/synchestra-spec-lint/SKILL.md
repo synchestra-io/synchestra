@@ -122,4 +122,4 @@ synchestra spec lint  # verify spec tree is still clean
 - `--rules` and `--ignore` are mutually exclusive. Use one or the other.
 - Default severity is `error` — warnings and info are hidden unless `--severity warning` or `--severity info` is passed.
 - The integration test verifies the Synchestra spec repo itself produces zero errors.
-- For querying spec content (rather than validating structure), use `spec search` (future).
+- For querying spec content (rather than validating structure), use [`spec search`](../synchestra-spec-search/README.md).

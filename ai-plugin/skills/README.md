@@ -105,12 +105,13 @@ Core principles (see the [agent-skills spec](../../spec/features/agent-skills/RE
 | Skill | Description | CLI Command |
 |---|---|---|
 | [synchestra-spec-lint](synchestra-spec-lint/README.md) | Validate spec tree for structural convention violations | ✅ [spec lint](../../spec/features/cli/spec/lint/README.md) |
+| [synchestra-spec-search](synchestra-spec-search/README.md) | Search spec documents with metadata filtering and cross-reference context | [spec search](../../spec/features/cli/spec/search/README.md) |
 
 ## Roadmap
 
 **Implemented:** all task lifecycle commands (create through abort), feature list, feature tree, feature deps, feature refs, feature new, code deps, spec lint.
 
-**Next up:** `--fields` flag for selective metadata, `--transitive` for dependency resolution, spec search.
+**Next up:** `--fields` flag for selective metadata, `--transitive` for dependency resolution. Spec search skill created (CLI not yet implemented).
 
 See the [Agent Skills Roadmap](../../spec/plans/agent-skills-roadmap/README.md) for the phased plan and competitive analysis.
 
