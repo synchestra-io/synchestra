@@ -113,7 +113,12 @@ No existing tool combines structured specification management, git-backed multi-
 
 ## Skill File Format
 
-Every `README.md` inside a skill directory **MUST** begin with a YAML frontmatter header containing `name` and `description` fields. This is required by the [Claude Code skills format](https://code.claude.com/docs/en/skills.md).
+Each skill directory contains two files:
+
+- **`SKILL.md`** — the skill instructions, loaded by GitHub Copilot CLI and Claude Code. This is the canonical source of skill content.
+- **`README.md`** — a short summary with a link to `SKILL.md`, included to satisfy the [repository convention](../../AGENTS.md) that every directory must have a `README.md`.
+
+`SKILL.md` files **MUST** begin with a YAML frontmatter header containing `name` and `description` fields, as required by both the [Claude Code skills format](https://code.claude.com/docs/en/skills.md) and the [GitHub Copilot CLI skills format](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/create-skills).
 
 ```yaml
 ---
@@ -126,6 +131,12 @@ description: Lists all features in a project. Use when listing features, explori
 - **`description`** — a concise, action-oriented sentence describing what the skill does and when to invoke it. Include trigger phrases like "Use when…" so agents can match user intent to the right skill.
 
 The rest of the file follows the standard skill body format (heading, context, parameters, exit codes, etc.).
+
+## GitHub Copilot CLI Integration
+
+Skills are exposed to GitHub Copilot CLI via a single directory symlink: `.github/skills` → `ai-plugin/skills/`. Copilot CLI auto-discovers skills by scanning `.github/skills/` for `SKILL.md` files.
+
+To add a new skill: create it here. No additional configuration needed — the symlink covers the whole directory.
 
 ## Outstanding Questions
 

@@ -1,92 +1,9 @@
----
-name: synchestra-feature-list
-description: Lists all features in a project, optionally with metadata fields. Use when surveying features, finding IDs, or getting a status overview.
----
+# synchestra-feature-list
 
-# Skill: synchestra-feature-list
+Lists all features in a project, optionally with metadata fields. Use when surveying features, finding IDs, or getting a status overview.
 
-List all features in a project to get an overview of what capabilities exist and how they're organized.
+See [SKILL.md](SKILL.md) for full instructions, parameters, exit codes, and examples.
 
-**CLI reference:** [synchestra feature list](../../spec/features/cli/feature/list/README.md)
+## Outstanding Questions
 
-## When to use
-
-- **Surveying a project:** Get a complete list of all features in the project
-- **Finding a feature ID:** Look up the exact ID before using `deps`, `refs`, or `info`
-- **Status overview:** Use `--fields=status` to see the state of every feature at once
-- **Checking feature coverage:** See what areas are already defined vs. missing
-
-## Command
-
-```bash
-synchestra feature list \
-  [--project <project_id>] \
-  [--fields <fields>]
-```
-
-## Parameters
-
-| Parameter | Required | Description |
-|---|---|---|
-| [`--project`](../../spec/features/cli/_args/project.md) | No | Project identifier (e.g., `synchestra`). Autodetected from current directory if omitted |
-| [`--fields`](../../spec/features/cli/feature/_args/fields.md) | No | Inline metadata (e.g., `status,oq`). Auto-switches output to YAML |
-
-## Exit codes
-
-| Exit code | Meaning | What to do |
-|---|---|---|
-| `0` | Success | Parse the output — one feature ID per line |
-| `2` | Invalid arguments | Check parameter values |
-| `3` | Project not found | Verify the project identifier or current directory |
-| `10+` | Unexpected error | Log the error and escalate |
-
-## Examples
-
-### List all features
-
-```bash
-synchestra feature list --project synchestra
-# agent-skills
-# claim-and-push
-# cli
-# cli/feature
-# cli/task
-# conflict-resolution
-# cross-repo-sync
-```
-
-### List with status and outstanding questions
-
-```bash
-synchestra feature list --fields=status,oq
-```
-
-```yaml
-- path: agent-skills
-  status: "In Progress"
-  oq: 3
-- path: cli
-  status: "In Progress"
-  oq: 3
-- path: cli/feature
-  status: "Conceptual"
-  oq: 1
-```
-
-### Pipe to other tools
-
-```bash
-# Count features
-synchestra feature list --project synchestra | wc -l
-
-# Find features matching a pattern
-synchestra feature list --project synchestra | grep cli
-```
-
-## Notes
-
-- This is a **read-only** command — it never mutates state.
-- Without `--fields`: plain text, one feature ID per line, sorted alphabetically.
-- With `--fields`: output auto-switches to YAML with the requested metadata inline.
-- Both parent features (`cli`) and their children (`cli/task`) appear as separate entries.
-- Use `feature tree` for a hierarchical view, or `feature deps`/`feature refs` to trace relationships.
+None at this time.
