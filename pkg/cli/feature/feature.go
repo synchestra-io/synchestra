@@ -18,6 +18,7 @@ func Command() *cobra.Command {
 		treeCommand(),
 		depsCommand(),
 		refsCommand(),
+		newCommand(),
 	)
 	return cmd
 }
