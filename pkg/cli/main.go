@@ -13,6 +13,7 @@ import (
 	"github.com/synchesta-io/synchestra/pkg/cli/code"
 	"github.com/synchesta-io/synchestra/pkg/cli/feature"
 	"github.com/synchesta-io/synchestra/pkg/cli/project"
+	"github.com/synchesta-io/synchestra/pkg/cli/spec"
 	testcmd "github.com/synchesta-io/synchestra/pkg/cli/test"
 )
 
@@ -56,6 +57,7 @@ func Run(
 		testcmd.Command(),
 		feature.Command(),
 		code.Command(),
+		spec.Command(),
 	)
 
 	rootCmd.SetArgs(args[1:])

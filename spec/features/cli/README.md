@@ -174,6 +174,10 @@ Read-only commands for querying features — flat listing, hierarchical tree, de
 
 Read-only commands for querying source code relationships to Synchestra resources. Where `feature` operates on the spec → spec graph, `code` operates on the code → spec graph — scanning source files for [source references](../source-references/README.md) (`synchestra:` annotations and expanded URLs). See [code/README.md](code/README.md).
 
+### `spec`
+
+Commands for validating and searching Synchestra specification repositories. Includes structural convention checking (`lint`) and keyword search (`search`, future). See [spec/README.md](spec/README.md).
+
 ### `serve`
 
 Starts a foreground Synchestra server exposing API over HTTP, HTTPS, and/or MCP. Designed for interactive development — logs stream to stdout, Ctrl+C to stop. See [serve/README.md](serve/README.md).
