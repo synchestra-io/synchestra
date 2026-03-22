@@ -91,11 +91,34 @@ Monospace is used as a **highlight device**: regular UI elements use Inter, but 
 
 ## Illustration Style
 
-### Approach: Hybrid Technical Elegance
+### Two Visual Registers
 
-Proportioned human figures drawn with clean vector strokes on white background. Not as raw as a blueprint, not as cartoonish as geometric icons. The visual language of a high-end architecture firm's website meets technical illustration.
+The brand uses two complementary illustration styles that share a common palette but differ in purpose and detail level:
 
-### Specification
+| Register | Used For | Style |
+|---|---|---|
+| **Character illustrations** | Website scenes, marketing, storytelling | Sempé-inspired pencil drawing — warm, expressive, individual |
+| **Technical diagrams** | Product UI, documentation, architecture | Clean wireframe — precise, schematic, functional |
+
+Both registers use the same graphite base (`#404040`) and selective color philosophy (color = attention). They coexist under the brand: **human warmth in storytelling, technical precision in the product.**
+
+### Character Illustrations: Sempé-Inspired Pencil Style
+
+Inspired by Jean-Jacques Sempé's editorial illustrations. Warm, slightly whimsical pencil work where every character feels alive through a few perfectly chosen details — a tilt of the head, the way someone holds their instrument, a distinctive piece of clothing.
+
+**Detail level:** Clean outlines with selective detail. Faces have expressions, clothing is distinct, but not every fold is drawn. Important details pop, the rest is suggested. Confident pencil strokes with lots of white space and breathing room.
+
+| Property | Value |
+|---|---|
+| Line work | Graphite pencil `#404040` |
+| Background | White `#ffffff` |
+| Foreground figures | Full pencil detail — expressions, posture, clothing |
+| Background figures | Lighter pencil work, 30–35% opacity, less detail |
+| Colored elements | Full saturation, selective — only meaningful objects |
+
+### Technical Diagrams: Wireframe Style
+
+Used in product interfaces, documentation, and architecture diagrams. Clean vector strokes, schematic figures, minimal personality.
 
 | Property | Value |
 |---|---|
@@ -109,24 +132,61 @@ Proportioned human figures drawn with clean vector strokes on white background. 
 
 ### The Recurring Cast
 
-| Character | Role | Visual Treatment |
+#### The Architect (Conductor)
+
+Central character. Conducts and holds plans. Represents the human or Synchestra itself. Full pencil detail with colored vest (burgundy `#7a2a2a`) and baton (gold `#c09018`). Confident, composed posture — authority without rigidity.
+
+#### The Musicians (The Orchestra)
+
+A world-class ensemble that sells out Carnegie Hall — but still plays Tuesday nights at their local pub for friends and family. Virtuosos who chose music for love, not fame. Each member has a life beyond the stage (a profession, a family, a neighborhood), and those lives make the music richer. Synchestra is built with the same philosophy: serious, professional-grade tooling — shared freely, built for the community, used by people who care about craft.
+
+The word "amateur" comes from the Latin *amator* — one who does it for love. These musicians are amateurs in that original sense: world-class in skill, motivated by passion rather than prestige.
+
+Each musician is a distinct character with:
+
+- **A cultural vibe** that guides their visual personality (used as a creative brief tool, not communicated to viewers)
+- **A distinct personality** conveyed through posture, expression, and clothing details
+- **Their own instrument** — a mix of classical and folk/popular, whatever people brought
+- **A backstory** that makes them recognizable across scenes
+
+A returning visitor should start to recognize individuals across different illustrations on the site.
+
+##### The Cast
+
+| # | Character | Instrument | Creative Vibe | Personality |
+|---|---|---|---|---|
+| — | **The Architect** | Baton | Central European precision, quiet warmth | The calm center of gravity — authority through competence, not volume |
+| 1 | **The Cellist** | Cello | Russian intellectual warmth | The scholar — studies carefully before speaking |
+| 2 | **The Flutist** | Flute | Parisian effortlessness | The questioner — finds the flaw in the plan |
+| 3 | **The Guitarist** | Classical guitar | Latin American ease | The enthusiast — already on board, makes everyone relax |
+| 4 | **The Accordionist** | Accordion | Italian expressiveness | The skeptic — strong opinions, deeply loyal once committed |
+| 5 | **The Violinist** | Violin | Japanese quiet precision | The observer — says little, misses nothing |
+| 6 | **The Drummer** | Cajón + percussion kit | Black cool, jazz/reggae soul | The black sheep — does his own thing, but holds it all together when it matters |
+
+**Creative vibe note:** Cultural backgrounds are used as shorthand to guide character energy, clothing style, and body language in AI image generation and illustration briefs. They are not labeled or communicated to website visitors — the viewer sees diverse, distinct individuals, not nationalities.
+
+**The Drummer's special role:** In scenes about flexibility, customization, or adaptive behavior, the Drummer becomes the featured character. Jazz improvisation = systems that adapt to whatever comes. Reggae groove = steady, reliable rhythm underneath apparent chaos.
+
+**Visual treatment:** Pencil outlines, subordinate to the architect. 30–35% opacity in ensemble scenes.
+
+#### The Setting
+
+| Element | Role | Visual Treatment |
 |---|---|---|
-| **The Architect** | Central character. Conducts and holds plans. Represents the human or Synchestra itself. | Full graphite detail, colored vest/baton |
-| **The Musicians** | The agents. Multiple, varied, each with their own instrument/tool. | Wireframe outlines, subordinate to architect, 30–35% opacity |
 | **The Stage** | The coordination space — the repository. | Floor line, red curtains at edges |
 | **The Plans/Score** | Blueprints the architect holds. Represent specs, tasks, state. | Drawn in blue (`#1a5ea0`) |
-| **Objects** | Metronome (timing/scheduling), music stands (task queues), sheet music (specifications), instruments. | Wireframe base, colored when significant |
+| **Objects** | Metronome (timing/scheduling), music stands (task queues), sheet music (specifications), instruments. | Pencil base, colored when significant |
 
 ### Color Hierarchy in Illustrations
 
-Characters and objects exist on a spectrum from pure wireframe to fully colored:
+Characters and objects exist on a spectrum from pure pencil to selectively colored:
 
-1. **Background context** — wireframe only, low opacity (musicians in background, stage floor)
-2. **Supporting elements** — wireframe at full opacity (foreground musicians, furniture)
-3. **Key objects** — wireframe with selective color (instruments of featured musicians, metronome pendulum)
-4. **Primary characters and dramatic elements** — colored accents on wireframe base (architect's vest, baton, curtains, plans)
+1. **Background context** — pencil only, low opacity (musicians in background, stage floor)
+2. **Supporting elements** — pencil at full opacity (foreground musicians, furniture)
+3. **Key objects** — pencil with selective color (instruments of featured musicians, metronome pendulum)
+4. **Primary characters and dramatic elements** — colored accents on pencil base (architect's vest, baton, curtains, plans)
 
-**When musicians get color:** Musicians are wireframe by default. A musician becomes "featured" — and receives color on their instrument or figure — when a scene is illustrating a concept that maps to a specific agent role. For example, in a scene about "task claiming," the musician reaching for a sheet of music would have a colored instrument to draw the eye. In ensemble/overview scenes, all musicians remain wireframe. The rule: **one scene, one focus, one featured musician at most.**
+**When musicians get color:** Musicians are pencil-only by default. A musician becomes "featured" — and receives color on their instrument or figure — when a scene is illustrating a concept that maps to a specific agent role. For example, in a scene about "task claiming," the musician reaching for a sheet of music would have a colored instrument to draw the eye. In ensemble/overview scenes, all musicians remain pencil-only. The rule: **one scene, one focus, one featured musician at most.**
 
 ## Voice & Tone
 
