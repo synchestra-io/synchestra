@@ -24,7 +24,7 @@ Slightly elevated audience POV, looking at the stage from approximately the 5th 
 ### Scene Zones
 
 **Zone 1 — At the workbench (center):**
-- The Architect stands at the near side of the workbench, facing the audience at a 3/4 angle, pointing at the blueprint
+- The Architect stands at the near side of the workbench, facing the audience at a 3/4 angle, pointing at the blueprint. His baton is nearby but not in use — tucked under his arm, resting on the bench, or sticking out of a vest pocket. He's in architect mode, not conductor mode.
 - The Cellist is seated at the workbench, leaning forward to study the blueprint
 - The Flutist stands at the workbench, one hand on the blueprint, asking a question
 - The Guitarist stands behind the workbench, leaning on it with both hands, grinning
