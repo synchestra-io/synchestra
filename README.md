@@ -2,6 +2,8 @@
 
 **Synchestra** — as in *synch*ronized *orchestra* — is a modular, opinionated platform for orchestrating multi-platform AI agents asynchronously. It manages the **I/O** of AI-driven development: the **inputs** (prompts, specifications, task queues) and the **outputs** (code, documents, artifacts) — keeping token usage minimal, output velocity high, and humans in the loop.
 
+![Synchestra — every agent knows its part](spec/branding/illustrations/hero-scene.webp)
+
 Open this in [synchestra.io/app](https://synchestra.io/app/add-project#state-repo=github.com/synchestra-io/synchestra-state)
 
 ## Why Synchestra Exists
