@@ -141,7 +141,3 @@ synchestra feature new \
 - **Output is `feature info`-compatible**: Use the `sections[].lines` ranges to immediately target specific sections for content population — no follow-up `feature info` call needed.
 - **Local by default**: Without `--commit` or `--push`, changes are only made on disk. Use `--commit` to stage and commit, or `--push` for atomic commit-and-push.
 - **Commit message**: `feat(spec): add feature {feature_id}` (not configurable).
-
-## Outstanding Questions
-
-None at this time.

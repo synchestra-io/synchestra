@@ -75,7 +75,3 @@ synchestra task abort --project synchestra --task fix-bug \
 - The task must be in `claimed` or `in_progress` status. If the task has already completed, failed, or been aborted, this command will fail with exit code `4`.
 - The transition is atomic — it commits the flag change and pushes to the state repository.
 - The `--reason` parameter is optional but recommended. It gives the working agent context about why the abort was requested.
-
-## Outstanding Questions
-
-None at this time.

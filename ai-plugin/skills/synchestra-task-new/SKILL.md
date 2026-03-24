@@ -97,8 +97,3 @@ synchestra task new \
 - The parent task must already exist when creating a nested subtask. If it does not, the command exits with code `3`.
 - The default status is `planning`. Use `--enqueue` to skip planning and place the task directly in `queued` status.
 - The task directory and `README.md` are created automatically; do not create them manually before running this command.
-
-## Outstanding Questions
-
-- Should there be a `--assignee` / `--requester` parameter?
-- Should the description be read from stdin if not provided as a flag?

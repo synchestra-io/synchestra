@@ -75,7 +75,3 @@ synchestra task release --project synchestra --task fix-bug \
 - This command implicitly guards on `--current claimed`. You can only release a task that is currently claimed.
 - The transition is atomic — it commits the status change and pushes to the state repository.
 - Releasing a task returns it to `queued` status, clearing the assignee so any agent can claim it.
-
-## Outstanding Questions
-
-None at this time.
