@@ -8,6 +8,7 @@
 | [chat-workflow-engine](chat-workflow-engine/) | draft | — | chat/workflow | @alex | — |
 | [agent-skills-roadmap](agent-skills-roadmap/) | draft | — | agent-skills, cli/feature | @alex | — |
 | [hero-scene](hero-scene/) | draft | — | landing | @alex | — |
+| [superpowers-integration](superpowers-integration/) | draft | — | embedded-state, cli/project/init, agent-skills | @alex | — |
 
 ## Recently Closed
 

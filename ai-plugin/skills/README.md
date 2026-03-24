@@ -64,6 +64,12 @@ Core principles (see the [agent-skills spec](../../spec/features/agent-skills/RE
 
 > **CLI Command status:** ✅ implemented · 🟨 draft · 🟥 not implemented
 
+### Project Setup
+
+| Skill | Description | CLI Command |
+|---|---|---|
+| [synchestra-project-init](synchestra-project-init/README.md) | Initialize embedded Synchestra state in a git repo | ✅ [project init](../../spec/features/cli/project/init/README.md) |
+
 ### Task Management
 
 | Skill | Description | CLI Command |
@@ -107,11 +113,25 @@ Core principles (see the [agent-skills spec](../../spec/features/agent-skills/RE
 | [synchestra-spec-lint](synchestra-spec-lint/README.md) | Validate spec tree for structural convention violations | ✅ [spec lint](../../spec/features/cli/spec/lint/README.md) |
 | [synchestra-spec-search](synchestra-spec-search/README.md) | Search spec documents with metadata filtering and cross-reference context | [spec search](../../spec/features/cli/spec/search/README.md) |
 
+## Distribution
+
+Skills are currently co-located with the CLI in this repository. They are built as a **separate, platform-independent release artifact** (`synchestra-skills-v{version}.tar.gz`) alongside the per-platform CLI binaries.
+
+Users install skills via:
+
+```bash
+synchestra skill install
+```
+
+This downloads the skills bundle matching the installed CLI version from GitHub releases and extracts it to the user's skills directory (e.g., `~/.claude/skills/`).
+
+**Future:** Once the project matures toward beta, skills will move to a dedicated `synchestra-skills` repository. This will allow skills to evolve independently of the CLI release cadence, accept community contributions without touching the CLI repo, and simplify the superpowers integration. The CLI command interface (flags, exit codes) is stable enough that skills do not need tight version coupling with the binary.
+
 ## Roadmap
 
-**Implemented:** all task lifecycle commands (create through abort), feature list, feature tree, feature deps, feature refs, feature new, code deps, spec lint.
+**Implemented:** all task lifecycle commands (create through abort), feature list, feature tree, feature deps, feature refs, feature new, code deps, spec lint, project init.
 
-**Next up:** `--fields` flag for selective metadata, `--transitive` for dependency resolution. Spec search skill created (CLI not yet implemented).
+**Next up:** `--fields` flag for selective metadata, `--transitive` for dependency resolution. Spec search skill created (CLI not yet implemented). `synchestra skill install` command for distributing skills independently of the CLI binary.
 
 See the [Agent Skills Roadmap](../../spec/plans/agent-skills-roadmap/README.md) for the phased plan and competitive analysis.
 
