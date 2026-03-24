@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/synchestra-io/synchestra/pkg/cli/exitcode"
 )
 
 // setupSpecRepo creates a temp dir with a spec/features directory tree, writes a
@@ -150,7 +152,7 @@ func TestRunNew_WithDependsOn(t *testing.T) {
 }
 
 // TestRunNew_InvalidDependency verifies that a non-existent dependency returns
-// an exitError with code 2.
+// an exitcode.Error with code 2.
 func TestRunNew_InvalidDependency(t *testing.T) {
 	setupSpecRepo(t)
 
@@ -158,16 +160,16 @@ func TestRunNew_InvalidDependency(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected an error for invalid dependency, got nil")
 	}
-	var exitErr *exitError
+	var exitErr *exitcode.Error
 	if !errors.As(err, &exitErr) {
-		t.Fatalf("expected *exitError, got %T: %v", err, err)
+		t.Fatalf("expected *exitcode.Error, got %T: %v", err, err)
 	}
 	if exitErr.ExitCode() != 2 {
 		t.Errorf("expected exit code 2, got %d", exitErr.ExitCode())
 	}
 }
 
-// TestRunNew_MissingTitle verifies that omitting --title returns an exitError
+// TestRunNew_MissingTitle verifies that omitting --title returns an exitcode.Error
 // with code 2.
 func TestRunNew_MissingTitle(t *testing.T) {
 	setupSpecRepo(t)
@@ -176,9 +178,9 @@ func TestRunNew_MissingTitle(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected an error when title is missing, got nil")
 	}
-	var exitErr *exitError
+	var exitErr *exitcode.Error
 	if !errors.As(err, &exitErr) {
-		t.Fatalf("expected *exitError, got %T: %v", err, err)
+		t.Fatalf("expected *exitcode.Error, got %T: %v", err, err)
 	}
 	if exitErr.ExitCode() != 2 {
 		t.Errorf("expected exit code 2, got %d", exitErr.ExitCode())
@@ -186,7 +188,7 @@ func TestRunNew_MissingTitle(t *testing.T) {
 }
 
 // TestRunNew_InvalidStatus verifies that an unrecognised status returns an
-// exitError with code 2.
+// exitcode.Error with code 2.
 func TestRunNew_InvalidStatus(t *testing.T) {
 	setupSpecRepo(t)
 
@@ -194,9 +196,9 @@ func TestRunNew_InvalidStatus(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected an error for invalid status, got nil")
 	}
-	var exitErr *exitError
+	var exitErr *exitcode.Error
 	if !errors.As(err, &exitErr) {
-		t.Fatalf("expected *exitError, got %T: %v", err, err)
+		t.Fatalf("expected *exitcode.Error, got %T: %v", err, err)
 	}
 	if exitErr.ExitCode() != 2 {
 		t.Errorf("expected exit code 2, got %d", exitErr.ExitCode())
@@ -204,7 +206,7 @@ func TestRunNew_InvalidStatus(t *testing.T) {
 }
 
 // TestRunNew_ParentNotFound verifies that a missing --parent returns an
-// exitError with code 3.
+// exitcode.Error with code 3.
 func TestRunNew_ParentNotFound(t *testing.T) {
 	setupSpecRepo(t)
 
@@ -212,9 +214,9 @@ func TestRunNew_ParentNotFound(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected an error for missing parent, got nil")
 	}
-	var exitErr *exitError
+	var exitErr *exitcode.Error
 	if !errors.As(err, &exitErr) {
-		t.Fatalf("expected *exitError, got %T: %v", err, err)
+		t.Fatalf("expected *exitcode.Error, got %T: %v", err, err)
 	}
 	if exitErr.ExitCode() != 3 {
 		t.Errorf("expected exit code 3, got %d", exitErr.ExitCode())
@@ -222,7 +224,7 @@ func TestRunNew_ParentNotFound(t *testing.T) {
 }
 
 // TestRunNew_AlreadyExists verifies that trying to create a feature whose
-// directory already exists returns an exitError with code 4.
+// directory already exists returns an exitcode.Error with code 4.
 func TestRunNew_AlreadyExists(t *testing.T) {
 	_, featDir := setupSpecRepo(t)
 
@@ -239,9 +241,9 @@ func TestRunNew_AlreadyExists(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected an error for already-existing feature, got nil")
 	}
-	var exitErr *exitError
+	var exitErr *exitcode.Error
 	if !errors.As(err, &exitErr) {
-		t.Fatalf("expected *exitError, got %T: %v", err, err)
+		t.Fatalf("expected *exitcode.Error, got %T: %v", err, err)
 	}
 	if exitErr.ExitCode() != 4 {
 		t.Errorf("expected exit code 4, got %d", exitErr.ExitCode())
@@ -249,7 +251,7 @@ func TestRunNew_AlreadyExists(t *testing.T) {
 }
 
 // TestRunNew_ParentSlugConflict verifies that providing both --parent and a
-// slash-containing --slug returns an exitError with code 2.
+// slash-containing --slug returns an exitcode.Error with code 2.
 func TestRunNew_ParentSlugConflict(t *testing.T) {
 	setupSpecRepo(t)
 
@@ -257,9 +259,9 @@ func TestRunNew_ParentSlugConflict(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected an error for parent+slug conflict, got nil")
 	}
-	var exitErr *exitError
+	var exitErr *exitcode.Error
 	if !errors.As(err, &exitErr) {
-		t.Fatalf("expected *exitError, got %T: %v", err, err)
+		t.Fatalf("expected *exitcode.Error, got %T: %v", err, err)
 	}
 	if exitErr.ExitCode() != 2 {
 		t.Errorf("expected exit code 2, got %d", exitErr.ExitCode())

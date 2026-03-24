@@ -3,6 +3,8 @@ package state
 import (
 	"bytes"
 	"testing"
+
+	"github.com/synchestra-io/synchestra/pkg/cli/exitcode"
 )
 
 func TestPushCommand_Help(t *testing.T) {
@@ -27,9 +29,9 @@ func TestPushCommand_StubReturnsNotImplemented(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error from stub implementation")
 	}
-	ec, ok := err.(*exitError)
+	ec, ok := err.(*exitcode.Error)
 	if !ok {
-		t.Fatalf("expected *exitError, got %T: %v", err, err)
+		t.Fatalf("expected *exitcode.Error, got %T: %v", err, err)
 	}
 	if ec.ExitCode() != 10 {
 		t.Errorf("expected exit code 10, got %d", ec.ExitCode())

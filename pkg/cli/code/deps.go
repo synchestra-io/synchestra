@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"github.com/synchestra-io/synchestra/pkg/cli/exitcode"
 	"github.com/synchestra-io/synchestra/pkg/sourceref"
 )
 
@@ -35,13 +36,13 @@ func runDeps(cmd *cobra.Command, _ []string) error {
 
 	// Validate type filter
 	if typeFilter != "" && typeFilter != "feature" && typeFilter != "plan" && typeFilter != "doc" {
-		return &exitError{code: 2, msg: fmt.Sprintf("invalid --type value: %s (must be feature, plan, or doc)", typeFilter)}
+		return exitcode.InvalidArgsErrorf("invalid --type value: %s (must be feature, plan, or doc)", typeFilter)
 	}
 
 	// Expand glob pattern
 	files, err := sourceref.ExpandGlobPattern(pathPattern)
 	if err != nil {
-		return &exitError{code: 2, msg: fmt.Sprintf("invalid glob pattern %q: %v", pathPattern, err)}
+		return exitcode.InvalidArgsErrorf("invalid glob pattern %q: %v", pathPattern, err)
 	}
 
 	if len(files) == 0 {
@@ -52,7 +53,7 @@ func runDeps(cmd *cobra.Command, _ []string) error {
 	// Scan files for references
 	result, err := sourceref.ScanFiles(files)
 	if err != nil {
-		return &exitError{code: 10, msg: fmt.Sprintf("scanning files: %v", err)}
+		return exitcode.UnexpectedErrorf("scanning files: %v", err)
 	}
 
 	// Determine if we have a single file match
@@ -67,21 +68,3 @@ func runDeps(cmd *cobra.Command, _ []string) error {
 
 	return nil
 }
-
-// exitError is a custom error type that carries an exit code
-type exitError struct {
-	code int
-	msg  string
-}
-
-func (e *exitError) Error() string {
-	return e.msg
-}
-
-// Custom exit handler (to be implemented in CLI main)
-func (e *exitError) ExitCode() int {
-	return e.code
-}
-
-// Ensure exitError is an error
-var _ error = (*exitError)(nil)

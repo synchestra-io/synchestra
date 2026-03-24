@@ -16,6 +16,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/synchestra-io/synchestra/pkg/cli/exitcode"
 	"gopkg.in/yaml.v3"
 )
 
@@ -65,7 +66,7 @@ func runInfo(cmd *cobra.Command, args []string) error {
 	formatFlag, _ := cmd.Flags().GetString("format")
 
 	if formatFlag != "yaml" && formatFlag != "json" && formatFlag != "text" {
-		return &exitError{code: 2, msg: fmt.Sprintf("invalid format: %s (supported: yaml, json, text)", formatFlag)}
+		return exitcode.InvalidArgsErrorf("invalid format: %s (supported: yaml, json, text)", formatFlag)
 	}
 
 	featuresDir, err := resolveFeaturesDir(projectFlag)
@@ -74,7 +75,7 @@ func runInfo(cmd *cobra.Command, args []string) error {
 	}
 
 	if !featureExists(featuresDir, featureID) {
-		return &exitError{code: 3, msg: fmt.Sprintf("feature not found: %s", featureID)}
+		return exitcode.NotFoundErrorf("feature not found: %s", featureID)
 	}
 
 	readmePath := featureReadmePath(featuresDir, featureID)
@@ -82,36 +83,36 @@ func runInfo(cmd *cobra.Command, args []string) error {
 	// Extract metadata
 	status, err := parseFeatureStatus(readmePath)
 	if err != nil {
-		return &exitError{code: 10, msg: fmt.Sprintf("reading feature status: %v", err)}
+		return exitcode.UnexpectedErrorf("reading feature status: %v", err)
 	}
 
 	deps, err := parseDependencies(readmePath)
 	if err != nil {
-		return &exitError{code: 10, msg: fmt.Sprintf("reading dependencies: %v", err)}
+		return exitcode.UnexpectedErrorf("reading dependencies: %v", err)
 	}
 
 	refs, err := findFeatureRefs(featuresDir, featureID)
 	if err != nil {
-		return &exitError{code: 10, msg: fmt.Sprintf("finding references: %v", err)}
+		return exitcode.UnexpectedErrorf("finding references: %v", err)
 	}
 
 	// Discover children
 	children, err := discoverChildFeatures(featuresDir, featureID, readmePath)
 	if err != nil {
-		return &exitError{code: 10, msg: fmt.Sprintf("discovering children: %v", err)}
+		return exitcode.UnexpectedErrorf("discovering children: %v", err)
 	}
 
 	// Find linked plans
 	specRoot := filepath.Dir(featuresDir) // spec/features/ -> spec/
 	plans, err := findLinkedPlans(filepath.Dir(specRoot), featureID)
 	if err != nil {
-		return &exitError{code: 10, msg: fmt.Sprintf("finding linked plans: %v", err)}
+		return exitcode.UnexpectedErrorf("finding linked plans: %v", err)
 	}
 
 	// Parse sections
 	sections, err := parseSections(readmePath)
 	if err != nil {
-		return &exitError{code: 10, msg: fmt.Sprintf("parsing sections: %v", err)}
+		return exitcode.UnexpectedErrorf("parsing sections: %v", err)
 	}
 
 	info := featureInfo{
@@ -134,7 +135,7 @@ func writeFeatureInfo(w io.Writer, formatFlag string, info featureInfo) error {
 		enc := yaml.NewEncoder(w)
 		enc.SetIndent(2)
 		if err := enc.Encode(info); err != nil {
-			return &exitError{code: 10, msg: fmt.Sprintf("encoding yaml: %v", err)}
+			return exitcode.UnexpectedErrorf("encoding yaml: %v", err)
 		}
 		return enc.Close()
 	case "json":

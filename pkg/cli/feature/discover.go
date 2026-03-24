@@ -11,23 +11,14 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/synchestra-io/synchestra/pkg/cli/exitcode"
 )
 
 // featuresDir returns the default features directory name.
 // In the future this could be read from project config (project_dirs.specifications).
 const defaultSpecDir = "spec"
 const featuresSubDir = "features"
-
-// exitError is an error that carries an exit code.
-type exitError struct {
-	code int
-	msg  string
-}
-
-func (e *exitError) Error() string { return e.msg }
-
-// ExitCode returns the exit code for the error.
-func (e *exitError) ExitCode() int { return e.code }
 
 // findSpecRepoRoot walks up from startDir looking for synchestra-spec-repo.yaml.
 // As a fallback, it also checks for a spec/features/ directory (for repos that
@@ -54,7 +45,7 @@ func findSpecRepoRoot(startDir string) (string, error) {
 
 		parent := filepath.Dir(current)
 		if parent == current {
-			return "", &exitError{code: 3, msg: "project not found: no synchestra-spec-repo.yaml or spec/features/ in any parent directory"}
+			return "", exitcode.NotFoundError("project not found: no synchestra-spec-repo.yaml or spec/features/ in any parent directory")
 		}
 		current = parent
 	}
@@ -64,12 +55,12 @@ func findSpecRepoRoot(startDir string) (string, error) {
 // It finds the spec repo root from CWD, then appends spec/features/.
 func resolveFeaturesDir(projectFlag string) (string, error) {
 	if projectFlag != "" {
-		return "", &exitError{code: 2, msg: "--project with project lookup is not yet implemented; run from within a spec repo directory"}
+		return "", exitcode.InvalidArgsError("--project with project lookup is not yet implemented; run from within a spec repo directory")
 	}
 
 	cwd, err := os.Getwd()
 	if err != nil {
-		return "", &exitError{code: 10, msg: fmt.Sprintf("cannot determine working directory: %v", err)}
+		return "", exitcode.UnexpectedErrorf("cannot determine working directory: %v", err)
 	}
 
 	root, err := findSpecRepoRoot(cwd)
@@ -80,7 +71,7 @@ func resolveFeaturesDir(projectFlag string) (string, error) {
 	featDir := filepath.Join(root, defaultSpecDir, featuresSubDir)
 	info, err := os.Stat(featDir)
 	if err != nil || !info.IsDir() {
-		return "", &exitError{code: 3, msg: fmt.Sprintf("features directory not found: %s", featDir)}
+		return "", exitcode.NotFoundErrorf("features directory not found: %s", featDir)
 	}
 
 	return featDir, nil

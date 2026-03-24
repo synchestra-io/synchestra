@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/synchestra-io/synchestra/pkg/cli/exitcode"
 	"github.com/synchestra-io/synchestra/pkg/cli/gitops"
 	"github.com/synchestra-io/synchestra/pkg/cli/reporef"
 )
@@ -236,15 +237,15 @@ func TestRunNew_MissingRequiredFlags(t *testing.T) {
 			if err == nil {
 				t.Fatal("expected error")
 			}
-			var ee *exitError
+			var ee *exitcode.Error
 			if !errors.As(err, &ee) {
-				t.Fatalf("expected exitError, got %T (%v)", err, err)
+				t.Fatalf("expected exitcode.Error, got %T (%v)", err, err)
 			}
-			if ee.code != 2 {
-				t.Fatalf("exit code = %d, want 2", ee.code)
+			if ee.ExitCode() != 2 {
+				t.Fatalf("exit code = %d, want 2", ee.ExitCode())
 			}
-			if ee.msg != tt.want {
-				t.Fatalf("message = %q, want %q", ee.msg, tt.want)
+			if ee.Error() != tt.want {
+				t.Fatalf("message = %q, want %q", ee.Error(), tt.want)
 			}
 		})
 	}
@@ -277,12 +278,12 @@ func TestRunNew_RejectsOverlappingRepos(t *testing.T) {
 			if err == nil {
 				t.Fatal("expected error")
 			}
-			var ee *exitError
+			var ee *exitcode.Error
 			if !errors.As(err, &ee) {
-				t.Fatalf("expected exitError, got %T (%v)", err, err)
+				t.Fatalf("expected exitcode.Error, got %T (%v)", err, err)
 			}
-			if ee.code != 2 {
-				t.Fatalf("exit code = %d, want 2", ee.code)
+			if ee.ExitCode() != 2 {
+				t.Fatalf("exit code = %d, want 2", ee.ExitCode())
 			}
 		})
 	}
@@ -294,12 +295,12 @@ func TestValidateResolvedRepoPath_RejectsTraversal(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected traversal error")
 	}
-	var ee *exitError
+	var ee *exitcode.Error
 	if !errors.As(err, &ee) {
-		t.Fatalf("expected exitError, got %T (%v)", err, err)
+		t.Fatalf("expected exitcode.Error, got %T (%v)", err, err)
 	}
-	if ee.code != 2 {
-		t.Fatalf("exit code = %d, want 2", ee.code)
+	if ee.ExitCode() != 2 {
+		t.Fatalf("exit code = %d, want 2", ee.ExitCode())
 	}
 }
 
@@ -316,12 +317,12 @@ func TestValidateResolvedRepoPath_RejectsSymlink(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected symlink error")
 	}
-	var ee *exitError
+	var ee *exitcode.Error
 	if !errors.As(err, &ee) {
-		t.Fatalf("expected exitError, got %T (%v)", err, err)
+		t.Fatalf("expected exitcode.Error, got %T (%v)", err, err)
 	}
-	if ee.code != 1 {
-		t.Fatalf("exit code = %d, want 1", ee.code)
+	if ee.ExitCode() != 1 {
+		t.Fatalf("exit code = %d, want 1", ee.ExitCode())
 	}
 }
 
@@ -352,12 +353,12 @@ func TestEnsureCheckoutMatchesRef_RejectsMismatchedOrigin(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected origin mismatch error")
 	}
-	var ee *exitError
+	var ee *exitcode.Error
 	if !errors.As(err, &ee) {
-		t.Fatalf("expected exitError, got %T (%v)", err, err)
+		t.Fatalf("expected exitcode.Error, got %T (%v)", err, err)
 	}
-	if ee.code != 1 {
-		t.Fatalf("exit code = %d, want 1", ee.code)
+	if ee.ExitCode() != 1 {
+		t.Fatalf("exit code = %d, want 1", ee.ExitCode())
 	}
 }
 
@@ -416,8 +417,8 @@ func TestCheckSpecConflict_DifferentProject(t *testing.T) {
 	if err == nil {
 		t.Error("different project should conflict")
 	}
-	var ee *exitError
-	if !errors.As(err, &ee) || ee.code != 1 {
+	var ee *exitcode.Error
+	if !errors.As(err, &ee) || ee.ExitCode() != 1 {
 		t.Errorf("expected exit code 1, got %v", err)
 	}
 }

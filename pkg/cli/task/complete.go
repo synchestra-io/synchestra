@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/synchestra-io/synchestra/pkg/cli/exitcode"
 )
 
 func completeCommand() *cobra.Command {
@@ -30,7 +31,7 @@ func runComplete(cmd *cobra.Command, _ []string) error {
 	syncFlag, _ := cmd.Flags().GetString("sync")
 
 	if strings.TrimSpace(taskFlag) == "" {
-		return &exitError{code: 2, msg: "--task is required"}
+		return exitcode.InvalidArgsError("--task is required")
 	}
 
 	store, err := resolveStore(syncFlag)

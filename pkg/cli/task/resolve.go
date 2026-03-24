@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/synchestra-io/synchestra/pkg/cli/exitcode"
 	"github.com/synchestra-io/synchestra/pkg/state"
 	"github.com/synchestra-io/synchestra/pkg/state/gitstore"
 	"gopkg.in/yaml.v3"
@@ -27,7 +28,7 @@ type specRepoConfig struct {
 func resolveStore(syncFlag string) (state.Store, error) {
 	cwd, err := os.Getwd()
 	if err != nil {
-		return nil, &exitError{code: 10, msg: fmt.Sprintf("getting working directory: %v", err)}
+		return nil, exitcode.UnexpectedErrorf("getting working directory: %v", err)
 	}
 	repoPath, err := resolveStateRepoPath(cwd)
 	if err != nil {
@@ -50,23 +51,23 @@ func resolveStore(syncFlag string) (state.Store, error) {
 	case "":
 		// use defaults (on_commit)
 	default:
-		return nil, &exitError{code: 2, msg: fmt.Sprintf("invalid --sync value %q: must be remote or local", syncFlag)}
+		return nil, exitcode.InvalidArgsErrorf("invalid --sync value %q: must be remote or local", syncFlag)
 	}
 
 	return gitstore.New(context.Background(), opts)
 }
 
 // mapStoreError converts state-layer errors to CLI exit codes.
-func mapStoreError(err error) *exitError {
+func mapStoreError(err error) *exitcode.Error {
 	switch {
 	case errors.Is(err, state.ErrNotFound):
-		return &exitError{code: 3, msg: err.Error()}
+		return exitcode.NotFoundError(err.Error())
 	case errors.Is(err, state.ErrConflict):
-		return &exitError{code: 1, msg: err.Error()}
+		return exitcode.ConflictError(err.Error())
 	case errors.Is(err, state.ErrInvalidTransition):
-		return &exitError{code: 4, msg: err.Error()}
+		return exitcode.InvalidStateError(err.Error())
 	default:
-		return &exitError{code: 10, msg: err.Error()}
+		return exitcode.UnexpectedError(err.Error())
 	}
 }
 
@@ -91,7 +92,7 @@ func resolveStateRepoPath(startDir string) (string, error) {
 				return "", fmt.Errorf("parsing %s: %w", specPath, err)
 			}
 			if cfg.StateRepo == "" {
-				return "", &exitError{code: 3, msg: fmt.Sprintf("no state_repo field in %s", specPath)}
+				return "", exitcode.NotFoundErrorf("no state_repo field in %s", specPath)
 			}
 			return cfg.StateRepo, nil
 		}
@@ -103,7 +104,7 @@ func resolveStateRepoPath(startDir string) (string, error) {
 
 		parent := filepath.Dir(current)
 		if parent == current {
-			return "", &exitError{code: 3, msg: "project not found: no synchestra-spec-repo.yaml or synchestra-state-repo.yaml in any parent directory"}
+			return "", exitcode.NotFoundError("project not found: no synchestra-spec-repo.yaml or synchestra-state-repo.yaml in any parent directory")
 		}
 		current = parent
 	}

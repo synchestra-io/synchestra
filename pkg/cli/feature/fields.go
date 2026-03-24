@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/synchestra-io/synchestra/pkg/cli/exitcode"
 	"gopkg.in/yaml.v3"
 )
 
@@ -155,7 +156,7 @@ func effectiveFormat(cmd *cobra.Command) string {
 // validateFormat checks the format flag value is valid.
 func validateFormat(format string) error {
 	if format != "text" && format != "yaml" && format != "json" {
-		return &exitError{code: 2, msg: fmt.Sprintf("invalid --format: %s (valid: text, yaml, json)", format)}
+		return exitcode.InvalidArgsErrorf("invalid --format: %s (valid: text, yaml, json)", format)
 	}
 	return nil
 }

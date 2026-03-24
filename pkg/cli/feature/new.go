@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/synchestra-io/synchestra/pkg/cli/exitcode"
 	"github.com/synchestra-io/synchestra/pkg/cli/gitops"
 )
 
@@ -51,13 +52,13 @@ func runNew(cmd *cobra.Command, _ []string) error {
 
 	// Step 1: Validate arguments
 	if title == "" {
-		return &exitError{code: 2, msg: "missing required flag: --title"}
+		return exitcode.InvalidArgsError("missing required flag: --title")
 	}
 	if formatFlag != "yaml" && formatFlag != "json" && formatFlag != "text" {
-		return &exitError{code: 2, msg: fmt.Sprintf("invalid format: %s (supported: yaml, json, text)", formatFlag)}
+		return exitcode.InvalidArgsErrorf("invalid format: %s (supported: yaml, json, text)", formatFlag)
 	}
 	if !isValidStatus(statusFlag) {
-		return &exitError{code: 2, msg: fmt.Sprintf("invalid status: %s (supported: draft, approved, implemented)", statusFlag)}
+		return exitcode.InvalidArgsErrorf("invalid status: %s (supported: draft, approved, implemented)", statusFlag)
 	}
 	if pushFlag {
 		commitFlag = true
@@ -69,13 +70,13 @@ func runNew(cmd *cobra.Command, _ []string) error {
 		slug = generateSlug(title)
 	} else {
 		if err := validateSlug(slug); err != nil {
-			return &exitError{code: 2, msg: fmt.Sprintf("invalid slug: %v", err)}
+			return exitcode.InvalidArgsErrorf("invalid slug: %v", err)
 		}
 	}
 
 	// Validate --parent and slash-in-slug mutual exclusion
 	if parentFlag != "" && strings.Contains(slug, "/") {
-		return &exitError{code: 2, msg: "cannot use --parent with a slug containing slashes; use one or the other"}
+		return exitcode.InvalidArgsError("cannot use --parent with a slug containing slashes; use one or the other")
 	}
 
 	// Parse --depends-on
@@ -98,7 +99,7 @@ func runNew(cmd *cobra.Command, _ []string) error {
 	// Validate --depends-on feature IDs exist
 	for _, dep := range deps {
 		if !featureExists(featuresDir, dep) {
-			return &exitError{code: 2, msg: fmt.Sprintf("dependency feature not found: %s", dep)}
+			return exitcode.InvalidArgsErrorf("dependency feature not found: %s", dep)
 		}
 	}
 
@@ -123,24 +124,24 @@ func runNew(cmd *cobra.Command, _ []string) error {
 	// Step 4: Validate parent exists (for sub-features)
 	if parentID != "" {
 		if !featureExists(featuresDir, parentID) {
-			return &exitError{code: 3, msg: fmt.Sprintf("parent feature not found: %s", parentID)}
+			return exitcode.NotFoundErrorf("parent feature not found: %s", parentID)
 		}
 	}
 
 	// Step 5: Verify target doesn't exist
 	if _, err := os.Stat(featureDir); err == nil {
-		return &exitError{code: 4, msg: fmt.Sprintf("feature already exists at: %s", featureID)}
+		return exitcode.InvalidStateErrorf("feature already exists at: %s", featureID)
 	}
 
 	// Step 6: Create feature directory and README
 	if err := os.MkdirAll(featureDir, 0o755); err != nil {
-		return &exitError{code: 10, msg: fmt.Sprintf("creating feature directory: %v", err)}
+		return exitcode.UnexpectedErrorf("creating feature directory: %v", err)
 	}
 
 	readme := generateReadme(title, statusFlag, descFlag, deps)
 	readmePath := filepath.Join(featureDir, "README.md")
 	if err := os.WriteFile(readmePath, []byte(readme), 0o644); err != nil {
-		return &exitError{code: 10, msg: fmt.Sprintf("writing README.md: %v", err)}
+		return exitcode.UnexpectedErrorf("writing README.md: %v", err)
 	}
 
 	// Track files changed for git commit
@@ -151,7 +152,7 @@ func runNew(cmd *cobra.Command, _ []string) error {
 		parentReadme := featureReadmePath(featuresDir, parentID)
 		changed, err := updateParentContents(parentReadme, filepath.Base(featureDir), descFlag)
 		if err != nil {
-			return &exitError{code: 10, msg: fmt.Sprintf("updating parent contents: %v", err)}
+			return exitcode.UnexpectedErrorf("updating parent contents: %v", err)
 		}
 		if changed {
 			changedFiles = append(changedFiles, parentReadme)
@@ -163,7 +164,7 @@ func runNew(cmd *cobra.Command, _ []string) error {
 		indexPath := filepath.Join(featuresDir, "README.md")
 		changed, err := updateFeatureIndex(indexPath, featureID, descFlag)
 		if err != nil {
-			return &exitError{code: 10, msg: fmt.Sprintf("updating feature index: %v", err)}
+			return exitcode.UnexpectedErrorf("updating feature index: %v", err)
 		}
 		if changed {
 			changedFiles = append(changedFiles, indexPath)
@@ -174,7 +175,7 @@ func runNew(cmd *cobra.Command, _ []string) error {
 	if commitFlag {
 		repoRoot := filepath.Dir(filepath.Dir(featuresDir)) // spec/features/ → repo root
 		if !gitops.IsGitRepo(repoRoot) {
-			return &exitError{code: 10, msg: "not a git repository; cannot commit"}
+			return exitcode.UnexpectedError("not a git repository; cannot commit")
 		}
 
 		// Make paths relative to repo root for git
@@ -191,11 +192,11 @@ func runNew(cmd *cobra.Command, _ []string) error {
 
 		if pushFlag {
 			if err := gitops.CommitAndPush(repoRoot, relFiles, commitMsg); err != nil {
-				return &exitError{code: 1, msg: fmt.Sprintf("commit and push failed: %v", err)}
+				return exitcode.ConflictErrorf("commit and push failed: %v", err)
 			}
 		} else {
 			if err := gitCommitOnly(repoRoot, relFiles, commitMsg); err != nil {
-				return &exitError{code: 10, msg: fmt.Sprintf("commit failed: %v", err)}
+				return exitcode.UnexpectedErrorf("commit failed: %v", err)
 			}
 		}
 	}
@@ -203,7 +204,7 @@ func runNew(cmd *cobra.Command, _ []string) error {
 	// Output: same as feature info
 	info, err := buildNewFeatureInfo(featureID, readmePath, statusFlag, deps)
 	if err != nil {
-		return &exitError{code: 10, msg: fmt.Sprintf("building output: %v", err)}
+		return exitcode.UnexpectedErrorf("building output: %v", err)
 	}
 
 	return writeFeatureInfo(cmd.OutOrStdout(), formatFlag, info)

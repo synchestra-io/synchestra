@@ -15,7 +15,7 @@ Implements the `synchestra feature` command group — querying and scaffolding f
 
 ## Key Files
 
-- `discover.go` — Spec repo discovery, feature walking, dependency parsing, and shared helpers (`exitError`, `featureExists`, `parseDependencies`)
+- `discover.go` — Spec repo discovery, feature walking, dependency parsing, and shared helpers (`featureExists`, `parseDependencies`)
 - `info.go` — `feature info` command with YAML/JSON/text output and section parsing
 - `list.go` — `feature list` command
 - `tree.go` — `feature tree` command with hierarchy building

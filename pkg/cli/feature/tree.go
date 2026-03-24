@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/synchestra-io/synchestra/pkg/cli/exitcode"
 )
 
 func treeCommand() *cobra.Command {
@@ -34,15 +35,15 @@ func runTree(cmd *cobra.Command, args []string) error {
 	fieldsFlag, _ := cmd.Flags().GetString("fields")
 
 	if directionFlag != "" && directionFlag != "up" && directionFlag != "down" {
-		return &exitError{code: 2, msg: fmt.Sprintf("invalid --direction: %s (valid: up, down)", directionFlag)}
+		return exitcode.InvalidArgsErrorf("invalid --direction: %s (valid: up, down)", directionFlag)
 	}
 	if directionFlag != "" && len(args) == 0 {
-		return &exitError{code: 2, msg: "--direction requires a feature_id argument"}
+		return exitcode.InvalidArgsError("--direction requires a feature_id argument")
 	}
 
 	fields, err := parseFieldNames(fieldsFlag)
 	if err != nil {
-		return &exitError{code: 2, msg: err.Error()}
+		return exitcode.InvalidArgsError(err.Error())
 	}
 
 	format := effectiveFormat(cmd)
@@ -57,7 +58,7 @@ func runTree(cmd *cobra.Command, args []string) error {
 
 	features, err := discoverFeatures(featuresDir)
 	if err != nil {
-		return &exitError{code: 10, msg: fmt.Sprintf("discovering features: %v", err)}
+		return exitcode.UnexpectedErrorf("discovering features: %v", err)
 	}
 
 	w := cmd.OutOrStdout()
@@ -67,7 +68,7 @@ func runTree(cmd *cobra.Command, args []string) error {
 	if len(args) > 0 {
 		targetID = args[0]
 		if !featureExists(featuresDir, targetID) {
-			return &exitError{code: 3, msg: fmt.Sprintf("feature not found: %s", targetID)}
+			return exitcode.NotFoundErrorf("feature not found: %s", targetID)
 		}
 	}
 

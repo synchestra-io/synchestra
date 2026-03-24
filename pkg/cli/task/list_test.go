@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"errors"
 	"testing"
+
+	"github.com/synchestra-io/synchestra/pkg/cli/exitcode"
 )
 
 func TestListCommand_Help(t *testing.T) {
@@ -28,9 +30,9 @@ func TestListCommand_NoProjectReturnsNotFound(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error from stub")
 	}
-	var ee *exitError
+	var ee *exitcode.Error
 	if !errors.As(err, &ee) {
-		t.Fatalf("expected exitError, got %T", err)
+		t.Fatalf("expected *exitcode.Error, got %T", err)
 	}
 	if ee.ExitCode() != 3 {
 		t.Errorf("exit code = %d, want 3", ee.ExitCode())

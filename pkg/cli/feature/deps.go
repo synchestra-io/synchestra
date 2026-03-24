@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/synchestra-io/synchestra/pkg/cli/exitcode"
 )
 
 func depsCommand() *cobra.Command {
@@ -34,7 +35,7 @@ func runDeps(cmd *cobra.Command, args []string) error {
 
 	fields, err := parseFieldNames(fieldsFlag)
 	if err != nil {
-		return &exitError{code: 2, msg: err.Error()}
+		return exitcode.InvalidArgsError(err.Error())
 	}
 
 	format := effectiveFormat(cmd)
@@ -48,7 +49,7 @@ func runDeps(cmd *cobra.Command, args []string) error {
 	}
 
 	if !featureExists(featuresDir, featureID) {
-		return &exitError{code: 3, msg: fmt.Sprintf("feature not found: %s", featureID)}
+		return exitcode.NotFoundErrorf("feature not found: %s", featureID)
 	}
 
 	w := cmd.OutOrStdout()
@@ -78,7 +79,7 @@ func runDeps(cmd *cobra.Command, args []string) error {
 	readmePath := featureReadmePath(featuresDir, featureID)
 	deps, err := parseDependencies(readmePath)
 	if err != nil {
-		return &exitError{code: 10, msg: fmt.Sprintf("reading feature %s: %v", featureID, err)}
+		return exitcode.UnexpectedErrorf("reading feature %s: %v", featureID, err)
 	}
 
 	if len(fields) > 0 || format == "yaml" || format == "json" {

@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/synchestra-io/synchestra/pkg/cli/exitcode"
 )
 
 func refsCommand() *cobra.Command {
@@ -35,7 +36,7 @@ func runRefs(cmd *cobra.Command, args []string) error {
 
 	fields, err := parseFieldNames(fieldsFlag)
 	if err != nil {
-		return &exitError{code: 2, msg: err.Error()}
+		return exitcode.InvalidArgsError(err.Error())
 	}
 
 	format := effectiveFormat(cmd)
@@ -49,7 +50,7 @@ func runRefs(cmd *cobra.Command, args []string) error {
 	}
 
 	if !featureExists(featuresDir, featureID) {
-		return &exitError{code: 3, msg: fmt.Sprintf("feature not found: %s", featureID)}
+		return exitcode.NotFoundErrorf("feature not found: %s", featureID)
 	}
 
 	w := cmd.OutOrStdout()
@@ -78,7 +79,7 @@ func runRefs(cmd *cobra.Command, args []string) error {
 	// Non-transitive
 	allFeatures, err := discoverFeatures(featuresDir)
 	if err != nil {
-		return &exitError{code: 10, msg: fmt.Sprintf("discovering features: %v", err)}
+		return exitcode.UnexpectedErrorf("discovering features: %v", err)
 	}
 
 	var refs []string

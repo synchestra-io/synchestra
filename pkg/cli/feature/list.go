@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"github.com/synchestra-io/synchestra/pkg/cli/exitcode"
 )
 
 func listCommand() *cobra.Command {
@@ -29,7 +30,7 @@ func runList(cmd *cobra.Command, _ []string) error {
 
 	fields, err := parseFieldNames(fieldsFlag)
 	if err != nil {
-		return &exitError{code: 2, msg: err.Error()}
+		return exitcode.InvalidArgsError(err.Error())
 	}
 
 	format := effectiveFormat(cmd)
@@ -44,7 +45,7 @@ func runList(cmd *cobra.Command, _ []string) error {
 
 	features, err := discoverFeatures(featuresDir)
 	if err != nil {
-		return &exitError{code: 10, msg: fmt.Sprintf("discovering features: %v", err)}
+		return exitcode.UnexpectedErrorf("discovering features: %v", err)
 	}
 
 	w := cmd.OutOrStdout()

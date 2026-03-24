@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/synchestra-io/synchestra/pkg/cli/exitcode"
 	"github.com/synchestra-io/synchestra/pkg/cli/gitops"
 	"github.com/synchestra-io/synchestra/pkg/cli/globalconfig"
 	"github.com/synchestra-io/synchestra/pkg/cli/reporef"
@@ -47,18 +48,18 @@ func runNew(cmd *cobra.Command, _ []string) error {
 
 	specRef, err := reporef.Parse(specRepoStr)
 	if err != nil {
-		return &exitError{code: 2, msg: fmt.Sprintf("invalid --spec-repo: %v", err)}
+		return exitcode.InvalidArgsErrorf("invalid --spec-repo: %v", err)
 	}
 	stateRef, err := reporef.Parse(stateRepoStr)
 	if err != nil {
-		return &exitError{code: 2, msg: fmt.Sprintf("invalid --state-repo: %v", err)}
+		return exitcode.InvalidArgsErrorf("invalid --state-repo: %v", err)
 	}
 
 	codeRefs := make([]reporef.Ref, 0, len(codeRepoStrs))
 	for _, s := range codeRepoStrs {
 		ref, err := reporef.Parse(s)
 		if err != nil {
-			return &exitError{code: 2, msg: fmt.Sprintf("invalid --code-repo %q: %v", s, err)}
+			return exitcode.InvalidArgsErrorf("invalid --code-repo %q: %v", s, err)
 		}
 		codeRefs = append(codeRefs, ref)
 	}
@@ -69,11 +70,11 @@ func runNew(cmd *cobra.Command, _ []string) error {
 
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		return &exitError{code: 10, msg: fmt.Sprintf("cannot determine home directory: %v", err)}
+		return exitcode.UnexpectedErrorf("cannot determine home directory: %v", err)
 	}
 	cfg, err := globalconfig.Load(filepath.Join(homeDir, ".synchestra.yaml"))
 	if err != nil {
-		return &exitError{code: 10, msg: fmt.Sprintf("reading global config: %v", err)}
+		return exitcode.UnexpectedErrorf("reading global config: %v", err)
 	}
 	reposDir := globalconfig.ResolveReposDir(cfg.ReposDir, homeDir)
 
@@ -95,21 +96,21 @@ func runNew(cmd *cobra.Command, _ []string) error {
 		case errors.Is(err, fs.ErrNotExist):
 			_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "Cloning %s...\n", ref.Identifier())
 			if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
-				return &exitError{code: 3, msg: fmt.Sprintf("creating directory for %s: %v", ref.Identifier(), err)}
+				return exitcode.NotFoundErrorf("creating directory for %s: %v", ref.Identifier(), err)
 			}
 			if err := gitops.Clone(ref.OriginURL(), p); err != nil {
-				return &exitError{code: 3, msg: fmt.Sprintf("cloning %s: %v", ref.Identifier(), err)}
+				return exitcode.NotFoundErrorf("cloning %s: %v", ref.Identifier(), err)
 			}
 		case err != nil:
-			return &exitError{code: 10, msg: fmt.Sprintf("checking %s: %v", ref.Identifier(), err)}
+			return exitcode.UnexpectedErrorf("checking %s: %v", ref.Identifier(), err)
 		case !info.IsDir():
-			return &exitError{code: 1, msg: fmt.Sprintf("path for %s already exists and is not a directory: %s", ref.Identifier(), p)}
+			return exitcode.ConflictErrorf("path for %s already exists and is not a directory: %s", ref.Identifier(), p)
 		}
 	}
 
 	for i, ref := range allRefs {
 		if !gitops.IsGitRepo(allPaths[i]) {
-			return &exitError{code: 3, msg: fmt.Sprintf("%s is not a git repository", ref.Identifier())}
+			return exitcode.NotFoundErrorf("%s is not a git repository", ref.Identifier())
 		}
 		if err := ensureCheckoutMatchesRef(allPaths[i], ref); err != nil {
 			return err
@@ -132,7 +133,7 @@ func runNew(cmd *cobra.Command, _ []string) error {
 		Repos:     codeOriginURLs,
 	}
 	if err := WriteSpecConfig(specPath, specCfg); err != nil {
-		return &exitError{code: 10, msg: fmt.Sprintf("writing spec config: %v", err)}
+		return exitcode.UnexpectedErrorf("writing spec config: %v", err)
 	}
 
 	stateCfg, _ := ReadStateConfig(statePath) // ignore error: file may not exist yet
@@ -141,7 +142,7 @@ func runNew(cmd *cobra.Command, _ []string) error {
 		stateCfg.SpecRepos = append(stateCfg.SpecRepos, specOrigin)
 	}
 	if err := WriteStateConfig(statePath, stateCfg); err != nil {
-		return &exitError{code: 10, msg: fmt.Sprintf("writing state config: %v", err)}
+		return exitcode.UnexpectedErrorf("writing state config: %v", err)
 	}
 
 	for _, cp := range codePaths {
@@ -150,20 +151,20 @@ func runNew(cmd *cobra.Command, _ []string) error {
 			codeCfg.SpecRepos = append(codeCfg.SpecRepos, specOrigin)
 		}
 		if err := WriteCodeConfig(cp, codeCfg); err != nil {
-			return &exitError{code: 10, msg: fmt.Sprintf("writing code config: %v", err)}
+			return exitcode.UnexpectedErrorf("writing code config: %v", err)
 		}
 	}
 
 	commitMsg := fmt.Sprintf("synchestra: initialize project %q", title)
 	if err := gitops.CommitAndPush(specPath, []string{SpecConfigFile}, commitMsg); err != nil {
-		return &exitError{code: 10, msg: fmt.Sprintf("committing spec repo: %v", err)}
+		return exitcode.UnexpectedErrorf("committing spec repo: %v", err)
 	}
 	if err := gitops.CommitAndPush(statePath, []string{StateConfigFile}, commitMsg); err != nil {
-		return &exitError{code: 10, msg: fmt.Sprintf("committing state repo: %v", err)}
+		return exitcode.UnexpectedErrorf("committing state repo: %v", err)
 	}
 	for i, cp := range codePaths {
 		if err := gitops.CommitAndPush(cp, []string{CodeConfigFile}, commitMsg); err != nil {
-			return &exitError{code: 10, msg: fmt.Sprintf("committing code repo %s: %v", codeRefs[i].Identifier(), err)}
+			return exitcode.UnexpectedErrorf("committing code repo %s: %v", codeRefs[i].Identifier(), err)
 		}
 	}
 
@@ -174,11 +175,11 @@ func runNew(cmd *cobra.Command, _ []string) error {
 func validateRequiredRepoFlags(specRepoStr, stateRepoStr string, codeRepoStrs []string) error {
 	switch {
 	case strings.TrimSpace(specRepoStr) == "":
-		return &exitError{code: 2, msg: "--spec-repo is required"}
+		return exitcode.InvalidArgsError("--spec-repo is required")
 	case strings.TrimSpace(stateRepoStr) == "":
-		return &exitError{code: 2, msg: "--state-repo is required"}
+		return exitcode.InvalidArgsError("--state-repo is required")
 	case len(codeRepoStrs) == 0:
-		return &exitError{code: 2, msg: "at least one --code-repo is required"}
+		return exitcode.InvalidArgsError("at least one --code-repo is required")
 	default:
 		return nil
 	}
@@ -186,7 +187,7 @@ func validateRequiredRepoFlags(specRepoStr, stateRepoStr string, codeRepoStrs []
 
 func validateDistinctRepoRoles(specRef, stateRef reporef.Ref, codeRefs []reporef.Ref) error {
 	if specRef == stateRef {
-		return &exitError{code: 2, msg: fmt.Sprintf("invalid repository layout: state repo %s must differ from spec repo %s", stateRef.Identifier(), specRef.Identifier())}
+		return exitcode.InvalidArgsErrorf("invalid repository layout: state repo %s must differ from spec repo %s", stateRef.Identifier(), specRef.Identifier())
 	}
 
 	seen := map[string]string{
@@ -196,7 +197,7 @@ func validateDistinctRepoRoles(specRef, stateRef reporef.Ref, codeRefs []reporef
 	for i, ref := range codeRefs {
 		id := ref.Identifier()
 		if prevRole, ok := seen[id]; ok {
-			return &exitError{code: 2, msg: fmt.Sprintf("invalid repository layout: code repo %s must differ from %s", id, prevRole)}
+			return exitcode.InvalidArgsErrorf("invalid repository layout: code repo %s must differ from %s", id, prevRole)
 		}
 		seen[id] = fmt.Sprintf("code repo #%d", i+1)
 	}
@@ -206,22 +207,22 @@ func validateDistinctRepoRoles(specRef, stateRef reporef.Ref, codeRefs []reporef
 func validateResolvedRepoPath(reposDir, path, identifier string) error {
 	reposDirAbs, err := filepath.Abs(reposDir)
 	if err != nil {
-		return &exitError{code: 10, msg: fmt.Sprintf("resolving repos_dir: %v", err)}
+		return exitcode.UnexpectedErrorf("resolving repos_dir: %v", err)
 	}
 	pathAbs, err := filepath.Abs(path)
 	if err != nil {
-		return &exitError{code: 10, msg: fmt.Sprintf("resolving local path for %s: %v", identifier, err)}
+		return exitcode.UnexpectedErrorf("resolving local path for %s: %v", identifier, err)
 	}
 
 	rel, err := filepath.Rel(reposDirAbs, pathAbs)
 	if err != nil {
-		return &exitError{code: 10, msg: fmt.Sprintf("checking local path for %s: %v", identifier, err)}
+		return exitcode.UnexpectedErrorf("checking local path for %s: %v", identifier, err)
 	}
 	if rel == ".." || strings.HasPrefix(rel, ".."+string(os.PathSeparator)) {
-		return &exitError{code: 2, msg: fmt.Sprintf("unsafe local path for %s: %s resolves outside repos_dir", identifier, pathAbs)}
+		return exitcode.InvalidArgsErrorf("unsafe local path for %s: %s resolves outside repos_dir", identifier, pathAbs)
 	}
 	if err := rejectSymlinkPath(reposDirAbs, pathAbs); err != nil {
-		return &exitError{code: 1, msg: fmt.Sprintf("unsafe local path for %s: %v", identifier, err)}
+		return exitcode.ConflictErrorf("unsafe local path for %s: %v", identifier, err)
 	}
 	return nil
 }
@@ -269,14 +270,14 @@ func rejectSymlink(path string) error {
 func ensureCheckoutMatchesRef(dir string, expected reporef.Ref) error {
 	originURL, err := gitops.GetOriginURL(dir)
 	if err != nil {
-		return &exitError{code: 1, msg: fmt.Sprintf("cannot verify origin for %s in %s: %v", expected.Identifier(), dir, err)}
+		return exitcode.ConflictErrorf("cannot verify origin for %s in %s: %v", expected.Identifier(), dir, err)
 	}
 	originRef, err := reporef.Parse(originURL)
 	if err != nil {
-		return &exitError{code: 1, msg: fmt.Sprintf("existing checkout for %s in %s has unsupported origin %q: %v", expected.Identifier(), dir, originURL, err)}
+		return exitcode.ConflictErrorf("existing checkout for %s in %s has unsupported origin %q: %v", expected.Identifier(), dir, originURL, err)
 	}
 	if originRef != expected {
-		return &exitError{code: 1, msg: fmt.Sprintf("existing checkout in %s points to %s, not %s", dir, originRef.Identifier(), expected.Identifier())}
+		return exitcode.ConflictErrorf("existing checkout in %s points to %s, not %s", dir, originRef.Identifier(), expected.Identifier())
 	}
 	return nil
 }
@@ -289,24 +290,10 @@ func checkSpecConflict(dir, expectedStateRepo string) error {
 		if errors.Is(err, fs.ErrNotExist) {
 			return nil
 		}
-		return &exitError{code: 10, msg: fmt.Sprintf("reading existing spec config: %v", err)}
+		return exitcode.UnexpectedErrorf("reading existing spec config: %v", err)
 	}
 	if cfg.StateRepo != "" && cfg.StateRepo != expectedStateRepo {
-		return &exitError{
-			code: 1,
-			msg:  fmt.Sprintf("conflict: %s in %s already points to state repo %s", SpecConfigFile, dir, cfg.StateRepo),
-		}
+		return exitcode.ConflictErrorf("conflict: %s in %s already points to state repo %s", SpecConfigFile, dir, cfg.StateRepo)
 	}
 	return nil
 }
-
-// exitError is an error that carries an exit code.
-type exitError struct {
-	code int
-	msg  string
-}
-
-func (e *exitError) Error() string { return e.msg }
-
-// ExitCode returns the exit code for the error.
-func (e *exitError) ExitCode() int { return e.code }

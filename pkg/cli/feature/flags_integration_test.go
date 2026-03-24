@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/spf13/cobra"
+	"github.com/synchestra-io/synchestra/pkg/cli/exitcode"
 )
 
 // executeCommand runs a cobra command with the given args and captures combined
@@ -100,15 +101,15 @@ func setupSpecRepoWithFeatures(t *testing.T, features map[string]string) string 
 	return tmpDir
 }
 
-// requireExitCode asserts that err is an *exitError with the expected code.
+// requireExitCode asserts that err is an *exitcode.Error with the expected code.
 func requireExitCode(t *testing.T, err error, wantCode int) {
 	t.Helper()
 	if err == nil {
 		t.Fatalf("expected exit code %d, got nil error", wantCode)
 	}
-	var ee *exitError
+	var ee *exitcode.Error
 	if !errors.As(err, &ee) {
-		t.Fatalf("expected *exitError, got %T: %v", err, err)
+		t.Fatalf("expected *exitcode.Error, got %T: %v", err, err)
 	}
 	if ee.ExitCode() != wantCode {
 		t.Errorf("expected exit code %d, got %d (msg: %s)", wantCode, ee.ExitCode(), ee.Error())

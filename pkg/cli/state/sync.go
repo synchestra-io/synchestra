@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"github.com/synchestra-io/synchestra/pkg/cli/exitcode"
 )
 
 func syncCommand() *cobra.Command {
@@ -23,5 +24,5 @@ func syncCommand() *cobra.Command {
 func runSync(cmd *cobra.Command, _ []string) error {
 	// TODO: Resolve project, construct store, call store.State().Sync(ctx)
 	_, _ = fmt.Fprintln(cmd.OutOrStdout(), "state sync: not implemented yet")
-	return &exitError{code: 10, msg: "synchestra state sync is not yet implemented"}
+	return exitcode.UnexpectedError("synchestra state sync is not yet implemented")
 }

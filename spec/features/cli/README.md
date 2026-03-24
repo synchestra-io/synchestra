@@ -50,7 +50,24 @@ All commands share a consistent exit code contract:
 | `2` | Invalid arguments |
 | `3` | Resource not found |
 | `4` | Invalid state transition |
-| `10+` | Unexpected errors |
+| `5–9` | Reserved for future standard codes |
+| `10` | Unexpected / catch-all runtime error |
+| `11–19` | Reserved for future standard codes |
+
+#### Command-group reserved ranges
+
+Each command group reserves a range for non-generic exit codes that are specific to that domain. These ranges are currently unused but available for future specialization:
+
+| Range | Command group |
+|---|---|
+| `20–29` | `project` |
+| `30–39` | `feature` |
+| `40–49` | `task` |
+| `50–59` | `spec` |
+| `60–69` | `state` |
+| `70–79` | `code` |
+
+Standard exit codes (`0–10`) should be preferred whenever possible. Use a group-specific code only when the error semantics cannot be expressed by a standard code.
 
 On non-zero exit, a human-readable explanation is written to stderr.
 

@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/synchestra-io/synchestra/pkg/cli/exitcode"
 	"github.com/synchestra-io/synchestra/pkg/state"
 )
 
@@ -37,10 +38,10 @@ func runNew(cmd *cobra.Command, _ []string) error {
 	syncFlag, _ := cmd.Flags().GetString("sync")
 
 	if strings.TrimSpace(taskFlag) == "" {
-		return &exitError{code: 2, msg: "--task is required"}
+		return exitcode.InvalidArgsError("--task is required")
 	}
 	if strings.TrimSpace(title) == "" {
-		return &exitError{code: 2, msg: "--title is required"}
+		return exitcode.InvalidArgsError("--title is required")
 	}
 
 	store, err := resolveStore(syncFlag)

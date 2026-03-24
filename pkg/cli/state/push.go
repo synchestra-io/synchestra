@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"github.com/synchestra-io/synchestra/pkg/cli/exitcode"
 )
 
 func pushCommand() *cobra.Command {
@@ -23,5 +24,5 @@ func pushCommand() *cobra.Command {
 func runPush(cmd *cobra.Command, _ []string) error {
 	// TODO: Resolve project, construct store, call store.State().Push(ctx)
 	_, _ = fmt.Fprintln(cmd.OutOrStdout(), "state push: not implemented yet")
-	return &exitError{code: 10, msg: "synchestra state push is not yet implemented"}
+	return exitcode.UnexpectedError("synchestra state push is not yet implemented")
 }

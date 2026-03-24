@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/synchestra-io/synchestra/pkg/cli/exitcode"
 	"gopkg.in/yaml.v3"
 )
 
@@ -45,7 +46,7 @@ func resolveStateRepoPath(startDir string) (string, error) {
 				return "", fmt.Errorf("parsing %s: %w", specPath, err)
 			}
 			if cfg.StateRepo == "" {
-				return "", &exitError{code: 3, msg: fmt.Sprintf("no state_repo field in %s", specPath)}
+				return "", exitcode.NotFoundErrorf("no state_repo field in %s", specPath)
 			}
 			// TODO: Resolve state_repo URL to local path using repos_dir convention
 			return cfg.StateRepo, nil
@@ -59,7 +60,7 @@ func resolveStateRepoPath(startDir string) (string, error) {
 
 		parent := filepath.Dir(current)
 		if parent == current {
-			return "", &exitError{code: 3, msg: "project not found: no synchestra-spec-repo.yaml or synchestra-state-repo.yaml in any parent directory"}
+			return "", exitcode.NotFoundError("project not found: no synchestra-spec-repo.yaml or synchestra-state-repo.yaml in any parent directory")
 		}
 		current = parent
 	}

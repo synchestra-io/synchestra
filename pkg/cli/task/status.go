@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/synchestra-io/synchestra/pkg/cli/exitcode"
 	"github.com/synchestra-io/synchestra/pkg/state"
 )
 
@@ -42,13 +43,13 @@ func runStatus(cmd *cobra.Command, _ []string) error {
 	syncFlag, _ := cmd.Flags().GetString("sync")
 
 	if strings.TrimSpace(taskFlag) == "" {
-		return &exitError{code: 2, msg: "--task is required"}
+		return exitcode.InvalidArgsError("--task is required")
 	}
 
 	hasCurrent := strings.TrimSpace(current) != ""
 	hasNew := strings.TrimSpace(newStatus) != ""
 	if hasCurrent != hasNew {
-		return &exitError{code: 2, msg: "--current and --new must both be provided for update mode"}
+		return exitcode.InvalidArgsError("--current and --new must both be provided for update mode")
 	}
 
 	store, err := resolveStore(syncFlag)
@@ -74,7 +75,7 @@ func runStatus(cmd *cobra.Command, _ []string) error {
 		return mapStoreError(err)
 	}
 	if string(t.Status) != current {
-		return &exitError{code: 4, msg: fmt.Sprintf("status guard failed: expected %s, got %s", current, t.Status)}
+		return exitcode.InvalidStateErrorf("status guard failed: expected %s, got %s", current, t.Status)
 	}
 
 	target := state.TaskStatus(newStatus)
@@ -94,25 +95,25 @@ func applyTransition(store state.Store, ctx context.Context, slug string, target
 	case state.TaskStatusQueued:
 		err = ts.Enqueue(ctx, slug)
 	case state.TaskStatusClaimed:
-		return &exitError{code: 2, msg: "use 'synchestra task claim' for claiming (requires --run and --model)"}
+		return exitcode.InvalidArgsError("use 'synchestra task claim' for claiming (requires --run and --model)")
 	case state.TaskStatusInProgress:
 		err = ts.Start(ctx, slug)
 	case state.TaskStatusCompleted:
 		err = ts.Complete(ctx, slug, reason)
 	case state.TaskStatusFailed:
 		if reason == "" {
-			return &exitError{code: 2, msg: "--reason is required when transitioning to failed"}
+			return exitcode.InvalidArgsError("--reason is required when transitioning to failed")
 		}
 		err = ts.Fail(ctx, slug, reason)
 	case state.TaskStatusBlocked:
 		if reason == "" {
-			return &exitError{code: 2, msg: "--reason is required when transitioning to blocked"}
+			return exitcode.InvalidArgsError("--reason is required when transitioning to blocked")
 		}
 		err = ts.Block(ctx, slug, reason)
 	case state.TaskStatusAborted:
 		err = ts.ConfirmAbort(ctx, slug)
 	default:
-		return &exitError{code: 2, msg: fmt.Sprintf("unsupported target status %q for status command", target)}
+		return exitcode.InvalidArgsErrorf("unsupported target status %q for status command", target)
 	}
 	if err != nil {
 		return mapStoreError(err)

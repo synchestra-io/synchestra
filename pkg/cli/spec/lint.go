@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/synchestra-io/synchestra/pkg/cli/exitcode"
 	"gopkg.in/yaml.v3"
 )
 
@@ -61,7 +62,7 @@ invalid arguments, 10+ = unexpected error.`,
 
 			// Parse rules and ignore
 			if rulesStr != "" && ignoreStr != "" {
-				return &exitError{code: 2, msg: "--rules and --ignore are mutually exclusive"}
+				return exitcode.InvalidArgsError("--rules and --ignore are mutually exclusive")
 			}
 
 			if rulesStr != "" {
@@ -80,20 +81,20 @@ invalid arguments, 10+ = unexpected error.`,
 
 			// Validate severity
 			if opts.Severity != "error" && opts.Severity != "warning" && opts.Severity != "info" {
-				return &exitError{code: 2, msg: fmt.Sprintf("invalid severity level: %s", opts.Severity)}
+				return exitcode.InvalidArgsErrorf("invalid severity level: %s", opts.Severity)
 			}
 
 			// Validate format
 			if opts.Format != "text" && opts.Format != "json" && opts.Format != "yaml" {
-				return &exitError{code: 2, msg: fmt.Sprintf("invalid format: %s", opts.Format)}
+				return exitcode.InvalidArgsErrorf("invalid format: %s", opts.Format)
 			}
 
 			// Validate rule names
 			if err := validateRuleNames(opts.Rules); err != nil {
-				return &exitError{code: 2, msg: err.Error()}
+				return exitcode.InvalidArgsError(err.Error())
 			}
 			if err := validateRuleNames(opts.Ignore); err != nil {
-				return &exitError{code: 2, msg: err.Error()}
+				return exitcode.InvalidArgsError(err.Error())
 			}
 
 			return runLint(opts)
@@ -112,17 +113,17 @@ func runLint(opts LintOptions) error {
 	// Check spec root exists
 	info, err := os.Stat(opts.SpecRoot)
 	if err != nil {
-		return &exitError{code: 10, msg: fmt.Sprintf("spec root not found: %s", opts.SpecRoot)}
+		return exitcode.UnexpectedErrorf("spec root not found: %s", opts.SpecRoot)
 	}
 	if !info.IsDir() {
-		return &exitError{code: 10, msg: fmt.Sprintf("spec root is not a directory: %s", opts.SpecRoot)}
+		return exitcode.UnexpectedErrorf("spec root is not a directory: %s", opts.SpecRoot)
 	}
 
 	// Create linter and run checks
 	linter := newLinter(opts)
 	violations, err := linter.lint()
 	if err != nil {
-		return &exitError{code: 10, msg: fmt.Sprintf("linting error: %v", err)}
+		return exitcode.UnexpectedErrorf("linting error: %v", err)
 	}
 
 	// Filter violations by severity
@@ -130,12 +131,12 @@ func runLint(opts LintOptions) error {
 
 	// Output results
 	if err := outputViolations(filtered, opts.Format); err != nil {
-		return &exitError{code: 10, msg: fmt.Sprintf("output error: %v", err)}
+		return exitcode.UnexpectedErrorf("output error: %v", err)
 	}
 
 	// Determine exit code
 	if len(filtered) > 0 {
-		return &exitError{code: 1, msg: fmt.Sprintf("%d violation(s) found", len(filtered))}
+		return exitcode.ConflictErrorf("%d violation(s) found", len(filtered))
 	}
 	return nil
 }
@@ -267,19 +268,4 @@ func validateRuleNames(names []string) error {
 		}
 	}
 	return nil
-}
-
-// exitError is a custom error type for CLI exit codes.
-type exitError struct {
-	code int
-	msg  string
-}
-
-func (e *exitError) Error() string {
-	return e.msg
-}
-
-// Implement ExitCoder if needed by cobra
-func (e *exitError) ExitCode() int {
-	return e.code
 }

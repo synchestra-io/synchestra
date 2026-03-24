@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"github.com/synchestra-io/synchestra/pkg/cli/exitcode"
 )
 
 func pullCommand() *cobra.Command {
@@ -23,5 +24,5 @@ func pullCommand() *cobra.Command {
 func runPull(cmd *cobra.Command, _ []string) error {
 	// TODO: Resolve project, construct store, call store.State().Pull(ctx)
 	_, _ = fmt.Fprintln(cmd.OutOrStdout(), "state pull: not implemented yet")
-	return &exitError{code: 10, msg: "synchestra state pull is not yet implemented"}
+	return exitcode.UnexpectedError("synchestra state pull is not yet implemented")
 }
