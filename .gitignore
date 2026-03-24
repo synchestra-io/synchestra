@@ -1,6 +1,9 @@
 ## Our executable
 synchestra
 
+## GoReleaser output
+dist/
+
 ## IDE
 .idea
 

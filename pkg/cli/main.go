@@ -65,7 +65,7 @@ func Run(
 	)
 
 	rootCmd.SetArgs(args[1:])
-	if err := fang.Execute(context.Background(), rootCmd); err != nil {
+	if err := fang.Execute(context.Background(), rootCmd, fang.WithVersion(version), fang.WithCommit(commit)); err != nil {
 		fatal(err)
 	}
 }
