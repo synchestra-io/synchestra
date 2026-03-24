@@ -7,8 +7,8 @@ before:
     - go mod tidy
     - go generate ./...
     # Create a zip archive of the ai-plugin directory to attach to the release.
-    # mkdir -p dist first because GoReleaser hasn't created it yet at this stage.
-    - sh -c "mkdir -p dist && cd ai-plugin && zip -r ../dist/ai-plugin.zip . --exclude '*/.DS_Store'"
+    # Must be outside dist/ — GoReleaser cleans dist/ after before hooks run.
+    - sh -c "cd ai-plugin && zip -r ../ai-plugin.zip . --exclude '*/.DS_Store'"
 
 builds:
   - id: synchestra
@@ -35,7 +35,7 @@ builds:
 
 archives:
   - id: synchestra
-    builds:
+    ids:
       - synchestra
     name_template: "synchestra_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     format_overrides:
@@ -50,7 +50,7 @@ checksum:
 release:
   # Attach the ai-plugin archive as an extra file on the GitHub release
   extra_files:
-    - glob: dist/ai-plugin.zip
+    - glob: ai-plugin.zip
 
 changelog:
   sort: asc

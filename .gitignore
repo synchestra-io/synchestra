@@ -3,6 +3,7 @@ synchestra
 
 ## GoReleaser output
 dist/
+ai-plugin.zip
 
 ## IDE
 .idea
