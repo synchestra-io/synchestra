@@ -31,6 +31,7 @@ Feature specifications for the Synchestra project, managed by Synchestra.
 | [lsp](lsp/README.md) | Conceptual | LSP server exposing specification navigation to IDEs — reuses the same Go packages as `synchestra feature` CLI commands |
 | [bots](bots/README.md) | Conceptual | Messenger bots for conversational access to Synchestra — project management, container control, prompt relay, and notifications |
 | [source-references](source-references/README.md) | Conceptual | Language-agnostic `synchestra:` annotations that link source code to Synchestra resources (features, plans, docs, tasks) with strict validation and URL expansion |
+| [stakeholder](stakeholder/README.md) | Conceptual | Humans and AI agents that participate in workflow decisions — identity model, role-based routing, structured decisions, gates, and audit logging |
 
 ## Feature Summaries
 
@@ -135,6 +136,10 @@ Messenger bots that serve as conversational interfaces to Synchestra. Three kind
 
 Language-agnostic inline annotations using the `synchestra:` prefix that link source code to Synchestra resources — features, plans, docs, and tasks. A single `synchestra:{type}/{path}[@{org}/{repo}]` notation works in any language's comment syntax, is detectable by byte-level prefix search, and expands to clickable `synchestra.io` URLs. References are validated strictly: pointing to a non-existent resource is an error caught by linter, pre-commit hook, or PR check. Extends `synchestra feature refs` to include source-level references alongside spec-level dependency references.
 
+### [Stakeholder](stakeholder/README.md)
+
+Humans and AI agents that participate in workflow decisions. Stakeholders are identified by inline string references (`alex@github`, `agent-x:model=opus`), assigned to roles (`code-reviewer`, `spec-approver`) that resolve hierarchically through the feature tree using `add`/`remove` overrides at each level. When a workflow hits a decision point — either a built-in gate (plan review, code review) or an agent-initiated blocker — a structured decision task is created with typed options (`pick-one`, `approve-reject`, etc.) and assigned to the resolved stakeholders. Responses are recorded in a per-task audit log. Sub-features cover [roles](stakeholder/role/README.md), [decisions](stakeholder/decision/README.md) (with [options](stakeholder/decision/options/README.md) and [audit](stakeholder/decision/audit/README.md)), [gates](stakeholder/gate/README.md), and [notifications](stakeholder/notification/README.md).
+
 ```
 feature → proposals, development-plan, outstanding-questions (features are the spec unit)
 task-status-board ← conflict-resolution
@@ -160,6 +165,8 @@ state-store ← cli, api, agent-skills (all consumers of state go through state 
 acceptance-criteria → feature (introduces mandatory AC section), development-plan (plan ACs can reference feature ACs)
 testing-framework → acceptance-criteria (composes ACs into test flows), cli (new test command group), feature (_tests/ directory)
 source-references → feature, cli, project-definition (synchestra: annotations link code to spec resources, validated by linter)
+stakeholder → task-status-board (decisions are tasks), development-plan (gates trigger on plan transitions), feature (_config.yaml for role overrides), cli (decision/stakeholder commands), agent-skills (decision-request skill), state-store (DecisionStore)
+stakeholder ← chat (workflows create decisions), ui (renders decision options), bots (delivers notifications, accepts responses)
 ```
 
 `feature` is the foundational spec-layer concept — proposals, plans, and outstanding questions all attach to features.
@@ -208,3 +215,10 @@ All diagrams in feature specifications should use **mermaid syntax** instead of 
 - [bots/synchestra-bot](bots/synchestra-bot/README.md): 5 outstanding questions
 - [lsp](lsp/README.md): 5 outstanding questions
 - [source-references](source-references/README.md): 0 outstanding questions
+- [stakeholder](stakeholder/README.md): 4 outstanding questions
+- [stakeholder/role](stakeholder/role/README.md): 3 outstanding questions
+- [stakeholder/decision](stakeholder/decision/README.md): 3 outstanding questions
+- [stakeholder/decision/options](stakeholder/decision/options/README.md): 3 outstanding questions
+- [stakeholder/decision/audit](stakeholder/decision/audit/README.md): 3 outstanding questions
+- [stakeholder/gate](stakeholder/gate/README.md): 3 outstanding questions
+- [stakeholder/notification](stakeholder/notification/README.md): 3 outstanding questions
