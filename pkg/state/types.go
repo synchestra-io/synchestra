@@ -130,4 +130,31 @@ type ProjectConfig struct {
 type StoreOptions struct {
 	SpecRepoPaths []string
 	StateRepoPath string
+	Sync          SyncConfig
+}
+
+// SyncPolicy controls when the store automatically syncs with the remote.
+type SyncPolicy string
+
+const (
+	// SyncOnCommit syncs after every merge to local main. Default.
+	SyncOnCommit SyncPolicy = "on_commit"
+
+	// SyncOnInterval syncs on a timer.
+	SyncOnInterval SyncPolicy = "on_interval"
+
+	// SyncOnSessionEnd syncs when the agent session ends.
+	SyncOnSessionEnd SyncPolicy = "on_session_end"
+
+	// SyncManual syncs only via explicit Pull/Push/Sync calls.
+	SyncManual SyncPolicy = "manual"
+)
+
+// SyncConfig holds the sync policy for automatic pull/push behaviour.
+// Pull and push policies are independent. Both default to SyncOnCommit.
+type SyncConfig struct {
+	Pull         SyncPolicy
+	PullInterval time.Duration // used when Pull is SyncOnInterval
+	Push         SyncPolicy
+	PushInterval time.Duration // used when Push is SyncOnInterval
 }
