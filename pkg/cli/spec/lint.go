@@ -259,6 +259,7 @@ var allRuleNames = map[string]bool{
 	"internal-links":     true,
 	"forward-refs":       true,
 	"code-annotations":   true,
+	"plan-hierarchy":     true,
 }
 
 func validateRuleNames(names []string) error {

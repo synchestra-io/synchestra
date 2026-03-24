@@ -36,6 +36,7 @@ func newLinter(opts LintOptions) *linter {
 	l.registerChecker(newInternalLinksChecker())
 	l.registerChecker(newForwardRefsChecker())
 	l.registerChecker(newCodeAnnotationsChecker())
+	l.registerChecker(newPlanHierarchyChecker())
 
 	return l
 }
