@@ -100,17 +100,24 @@ How stakeholders learn about decisions and how responses flow back to requesting
 
 | Feature | Relationship |
 |---|---|
-| [task-status-board](../task-status-board/README.md) | Decisions are tasks with `type: decision` — appear on the board |
-| [cli](../cli/README.md) | New `synchestra decision` and `synchestra stakeholder` command groups |
+| [task-status-board](../task-status-board/README.md) | Decisions are tasks with `type: decision` — appear on the board. Introduces the `type` field to the task model (planned addition to task-status-board spec). |
+| [cli](../cli/README.md) | New `synchestra decision` and `synchestra stakeholder` command groups (planned addition to CLI spec) |
 | [agent-skills](../agent-skills/README.md) | `synchestra-decision-request` skill for agent-initiated decisions |
-| [state-store](../state-store/README.md) | `DecisionStore` sub-interface joins existing store hierarchy |
+| [state-store](../state-store/README.md) | `DecisionStore` sub-interface joins existing store hierarchy (planned addition to state-store spec) |
 | [development-plan](../development-plan/README.md) | Gates trigger on plan status transitions |
-| [feature](../feature/README.md) | `_config.yaml` for feature-scoped role overrides |
-| [chat](../chat/README.md) | Workflows can create decisions as part of guided conversations |
+| [feature](../feature/README.md) | `_config.yaml` for feature-scoped role overrides (planned addition to feature spec's reserved `_` prefix table) |
+| [github-app](../github-app/README.md) | GitHub review requests and PR comments as a notification delivery channel |
+| [chat](../chat/README.md) | Workflows can create decisions as part of guided conversations (planned addition to chat spec) |
 | [ui](../ui/README.md) | Renders decision tasks with structured options (buttons, selects) |
 | [bots](../bots/README.md) | Delivers decision notifications and accepts responses |
 
+## Acceptance Criteria
+
+Not defined yet.
+
 ## Outstanding Questions
+
+- Acceptance criteria are not yet defined for this feature.
 
 - Should the `stakeholders.yaml` registry be specified now as a future sub-feature, or deferred entirely until real usage patterns emerge?
 - How should role resolution interact with cross-repo-sync — if a decision spans multiple repositories, are stakeholders resolved per-repo or at the coordination level?

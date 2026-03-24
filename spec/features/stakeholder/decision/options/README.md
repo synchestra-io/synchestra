@@ -136,7 +136,13 @@ options:
 
 Renders as checkboxes with an optional text field.
 
+## Acceptance Criteria
+
+Not defined yet.
+
 ## Outstanding Questions
+
+- Acceptance criteria are not yet defined for this feature.
 
 - Should options support a `default` field to pre-select a recommended choice?
 - Should there be a `description` field per option for cases where even the label is too short to convey meaning, or is that always better handled in the decision's markdown body?

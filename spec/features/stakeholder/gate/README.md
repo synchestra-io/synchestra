@@ -18,15 +18,16 @@ Synchestra has implicit approval points — development plans transition through
 
 | Gate | Trigger | Default role | Default policy |
 |---|---|---|---|
-| `spec-review` | Plan status → `in_review` | `spec-approver` | `all` |
+| `plan-review` | Plan status → `in_review` | `spec-approver` | `all` |
 | `code-review` | Implementation task → `completed` | `code-reviewer` | `min: 1` |
-| `plan-approval` | Plan ready for final approval | `spec-approver` | `all` |
+
+`plan-review` covers the full plan approval cycle: when a plan enters `in_review`, a decision is created for spec approvers. If they approve, the plan transitions to `approved`. If they reject or provide custom feedback, the plan returns to `draft` for revision.
 
 Built-in gates fire automatically when their trigger condition is met. They create [decision](../decision/README.md) tasks assigned to the resolved stakeholders for the relevant feature scope.
 
 ### Gate Configuration
 
-Gates are configured in the project configuration. Built-in gates have sensible defaults but are fully overridable:
+Gates are configured in the project configuration (`synchestra-spec-repo.yaml`), alongside [role definitions](../role/README.md). Both `roles:` and `gates:` are top-level keys in the project configuration file. Built-in gates have sensible defaults but are fully overridable:
 
 ```yaml
 gates:
@@ -38,15 +39,8 @@ gates:
       type: approve-reject
       allow_custom: true
 
-  spec-review:
+  plan-review:
     requires: [spec-approver, domain-expert]
-    policy: all
-    options:
-      type: approve-reject
-      allow_custom: true
-
-  plan-approval:
-    requires: [spec-approver]
     policy: all
     options:
       type: approve-reject
@@ -121,7 +115,13 @@ gates:
 
 The `trigger` field is reserved but not implemented. Built-in gates use hardcoded trigger logic.
 
+## Acceptance Criteria
+
+Not defined yet.
+
 ## Outstanding Questions
+
+- Acceptance criteria are not yet defined for this feature.
 
 - Should gates be configurable per-feature (e.g., CLI features require 2 code reviewers, UI features require 1), or only at the project level?
 - Should there be a `bypass` mechanism for emergencies — e.g., a project owner can force-approve past a gate with an audit trail entry?

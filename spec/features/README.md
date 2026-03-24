@@ -215,10 +215,10 @@ All diagrams in feature specifications should use **mermaid syntax** instead of 
 - [bots/synchestra-bot](bots/synchestra-bot/README.md): 5 outstanding questions
 - [lsp](lsp/README.md): 5 outstanding questions
 - [source-references](source-references/README.md): 0 outstanding questions
-- [stakeholder](stakeholder/README.md): 4 outstanding questions
-- [stakeholder/role](stakeholder/role/README.md): 3 outstanding questions
-- [stakeholder/decision](stakeholder/decision/README.md): 3 outstanding questions
-- [stakeholder/decision/options](stakeholder/decision/options/README.md): 3 outstanding questions
-- [stakeholder/decision/audit](stakeholder/decision/audit/README.md): 3 outstanding questions
-- [stakeholder/gate](stakeholder/gate/README.md): 3 outstanding questions
-- [stakeholder/notification](stakeholder/notification/README.md): 3 outstanding questions
+- [stakeholder](stakeholder/README.md): 5 outstanding questions
+- [stakeholder/role](stakeholder/role/README.md): 4 outstanding questions
+- [stakeholder/decision](stakeholder/decision/README.md): 4 outstanding questions
+- [stakeholder/decision/options](stakeholder/decision/options/README.md): 4 outstanding questions
+- [stakeholder/decision/audit](stakeholder/decision/audit/README.md): 4 outstanding questions
+- [stakeholder/gate](stakeholder/gate/README.md): 4 outstanding questions
+- [stakeholder/notification](stakeholder/notification/README.md): 4 outstanding questions

@@ -114,7 +114,13 @@ A single task may spawn multiple decisions over its lifetime — an agent gets u
 - **Co-located with the task** — decisions belong to their task context. A centralized audit index across the project may be introduced later, but the source of truth is always the task directory.
 - **Append-only** — responses are never edited or removed once recorded. The log is an immutable audit trail.
 
+## Acceptance Criteria
+
+Not defined yet.
+
 ## Outstanding Questions
+
+- Acceptance criteria are not yet defined for this feature.
 
 - Should the audit log include a machine-readable frontmatter section summarizing all outcomes for programmatic access?
 - Should there be a project-wide audit index that aggregates decision outcomes across all tasks for reporting purposes?

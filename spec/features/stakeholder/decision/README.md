@@ -54,26 +54,36 @@ graph TD
 
 ### Decision Lifecycle
 
+Decisions are tasks, so their lifecycle maps to existing task statuses:
+
+| Decision state | Task status | Transition |
+|---|---|---|
+| Requested | `queued` | Decision task created, waiting for stakeholders |
+| Under review | `in_progress` | At least one stakeholder has claimed/started reviewing |
+| Resolved | `completed` | Policy satisfied, outcome recorded |
+| Expired | `failed` | Timeout reached without sufficient responses |
+
 ```mermaid
 stateDiagram-v2
-    [*] --> pending: decision requested
-    pending --> in_review: stakeholder(s) assigned
-    in_review --> resolved: policy satisfied
-    in_review --> expired: timeout (if configured)
-    resolved --> [*]
-    expired --> [*]
+    [*] --> queued: decision requested
+    queued --> in_progress: stakeholder(s) begin review
+    in_progress --> completed: policy satisfied
+    in_progress --> failed: timeout (if configured)
+    completed --> [*]
+    failed --> [*]
 ```
 
 ### Decision Task Format
 
 A decision is a task with `type: decision`. Structured metadata lives in YAML frontmatter; human-readable context lives in the markdown body.
 
+**Agent-initiated example:**
+
 ```markdown
 ---
 type: decision
 requester: agent-x
 source_task: implement-api
-gate: code-review
 stakeholders:
   - alex@github
   - carol@github
@@ -102,7 +112,51 @@ to implement.
 
 - Related spec: [API feature](spec/features/api/README.md)
 - Current task: [implement-api](../implement-api/)
-- See also: [security guidelines](docs/security.md)
+```
+
+**Gate-triggered example:**
+
+```markdown
+---
+type: decision
+requester: system
+gate: plan-review
+stakeholders:
+  - alex@github
+options:
+  type: approve-reject
+  allow_custom: true
+---
+
+# Decision: Approve plan "add-batch-mode"
+
+Review the development plan for adding batch mode to the CLI.
+
+## Context
+
+- Plan: [add-batch-mode](spec/plans/add-batch-mode/README.md)
+- Affected features: [cli](spec/features/cli/README.md)
+```
+
+**Agent-initiated free-text example (no predefined options):**
+
+```markdown
+---
+type: decision
+requester: agent-x
+source_task: implement-api
+stakeholders:
+  - alex@github
+policy: any
+options:
+  type: free-text
+---
+
+# Decision: Error Response Format
+
+I'm implementing the API error responses and need guidance on the
+preferred format. Should errors follow RFC 7807 (Problem Details),
+a custom JSON envelope, or something else?
 ```
 
 ### Frontmatter Fields
@@ -143,7 +197,13 @@ When a stakeholder provides a custom response (via `allow_custom`), the decision
 
 This is by design — not every decision fits neatly into predefined options, and the ability to steer with free-text is what enables truly async, persistent conversations between stakeholders and agents.
 
+## Acceptance Criteria
+
+Not defined yet.
+
 ## Outstanding Questions
+
+- Acceptance criteria are not yet defined for this feature.
 
 - Should decisions support attachments (files, images, links) in addition to text context?
 - What is the maximum nesting depth for follow-up decisions before the system should escalate to a human?

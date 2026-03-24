@@ -77,7 +77,13 @@ Stakeholders can configure their preferred notification channels. This is out of
 
 Until per-stakeholder preferences exist, notifications are delivered to all available channels for the project.
 
+## Acceptance Criteria
+
+Not defined yet.
+
 ## Outstanding Questions
+
+- Acceptance criteria are not yet defined for this feature.
 
 - Should notification preferences be per-stakeholder, per-role, or per-gate (e.g., "email me for spec-review but bot me for code-review")?
 - What is the retry strategy for failed notification delivery — should Synchestra retry, or is delivery best-effort with the task board as the fallback source of truth?

@@ -16,7 +16,7 @@ When a development plan needs review or an agent needs input, someone must decid
 
 ### Role Definition
 
-Roles are defined in the project configuration (`synchestra-spec.yaml` or a dedicated stakeholders section):
+Roles are defined in the project configuration (`synchestra-spec-repo.yaml`):
 
 ```yaml
 roles:
@@ -97,7 +97,13 @@ Project level:        {agent-x, alex}
 
 A `set` operation that replaces the entire inherited list may be added if `add`/`remove` proves cumbersome for features that need a completely different reviewer set. For now, `add`/`remove` covers the common cases.
 
+## Acceptance Criteria
+
+Not defined yet.
+
 ## Outstanding Questions
+
+- Acceptance criteria are not yet defined for this feature.
 
 - Should `_config.yaml` support conditions (e.g., different reviewers for different file types within a feature)?
 - Should role definitions support description/purpose metadata for discoverability (e.g., `code-reviewer: { description: "Reviews implementation code", add: [...] }`)?
