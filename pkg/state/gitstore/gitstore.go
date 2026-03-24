@@ -7,7 +7,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/synchesta-io/synchestra/pkg/state"
+	"github.com/synchestra-io/synchestra/pkg/state"
 )
 
 var errNotImplemented = errors.New("gitstore: not implemented")
@@ -23,7 +23,7 @@ const (
 	// SyncModeLocal operates only on the local clone — no pull/push per
 	// operation. The caller is responsible for periodic sync with the remote.
 	// Ideal for single-host setups where all agents share one local clone.
-	SyncModeLocal SyncMode = "local"
+	SyncModeLocal SyncMode = "local" // TODO: Implement
 )
 
 // Options holds git-backend-specific configuration.
@@ -43,7 +43,7 @@ type GitStateStore struct {
 }
 
 // New creates a new GitStateStore with git-backend-specific options.
-func New(ctx context.Context, opts Options) (state.Store, error) {
+func New(_ context.Context, opts Options) (state.Store, error) {
 	syncMode := opts.SyncMode
 	if syncMode == "" {
 		syncMode = SyncModeSync

@@ -6,8 +6,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/synchesta-io/synchestra/pkg/state"
-	"github.com/synchesta-io/synchestra/pkg/state/gitstore"
+	"github.com/synchestra-io/synchestra/pkg/state"
+	"github.com/synchestra-io/synchestra/pkg/state/gitstore"
 )
 
 // TestGitStateStoreImplementsStore verifies that GitStateStore satisfies state.Store

@@ -499,7 +499,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/synchesta-io/synchestra/pkg/state"
+	"github.com/synchestra-io/synchestra/pkg/state"
 )
 
 var errNotImplemented = errors.New("gitstore: not implemented")
@@ -620,8 +620,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/synchesta-io/synchestra/pkg/state"
-	"github.com/synchesta-io/synchestra/pkg/state/gitstore"
+	"github.com/synchestra-io/synchestra/pkg/state"
+	"github.com/synchestra-io/synchestra/pkg/state/gitstore"
 )
 
 // TestGitStateStoreImplementsStore verifies that GitStateStore satisfies state.Store

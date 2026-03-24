@@ -4,7 +4,6 @@ package feature
 // Features depended on:  cli/feature, cli/feature/info, project-definition
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -12,8 +11,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/synchesta-io/synchestra/pkg/cli/gitops"
-	"gopkg.in/yaml.v3"
+	"github.com/synchestra-io/synchestra/pkg/cli/gitops"
 )
 
 func newCommand() *cobra.Command {
@@ -203,32 +201,16 @@ func runNew(cmd *cobra.Command, _ []string) error {
 	}
 
 	// Output: same as feature info
-	info, err := buildNewFeatureInfo(featuresDir, featureID, readmePath, statusFlag, deps)
+	info, err := buildNewFeatureInfo(featureID, readmePath, statusFlag, deps)
 	if err != nil {
 		return &exitError{code: 10, msg: fmt.Sprintf("building output: %v", err)}
 	}
 
-	w := cmd.OutOrStdout()
-	switch formatFlag {
-	case "yaml":
-		enc := yaml.NewEncoder(w)
-		enc.SetIndent(2)
-		if err := enc.Encode(info); err != nil {
-			return &exitError{code: 10, msg: fmt.Sprintf("encoding yaml: %v", err)}
-		}
-		return enc.Close()
-	case "json":
-		enc := json.NewEncoder(w)
-		enc.SetIndent("", "  ")
-		return enc.Encode(info)
-	case "text":
-		return writeTextInfo(w, info)
-	}
-	return nil
+	return writeFeatureInfo(cmd.OutOrStdout(), formatFlag, info)
 }
 
 // buildNewFeatureInfo constructs a featureInfo for the newly created feature.
-func buildNewFeatureInfo(featuresDir, featureID, readmePath, status string, deps []string) (featureInfo, error) {
+func buildNewFeatureInfo(featureID, readmePath, status string, deps []string) (featureInfo, error) {
 	sections, err := parseSections(readmePath)
 	if err != nil {
 		return featureInfo{}, err

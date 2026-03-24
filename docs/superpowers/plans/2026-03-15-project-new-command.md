@@ -1223,9 +1223,9 @@ import (
 	"path/filepath"
 
 	"github.com/spf13/cobra"
-	"github.com/synchesta-io/synchestra/cli/gitops"
-	"github.com/synchesta-io/synchestra/cli/globalconfig"
-	"github.com/synchesta-io/synchestra/cli/reporef"
+	"github.com/synchestra-io/synchestra/cli/gitops"
+	"github.com/synchestra-io/synchestra/cli/globalconfig"
+	"github.com/synchestra-io/synchestra/cli/reporef"
 	"gopkg.in/yaml.v3"
 )
 
@@ -1442,7 +1442,7 @@ func (e *exitError) ExitCode() int { return e.code }
 
 Modify `cli/main.go` — add the project command to the root:
 
-Add import: `"github.com/synchesta-io/synchestra/cli/project"`
+Add import: `"github.com/synchestra-io/synchestra/cli/project"`
 
 Add to `rootCmd.AddCommand(...)`:
 ```go
@@ -1550,7 +1550,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/synchesta-io/synchestra/cli/gitops"
+	"github.com/synchestra-io/synchestra/cli/gitops"
 )
 
 func initBareTestRepo(t *testing.T, name string) string {

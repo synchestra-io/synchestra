@@ -1,4 +1,4 @@
-module github.com/synchesta-io/synchestra
+module github.com/synchestra-io/synchestra
 
 go 1.26.1
 

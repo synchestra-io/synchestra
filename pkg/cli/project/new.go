@@ -13,9 +13,9 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/synchesta-io/synchestra/pkg/cli/gitops"
-	"github.com/synchesta-io/synchestra/pkg/cli/globalconfig"
-	"github.com/synchesta-io/synchestra/pkg/cli/reporef"
+	"github.com/synchestra-io/synchestra/pkg/cli/gitops"
+	"github.com/synchestra-io/synchestra/pkg/cli/globalconfig"
+	"github.com/synchestra-io/synchestra/pkg/cli/reporef"
 )
 
 func newCommand() *cobra.Command {

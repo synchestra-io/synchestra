@@ -10,11 +10,11 @@ import (
 	"charm.land/fang/v2"
 	"github.com/ingitdb/ingitdb-cli/cmd/ingitdb/commands"
 	"github.com/spf13/cobra"
-	"github.com/synchesta-io/synchestra/pkg/cli/code"
-	"github.com/synchesta-io/synchestra/pkg/cli/feature"
-	"github.com/synchesta-io/synchestra/pkg/cli/project"
-	"github.com/synchesta-io/synchestra/pkg/cli/spec"
-	testcmd "github.com/synchesta-io/synchestra/pkg/cli/test"
+	"github.com/synchestra-io/synchestra/pkg/cli/code"
+	"github.com/synchestra-io/synchestra/pkg/cli/feature"
+	"github.com/synchestra-io/synchestra/pkg/cli/project"
+	"github.com/synchestra-io/synchestra/pkg/cli/spec"
+	testcmd "github.com/synchestra-io/synchestra/pkg/cli/test"
 )
 
 var (

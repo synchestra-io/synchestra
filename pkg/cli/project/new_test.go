@@ -11,8 +11,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/synchesta-io/synchestra/pkg/cli/gitops"
-	"github.com/synchesta-io/synchestra/pkg/cli/reporef"
+	"github.com/synchestra-io/synchestra/pkg/cli/gitops"
+	"github.com/synchestra-io/synchestra/pkg/cli/reporef"
 )
 
 func initBareTestRepo(t *testing.T, name string) string {

@@ -7,7 +7,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"github.com/synchesta-io/synchestra/pkg/sourceref"
+	"github.com/synchestra-io/synchestra/pkg/sourceref"
 )
 
 func depsCommand() *cobra.Command {

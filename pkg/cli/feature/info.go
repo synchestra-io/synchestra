@@ -124,7 +124,11 @@ func runInfo(cmd *cobra.Command, args []string) error {
 		Sections: sections,
 	}
 
-	w := cmd.OutOrStdout()
+	return writeFeatureInfo(cmd.OutOrStdout(), formatFlag, info)
+}
+
+// writeFeatureInfo encodes info to w in the given format (yaml, json, or text).
+func writeFeatureInfo(w io.Writer, formatFlag string, info featureInfo) error {
 	switch formatFlag {
 	case "yaml":
 		enc := yaml.NewEncoder(w)
