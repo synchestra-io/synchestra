@@ -25,12 +25,21 @@ func startCommand() *cobra.Command {
 
 func runStart(cmd *cobra.Command, _ []string) error {
 	taskFlag, _ := cmd.Flags().GetString("task")
+	syncFlag, _ := cmd.Flags().GetString("sync")
 
 	if strings.TrimSpace(taskFlag) == "" {
 		return &exitError{code: 2, msg: "--task is required"}
 	}
 
-	// TODO: Resolve project, construct store, call store.Task().Start(ctx, slug)
-	_, _ = fmt.Fprintln(cmd.OutOrStdout(), "task start: not implemented yet")
-	return &exitError{code: 10, msg: "synchestra task start is not yet implemented"}
+	store, err := resolveStore(syncFlag)
+	if err != nil {
+		return err
+	}
+
+	if err := store.Task().Start(cmd.Context(), taskFlag); err != nil {
+		return mapStoreError(err)
+	}
+
+	_, _ = fmt.Fprintf(cmd.OutOrStdout(), "task %s started\n", taskFlag)
+	return nil
 }

@@ -4,9 +4,10 @@ package task
 // Features depended on:  state-store/task-store
 
 import (
-	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/synchestra-io/synchestra/pkg/state"
 )
 
 func listCommand() *cobra.Command {
@@ -25,10 +26,25 @@ func listCommand() *cobra.Command {
 }
 
 func runList(cmd *cobra.Command, _ []string) error {
-	// TODO: Resolve project, construct store
-	// Parse --status into *state.TaskStatus filter
-	// Call store.Task().List(ctx, filter)
-	// Format output per --format flag
-	_, _ = fmt.Fprintln(cmd.OutOrStdout(), "task list: not implemented yet")
-	return &exitError{code: 10, msg: "synchestra task list is not yet implemented"}
+	statusFlag, _ := cmd.Flags().GetString("status")
+	format, _ := cmd.Flags().GetString("format")
+	syncFlag, _ := cmd.Flags().GetString("sync")
+
+	store, err := resolveStore(syncFlag)
+	if err != nil {
+		return err
+	}
+
+	var filter state.TaskFilter
+	if s := strings.TrimSpace(statusFlag); s != "" {
+		ts := state.TaskStatus(s)
+		filter.Status = &ts
+	}
+
+	tasks, err := store.Task().List(cmd.Context(), filter)
+	if err != nil {
+		return mapStoreError(err)
+	}
+
+	return writeTaskList(cmd.OutOrStdout(), format, tasks)
 }

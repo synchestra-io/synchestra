@@ -52,7 +52,7 @@ func TestBlockCommand_MissingFlags(t *testing.T) {
 	}
 }
 
-func TestBlockCommand_StubReturnsNotImplemented(t *testing.T) {
+func TestBlockCommand_NoProjectReturnsNotFound(t *testing.T) {
 	cmd := blockCommand()
 	cmd.SetOut(new(bytes.Buffer))
 	cmd.SetErr(new(bytes.Buffer))
@@ -65,7 +65,7 @@ func TestBlockCommand_StubReturnsNotImplemented(t *testing.T) {
 	if !errors.As(err, &ee) {
 		t.Fatalf("expected exitError, got %T", err)
 	}
-	if ee.ExitCode() != 10 {
-		t.Errorf("exit code = %d, want 10", ee.ExitCode())
+	if ee.ExitCode() != 3 {
+		t.Errorf("exit code = %d, want 3", ee.ExitCode())
 	}
 }

@@ -4,7 +4,6 @@ package task
 // Features depended on:  state-store/task-store
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -26,13 +25,22 @@ func infoCommand() *cobra.Command {
 
 func runInfo(cmd *cobra.Command, _ []string) error {
 	taskFlag, _ := cmd.Flags().GetString("task")
+	format, _ := cmd.Flags().GetString("format")
+	syncFlag, _ := cmd.Flags().GetString("sync")
 
 	if strings.TrimSpace(taskFlag) == "" {
 		return &exitError{code: 2, msg: "--task is required"}
 	}
 
-	// TODO: Resolve project, construct store, call store.Task().Get(ctx, slug)
-	// Format output per --format flag using writeTask()
-	_, _ = fmt.Fprintln(cmd.OutOrStdout(), "task info: not implemented yet")
-	return &exitError{code: 10, msg: "synchestra task info is not yet implemented"}
+	store, err := resolveStore(syncFlag)
+	if err != nil {
+		return err
+	}
+
+	t, err := store.Task().Get(cmd.Context(), taskFlag)
+	if err != nil {
+		return mapStoreError(err)
+	}
+
+	return writeTask(cmd.OutOrStdout(), format, t)
 }

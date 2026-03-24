@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/synchestra-io/synchestra/pkg/state"
 )
 
 func claimCommand() *cobra.Command {
@@ -29,6 +30,7 @@ func runClaim(cmd *cobra.Command, _ []string) error {
 	taskFlag, _ := cmd.Flags().GetString("task")
 	run, _ := cmd.Flags().GetString("run")
 	model, _ := cmd.Flags().GetString("model")
+	syncFlag, _ := cmd.Flags().GetString("sync")
 
 	if strings.TrimSpace(taskFlag) == "" {
 		return &exitError{code: 2, msg: "--task is required"}
@@ -40,7 +42,15 @@ func runClaim(cmd *cobra.Command, _ []string) error {
 		return &exitError{code: 2, msg: "--model is required"}
 	}
 
-	// TODO: Resolve project, construct store, call store.Task().Claim(ctx, slug, ClaimParams{Run, Model})
-	_, _ = fmt.Fprintln(cmd.OutOrStdout(), "task claim: not implemented yet")
-	return &exitError{code: 10, msg: "synchestra task claim is not yet implemented"}
+	store, err := resolveStore(syncFlag)
+	if err != nil {
+		return err
+	}
+
+	if err := store.Task().Claim(cmd.Context(), taskFlag, state.ClaimParams{Run: run, Model: model}); err != nil {
+		return mapStoreError(err)
+	}
+
+	_, _ = fmt.Fprintf(cmd.OutOrStdout(), "task %s claimed by %s (%s)\n", taskFlag, run, model)
+	return nil
 }

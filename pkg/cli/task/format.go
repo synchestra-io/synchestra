@@ -14,12 +14,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Suppress unused warnings until the gitstore backend is wired.
-var (
-	_ = writeTask
-	_ = writeTaskList
-)
-
 // taskOutput is the serialisable view of a task for CLI output.
 type taskOutput struct {
 	Path           string `json:"path" yaml:"path"`

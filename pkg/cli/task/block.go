@@ -27,6 +27,7 @@ func blockCommand() *cobra.Command {
 func runBlock(cmd *cobra.Command, _ []string) error {
 	taskFlag, _ := cmd.Flags().GetString("task")
 	reason, _ := cmd.Flags().GetString("reason")
+	syncFlag, _ := cmd.Flags().GetString("sync")
 
 	if strings.TrimSpace(taskFlag) == "" {
 		return &exitError{code: 2, msg: "--task is required"}
@@ -35,7 +36,15 @@ func runBlock(cmd *cobra.Command, _ []string) error {
 		return &exitError{code: 2, msg: "--reason is required"}
 	}
 
-	// TODO: Resolve project, construct store, call store.Task().Block(ctx, slug, reason)
-	_, _ = fmt.Fprintln(cmd.OutOrStdout(), "task block: not implemented yet")
-	return &exitError{code: 10, msg: "synchestra task block is not yet implemented"}
+	store, err := resolveStore(syncFlag)
+	if err != nil {
+		return err
+	}
+
+	if err := store.Task().Block(cmd.Context(), taskFlag, reason); err != nil {
+		return mapStoreError(err)
+	}
+
+	_, _ = fmt.Fprintf(cmd.OutOrStdout(), "task %s blocked\n", taskFlag)
+	return nil
 }

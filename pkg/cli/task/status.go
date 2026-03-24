@@ -4,10 +4,12 @@ package task
 // Features depended on:  state-store/task-store
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/synchestra-io/synchestra/pkg/state"
 )
 
 func statusCommand() *cobra.Command {
@@ -36,21 +38,84 @@ func runStatus(cmd *cobra.Command, _ []string) error {
 	taskFlag, _ := cmd.Flags().GetString("task")
 	current, _ := cmd.Flags().GetString("current")
 	newStatus, _ := cmd.Flags().GetString("new")
+	reason, _ := cmd.Flags().GetString("reason")
+	syncFlag, _ := cmd.Flags().GetString("sync")
 
 	if strings.TrimSpace(taskFlag) == "" {
 		return &exitError{code: 2, msg: "--task is required"}
 	}
 
-	// Validate update mode: --current and --new must both be provided or both omitted
 	hasCurrent := strings.TrimSpace(current) != ""
 	hasNew := strings.TrimSpace(newStatus) != ""
 	if hasCurrent != hasNew {
 		return &exitError{code: 2, msg: "--current and --new must both be provided for update mode"}
 	}
 
-	// TODO: Resolve project, construct store
-	// Query mode: call store.Task().Get(ctx, slug) and print status
-	// Update mode: validate transition, call appropriate TaskStore method
-	_, _ = fmt.Fprintln(cmd.OutOrStdout(), "task status: not implemented yet")
-	return &exitError{code: 10, msg: "synchestra task status is not yet implemented"}
+	store, err := resolveStore(syncFlag)
+	if err != nil {
+		return err
+	}
+
+	ctx := cmd.Context()
+
+	// Query mode: just print the status
+	if !hasNew {
+		t, err := store.Task().Get(ctx, taskFlag)
+		if err != nil {
+			return mapStoreError(err)
+		}
+		_, _ = fmt.Fprintf(cmd.OutOrStdout(), "%s\n", t.Status)
+		return nil
+	}
+
+	// Update mode: guard with --current, then perform transition
+	t, err := store.Task().Get(ctx, taskFlag)
+	if err != nil {
+		return mapStoreError(err)
+	}
+	if string(t.Status) != current {
+		return &exitError{code: 4, msg: fmt.Sprintf("status guard failed: expected %s, got %s", current, t.Status)}
+	}
+
+	target := state.TaskStatus(newStatus)
+	if err := applyTransition(store, ctx, taskFlag, target, reason); err != nil {
+		return err
+	}
+
+	_, _ = fmt.Fprintf(cmd.OutOrStdout(), "task %s transitioned from %s to %s\n", taskFlag, current, newStatus)
+	return nil
+}
+
+// applyTransition calls the appropriate TaskStore method for the target status.
+func applyTransition(store state.Store, ctx context.Context, slug string, target state.TaskStatus, reason string) error {
+	ts := store.Task()
+	var err error
+	switch target {
+	case state.TaskStatusQueued:
+		err = ts.Enqueue(ctx, slug)
+	case state.TaskStatusClaimed:
+		return &exitError{code: 2, msg: "use 'synchestra task claim' for claiming (requires --run and --model)"}
+	case state.TaskStatusInProgress:
+		err = ts.Start(ctx, slug)
+	case state.TaskStatusCompleted:
+		err = ts.Complete(ctx, slug, reason)
+	case state.TaskStatusFailed:
+		if reason == "" {
+			return &exitError{code: 2, msg: "--reason is required when transitioning to failed"}
+		}
+		err = ts.Fail(ctx, slug, reason)
+	case state.TaskStatusBlocked:
+		if reason == "" {
+			return &exitError{code: 2, msg: "--reason is required when transitioning to blocked"}
+		}
+		err = ts.Block(ctx, slug, reason)
+	case state.TaskStatusAborted:
+		err = ts.ConfirmAbort(ctx, slug)
+	default:
+		return &exitError{code: 2, msg: fmt.Sprintf("unsupported target status %q for status command", target)}
+	}
+	if err != nil {
+		return mapStoreError(err)
+	}
+	return nil
 }

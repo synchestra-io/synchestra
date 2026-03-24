@@ -37,7 +37,7 @@ func TestAbortCommand_MissingTask(t *testing.T) {
 	}
 }
 
-func TestAbortCommand_StubReturnsNotImplemented(t *testing.T) {
+func TestAbortCommand_NoProjectReturnsNotFound(t *testing.T) {
 	cmd := abortCommand()
 	cmd.SetOut(new(bytes.Buffer))
 	cmd.SetErr(new(bytes.Buffer))
@@ -50,7 +50,7 @@ func TestAbortCommand_StubReturnsNotImplemented(t *testing.T) {
 	if !errors.As(err, &ee) {
 		t.Fatalf("expected exitError, got %T", err)
 	}
-	if ee.ExitCode() != 10 {
-		t.Errorf("exit code = %d, want 10", ee.ExitCode())
+	if ee.ExitCode() != 3 {
+		t.Errorf("exit code = %d, want 3", ee.ExitCode())
 	}
 }

@@ -1,13 +1,17 @@
 package task
 
 // Features implemented: cli/task
-// Features depended on:  project-definition
+// Features depended on:  project-definition, state-store, state-store/backends/git
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 
+	"github.com/synchestra-io/synchestra/pkg/state"
+	"github.com/synchestra-io/synchestra/pkg/state/gitstore"
 	"gopkg.in/yaml.v3"
 )
 
@@ -17,8 +21,54 @@ type specRepoConfig struct {
 	StateRepo string `yaml:"state_repo"`
 }
 
-// TODO: Remove once task commands call resolveStateRepoPath.
-var _ = resolveStateRepoPath
+// resolveStore constructs a state.Store by resolving the project and applying
+// the --sync override. The commands interact only with state.Store — they are
+// unaware of which backend is used.
+func resolveStore(syncFlag string) (state.Store, error) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return nil, &exitError{code: 10, msg: fmt.Sprintf("getting working directory: %v", err)}
+	}
+	repoPath, err := resolveStateRepoPath(cwd)
+	if err != nil {
+		return nil, err
+	}
+
+	opts := gitstore.GitStoreOptions{
+		StoreOptions: state.StoreOptions{
+			StateRepoPath: repoPath,
+		},
+	}
+
+	switch syncFlag {
+	case "remote":
+		opts.Sync.Pull = state.SyncOnCommit
+		opts.Sync.Push = state.SyncOnCommit
+	case "local":
+		opts.Sync.Pull = state.SyncManual
+		opts.Sync.Push = state.SyncManual
+	case "":
+		// use defaults (on_commit)
+	default:
+		return nil, &exitError{code: 2, msg: fmt.Sprintf("invalid --sync value %q: must be remote or local", syncFlag)}
+	}
+
+	return gitstore.New(context.Background(), opts)
+}
+
+// mapStoreError converts state-layer errors to CLI exit codes.
+func mapStoreError(err error) *exitError {
+	switch {
+	case errors.Is(err, state.ErrNotFound):
+		return &exitError{code: 3, msg: err.Error()}
+	case errors.Is(err, state.ErrConflict):
+		return &exitError{code: 1, msg: err.Error()}
+	case errors.Is(err, state.ErrInvalidTransition):
+		return &exitError{code: 4, msg: err.Error()}
+	default:
+		return &exitError{code: 10, msg: err.Error()}
+	}
+}
 
 // resolveStateRepoPath finds the state repo path for the current project.
 // It walks up from startDir looking for synchestra-spec-repo.yaml (reads

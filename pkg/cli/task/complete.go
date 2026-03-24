@@ -26,12 +26,22 @@ func completeCommand() *cobra.Command {
 
 func runComplete(cmd *cobra.Command, _ []string) error {
 	taskFlag, _ := cmd.Flags().GetString("task")
+	summary, _ := cmd.Flags().GetString("summary")
+	syncFlag, _ := cmd.Flags().GetString("sync")
 
 	if strings.TrimSpace(taskFlag) == "" {
 		return &exitError{code: 2, msg: "--task is required"}
 	}
 
-	// TODO: Resolve project, construct store, call store.Task().Complete(ctx, slug, summary)
-	_, _ = fmt.Fprintln(cmd.OutOrStdout(), "task complete: not implemented yet")
-	return &exitError{code: 10, msg: "synchestra task complete is not yet implemented"}
+	store, err := resolveStore(syncFlag)
+	if err != nil {
+		return err
+	}
+
+	if err := store.Task().Complete(cmd.Context(), taskFlag, summary); err != nil {
+		return mapStoreError(err)
+	}
+
+	_, _ = fmt.Fprintf(cmd.OutOrStdout(), "task %s completed\n", taskFlag)
+	return nil
 }

@@ -26,12 +26,21 @@ func unblockCommand() *cobra.Command {
 
 func runUnblock(cmd *cobra.Command, _ []string) error {
 	taskFlag, _ := cmd.Flags().GetString("task")
+	syncFlag, _ := cmd.Flags().GetString("sync")
 
 	if strings.TrimSpace(taskFlag) == "" {
 		return &exitError{code: 2, msg: "--task is required"}
 	}
 
-	// TODO: Resolve project, construct store, call store.Task().Unblock(ctx, slug)
-	_, _ = fmt.Fprintln(cmd.OutOrStdout(), "task unblock: not implemented yet")
-	return &exitError{code: 10, msg: "synchestra task unblock is not yet implemented"}
+	store, err := resolveStore(syncFlag)
+	if err != nil {
+		return err
+	}
+
+	if err := store.Task().Unblock(cmd.Context(), taskFlag); err != nil {
+		return mapStoreError(err)
+	}
+
+	_, _ = fmt.Fprintf(cmd.OutOrStdout(), "task %s unblocked\n", taskFlag)
+	return nil
 }

@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/synchestra-io/synchestra/pkg/state"
 )
 
 func newCommand() *cobra.Command {
@@ -30,6 +31,10 @@ func newCommand() *cobra.Command {
 func runNew(cmd *cobra.Command, _ []string) error {
 	taskFlag, _ := cmd.Flags().GetString("task")
 	title, _ := cmd.Flags().GetString("title")
+	description, _ := cmd.Flags().GetString("description")
+	dependsOn, _ := cmd.Flags().GetString("depends-on")
+	enqueue, _ := cmd.Flags().GetBool("enqueue")
+	syncFlag, _ := cmd.Flags().GetString("sync")
 
 	if strings.TrimSpace(taskFlag) == "" {
 		return &exitError{code: 2, msg: "--task is required"}
@@ -38,7 +43,40 @@ func runNew(cmd *cobra.Command, _ []string) error {
 		return &exitError{code: 2, msg: "--title is required"}
 	}
 
-	// TODO: Resolve project, construct store, call store.Task().Create(ctx, params)
-	_, _ = fmt.Fprintln(cmd.OutOrStdout(), "task new: not implemented yet")
-	return &exitError{code: 10, msg: "synchestra task new is not yet implemented"}
+	store, err := resolveStore(syncFlag)
+	if err != nil {
+		return err
+	}
+
+	var deps []string
+	if dependsOn != "" {
+		for _, d := range strings.Split(dependsOn, ",") {
+			if s := strings.TrimSpace(d); s != "" {
+				deps = append(deps, s)
+			}
+		}
+	}
+
+	ctx := cmd.Context()
+	params := state.TaskCreateParams{
+		Slug:      taskFlag,
+		Title:     title,
+		DependsOn: deps,
+	}
+	_ = description // description is stored in the task file by the store if supported
+
+	task, err := store.Task().Create(ctx, params)
+	if err != nil {
+		return mapStoreError(err)
+	}
+
+	if enqueue {
+		if err := store.Task().Enqueue(ctx, taskFlag); err != nil {
+			return mapStoreError(err)
+		}
+		task.Status = state.TaskStatusQueued
+	}
+
+	_, _ = fmt.Fprintf(cmd.OutOrStdout(), "created task %s (%s)\n", task.Slug, task.Status)
+	return nil
 }

@@ -26,12 +26,21 @@ func abortCommand() *cobra.Command {
 
 func runAbort(cmd *cobra.Command, _ []string) error {
 	taskFlag, _ := cmd.Flags().GetString("task")
+	syncFlag, _ := cmd.Flags().GetString("sync")
 
 	if strings.TrimSpace(taskFlag) == "" {
 		return &exitError{code: 2, msg: "--task is required"}
 	}
 
-	// TODO: Resolve project, construct store, call store.Task().RequestAbort(ctx, slug)
-	_, _ = fmt.Fprintln(cmd.OutOrStdout(), "task abort: not implemented yet")
-	return &exitError{code: 10, msg: "synchestra task abort is not yet implemented"}
+	store, err := resolveStore(syncFlag)
+	if err != nil {
+		return err
+	}
+
+	if err := store.Task().RequestAbort(cmd.Context(), taskFlag); err != nil {
+		return mapStoreError(err)
+	}
+
+	_, _ = fmt.Fprintf(cmd.OutOrStdout(), "task %s abort requested\n", taskFlag)
+	return nil
 }

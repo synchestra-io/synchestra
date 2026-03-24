@@ -37,7 +37,7 @@ func TestEnqueueCommand_MissingTask(t *testing.T) {
 	}
 }
 
-func TestEnqueueCommand_StubReturnsNotImplemented(t *testing.T) {
+func TestEnqueueCommand_NoProjectReturnsNotFound(t *testing.T) {
 	cmd := enqueueCommand()
 	cmd.SetOut(new(bytes.Buffer))
 	cmd.SetErr(new(bytes.Buffer))
@@ -50,7 +50,7 @@ func TestEnqueueCommand_StubReturnsNotImplemented(t *testing.T) {
 	if !errors.As(err, &ee) {
 		t.Fatalf("expected exitError, got %T", err)
 	}
-	if ee.ExitCode() != 10 {
-		t.Errorf("exit code = %d, want 10", ee.ExitCode())
+	if ee.ExitCode() != 3 {
+		t.Errorf("exit code = %d, want 3", ee.ExitCode())
 	}
 }
