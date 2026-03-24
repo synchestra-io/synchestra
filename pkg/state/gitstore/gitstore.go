@@ -50,45 +50,6 @@ func (s *GitStateStore) Chat() state.ChatStore       { return &gitChatStore{stor
 func (s *GitStateStore) Project() state.ProjectStore { return &gitProjectStore{store: s} }
 func (s *GitStateStore) State() state.StateSync      { return &gitStateSync{store: s} }
 
-// --- TaskStore ---
-
-type gitTaskStore struct{ store *GitStateStore }
-
-func (t *gitTaskStore) Create(_ context.Context, _ state.TaskCreateParams) (state.Task, error) {
-	return state.Task{}, errNotImplemented
-}
-func (t *gitTaskStore) Get(_ context.Context, _ string) (state.Task, error) {
-	return state.Task{}, errNotImplemented
-}
-func (t *gitTaskStore) List(_ context.Context, _ state.TaskFilter) ([]state.Task, error) {
-	return nil, errNotImplemented
-}
-func (t *gitTaskStore) Enqueue(_ context.Context, _ string) error { return errNotImplemented }
-func (t *gitTaskStore) Claim(_ context.Context, _ string, _ state.ClaimParams) error {
-	return errNotImplemented
-}
-func (t *gitTaskStore) Start(_ context.Context, _ string) error        { return errNotImplemented }
-func (t *gitTaskStore) Complete(_ context.Context, _, _ string) error  { return errNotImplemented }
-func (t *gitTaskStore) Fail(_ context.Context, _, _ string) error      { return errNotImplemented }
-func (t *gitTaskStore) Block(_ context.Context, _, _ string) error     { return errNotImplemented }
-func (t *gitTaskStore) Unblock(_ context.Context, _ string) error      { return errNotImplemented }
-func (t *gitTaskStore) Release(_ context.Context, _ string) error      { return errNotImplemented }
-func (t *gitTaskStore) RequestAbort(_ context.Context, _ string) error { return errNotImplemented }
-func (t *gitTaskStore) ConfirmAbort(_ context.Context, _ string) error { return errNotImplemented }
-func (t *gitTaskStore) Board() state.Board                             { return &gitBoard{store: t.store} }
-func (t *gitTaskStore) Artifact(_ context.Context, _ string) state.ArtifactStore {
-	return &gitArtifactStore{store: t.store}
-}
-
-// --- Board ---
-
-type gitBoard struct{ store *GitStateStore }
-
-func (b *gitBoard) Rebuild(_ context.Context) error { return errNotImplemented }
-func (b *gitBoard) Get(_ context.Context) (state.BoardView, error) {
-	return state.BoardView{}, errNotImplemented
-}
-
 // --- ArtifactStore ---
 
 type gitArtifactStore struct{ store *GitStateStore }

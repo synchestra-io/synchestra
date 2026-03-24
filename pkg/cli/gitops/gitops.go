@@ -1,6 +1,6 @@
 package gitops
 
-// Features depended on: cli/project/new
+// Features depended on: cli/project/new, state-store/backends/git
 
 import (
 	"fmt"
@@ -72,6 +72,91 @@ func Pull(dir string) error {
 	cmd := exec.Command("git", "-C", dir, "pull")
 	if out, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("git pull in %s: %w\n%s", dir, err, out)
+	}
+	return nil
+}
+
+// CurrentBranch returns the name of the current branch.
+func CurrentBranch(dir string) (string, error) {
+	cmd := exec.Command("git", "-C", dir, "rev-parse", "--abbrev-ref", "HEAD")
+	out, err := cmd.Output()
+	if err != nil {
+		return "", fmt.Errorf("getting current branch in %s: %w", dir, err)
+	}
+	return strings.TrimSpace(string(out)), nil
+}
+
+// CreateBranch creates a new branch without checking it out.
+func CreateBranch(dir, name string) error {
+	cmd := exec.Command("git", "-C", dir, "branch", name)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("creating branch %s in %s: %w\n%s", name, dir, err, out)
+	}
+	return nil
+}
+
+// CheckoutBranch switches to the named branch.
+func CheckoutBranch(dir, name string) error {
+	cmd := exec.Command("git", "-C", dir, "checkout", name)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("checking out branch %s in %s: %w\n%s", name, dir, err, out)
+	}
+	return nil
+}
+
+// CreateAndCheckoutBranch creates a new branch and checks it out.
+func CreateAndCheckoutBranch(dir, name string) error {
+	cmd := exec.Command("git", "-C", dir, "checkout", "-b", name)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("creating and checking out branch %s in %s: %w\n%s", name, dir, err, out)
+	}
+	return nil
+}
+
+// MergeBranch merges the source branch into the current branch using fast-forward only.
+func MergeBranch(dir, source string) error {
+	cmd := exec.Command("git", "-C", dir, "merge", "--ff-only", source)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("merging branch %s in %s: %w\n%s", source, dir, err, out)
+	}
+	return nil
+}
+
+// DeleteBranch deletes the named branch.
+func DeleteBranch(dir, name string) error {
+	cmd := exec.Command("git", "-C", dir, "branch", "-d", name)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("deleting branch %s in %s: %w\n%s", name, dir, err, out)
+	}
+	return nil
+}
+
+// BranchExists returns true if the named branch exists.
+func BranchExists(dir, name string) bool {
+	cmd := exec.Command("git", "-C", dir, "rev-parse", "--verify", "refs/heads/"+name)
+	return cmd.Run() == nil
+}
+
+// Push pushes the current branch to the remote.
+func Push(dir string) error {
+	cmd := exec.Command("git", "-C", dir, "push")
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("git push in %s: %w\n%s", dir, err, out)
+	}
+	return nil
+}
+
+// Commit stages the given files and commits with the message, without pushing.
+func Commit(dir string, files []string, message string) error {
+	args := []string{"-C", dir, "add"}
+	args = append(args, files...)
+	if out, err := exec.Command("git", args...).CombinedOutput(); err != nil {
+		return fmt.Errorf("git add in %s: %w\n%s", dir, err, out)
+	}
+
+	cmd := exec.Command("git", "-C", dir, "commit", "-m", message)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("git commit in %s: %w\n%s", dir, err, out)
 	}
 	return nil
 }
