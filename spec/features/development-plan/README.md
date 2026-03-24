@@ -175,6 +175,8 @@ None at this time.
 | **Approver** | On approval | Who approved the plan |
 | **Created** | Yes | Date the plan was created |
 | **Approved** | On approval | Date the plan was approved |
+| **Effort** | No | `S` \| `M` \| `L` \| `XL` — see [Optional ROI metadata](#optional-roi-metadata) |
+| **Impact** | No | `low` \| `medium` \| `high` \| `critical` — see [Optional ROI metadata](#optional-roi-metadata) |
 
 When a plan is triggered by a change request (proposal), the **Source** field links directly to the proposal. The proposal in turn gets a forward reference to the plan:
 
@@ -216,6 +218,109 @@ This allows criteria to be as simple or as complex as needed without cluttering 
 Plans support a maximum of **two levels** of nesting: steps (level 1) and sub-steps (level 2, e.g., "2.1"). Anything deeper is execution detail that belongs in task decomposition, not the plan.
 
 This constraint is intentional — it keeps plans scannable. A reviewer should be able to read the full plan in under two minutes.
+
+### Plan hierarchy
+
+Plans can nest to mirror the feature tree convention. A **roadmap** is a parent plan that defines ordering between child plans. A **child plan** has the same format as today's standalone plans. A **standalone plan** (no children) works exactly as before.
+
+#### Directory structure
+
+```text
+spec/plans/
+  README.md                          ← index
+  chat-feature/
+    README.md                        ← roadmap plan (parent)
+    chat-infrastructure/
+      README.md                      ← child plan
+    chat-workflow-engine/
+      README.md                      ← child plan
+  e2e-testing-framework/
+    README.md                        ← standalone plan (no children)
+```
+
+#### Rules
+
+- A **roadmap** (parent plan) defines ordering and dependencies between child plans. It does not have implementation steps — its Steps section is replaced by a Child Plans table listing child plans with their relationships.
+- A **child plan** has steps, task mappings, and acceptance criteria — the same format as today's plans.
+- A **standalone plan** (no children) works exactly as today. No changes required.
+- Nesting is limited to **2 levels**: roadmap → child plan. Deeper nesting belongs in task decomposition.
+
+#### Roadmap document structure
+
+```markdown
+# Plan: Chat Feature Roadmap
+
+**Status:** draft
+**Features:**
+  - [chat](../../features/chat/README.md)
+  - [chat/workflow](../../features/chat/workflow/README.md)
+**Source type:** feature
+**Source:** [Chat feature spec](../../features/chat/)
+**Author:** @alex
+**Created:** 2026-03-24
+**Effort:** XL
+**Impact:** critical
+
+## Context
+
+High-level roadmap for the Chat feature. Decomposes into sequential
+phases, each with its own child plan.
+
+## Acceptance criteria
+
+- All child plans completed
+- Chat feature status moves to Stable
+
+## Child Plans
+
+| Order | Plan | Status | Effort | Impact |
+|-------|------|--------|--------|--------|
+| 1 | [chat-infrastructure](chat-infrastructure/) | draft | L | high |
+| 2 | [chat-workflow-engine](chat-workflow-engine/) | draft | M | high |
+```
+
+#### Roadmap status derivation
+
+A roadmap's status is derived from its children:
+
+| Condition | Derived status |
+|---|---|
+| At least one child is `draft` | `draft` |
+| All children are `in_review` or `approved` | `in_review` |
+| All children are `approved` | `approved` |
+| At least one child plan has linked tasks in progress | `in_progress` |
+| Explicitly set when the roadmap is replaced | `superseded` |
+
+### Optional ROI metadata
+
+Two optional fields can be added to the plan document header:
+
+```markdown
+**Effort:** S | M | L | XL
+**Impact:** low | medium | high | critical
+```
+
+Both fields are **optional**. When absent, the AI infers effort from step count, dependency depth, and acceptance criteria complexity. It infers impact from feature importance and downstream dependents. During plan authoring (brainstorming/writing-plans flow), the AI **suggests** values. The user accepts, declines, or overwrites.
+
+For roadmaps, effort/impact describe the aggregate. Child plans carry independent estimates.
+
+#### Effort scale
+
+| Effort | Rough meaning |
+|--------|---------------|
+| S | A few hours of focused work, 1-3 steps |
+| M | A few days, 3-6 steps, limited dependencies |
+| L | A week or more, 5-10 steps, cross-cutting |
+| XL | Multi-week, many steps, multiple child plans or deep dependencies |
+
+#### Impact scale
+
+| Impact | Rough meaning |
+|--------|---------------|
+| low | Nice-to-have, no users blocked |
+| medium | Improves existing capability, some users benefit |
+| high | Enables important new capability, many users benefit |
+| critical | Unblocks core functionality or other critical work |
 
 ### Steps without dependencies are parallel-eligible
 
@@ -292,11 +397,14 @@ planning:
 ```markdown
 # Plans
 
-| Plan                                | Status     | Progress   | Features        | Author | Approved   |
-|-------------------------------------|------------|------------|-----------------|--------|------------|
-| [user-auth](user-auth/)             | approved   | 2/4 steps  | api, ui/web-app | @alex  | 2026-03-15 |
-| [add-batch-mode](add-batch-mode/)   | in_review  | —          | cli             | @alex  | —          |
-| [refactor-output](refactor-output/) | superseded | —          | cli             | @alex  | —          |
+| Plan | Status | Progress | Features | Effort | Impact | Author | Approved |
+|---|---|---|---|---|---|---|---|
+| [chat-feature](chat-feature/) | draft | — | chat, chat/workflow | XL | critical | @alex | — |
+| &ensp;[chat-infrastructure](chat-feature/chat-infrastructure/) | draft | — | chat | L | high | @alex | — |
+| &ensp;[chat-workflow-engine](chat-feature/chat-workflow-engine/) | draft | — | chat/workflow | M | high | @alex | — |
+| [user-auth](user-auth/) | approved | 2/4 steps | api, ui/web-app | M | high | @alex | 2026-03-15 |
+| [add-batch-mode](add-batch-mode/) | in_review | — | cli | S | medium | @alex | — |
+| [refactor-output](refactor-output/) | superseded | — | cli | — | — | @alex | — |
 
 ## Recently Closed
 
@@ -311,20 +419,26 @@ None at this time.
 
 The **Progress** column shows derived status (see [Derived status view](#derived-status-view)) for approved plans that have generated tasks. Plans in `draft` or `in_review` show `—`.
 
+Child plans are indented with `&ensp;` and their link paths include the parent directory (e.g., `chat-feature/chat-infrastructure/`). The **Effort** and **Impact** columns show [optional ROI metadata](#optional-roi-metadata) when present, or `—` when absent.
+
 The **Recently Closed** section shows completed, failed, or superseded plans from the last N (configurable per project, default: 5) plans.
 
 ### Feature README back-reference
 
-Each affected feature's README includes a **Plans** section linking to plans that touch it:
+Each affected feature's README includes a **Plans** section linking to plans that touch it. Features can reference both roadmaps and child plans — the path disambiguates:
 
 ```markdown
 ## Plans
 
-| Plan                                          | Status    | Author | Approved   |
-|-----------------------------------------------|-----------|--------|------------|
-| [user-auth](../../plans/user-auth/)           | approved  | @alex  | 2026-03-15 |
-| [add-batch-mode](../../plans/add-batch-mode/) | in_review | @alex  | —          |
+| Plan                                                                  | Status    | Author | Approved   |
+|-----------------------------------------------------------------------|-----------|--------|------------|
+| [chat-feature](../../plans/chat-feature/)                             | draft     | @alex  | —          |
+| [chat-infrastructure](../../plans/chat-feature/chat-infrastructure/)  | draft     | @alex  | —          |
+| [user-auth](../../plans/user-auth/)                                   | approved  | @alex  | 2026-03-15 |
+| [add-batch-mode](../../plans/add-batch-mode/)                         | in_review | @alex  | —          |
 ```
+
+A feature appearing in both a roadmap and its child plan is valid — the roadmap covers it broadly, the child plan implements a slice. A feature linked only to a roadmap (no child plan yet) signals "planned but not decomposed."
 
 ## Workflow
 
@@ -672,6 +786,71 @@ spec/plans/{plan-slug}/
     README.md           ← deviation report
 ```
 
+## What's Next Report
+
+The What's Next report is an AI-generated prioritization document that surfaces what to work on next based on plan statuses, dependencies, and ROI metadata.
+
+### Location
+
+`spec/plans/WHATS-NEXT.md`
+
+### Report structure
+
+```markdown
+# What's Next
+
+**Generated:** 2026-03-24
+**Mode:** incremental | full
+
+## Completed Since Last Update
+
+- [chat-infrastructure](chat-feature/chat-infrastructure/) — completed 2026-03-20
+
+## In Progress
+
+- [hero-scene](hero-scene/) — 2/4 steps done, no blockers
+
+## Recommended Next
+
+1. **[chat-workflow-engine](chat-feature/chat-workflow-engine/)** — Impact: high,
+   Effort: M. Unblocked by chat-infrastructure completion. Advances the
+   highest-impact roadmap.
+2. **[agent-skills-roadmap](agent-skills-roadmap/)** — Impact: medium, Effort: L.
+   No blockers, independent of current momentum.
+
+### Reasoning
+
+Brief AI explanation of prioritization — dependency unlocks, ROI ratio,
+momentum, competing priorities.
+
+## Outstanding Questions
+
+(ambiguities the AI surfaced during analysis)
+```
+
+### Update mechanism
+
+- **Trigger:** plan or task completion events (via `synchestra task-complete` / plan status transitions)
+- **Incremental mode:** reads previous `WHATS-NEXT.md` + the completion delta. Regenerates only affected sections. Minimizes token usage.
+- **Full mode:** scans all features, plans, and task statuses. Used for initial generation or to correct incremental drift.
+- The file is **committed to git** after each update, providing a history of how priorities evolved over time.
+
+The explicit command `synchestra plans whats-next` works regardless of config setting. Pass `--full` to force full regeneration.
+
+### Prioritization inputs
+
+The AI considers these signals in order of priority:
+
+1. Explicit ROI metadata (effort/impact) when present
+2. Dependency graph — what is newly unblocked by recent completions
+3. Momentum — preference for advancing roadmaps already in progress
+4. Feature status — features closer to "stable" get a boost
+5. AI inference from plan complexity when ROI metadata is absent
+
+### Opt-in via config
+
+Report generation is opt-in via the `planning.whats_next` setting in `synchestra-spec-repo.yaml` to avoid surprise token spend. See [Project Configuration](#project-configuration) for details.
+
 ## Project Configuration
 
 All planning settings in `synchestra-spec-repo.yaml`:
@@ -682,6 +861,7 @@ planning:
   auto_generate_tasks: false  # generate tasks on plan approval (default: false)
   enforce_freeze: warn        # protect approved plans from edits: warn | reject | off (default: warn)
   validate_artifacts: warn    # check declared artifacts exist on task complete: warn | reject | off (default: warn)
+  whats_next: disabled        # disabled | incremental | full (default: disabled)
 ```
 
 ## Interaction with Other Features
