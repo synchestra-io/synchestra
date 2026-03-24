@@ -260,6 +260,7 @@ var allRuleNames = map[string]bool{
 	"forward-refs":       true,
 	"code-annotations":   true,
 	"plan-hierarchy":     true,
+	"plan-roi-metadata":  true,
 }
 
 func validateRuleNames(names []string) error {

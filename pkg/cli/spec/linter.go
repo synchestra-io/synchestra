@@ -37,6 +37,7 @@ func newLinter(opts LintOptions) *linter {
 	l.registerChecker(newForwardRefsChecker())
 	l.registerChecker(newCodeAnnotationsChecker())
 	l.registerChecker(newPlanHierarchyChecker())
+	l.registerChecker(newPlanROIChecker())
 
 	return l
 }
