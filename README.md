@@ -424,15 +424,23 @@ gets felt immediately and fixed quickly.
 
 **Synchestra-managed projects:**
 
-- [synchestra-state](https://github.com/synchestra-io/synchestra-state) — Synchestra's own state repository (tasks,
-  coordination state)
-- [synchestra-go](https://github.com/synchestra-io/synchestra-go) — CLI, daemon, server, HTTP API, and task runner (Go)
-- [synchestra-app](https://github.com/synchestra-io/synchestra-app) — Web UI frontend (TypeScript, Angular, Ionic)
+- [synchestra](https://github.com/synchestra-io/synchestra)
+    - Specifications
+    - Documentation
+    - Implementation
+        - CLI - Go language
+            - daemon
+            - HTTP API server
+            - task runner
+- [synchestra-state](https://github.com/synchestra-io/synchestra-state)
+    - Synchestra's own state repository (tasks, coordination state)
+- [synchestra-app](https://github.com/synchestra-io/synchestra-app)
+    - Web UI frontend (TypeScript, Angular)
 
 ## Current Status
 
-Synchestra is in active development. The conventions, module structure, and CLI are being built and refined through
-daily use on real projects.
+Synchestra is in active development. The conventions, module structure, and CLI
+are being built and refined through daily use on real projects.
 
 ## Outstanding Questions
 

@@ -4,36 +4,40 @@ How Synchestra discovers and configures projects.
 
 ## Repository Types
 
-Synchestra operates with three kinds of repositories — spec, state, and code. See [Repository Types](../../architecture/repository-types/README.md) for the full description of each type, why they're separate, and how they connect.
+Synchestra operates with three kinds of repositories — spec, state, and code.
+See [Repository Types](../../architecture/repository-types/README.md) for the full description of each type,
+why they're separate, and how they connect.
 
-| Repository type | What it holds | Naming convention | Example |
-|---|---|---|---|
-| **Spec repository** | Requirements, architecture, documentation, `synchestra-spec-repo.yaml` | User's choice | `acme`, `acme-spec` |
-| **State repository** | Tasks, claims, coordination state, workflow artifacts | `{project}-synchestra` | `acme-synchestra` |
-| **Code repository** (one or more) | Implementation and source code | User's choice | `acme-api`, `acme-web` |
+| Repository type                   | What it holds                                                          | Naming convention      | Example                |
+|-----------------------------------|------------------------------------------------------------------------|------------------------|------------------------|
+| **Spec repository**               | Requirements, architecture, documentation, `synchestra-spec-repo.yaml` | User's choice          | `acme`, `acme-spec`    |
+| **State repository**              | Tasks, claims, coordination state, workflow artifacts                  | `{project}-synchestra` | `acme-synchestra`      |
+| **Code repository** (one or more) | Implementation and source code                                         | User's choice          | `acme-api`, `acme-web` |
 
 ## Project File
 
-Every project managed by Synchestra has a `synchestra-spec-repo.yaml` file as its entry point. This file lives in the **spec repository** (or the combined spec+code repository) and references the state repository.
+Every project managed by Synchestra has a `synchestra-spec-repo.yaml` file as its entry point. This file lives in the *
+*spec repository** (or the combined spec+code repository) and references the state repository.
 
 ### Mandatory fields
 
-| Field | Description |
-|---|---|
-| `title` | Human-readable project name |
+| Field        | Description                                                                  |
+|--------------|------------------------------------------------------------------------------|
+| `title`      | Human-readable project name                                                  |
 | `state_repo` | URL of the state repository (e.g., `https://github.com/org/acme-synchestra`) |
 
 ### Optional fields
 
-| Field | Default | Description |
-|---|---|---|
-| `repos` | — | List of code repository URLs (repos that agents work in) |
-| `project_dirs.specifications` | `spec` | Directory for technical specifications (features, architecture, etc.) |
-| `project_dirs.documents` | `docs` | Directory for user-facing documentation |
+| Field                         | Default | Description                                                           |
+|-------------------------------|---------|-----------------------------------------------------------------------|
+| `repos`                       | —       | List of code repository URLs (repos that agents work in)              |
+| `project_dirs.specifications` | `spec`  | Directory for technical specifications (features, architecture, etc.) |
+| `project_dirs.documents`      | `docs`  | Directory for user-facing documentation                               |
 
 ## Repository Layouts
 
-Synchestra supports two layouts for where project files live within the spec repository, depending on whether it manages one or multiple projects.
+Synchestra supports two layouts for where project files live within the spec repository, depending on whether it manages
+one or multiple projects.
 
 ### Multi-project layout (default)
 
@@ -83,7 +87,8 @@ docs/                           # Documentation
 
 The project entry point is `synchestra-spec-repo.yaml` at the repository root.
 
-This layout is appropriate when the entire repository exists to specify one project. There is no `synchestra/projects/` nesting — the repository itself is the project directory.
+This layout is appropriate when the entire repository exists to specify one project. There is no `synchestra/projects/`
+nesting — the repository itself is the project directory.
 
 #### Example
 
@@ -91,8 +96,7 @@ This layout is appropriate when the entire repository exists to specify one proj
 title: Synchestra
 state_repo: https://github.com/synchestra-io/synchestra-state
 repos:
-  - https://github.com/synchestra-io/synchestra-go
-  - https://github.com/synchestra-io/synchestra-app
+  - https://github.com/synchestra-io/synchestra
 ```
 
 ## State Repository Structure
@@ -122,16 +126,18 @@ The root `README.md` of a state repository follows this template:
 
 State repository for the [{project_title}]({spec_repo_url}) project.
 
-This repo is managed by [Synchestra](https://github.com/synchestra-io/synchestra) — it tracks task status, coordination state, and workflow artifacts. For specifications, architecture, and documentation, see the [{project_title}]({spec_repo_url}) repository.
+This repo is managed by [Synchestra](https://github.com/synchestra-io/synchestra) — it tracks task status, coordination
+state, and workflow artifacts. For specifications, architecture, and documentation, see
+the [{project_title}]({spec_repo_url}) repository.
 ```
 
 ### Template variables
 
-| Variable | Source | Example |
-|---|---|---|
-| `{project_title}` | `title` field from `synchestra-spec-repo.yaml` | `Synchestra` |
+| Variable          | Source                                                                        | Example                                       |
+|-------------------|-------------------------------------------------------------------------------|-----------------------------------------------|
+| `{project_title}` | `title` field from `synchestra-spec-repo.yaml`                                | `Synchestra`                                  |
 | `{spec_repo_url}` | URL of the spec repository hosting this project's `synchestra-spec-repo.yaml` | `https://github.com/synchestra-io/synchestra` |
-| `{state_repo_id}` | GitHub identifier of the state repo (org/repo format) | `github.com/synchestra-io/synchestra-state` |
+| `{state_repo_id}` | GitHub identifier of the state repo (org/repo format)                         | `github.com/synchestra-io/synchestra-state`   |
 
 ### Example (for Synchestra itself)
 
@@ -142,15 +148,21 @@ This repo is managed by [Synchestra](https://github.com/synchestra-io/synchestra
 
 State repository for the [Synchestra](https://github.com/synchestra-io/synchestra) project.
 
-This repo is managed by [Synchestra](https://github.com/synchestra-io/synchestra) — it tracks task status, coordination state, and workflow artifacts. For specifications, architecture, and documentation, see the [Synchestra](https://github.com/synchestra-io/synchestra) repository.
+This repo is managed by [Synchestra](https://github.com/synchestra-io/synchestra) — it tracks task status, coordination
+state, and workflow artifacts. For specifications, architecture, and documentation, see
+the [Synchestra](https://github.com/synchestra-io/synchestra) repository.
 ```
 
 ### How Synchestra determines the layout
 
-Synchestra checks for a `synchestra-spec-repo.yaml` at the repository root. If found, the repository is treated as a dedicated spec repository. Otherwise, it looks under `synchestra/projects/` for the multi-project layout.
+Synchestra checks for a `synchestra-spec-repo.yaml` at the repository root. If found, the repository is treated as a
+dedicated spec repository. Otherwise, it looks under `synchestra/projects/` for the multi-project layout.
 
 ## Outstanding Questions
 
-- Should there be an explicit field in `synchestra-spec-repo.yaml` to declare the layout, or is auto-detection (root file presence) sufficient?
-- Should `synchestra-spec-repo.yaml` in the state repo contain a `spec_repos` back-reference field, or is the link only from spec repo → state repo?
-- Should code repositories also contain a lightweight `synchestra.yaml` pointer to the state repo for CLI auto-discovery?
+- Should there be an explicit field in `synchestra-spec-repo.yaml` to declare the layout, or is auto-detection (root
+  file presence) sufficient?
+- Should `synchestra-spec-repo.yaml` in the state repo contain a `spec_repos` back-reference field, or is the link only
+  from spec repo → state repo?
+- Should code repositories also contain a lightweight `synchestra.yaml` pointer to the state repo for CLI
+  auto-discovery?
