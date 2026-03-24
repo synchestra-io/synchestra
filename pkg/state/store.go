@@ -21,6 +21,9 @@ type Store interface {
 
 	// Project returns the project sub-interface for project configuration.
 	Project() ProjectStore
+
+	// State returns the sync sub-interface for manual sync controls.
+	State() StateSync
 }
 
 // StoreFactory is a constructor function that each backend provides.

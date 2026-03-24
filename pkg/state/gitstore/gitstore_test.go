@@ -15,9 +15,11 @@ import (
 func TestGitStateStoreImplementsStore(t *testing.T) {
 	var store state.Store
 
-	s, err := gitstore.New(context.Background(), gitstore.Options{
-		StateRepoPath: t.TempDir(),
-		SpecRepoPaths: []string{t.TempDir()},
+	s, err := gitstore.New(context.Background(), gitstore.GitStoreOptions{
+		StoreOptions: state.StoreOptions{
+			StateRepoPath: t.TempDir(),
+			SpecRepoPaths: []string{t.TempDir()},
+		},
 	})
 	if err != nil {
 		t.Fatalf("New() returned error: %v", err)
@@ -34,6 +36,9 @@ func TestGitStateStoreImplementsStore(t *testing.T) {
 	if store.Project() == nil {
 		t.Error("Project() returned nil")
 	}
+	if store.State() == nil {
+		t.Error("State() returned nil")
+	}
 
 	// Verify nested accessors return non-nil
 	if store.Task().Board() == nil {
@@ -47,18 +52,23 @@ func TestGitStateStoreImplementsStore(t *testing.T) {
 	}
 }
 
-func TestSyncModeDefaultsToSync(t *testing.T) {
-	s, err := gitstore.New(context.Background(), gitstore.Options{
-		StateRepoPath: t.TempDir(),
-		SpecRepoPaths: []string{t.TempDir()},
-		// SyncMode intentionally omitted — should default to "sync"
+func TestSyncPolicyDefaultsToOnCommit(t *testing.T) {
+	s, err := gitstore.New(context.Background(), gitstore.GitStoreOptions{
+		StoreOptions: state.StoreOptions{
+			StateRepoPath: t.TempDir(),
+			SpecRepoPaths: []string{t.TempDir()},
+		},
+		// Sync intentionally omitted — should default to SyncOnCommit
 	})
 	if err != nil {
 		t.Fatalf("New() returned error: %v", err)
 	}
-	// Verify it returns a valid store (sync mode is internal,
+	// Verify it returns a valid store (sync config is internal,
 	// but construction should succeed with default)
 	if s == nil {
 		t.Error("New() returned nil store")
+	}
+	if s.State() == nil {
+		t.Error("State() returned nil")
 	}
 }

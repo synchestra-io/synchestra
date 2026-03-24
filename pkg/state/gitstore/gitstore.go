@@ -12,25 +12,10 @@ import (
 
 var errNotImplemented = errors.New("gitstore: not implemented")
 
-// SyncMode controls how the git backend synchronizes with the remote.
-type SyncMode string
-
-const (
-	// SyncModeSync pulls before reads and pushes after writes.
-	// This is the safe default for multi-host/distributed agent setups.
-	SyncModeSync SyncMode = "sync"
-
-	// SyncModeLocal operates only on the local clone — no pull/push per
-	// operation. The caller is responsible for periodic sync with the remote.
-	// Ideal for single-host setups where all agents share one local clone.
-	SyncModeLocal SyncMode = "local" // TODO: Implement
-)
-
-// Options holds git-backend-specific configuration.
-type Options struct {
-	StateRepoPath string
-	SpecRepoPaths []string
-	SyncMode      SyncMode // defaults to SyncModeSync if empty
+// GitStoreOptions holds git-backend-specific configuration.
+type GitStoreOptions struct {
+	state.StoreOptions        // embeds shared options including SyncConfig
+	RunID              string // agent branch: agent/<run-id>
 }
 
 // GitStateStore is the git-backed implementation of state.Store.
@@ -39,25 +24,31 @@ type Options struct {
 type GitStateStore struct {
 	stateRepoPath string
 	specRepoPaths []string
-	syncMode      SyncMode
+	sync          state.SyncConfig
+	runID         string
 }
 
 // New creates a new GitStateStore with git-backend-specific options.
-func New(_ context.Context, opts Options) (state.Store, error) {
-	syncMode := opts.SyncMode
-	if syncMode == "" {
-		syncMode = SyncModeSync
+func New(_ context.Context, opts GitStoreOptions) (state.Store, error) {
+	sync := opts.Sync
+	if sync.Pull == "" {
+		sync.Pull = state.SyncOnCommit
+	}
+	if sync.Push == "" {
+		sync.Push = state.SyncOnCommit
 	}
 	return &GitStateStore{
 		stateRepoPath: opts.StateRepoPath,
 		specRepoPaths: opts.SpecRepoPaths,
-		syncMode:      syncMode,
+		sync:          sync,
+		runID:         opts.RunID,
 	}, nil
 }
 
 func (s *GitStateStore) Task() state.TaskStore       { return &gitTaskStore{store: s} }
 func (s *GitStateStore) Chat() state.ChatStore       { return &gitChatStore{store: s} }
 func (s *GitStateStore) Project() state.ProjectStore { return &gitProjectStore{store: s} }
+func (s *GitStateStore) State() state.StateSync      { return &gitStateSync{store: s} }
 
 // --- TaskStore ---
 
