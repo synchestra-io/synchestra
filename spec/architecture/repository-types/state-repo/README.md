@@ -52,6 +52,20 @@ The `synchestra-state-repo.yaml` at the state repo root has the following fields
 | `main_repo` | **Yes** | Primary repository for the project — must be one of the URLs listed in `spec_repos` or `code_repos` |
 | `spec_repos` | **Yes** | Spec repositories managed by this state repo |
 | `code_repos` | No | Code repositories, required when a repo serves both spec and code roles |
+| `sync` | No | Sync policy configuration (see below) |
+
+### Sync policy
+
+The optional `sync:` block configures when the state store automatically syncs with the remote. Both `pull` and `push` default to `on_commit` if omitted.
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `sync.pull` | String | `on_commit` | When to pull from origin: `on_commit`, `on_interval=<duration>`, `on_session_end`, `manual` |
+| `sync.push` | String | `on_commit` | When to push to origin: `on_commit`, `on_interval=<duration>`, `on_session_end`, `manual` |
+
+Environment-level overrides (in `~/.synchestra.yaml` or `synchestra-server.yaml`) can only be stricter (more frequent) than the project baseline. Strictness ordering: `on_commit` > `on_interval` (shorter duration = stricter) > `on_session_end` > `manual`.
+
+See [State Store: SyncConfig](../../../features/state-store/README.md#construction) for the full type definitions.
 
 ### Example
 
@@ -64,6 +78,9 @@ spec_repos:
 code_repos:
   - https://github.com/acme/acme-api
   - https://github.com/acme/acme-web
+sync:
+  pull: on_commit
+  push: on_interval=5m
 ```
 
 ## Rules

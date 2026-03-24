@@ -129,6 +129,9 @@ The core workflow commands for task lifecycle management. These are what agents 
 | `synchestra task aborted` | Report task has been aborted (terminal) | mutation | [task/aborted](task/aborted/README.md) |
 | `synchestra task list` | List tasks with filtering | read | [task/list](task/list/README.md) |
 | `synchestra task info` | Show full task details and context | read | [task/info](task/info/README.md) |
+| `synchestra state pull` | Pull latest state from origin | mutation | [state/pull](state/pull/README.md) |
+| `synchestra state push` | Push local state to origin | mutation | [state/push](state/push/README.md) |
+| `synchestra state sync` | Full bidirectional sync (pull + push) | mutation | [state/sync](state/sync/README.md) |
 
 **Environment requirements:**
 - Access to the project's [state store](../state-store/README.md) (git-backed by default, but backend-agnostic)
@@ -195,6 +198,9 @@ Quick-reference table of every CLI command.
 | `task aborted` | 🤖 Coordination | mutation | state store |
 | `task list` | 🤖 Coordination | read | state store |
 | `task info` | 🤖 Coordination | read | state store |
+| `state pull` | 🤖 Coordination | mutation | state store (git remote) |
+| `state push` | 🤖 Coordination | mutation | state store (git remote) |
+| `state sync` | 🤖 Coordination | mutation | state store (git remote) |
 | `server start` | 🖥️ Infrastructure | mutation | host filesystem, `synchestra-server.yaml` |
 | `server stop` | 🖥️ Infrastructure | mutation | host filesystem (PID) |
 | `server restart` | 🖥️ Infrastructure | mutation | host filesystem, `synchestra-server.yaml` |

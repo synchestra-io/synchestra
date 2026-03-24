@@ -56,9 +56,13 @@ On non-zero exit, a human-readable explanation is written to stderr.
 
 ### Git mechanics
 
-Commands that mutate state (claim, status change, release) perform an atomic commit-and-push. If the push fails due to a remote conflict, the command pulls, checks whether the intended operation is still valid, and either retries or fails with an appropriate exit code.
+Commands that mutate state (claim, status change, release) commit on the agent's branch and merge to local main. Whether the merge is pushed to the remote depends on the project's [sync policy](../state-store/backends/git/README.md#sync-policy) — by default (`on_commit`), every mutation pushes immediately. If the push fails due to a remote conflict, the command pulls, checks whether the intended operation is still valid, and either retries or fails with an appropriate exit code.
 
-Commands that only read state (list, status query) do a pull first to ensure freshness.
+Commands that only read state (list, status query) pull first to ensure freshness when the sync policy calls for it.
+
+**Contended operations** (`task claim`) always force an immediate pull+push round-trip regardless of the sync policy, to preserve optimistic locking.
+
+Manual sync is available via [`synchestra state pull/push/sync`](state/README.md).
 
 ## Task Statuses
 
@@ -143,6 +147,7 @@ For an overview of which commands run in which environments (host, agent contain
 | [config](config/README.md) | Global user configuration management |
 | [project](project/README.md) | Project creation and management |
 | [task](task/README.md) | Task management — claiming, status, progress |
+| [state](state/README.md) | State repository synchronization — pull, push, sync |
 | [feature](feature/README.md) | Feature queries — listing, hierarchy, dependencies, references |
 | [code](code/README.md) | Code queries — source file dependencies on Synchestra resources |
 | [serve](serve/README.md) | Foreground dev server — HTTP, HTTPS, MCP |
@@ -165,6 +170,10 @@ Project creation and management — creating projects, viewing configuration, up
 ### `task`
 
 See each command group for its subcommands and linked skills.
+
+### `state`
+
+Manual state repository synchronization — pull from origin, push to origin, or full bidirectional sync. These commands are policy-unaware escape hatches that execute immediately regardless of the project's sync policy. Operates on the state repo as a whole (tasks, chats, project config). See [state/README.md](state/README.md).
 
 ### `feature`
 

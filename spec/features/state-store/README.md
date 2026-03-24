@@ -46,6 +46,20 @@ type Store interface {
     Task() TaskStore
     Chat() ChatStore
     Project() ProjectStore
+    State() StateSync
+}
+
+// StateSync provides manual synchronization controls for the state store.
+// Backends without a remote concept (e.g., SQLite) return a no-op implementation.
+type StateSync interface {
+    // Pull fetches the latest state from the remote.
+    Pull(ctx context.Context) error
+
+    // Push sends local state to the remote.
+    Push(ctx context.Context) error
+
+    // Sync performs a full round-trip: pull then push.
+    Sync(ctx context.Context) error
 }
 ```
 
@@ -97,9 +111,30 @@ package state
 
 type StoreFactory func(ctx context.Context, opts StoreOptions) (Store, error)
 
+// SyncPolicy controls when the store automatically syncs with the remote.
+type SyncPolicy string
+
+const (
+    SyncOnCommit     SyncPolicy = "on_commit"      // sync after every merge to main
+    SyncOnInterval   SyncPolicy = "on_interval"     // sync on a timer (duration in config)
+    SyncOnSessionEnd SyncPolicy = "on_session_end"  // sync when agent session ends
+    SyncManual       SyncPolicy = "manual"           // sync only via explicit Pull/Push/Sync calls
+)
+
+// SyncConfig holds the sync policy for automatic pull/push behaviour.
+// Pull and push policies are independent — e.g., pull on every commit
+// but push on an interval. Defaults to on_commit for both.
+type SyncConfig struct {
+    Pull         SyncPolicy
+    PullInterval time.Duration // used when Pull is SyncOnInterval
+    Push         SyncPolicy
+    PushInterval time.Duration // used when Push is SyncOnInterval
+}
+
 type StoreOptions struct {
     SpecRepoPaths []string
     StateRepoPath string
+    Sync          SyncConfig
 }
 ```
 

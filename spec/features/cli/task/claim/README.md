@@ -13,7 +13,7 @@ synchestra task claim --project <project_id> --task <task_path> --run <run_id> -
 
 Claims a queued task so an agent can begin working on it. The command transitions the task from `queued` to `claimed`, recording the agent's run ID, model, and timestamp.
 
-Claiming is atomic: the CLI commits the status change and pushes to the state repository. If the push fails due to a remote conflict, the CLI pulls and checks whether the task is still claimable. If yes, it retries. If no (another agent claimed it), it exits with code `1`.
+Claiming is atomic: the CLI commits the status change and syncs with the state repository. **This operation always forces an immediate pull+push round-trip regardless of the project's [sync policy](../../../../state-store/backends/git/README.md#sync-policy)**, to preserve optimistic locking via git's push-or-fail semantics. If the push fails due to a remote conflict, the CLI pulls and checks whether the task is still claimable. If yes, it retries. If no (another agent claimed it), it exits with code `1`.
 
 ## Parameters
 

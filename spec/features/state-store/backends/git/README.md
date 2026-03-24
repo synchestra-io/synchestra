@@ -77,66 +77,129 @@ This backend requires no external infrastructure — only a git remote. It is th
 | `Project().UpdateConfig()` | Write `synchestra-state-repo.yaml`, commit |
 | `Project().RebuildREADME()` | Regenerate root `README.md` from project state |
 
-## Sync Mode
+### StateSync
 
-The git backend supports configurable sync behavior via `GitStoreOptions.SyncMode`:
+| Interface Method | Git Operation |
+|---|---|
+| `State().Pull()` | Fetch from origin, fast-forward local main, rebase active agent branches |
+| `State().Push()` | Merge pending agent branch commits to local main, push main to origin |
+| `State().Sync()` | Pull then push, with conflict retry |
 
-| Mode | Pull before read | Push after write | Use case |
+## Sync Policy
+
+The git backend respects the `SyncConfig` from `StoreOptions` to determine when automatic pull/push happens. See [State Store: SyncConfig](../../README.md#construction) for the policy values and configuration.
+
+| Policy | Pull before read | Push after write | Use case |
 |---|---|---|---|
-| `sync` | Yes | Yes | Multi-host: multiple agents on different machines. Every operation hits the remote to ensure consistency. This is the default. |
-| `local` | No | No | Single-host: one machine runs all agents against a local clone. No network I/O per operation. The caller is responsible for periodic `git pull`/`git push` (e.g., via cron or a background goroutine). |
+| `on_commit` | Yes | Yes | Multi-host: multiple agents on different machines. Every operation hits the remote to ensure consistency. This is the default. |
+| `on_interval=<dur>` | On timer | On timer | Balanced: reduces network I/O while maintaining periodic freshness. |
+| `on_session_end` | No | On session close | Single-host primary: local agents work freely, push when done. |
+| `manual` | No | No | Full manual control: sync only via explicit `synchestra state pull/push/sync` commands. |
+
+**Contended operations override:** `task claim` always forces an immediate pull+push round-trip regardless of policy, to preserve optimistic locking via git's push-or-fail semantics.
+
+## Agent Branching Model
+
+Each agent operates on a dedicated branch in the state repository:
+
+```
+agent/<run-id>
+```
+
+Where `<run-id>` is the same identifier passed to `task claim --run`. This gives each agent session its own branch, traceable back to the task run.
 
 ```go
-type SyncMode string
-
-const (
-    SyncModeSync  SyncMode = "sync"  // pull before read, push after write (default)
-    SyncModeLocal SyncMode = "local" // local-only, no remote I/O per operation
-)
-
+// GitStoreOptions holds git-backend-specific configuration.
 type GitStoreOptions struct {
-    StateRepoPath string
-    SpecRepoPaths []string
-    SyncMode      SyncMode // defaults to SyncModeSync
+    state.StoreOptions          // embeds shared options including SyncConfig
+    RunID              string   // agent branch: agent/<run-id>
 }
 ```
 
-In `local` mode:
-- **Reads** operate directly on the working tree — no `git pull` first.
-- **Writes** commit locally but do not push. The working tree is always up-to-date with the latest local commit.
-- **Claim atomicity** is still guaranteed within the host (file-level locking or similar), but not across hosts. Running multiple hosts in `local` mode against the same remote will cause conflicts.
-- **Periodic sync** is the caller's responsibility. A typical setup pushes every N seconds or on a signal.
+### Operation flow
 
-In `sync` mode:
-- Every mutating operation follows the full pull → validate → commit → push protocol.
-- Read operations pull first to ensure freshness.
-- This is the safe default for distributed agent setups.
+For a typical mutating operation (e.g., `task complete`):
+
+```mermaid
+sequenceDiagram
+    participant A as Agent Branch
+    participant M as Local Main
+    participant O as Origin
+
+    A->>A: Commit state change
+    A->>M: Merge (fast-forward)
+    alt sync policy says push now
+        M->>O: Push
+    end
+```
+
+1. Commit on `agent/<run-id>`
+2. Checkout main
+3. Merge `agent/<run-id>` (fast-forward if possible)
+4. If sync policy says push now → push main to origin
+5. Checkout `agent/<run-id>`
+
+### Conflict during merge to local main
+
+Another local agent may have merged to main concurrently. Resolution:
+- Pull main (local)
+- Rebase `agent/<run-id>` onto main
+- Retry merge
+- State repo changes are small and scoped to different files (different task directories), so conflicts should be rare
+
+### Conflict during push to origin
+
+Another environment pushed to origin. Resolution:
+- Pull origin → local main
+- Rebase and retry push
+- If the conflict affects the same task (e.g., two environments both completing the same task), fail with exit `1`
+
+### Branch cleanup
+
+Agent branches are deleted after the agent session ends, after final merge to main.
+
+### Contended operations (`task claim`)
+
+Forces the full round-trip regardless of policy:
+
+```mermaid
+sequenceDiagram
+    participant A as Agent Branch
+    participant M as Local Main
+    participant O as Origin
+
+    M->>O: Pull (fetch + fast-forward)
+    O-->>M: Latest commits
+    A->>A: Commit claim
+    A->>M: Merge
+    M->>O: Push (immediate)
+    alt push conflict
+        O-->>M: Reject
+        M->>O: Pull, check if claimed by other
+        Note over M: Fail with exit 1
+    end
+```
 
 ## Atomicity
 
-The git backend relies on git's push-or-fail semantics for atomicity in `sync` mode. The protocol for mutating operations:
+The git backend relies on the agent branching model for local atomicity and git's push-or-fail semantics for remote atomicity.
 
-1. Pull latest state from remote
-2. Validate preconditions (task exists, correct status, etc.)
-3. Update local files
-4. Commit
-5. Push
-6. On push conflict: pull, re-verify preconditions, retry or fail
+**Local atomicity:** Each agent writes to its own branch (`agent/<run-id>`), so concurrent local agents never conflict at the commit level. Contention is resolved during the merge-to-main step, where only one agent can merge at a time.
 
-In `local` mode, atomicity is scoped to the local host (file-level locking prevents concurrent local writes from corrupting state).
+**Remote atomicity (when sync policy triggers a push):** The push-or-fail protocol ensures exactly one environment succeeds. On conflict: pull, re-verify preconditions, retry or fail.
 
 See [Task Status Board: Claiming a Task](../../../task-status-board/README.md#claiming-a-task-optimistic-locking) for the detailed claiming protocol and conflict resolution.
 
 ## Performance Characteristics
 
-| Operation | Cost (`sync` mode) | Cost (`local` mode) | Notes |
+| Operation | Cost (`on_commit`) | Cost (`manual` / `on_interval`) | Notes |
 |---|---|---|---|
-| Read (Get, List) | Pull + file I/O | File I/O only | `local` avoids network round-trip |
-| Write (Create, status transitions) | File I/O + commit + push | File I/O + commit | `local` defers push |
-| Claim (contended) | File I/O + commit + push + retry | File I/O + commit + local lock | `local` has no remote contention |
-| Board Rebuild | Scan all task directories | Same | O(n) in number of tasks regardless of mode |
+| Read (Get, List) | Pull + file I/O | File I/O only | Deferred sync avoids network round-trip |
+| Write (Create, status transitions) | File I/O + commit + merge + push | File I/O + commit + merge | Deferred sync defers push |
+| Claim (contended) | File I/O + commit + merge + push + retry | Same (always forces round-trip) | Claim ignores sync policy |
+| Board Rebuild | Scan all task directories | Same | O(n) in number of tasks regardless of policy |
 
-For single-host setups, `local` mode eliminates network overhead entirely — mutations become local file + commit operations. Periodic push keeps the remote in sync for visibility (dashboards, other tools) without blocking the hot path.
+For single-host setups, `manual` or `on_interval` sync policies eliminate network overhead from the hot path — mutations become local file + commit + merge operations. Periodic or manual push keeps the remote in sync for visibility (dashboards, other tools) without blocking agent work.
 
 For projects with hundreds of concurrent agents or thousands of tasks, database backends may offer better performance. See the [backend matrix](../) for alternatives.
 
