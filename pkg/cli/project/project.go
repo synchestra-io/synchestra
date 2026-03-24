@@ -12,6 +12,9 @@ func Command() *cobra.Command {
 		Use:   "project",
 		Short: "Project creation and management",
 	}
-	cmd.AddCommand(newCommand())
+	cmd.AddCommand(
+		initCommand(),
+		newCommand(),
+	)
 	return cmd
 }

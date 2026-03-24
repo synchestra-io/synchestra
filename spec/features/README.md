@@ -25,6 +25,7 @@ Feature specifications for the Synchestra project, managed by Synchestra.
 | [github-app](github-app/README.md) | Conceptual | GitHub App for webhook notifications, authenticated repo access, and organization-level installation |
 | [onboarding](onboarding/README.md) | Conceptual | Guided wizard for first-time project setup — repo connection, GitHub App installation, AI-powered scaffolding, or demo launch |
 | [sandbox](sandbox/README.md) | Conceptual | Isolated Docker container environments per project for executing user-initiated commands from the chat interface |
+| [embedded-state](embedded-state/README.md) | Conceptual | Zero-friction state management via orphan branch + git worktree — no separate repo required |
 | [state-store](state-store/README.md) | Conceptual | Pluggable state storage abstraction — composable Go interface (`state.Store`) with git-backed default implementation |
 | [acceptance-criteria](acceptance-criteria/README.md) | Conceptual | First-class verification artifacts — full specification in [synchestra-io/rehearse](https://github.com/synchestra-io/rehearse/blob/main/spec/features/acceptance-criteria/); Synchestra adds plan AC relationships and outstanding questions linkage |
 | [testing-framework](testing-framework/README.md) | Conceptual | Markdown-native testing framework — full specification in [synchestra-io/rehearse](https://github.com/synchestra-io/rehearse/blob/main/spec/features/testing-framework/) |
@@ -111,6 +112,10 @@ A guided wizard delivered through both the web app and the CLI that walks new us
 ### [Sandbox](sandbox/README.md)
 
 Isolated Docker container environments per project for executing user-initiated commands from the chat interface. Each project gets its own persistent container with encrypted credential storage (AES256), user-isolated sessions, and a gRPC agent for host↔container communication. The host is stateless and routes requests; all state, secrets, and execution data remain inside containers.
+
+### [Embedded State](embedded-state/README.md)
+
+Zero-friction onboarding path for Synchestra. Uses a git orphan branch checked out as a worktree to store coordination state inside an existing repository — no separate state repo required. One command (`synchestra project init`) sets up task management in any git repo. Provides the same history isolation as a dedicated state repo (orphan branches share no commits with `main`) and the same optimistic locking protocol. Designed as an on-ramp: projects that outgrow embedded mode can extract state to a dedicated repo later.
 
 ### [State Store](state-store/README.md)
 

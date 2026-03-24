@@ -209,6 +209,33 @@ graph TB
 
 The spec repo holds everything about **intent and approach** (features, proposals, plans). The state repo holds everything about **execution** (tasks, artifacts, status boards). Code repos hold the **output** (implementation on branches). This separation ensures that high-frequency machine commits (task claims, status transitions) never pollute the spec or code history.
 
+### Embedded state: single-repo alternative
+
+For single-repo projects, all three layers can live in one repository using [embedded state](../features/embedded-state/README.md). State lives on an orphan branch (`synchestra-state`) checked out as a worktree at `.synchestra/`. The orphan branch has no shared history with `main`, preserving the same commit isolation as a dedicated state repo.
+
+```mermaid
+graph TB
+    subgraph "One repo, two branches"
+        direction TB
+        subgraph "main branch (spec + code)"
+            SF2["spec/features/"]
+            SP2["spec/plans/"]
+            CB2["source code"]
+        end
+
+        subgraph "synchestra-state branch (orphan → .synchestra/)"
+            ST2["tasks/"]
+            SA2["tasks/*/artifacts/"]
+        end
+    end
+
+    SF2 -->|"plan references<br/>features"| SP2
+    SP2 -->|"tasks generated<br/>from plan steps"| ST2
+    ST2 --- SA2
+```
+
+Set up with `synchestra project init`. See [Embedded State](../features/embedded-state/README.md) for details.
+
 ## Outstanding Questions
 
 None at this time.

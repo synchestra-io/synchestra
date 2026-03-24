@@ -72,8 +72,10 @@ func mapStoreError(err error) *exitcode.Error {
 }
 
 // resolveStateRepoPath finds the state repo path for the current project.
-// It walks up from startDir looking for synchestra-spec-repo.yaml (reads
-// state_repo field) or synchestra-state-repo.yaml (direct detection).
+// It walks up from startDir looking for:
+//   - synchestra.yaml (embedded state — worktree at .synchestra/)
+//   - synchestra-spec-repo.yaml (reads state_repo field)
+//   - synchestra-state-repo.yaml (direct detection)
 func resolveStateRepoPath(startDir string) (string, error) {
 	current, err := filepath.Abs(startDir)
 	if err != nil {
@@ -81,6 +83,17 @@ func resolveStateRepoPath(startDir string) (string, error) {
 	}
 
 	for {
+		// Check for embedded state first (synchestra.yaml marker).
+		embeddedPath := filepath.Join(current, "synchestra.yaml")
+		if _, err := os.Stat(embeddedPath); err == nil {
+			worktreePath := filepath.Join(current, ".synchestra")
+			if info, statErr := os.Stat(worktreePath); statErr == nil && info.IsDir() {
+				return worktreePath, nil
+			}
+			// Marker exists but worktree is missing — user needs to run init.
+			return "", exitcode.NotFoundErrorf("embedded state configured in %s but .synchestra/ worktree is missing; run 'synchestra project init' to set up", embeddedPath)
+		}
+
 		specPath := filepath.Join(current, "synchestra-spec-repo.yaml")
 		if _, err := os.Stat(specPath); err == nil {
 			data, err := os.ReadFile(specPath)
@@ -104,7 +117,7 @@ func resolveStateRepoPath(startDir string) (string, error) {
 
 		parent := filepath.Dir(current)
 		if parent == current {
-			return "", exitcode.NotFoundError("project not found: no synchestra-spec-repo.yaml or synchestra-state-repo.yaml in any parent directory")
+			return "", exitcode.NotFoundError("project not found: no synchestra.yaml, synchestra-spec-repo.yaml, or synchestra-state-repo.yaml in any parent directory")
 		}
 		current = parent
 	}

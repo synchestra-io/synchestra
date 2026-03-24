@@ -10,7 +10,7 @@ The state repo is written to primarily by the Synchestra CLI and agents. Every `
 
 ## Why It's Separate
 
-This is the most important separation. The state repo **must** be dedicated because:
+A dedicated state repo is the recommended default because:
 
 | Reason | Explanation |
 |---|---|
@@ -18,6 +18,8 @@ This is the most important separation. The state repo **must** be dedicated beca
 | **Conflict surface** | Agents competing for tasks push frequently. Keeping this traffic in a dedicated repo avoids merge conflicts with code or spec changes. |
 | **Access patterns** | The state repo is pulled and pushed constantly by the CLI. Code and spec repos follow normal development workflows (feature branches, PRs). Mixing them would create unnecessary contention. |
 | **Permissions** | Agents need write access to the state repo to claim and update tasks. You may not want those same agents to have unrestricted write access to your production code or specifications. |
+
+> **Alternative: Embedded state.** For single-repo projects, state can live on an orphan branch within the host repo instead of a dedicated repository. The orphan branch provides the same history isolation (no shared commits with `main`) and the same conflict separation (different branches never conflict). The trade-off is shared permissions and a single remote. See [Embedded State](../../../features/embedded-state/README.md) for details. Set up via `synchestra project init`.
 
 ## Naming Convention
 

@@ -11,9 +11,11 @@ import (
 )
 
 const (
-	SpecConfigFile  = "synchestra-spec-repo.yaml"
-	StateConfigFile = "synchestra-state-repo.yaml"
-	CodeConfigFile  = "synchestra-code-repo.yaml"
+	SpecConfigFile     = "synchestra-spec-repo.yaml"
+	StateConfigFile    = "synchestra-state-repo.yaml"
+	CodeConfigFile     = "synchestra-code-repo.yaml"
+	EmbeddedConfigFile = "synchestra.yaml"
+	EmbeddedStateFile  = "synchestra-state.yaml"
 )
 
 type SpecConfig struct {
@@ -31,6 +33,26 @@ type StateConfig struct {
 
 type CodeConfig struct {
 	SpecRepos []string `yaml:"spec_repos"`
+}
+
+// EmbeddedConfig is the marker file written to the host repo root (on the main branch).
+type EmbeddedConfig struct {
+	State       string `yaml:"state"`        // "embedded"
+	StateBranch string `yaml:"state_branch"` // orphan branch name, e.g. "synchestra-state"
+}
+
+// EmbeddedStateConfig lives on the orphan branch (inside the worktree).
+type EmbeddedStateConfig struct {
+	Title        string           `yaml:"title"`
+	Mode         string           `yaml:"mode"`          // "embedded"
+	SourceBranch string           `yaml:"source_branch"` // e.g. "main"
+	Sync         *EmbeddedSyncCfg `yaml:"sync,omitempty"`
+}
+
+// EmbeddedSyncCfg controls sync policy for embedded state.
+type EmbeddedSyncCfg struct {
+	Pull string `yaml:"pull"`
+	Push string `yaml:"push"`
 }
 
 func WriteSpecConfig(dir string, cfg SpecConfig) error {
@@ -77,6 +99,38 @@ func ReadCodeConfig(dir string) (CodeConfig, error) {
 	}
 	if err := yaml.Unmarshal(data, &cfg); err != nil {
 		return cfg, fmt.Errorf("parsing code config: %w", err)
+	}
+	return cfg, nil
+}
+
+func WriteEmbeddedConfig(dir string, cfg EmbeddedConfig) error {
+	return writeYAML(filepath.Join(dir, EmbeddedConfigFile), cfg)
+}
+
+func ReadEmbeddedConfig(dir string) (EmbeddedConfig, error) {
+	var cfg EmbeddedConfig
+	data, err := os.ReadFile(filepath.Join(dir, EmbeddedConfigFile))
+	if err != nil {
+		return cfg, fmt.Errorf("reading embedded config: %w", err)
+	}
+	if err := yaml.Unmarshal(data, &cfg); err != nil {
+		return cfg, fmt.Errorf("parsing embedded config: %w", err)
+	}
+	return cfg, nil
+}
+
+func WriteEmbeddedStateConfig(dir string, cfg EmbeddedStateConfig) error {
+	return writeYAML(filepath.Join(dir, EmbeddedStateFile), cfg)
+}
+
+func ReadEmbeddedStateConfig(dir string) (EmbeddedStateConfig, error) {
+	var cfg EmbeddedStateConfig
+	data, err := os.ReadFile(filepath.Join(dir, EmbeddedStateFile))
+	if err != nil {
+		return cfg, fmt.Errorf("reading embedded state config: %w", err)
+	}
+	if err := yaml.Unmarshal(data, &cfg); err != nil {
+		return cfg, fmt.Errorf("parsing embedded state config: %w", err)
 	}
 	return cfg, nil
 }

@@ -33,10 +33,15 @@ Each repository type has a dedicated config file written to its root:
 
 | Command | Description |
 |---|---|
-| [new](new/README.md) | Create a new project |
+| [init](init/README.md) | Initialize embedded state in the current repo |
+| [new](new/README.md) | Create a new project with dedicated repos |
 | [info](info/README.md) | Display project configuration |
 | [set](set/README.md) | Update project settings |
 | [code](code/README.md) | Manage code repositories |
+
+### `init`
+
+Initializes Synchestra embedded state in the current git repository — creates an orphan branch, sets up a git worktree at `.synchestra/`, and you're ready to go. Zero-friction alternative to `project new` for single-repo projects. See [init/README.md](init/README.md).
 
 ### `new`
 

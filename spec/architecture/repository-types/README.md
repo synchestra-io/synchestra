@@ -80,7 +80,11 @@ graph LR
 
 ## Combining Repositories
 
-For smaller projects, the spec and code repos can be combined into a single repository. Both `synchestra-spec-repo.yaml` and `synchestra-code-repo.yaml` live at the root alongside `spec/`, `docs/`, and the source code. The state repo remains separate.
+For smaller projects, the spec and code repos can be combined into a single repository. Both `synchestra-spec-repo.yaml` and `synchestra-code-repo.yaml` live at the root alongside `spec/`, `docs/`, and the source code.
+
+### Dedicated state repo (default)
+
+The state repo remains a separate repository. This is recommended for multi-repo projects, teams with distinct permissions, or high-frequency agent coordination.
 
 ```
 acme/                             # Combined spec + code repo
@@ -89,18 +93,37 @@ acme/                             # Combined spec + code repo
   spec/
     features/
       ...
-  docs/
-    ...
   src/                            # Source code
     ...
 
-acme-synchestra/                  # State repo (always separate)
+acme-synchestra/                  # State repo (dedicated)
   synchestra-state-repo.yaml
   tasks/
     ...
 ```
 
-What **cannot** be combined: the state repo. Even for the simplest projects, coordination state belongs in its own dedicated repository.
+### Embedded state (single-repo mode)
+
+For single-repo projects or quick starts, state can live on an **orphan branch** within the same repository, checked out as a git worktree. This provides full history isolation (the orphan branch shares no commits with `main`) without requiring a separate repo.
+
+```
+acme/                             # Single repo
+  synchestra.yaml                 # Marker: state = embedded
+  spec/
+    features/
+      ...
+  src/                            # Source code
+    ...
+  .synchestra/                    # Git worktree (in .gitignore)
+    synchestra-state.yaml         # On orphan branch 'synchestra-state'
+    tasks/
+      README.md                   # Task status board
+      ...
+```
+
+Set up with `synchestra project init` — one command, no separate repos. See [Embedded State](../../features/embedded-state/README.md) for the full design.
+
+Projects that outgrow embedded mode can extract state to a dedicated repo later.
 
 ## Typical Workflow
 

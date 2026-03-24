@@ -98,11 +98,14 @@ The default `state.Store` implementation. Maps every interface method to git ope
 
 | Backend | Use Case | Atomicity Mechanism | Status |
 |---|---|---|---|
-| **Git** (`gitstore`) | Default, works everywhere | Push-or-fail | Default implementation |
+| **Git — dedicated repo** (`gitstore`) | Default, multi-repo projects | Push-or-fail on state repo | Default implementation |
+| **Git — embedded** (`gitstore`) | Single-repo, quick start | Push-or-fail on orphan branch | Planned |
 | **SQLite** (`sqlitestore`) | Single-host, high performance | Row-level locking | Future |
 | **PostgreSQL** (`pgstore`) | Multi-host, K8s clusters | `UPDATE ... WHERE` | Future |
 | **Cloud DB** | Managed cloud deployments | Provider-specific | Future |
 | **Custom** | User-provided `state.Store` | User-defined | Supported via interface |
+
+The git backend handles both dedicated and embedded modes — the only difference is the target directory and push ref. Embedded mode uses a git worktree on an orphan branch within the host repo. See [Embedded State](../embedded-state/README.md) for the full design.
 
 ## Construction
 
