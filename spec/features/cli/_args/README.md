@@ -11,6 +11,7 @@ Arguments available to all `synchestra` commands.
 | [`--project`](project.md) | String | No (autodetected) | Project identifier |
 | [`--path`](path.md) | String | No | Working directory for context resolution |
 | [`--format`](format.md) | String | No | Output format for read commands |
+| [`--sync`](sync.md) | String | No | Override the configured state-repo sync policy (`remote`, `local`) |
 
 ### `--project`
 
@@ -23,6 +24,10 @@ Overrides the current working directory for commands that resolve a Synchestra c
 ### `--format`
 
 Controls the output format of read commands. Supported formats vary by command. Promoted from task-group level since it is now shared by `task` and `server` subcommands. See [format.md](format.md).
+
+### `--sync`
+
+Overrides the project's configured sync policy for a single invocation. Values: `remote` (force immediate pull/push), `local` (suppress all remote I/O). When omitted, the command follows the project's configured policy. See [sync.md](sync.md).
 
 ## Outstanding Questions
 

@@ -60,9 +60,9 @@ Commands that mutate state (claim, status change, release) commit on the agent's
 
 Commands that only read state (list, status query) pull first to ensure freshness when the sync policy calls for it.
 
-**Contended operations** (`task claim`) always force an immediate pull+push round-trip regardless of the sync policy, to preserve optimistic locking.
+All task subcommands — including contended operations like `task claim` — respect the project's sync policy. Under deferred-push policies (`manual`, `on_session_end`, `on_interval`), claim atomicity is scoped to the local host. To force immediate remote sync for any command, use the [`--sync`](_args/sync.md) flag (e.g., `--sync remote`).
 
-Manual sync is available via [`synchestra state pull/push/sync`](state/README.md).
+Manual sync is also available via [`synchestra state pull/push/sync`](state/README.md).
 
 ## Task Statuses
 

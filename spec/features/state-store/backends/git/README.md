@@ -96,7 +96,7 @@ The git backend respects the `SyncConfig` from `StoreOptions` to determine when 
 | `on_session_end` | No | On session close | Single-host primary: local agents work freely, push when done. |
 | `manual` | No | No | Full manual control: sync only via explicit `synchestra state pull/push/sync` commands. |
 
-**Contended operations override:** `task claim` always forces an immediate pull+push round-trip regardless of policy, to preserve optimistic locking via git's push-or-fail semantics.
+**Contended operations note:** `task claim` follows the project's sync policy like any other mutation command. Under the default `on_commit` policy, this means an immediate pull+push round-trip, which preserves optimistic locking via git's push-or-fail semantics. Under policies that defer push (e.g., `manual`, `on_session_end`), claim atomicity is scoped to the local host — the caller or orchestrator is responsible for ensuring remote visibility when needed (e.g., via `synchestra state push` or the `--sync` flag).
 
 ## Agent Branching Model
 
@@ -160,7 +160,7 @@ Agent branches are deleted after the agent session ends, after final merge to ma
 
 ### Contended operations (`task claim`)
 
-Forces the full round-trip regardless of policy:
+Follows the sync policy like other mutations. Under `on_commit` (default), this is a full round-trip:
 
 ```mermaid
 sequenceDiagram
@@ -180,6 +180,8 @@ sequenceDiagram
     end
 ```
 
+Under policies that defer push (`manual`, `on_session_end`, `on_interval`), the push step is skipped and claim atomicity is scoped to the local host. Use `--sync remote` or `synchestra state push` to force immediate remote visibility when needed.
+
 ## Atomicity
 
 The git backend relies on the agent branching model for local atomicity and git's push-or-fail semantics for remote atomicity.
@@ -196,7 +198,7 @@ See [Task Status Board: Claiming a Task](../../../task-status-board/README.md#cl
 |---|---|---|---|
 | Read (Get, List) | Pull + file I/O | File I/O only | Deferred sync avoids network round-trip |
 | Write (Create, status transitions) | File I/O + commit + merge + push | File I/O + commit + merge | Deferred sync defers push |
-| Claim (contended) | File I/O + commit + merge + push + retry | Same (always forces round-trip) | Claim ignores sync policy |
+| Claim (contended) | File I/O + commit + merge + push + retry | File I/O + commit + merge (local only) | Same as other mutations; use `--sync remote` for immediate remote contention |
 | Board Rebuild | Scan all task directories | Same | O(n) in number of tasks regardless of policy |
 
 For single-host setups, `manual` or `on_interval` sync policies eliminate network overhead from the hot path — mutations become local file + commit + merge operations. Periodic or manual push keeps the remote in sync for visibility (dashboards, other tools) without blocking agent work.
