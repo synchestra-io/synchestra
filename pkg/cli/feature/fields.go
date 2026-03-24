@@ -117,7 +117,7 @@ func countOutstandingQuestions(readmePath string) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	defer f.Close() //nolint:errcheck // read-only file
+	defer func() { _ = f.Close() }() // opened read-only; Close never flushes data so its error is irrelevant
 
 	inOQ := false
 	count := 0

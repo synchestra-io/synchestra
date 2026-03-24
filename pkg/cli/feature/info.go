@@ -210,7 +210,7 @@ func parseFeatureStatus(readmePath string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer f.Close() //nolint:errcheck // read-only file
+	defer func() { _ = f.Close() }() // opened read-only; Close never flushes data so its error is irrelevant
 
 	statusRe := regexp.MustCompile(`^\*?\*?Status:?\*?\*?\s*(.+)$`)
 	scanner := bufio.NewScanner(f)
@@ -307,7 +307,7 @@ func parseContentsTable(readmePath string) (map[string]bool, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close() //nolint:errcheck // read-only file
+	defer func() { _ = f.Close() }() // opened read-only; Close never flushes data so its error is irrelevant
 
 	entries := make(map[string]bool)
 	inContents := false
@@ -393,7 +393,7 @@ func planReferencesFeature(planReadmePath, featureID string) bool {
 	if err != nil {
 		return false
 	}
-	defer f.Close() //nolint:errcheck // read-only file
+	defer func() { _ = f.Close() }() // opened read-only; Close never flushes data so its error is irrelevant
 
 	inFeatures := false
 	scanner := bufio.NewScanner(f)
@@ -432,7 +432,7 @@ func parseSections(readmePath string) ([]sectionInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close() //nolint:errcheck // read-only file
+	defer func() { _ = f.Close() }() // opened read-only; Close never flushes data so its error is irrelevant
 
 	type rawSection struct {
 		title     string
