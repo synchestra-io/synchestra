@@ -98,8 +98,8 @@ func scanROIMetadata(readmePath, relPath string) ([]Violation, error) {
 			break
 		}
 
-		if strings.HasPrefix(trimmed, "**Effort:**") {
-			value := strings.TrimSpace(strings.TrimPrefix(trimmed, "**Effort:**"))
+		if value, ok := strings.CutPrefix(trimmed, "**Effort:**"); ok {
+			value = strings.TrimSpace(value)
 			if !validEffort[value] {
 				violations = append(violations, Violation{
 					File:     relPath,
@@ -111,8 +111,8 @@ func scanROIMetadata(readmePath, relPath string) ([]Violation, error) {
 			}
 		}
 
-		if strings.HasPrefix(trimmed, "**Impact:**") {
-			value := strings.TrimSpace(strings.TrimPrefix(trimmed, "**Impact:**"))
+		if value, ok := strings.CutPrefix(trimmed, "**Impact:**"); ok {
+			value = strings.TrimSpace(value)
 			if !validImpact[value] {
 				violations = append(violations, Violation{
 					File:     relPath,

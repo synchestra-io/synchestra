@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 )
 
@@ -48,21 +49,11 @@ func (l *linter) registerChecker(c checker) {
 
 func (l *linter) isRuleEnabled(ruleName string) bool {
 	if len(l.opts.Rules) > 0 {
-		for _, r := range l.opts.Rules {
-			if r == ruleName {
-				return true
-			}
-		}
-		return false
+		return slices.Contains(l.opts.Rules, ruleName)
 	}
 
 	if len(l.opts.Ignore) > 0 {
-		for _, r := range l.opts.Ignore {
-			if r == ruleName {
-				return false
-			}
-		}
-		return true
+		return !slices.Contains(l.opts.Ignore, ruleName)
 	}
 
 	return true
