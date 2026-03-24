@@ -2,9 +2,9 @@
 
 **Status:** draft
 **Features:**
-  - [chat/workflow](../../features/chat/workflow/README.md)
+  - [chat/workflow](../../../features/chat/workflow/README.md)
 **Source type:** feature
-**Source:** [Workflow feature spec](../../features/chat/workflow/)
+**Source:** [Workflow feature spec](../../../features/chat/workflow/)
 **Author:** @alex
 **Created:** 2026-03-14
 
@@ -12,7 +12,7 @@
 
 This plan covers the workflow orchestration layer for the Chat feature. It builds on the [chat infrastructure](../chat-infrastructure/) (Phase 1) and adds: YAML workflow parsing and validation, step sequencing and AI-driven transitions, project customization (additional questions, rules, checks), artifact production pipeline, fast path vs standard path routing, and workflow discovery for the UI.
 
-This is Phase 2 of the [chat-feature high-level plan](../chat-feature/). After this, the built-in workflows (Phase 3) can be implemented as configurations of this engine rather than custom code.
+This is Phase 2 of the [chat-feature high-level plan](../). After this, the built-in workflows (Phase 3) can be implemented as configurations of this engine rather than custom code.
 
 ## Acceptance criteria
 

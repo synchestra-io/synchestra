@@ -2,15 +2,15 @@
 
 **Status:** draft
 **Features:**
-  - [chat](../../features/chat/README.md)
+  - [chat](../../../features/chat/README.md)
 **Source type:** feature
-**Source:** [Chat feature spec](../../features/chat/)
+**Source:** [Chat feature spec](../../../features/chat/)
 **Author:** @alex
 **Created:** 2026-03-14
 
 ## Context
 
-This plan covers the foundational server-side infrastructure for the Chat feature. It builds the data model, state repo integration, server-side message management, context assembly pipeline, lifecycle management, REST API endpoints, and CLI admin commands. This is Phase 1 of the [chat-feature high-level plan](../chat-feature/) — everything else (workflow engine, built-in workflows, UI) builds on this foundation.
+This plan covers the foundational server-side infrastructure for the Chat feature. It builds the data model, state repo integration, server-side message management, context assembly pipeline, lifecycle management, REST API endpoints, and CLI admin commands. This is Phase 1 of the [chat-feature high-level plan](../) — everything else (workflow engine, built-in workflows, UI) builds on this foundation.
 
 The key architectural decision is the hybrid storage approach: messages are held server-side during active chats for real-time interaction, and flushed to git (state repo) on finalization or at periodic checkpoints.
 
