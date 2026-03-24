@@ -106,6 +106,12 @@ Core principles (see the [agent-skills spec](../../spec/features/agent-skills/RE
 |---|---|---|
 | [synchestra-code-deps](synchestra-code-deps/README.md) | Show Synchestra resources that source files depend on | ✅ [code deps](../../spec/features/cli/code/deps/README.md) |
 
+### Plan Prioritization
+
+| Skill | Description | CLI Command |
+|---|---|---|
+| [synchestra-whats-next](synchestra-whats-next/README.md) | Generate or update the WHATS-NEXT.md prioritization report | AI skill (no CLI command) |
+
 ### Spec Validation
 
 | Skill | Description | CLI Command |
