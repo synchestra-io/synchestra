@@ -1,6 +1,6 @@
 package project
 
-// Features implemented: project-definition, cli/project/new
+// Features implemented: project-definition, cli/project/new, development-plan
 
 import (
 	"fmt"
@@ -18,10 +18,24 @@ const (
 	EmbeddedStateFile  = "synchestra-state.yaml"
 )
 
+// PlanningConfig holds planning-related settings from synchestra-spec-repo.yaml.
+type PlanningConfig struct {
+	WhatsNext string `yaml:"whats_next"`
+}
+
 type SpecConfig struct {
-	Title     string   `yaml:"title"`
-	StateRepo string   `yaml:"state_repo"`
-	Repos     []string `yaml:"repos"`
+	Title     string          `yaml:"title"`
+	StateRepo string          `yaml:"state_repo"`
+	Repos     []string        `yaml:"repos"`
+	Planning  *PlanningConfig `yaml:"planning,omitempty"`
+}
+
+// WhatsNextMode returns the effective whats_next mode, defaulting to "disabled".
+func (c SpecConfig) WhatsNextMode() string {
+	if c.Planning != nil && c.Planning.WhatsNext != "" {
+		return c.Planning.WhatsNext
+	}
+	return "disabled"
 }
 
 type StateConfig struct {

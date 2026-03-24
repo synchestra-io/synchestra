@@ -151,6 +151,42 @@ func TestReadStateConfig_Exists(t *testing.T) {
 	}
 }
 
+func TestReadSpecConfig_PlanningWhatsNext(t *testing.T) {
+	dir := t.TempDir()
+	content := []byte("title: test\nplanning:\n  whats_next: incremental\n")
+	if err := os.WriteFile(filepath.Join(dir, "synchestra-spec-repo.yaml"), content, 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg, err := ReadSpecConfig(dir)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if cfg.Planning == nil {
+		t.Fatal("expected Planning to be non-nil")
+	}
+	if cfg.Planning.WhatsNext != "incremental" {
+		t.Fatalf("expected WhatsNext=incremental, got %s", cfg.Planning.WhatsNext)
+	}
+}
+
+func TestReadSpecConfig_PlanningWhatsNextDefault(t *testing.T) {
+	dir := t.TempDir()
+	content := []byte("title: test\n")
+	if err := os.WriteFile(filepath.Join(dir, "synchestra-spec-repo.yaml"), content, 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg, err := ReadSpecConfig(dir)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	whatsNext := cfg.WhatsNextMode()
+	if whatsNext != "disabled" {
+		t.Fatalf("expected default disabled, got %s", whatsNext)
+	}
+}
+
 func TestReadCodeConfig_Exists(t *testing.T) {
 	dir := t.TempDir()
 	content := "spec_repos:\n  - https://github.com/org/spec\n  - https://github.com/org/rehearse\n"
