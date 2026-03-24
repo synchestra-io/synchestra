@@ -91,6 +91,7 @@ A roadmap's status is derived from its children:
 - `draft` — at least one child is `draft`
 - `in_review` — all children are `in_review` or `approved`
 - `approved` — all children are `approved`
+- `in_progress` — at least one child plan has linked tasks in progress
 - `superseded` — explicitly set when the roadmap is replaced
 
 ### Feature linking
@@ -227,4 +228,3 @@ The explicit command `synchestra plans whats-next` works regardless of config se
 
 - Should `synchestra plans whats-next` support a `--dry-run` flag that prints the report without committing?
 - Should the report include a "Blocked" section for plans that are blocked on external dependencies?
-- Should roadmaps support an explicit `priority` ordering field for child plans, or is the table order in the README sufficient?
