@@ -15,6 +15,7 @@ import (
 	"github.com/synchestra-io/synchestra/pkg/cli/project"
 	"github.com/synchestra-io/synchestra/pkg/cli/spec"
 	statecmd "github.com/synchestra-io/synchestra/pkg/cli/state"
+	taskcmd "github.com/synchestra-io/synchestra/pkg/cli/task"
 	testcmd "github.com/synchestra-io/synchestra/pkg/cli/test"
 )
 
@@ -60,6 +61,7 @@ func Run(
 		code.Command(),
 		spec.Command(),
 		statecmd.Command(),
+		taskcmd.Command(),
 	)
 
 	rootCmd.SetArgs(args[1:])
