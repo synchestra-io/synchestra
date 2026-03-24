@@ -195,7 +195,7 @@ momentum, competing priorities.
 
 ### Configuration
 
-In `synchestra-spec.yaml` (or `synchestra-spec-repo.yaml`):
+In `synchestra-spec-repo.yaml`:
 
 ```yaml
 planning:
