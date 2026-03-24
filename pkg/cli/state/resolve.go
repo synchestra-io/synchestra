@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/synchestra-io/synchestra/pkg/cli/exitcode"
 	"gopkg.in/yaml.v3"
@@ -23,10 +24,8 @@ var _ = resolveStateRepoPath
 
 // resolveStateRepoPath finds the state repo path for the current project.
 // It walks up from startDir looking for synchestra-spec-repo.yaml (reads
-// state_repo field) or synchestra-state-repo.yaml (direct detection).
-//
-// TODO: Add stateRepoConfig struct for parsing synchestra-state-repo.yaml
-// when direct state repo detection needs config fields beyond file existence.
+// state_repo field; worktree:// for embedded state) or synchestra-state-repo.yaml
+// (direct detection).
 func resolveStateRepoPath(startDir string) (string, error) {
 	current, err := filepath.Abs(startDir)
 	if err != nil {
@@ -48,6 +47,16 @@ func resolveStateRepoPath(startDir string) (string, error) {
 			if cfg.StateRepo == "" {
 				return "", exitcode.NotFoundErrorf("no state_repo field in %s", specPath)
 			}
+
+			// Check for worktree:// scheme (embedded state).
+			if strings.HasPrefix(cfg.StateRepo, "worktree://") {
+				worktreePath := filepath.Join(current, ".synchestra")
+				if info, statErr := os.Stat(worktreePath); statErr == nil && info.IsDir() {
+					return worktreePath, nil
+				}
+				return "", exitcode.NotFoundErrorf("embedded state configured in %s but .synchestra/ worktree is missing; run 'synchestra project init' to set up", specPath)
+			}
+
 			// TODO: Resolve state_repo URL to local path using repos_dir convention
 			return cfg.StateRepo, nil
 		}
