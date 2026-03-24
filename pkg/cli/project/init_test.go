@@ -95,16 +95,13 @@ func TestInit_NewProject(t *testing.T) {
 		t.Errorf("board missing table header")
 	}
 
-	// Verify synchestra.yaml marker on main branch.
-	embCfg, err := ReadEmbeddedConfig(workDir)
+	// Verify synchestra-spec-repo.yaml on main branch.
+	specCfg, err := ReadSpecConfig(workDir)
 	if err != nil {
-		t.Fatalf("reading embedded config: %v", err)
+		t.Fatalf("reading spec config: %v", err)
 	}
-	if embCfg.State != "embedded" {
-		t.Errorf("state = %q, want embedded", embCfg.State)
-	}
-	if embCfg.StateBranch != "synchestra-state" {
-		t.Errorf("state_branch = %q, want synchestra-state", embCfg.StateBranch)
+	if specCfg.StateRepo != "worktree://synchestra-state" {
+		t.Errorf("state_repo = %q, want worktree://synchestra-state", specCfg.StateRepo)
 	}
 
 	// Verify .gitignore contains .synchestra.
@@ -198,12 +195,12 @@ func TestInit_CustomBranch(t *testing.T) {
 		t.Fatalf("init failed: %v", err)
 	}
 
-	embCfg, err := ReadEmbeddedConfig(workDir)
+	specCfg, err := ReadSpecConfig(workDir)
 	if err != nil {
-		t.Fatalf("reading embedded config: %v", err)
+		t.Fatalf("reading spec config: %v", err)
 	}
-	if embCfg.StateBranch != "my-state" {
-		t.Errorf("state_branch = %q, want my-state", embCfg.StateBranch)
+	if specCfg.StateRepo != "worktree://my-state" {
+		t.Errorf("state_repo = %q, want worktree://my-state", specCfg.StateRepo)
 	}
 }
 

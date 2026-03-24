@@ -68,9 +68,12 @@ func runInit(cmd *cobra.Command, _ []string) error {
 	// Prune stale worktree entries before proceeding.
 	_ = gitops.WorktreePrune(repoRoot)
 
-	// Check for conflict with dedicated project setup.
-	if _, err := os.Stat(filepath.Join(repoRoot, SpecConfigFile)); err == nil {
-		return exitcode.ConflictError("this repository already has a dedicated project setup (" + SpecConfigFile + "); embedded state cannot be used alongside it")
+	// Check for conflict with dedicated project setup (external state repo).
+	if cfg, err := ReadSpecConfig(repoRoot); err == nil {
+		mode, _ := cfg.ParseStateRepo()
+		if mode == "repo" {
+			return exitcode.ConflictError("this repository already has a dedicated project setup (" + SpecConfigFile + " with external state repo); embedded state cannot be used alongside it")
+		}
 	}
 
 	// Remember the current branch to switch back after creating orphan.
@@ -96,7 +99,7 @@ func runInit(cmd *cobra.Command, _ []string) error {
 		if err := ensureGitignoreEntry(repoRoot, worktreeDir); err != nil {
 			return exitcode.UnexpectedErrorf("updating .gitignore: %v", err)
 		}
-		if err := ensureEmbeddedConfig(repoRoot, branch); err != nil {
+		if err := ensureSpecConfig(repoRoot, branch); err != nil {
 			return err
 		}
 		_, _ = fmt.Fprintf(cmd.OutOrStdout(), "Embedded state connected (existing project)\n")
@@ -112,7 +115,7 @@ func runInit(cmd *cobra.Command, _ []string) error {
 		if err := ensureGitignoreEntry(repoRoot, worktreeDir); err != nil {
 			return exitcode.UnexpectedErrorf("updating .gitignore: %v", err)
 		}
-		if err := ensureEmbeddedConfig(repoRoot, branch); err != nil {
+		if err := ensureSpecConfig(repoRoot, branch); err != nil {
 			return err
 		}
 		_, _ = fmt.Fprintf(cmd.OutOrStdout(), "Embedded state initialized (from local branch)\n")
@@ -158,7 +161,7 @@ func runInit(cmd *cobra.Command, _ []string) error {
 	}
 
 	// Step 8: Write marker config on the main branch.
-	if err := ensureEmbeddedConfig(repoRoot, branch); err != nil {
+	if err := ensureSpecConfig(repoRoot, branch); err != nil {
 		return err
 	}
 
@@ -281,18 +284,20 @@ func ensureGitignoreEntry(repoRoot, entry string) error {
 	return nil
 }
 
-// ensureEmbeddedConfig writes the synchestra.yaml marker on the main branch if not present.
-func ensureEmbeddedConfig(repoRoot, branch string) error {
-	path := filepath.Join(repoRoot, EmbeddedConfigFile)
-	if _, err := os.Stat(path); err == nil {
-		return nil // already exists
+// ensureSpecConfig writes or updates synchestra-spec-repo.yaml with a worktree://
+// state_repo on the main branch. Preserves existing fields (title, repos, planning).
+func ensureSpecConfig(repoRoot, branch string) error {
+	expected := worktreeScheme + branch
+
+	// Read existing config (if any) to preserve other fields.
+	cfg, _ := ReadSpecConfig(repoRoot) // ignore error: file may not exist
+	if cfg.StateRepo == expected {
+		return nil // already correct
 	}
-	cfg := EmbeddedConfig{
-		State:       "embedded",
-		StateBranch: branch,
-	}
-	if err := WriteEmbeddedConfig(repoRoot, cfg); err != nil {
-		return exitcode.UnexpectedErrorf("writing embedded config: %v", err)
+
+	cfg.StateRepo = expected
+	if err := WriteSpecConfig(repoRoot, cfg); err != nil {
+		return exitcode.UnexpectedErrorf("writing spec config: %v", err)
 	}
 	return nil
 }
