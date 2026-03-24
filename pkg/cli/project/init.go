@@ -263,16 +263,20 @@ func ensureGitignoreEntry(repoRoot, entry string) error {
 	if err != nil {
 		return fmt.Errorf("opening .gitignore: %w", err)
 	}
-	defer f.Close()
 
 	// Add newline before entry if file doesn't end with one.
 	if len(data) > 0 && data[len(data)-1] != '\n' {
 		if _, err := f.WriteString("\n"); err != nil {
+			_ = f.Close()
 			return fmt.Errorf("writing newline to .gitignore: %w", err)
 		}
 	}
 	if _, err := f.WriteString(entry + "\n"); err != nil {
+		_ = f.Close()
 		return fmt.Errorf("writing to .gitignore: %w", err)
+	}
+	if err := f.Close(); err != nil {
+		return fmt.Errorf("closing .gitignore: %w", err)
 	}
 	return nil
 }
