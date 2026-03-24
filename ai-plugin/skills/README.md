@@ -135,6 +135,25 @@ This downloads the skills bundle matching the installed CLI version from GitHub 
 
 See the [Agent Skills Roadmap](../../spec/plans/agent-skills-roadmap/README.md) for the phased plan and competitive analysis.
 
+## Why So Many Skills?
+
+Synchestra has 24+ skills. This is intentional and does not create complexity for users.
+
+**Users never browse skills directly.** The AI agent matches user intent to the right skill automatically. A user says "show me the task board" and the agent invokes `synchestra-task-list`. The user doesn't need to know that skill exists, let alone that there are 23 others alongside it. This is the same reason git users don't need to know there are 150+ git commands — they use 10 and the rest are there when needed.
+
+**One skill per CLI command keeps each skill small and precise.** An agent loading `synchestra-task-claim` gets exactly the parameters, exit codes, and examples for that one operation — no wading through a monolithic "task management" skill to find the relevant section. This follows the same principle as Unix commands: do one thing well.
+
+**Skills load lazily.** Platforms like Claude Code load only skill names and descriptions at session start (one line each). Full skill content loads on demand when invoked. 24 one-line descriptions cost fewer tokens than a single large README.
+
+**The superpowers integration further reduces the visible surface.** Users coming through the [synchestra-superpowers](https://github.com/synchestra-io/synchestra-superpowers) fork see only 4 workflow skills (synchestra-state, install-synchestra, task-board, deviation-report). The 24 atomic skills are installed later via `synchestra skill install` — only when the user is ready for full spec-driven development.
+
+| What the user sees | When | Skill count |
+|---|---|---|
+| Superpowers + 4 workflow skills | After switching to the fork | 18 (14 superpowers + 4 Synchestra) |
+| + 24 atomic Synchestra skills | After `synchestra skill install` | 42, but agent handles selection |
+
+The number of skills is a feature of completeness, not a burden on the user.
+
 ## Competitive Context
 
 No existing tool combines structured specification management, git-backed multi-agent coordination, and an agent-native CLI interface. GitHub Spec Kit is the closest analog — but it's simpler, flat (no hierarchy), and doesn't support multi-agent workflows. Synchestra's skill layer gives agents a token-efficient, convention-enforcing interface that scales with spec complexity.
