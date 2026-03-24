@@ -187,6 +187,61 @@ func TestReadSpecConfig_PlanningWhatsNextDefault(t *testing.T) {
 	}
 }
 
+func TestSpecConfig_ParseStateRepo_Worktree(t *testing.T) {
+	cfg := SpecConfig{StateRepo: "worktree://synchestra-state"}
+	mode, branch := cfg.ParseStateRepo()
+	if mode != "worktree" {
+		t.Errorf("mode = %q, want worktree", mode)
+	}
+	if branch != "synchestra-state" {
+		t.Errorf("branch = %q, want synchestra-state", branch)
+	}
+}
+
+func TestSpecConfig_ParseStateRepo_WorktreeBranchWithSlash(t *testing.T) {
+	cfg := SpecConfig{StateRepo: "worktree://feature/state"}
+	mode, branch := cfg.ParseStateRepo()
+	if mode != "worktree" {
+		t.Errorf("mode = %q, want worktree", mode)
+	}
+	if branch != "feature/state" {
+		t.Errorf("branch = %q, want feature/state", branch)
+	}
+}
+
+func TestSpecConfig_ParseStateRepo_WorktreeEmptyBranch(t *testing.T) {
+	cfg := SpecConfig{StateRepo: "worktree://"}
+	mode, branch := cfg.ParseStateRepo()
+	if mode != "" {
+		t.Errorf("mode = %q, want empty (invalid)", mode)
+	}
+	if branch != "" {
+		t.Errorf("branch = %q, want empty", branch)
+	}
+}
+
+func TestSpecConfig_ParseStateRepo_URL(t *testing.T) {
+	cfg := SpecConfig{StateRepo: "https://github.com/acme/state"}
+	mode, branch := cfg.ParseStateRepo()
+	if mode != "repo" {
+		t.Errorf("mode = %q, want repo", mode)
+	}
+	if branch != "" {
+		t.Errorf("branch = %q, want empty", branch)
+	}
+}
+
+func TestSpecConfig_ParseStateRepo_Empty(t *testing.T) {
+	cfg := SpecConfig{}
+	mode, branch := cfg.ParseStateRepo()
+	if mode != "" {
+		t.Errorf("mode = %q, want empty", mode)
+	}
+	if branch != "" {
+		t.Errorf("branch = %q, want empty", branch)
+	}
+}
+
 func TestReadCodeConfig_Exists(t *testing.T) {
 	dir := t.TempDir()
 	content := "spec_repos:\n  - https://github.com/org/spec\n  - https://github.com/org/rehearse\n"
