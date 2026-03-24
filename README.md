@@ -442,6 +442,22 @@ gets felt immediately and fixed quickly.
 Synchestra is in active development. The conventions, module structure, and CLI
 are being built and refined through daily use on real projects.
 
+## What's Next
+
+Active [development plans](spec/plans/README.md) and their current state:
+
+| Plan | Status | Features | Effort | Impact |
+|------|--------|----------|--------|--------|
+| [chat-feature](spec/plans/chat-feature/) | draft | chat, chat/workflow | — | — |
+| &ensp;[chat-infrastructure](spec/plans/chat-feature/chat-infrastructure/) | draft | chat | L | high |
+| &ensp;[chat-workflow-engine](spec/plans/chat-feature/chat-workflow-engine/) | draft | chat/workflow | M | high |
+| [e2e-testing-framework](spec/plans/e2e-testing-framework/) | draft | testing-framework | — | — |
+| [agent-skills-roadmap](spec/plans/agent-skills-roadmap/) | draft | agent-skills, cli/feature | — | — |
+| [hero-scene](spec/plans/hero-scene/) | draft | landing | — | — |
+| [superpowers-integration](spec/plans/superpowers-integration/) | draft | embedded-state, cli/project/init | — | — |
+
+Plans support [hierarchical nesting](spec/features/development-plan/README.md#plan-hierarchy) (roadmaps containing child plans) and optional [ROI metadata](spec/features/development-plan/README.md#optional-roi-metadata) for prioritization. A generated [What's Next report](spec/features/development-plan/README.md#whats-next-report) can be enabled to surface recommended next targets after plan or task completion.
+
 ## Outstanding Questions
 
 - What is the full lifecycle of a cross-repo task — from branch reservation through integration testing to merge? (Early
