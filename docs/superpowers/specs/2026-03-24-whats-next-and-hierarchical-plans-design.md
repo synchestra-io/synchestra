@@ -13,7 +13,7 @@ Three additions to the Synchestra planning system:
 - **Nesting limit:** 2 levels (roadmap → plan), consistent with the 2-level step limit inside plans
 - **Roadmaps have no implementation steps** — they define ordering between child plans
 - **ROI metadata is optional** — AI infers from plan structure when absent
-- **Report generation is opt-in** via `planning.whats-next` config to avoid surprise token spend
+- **Report generation is opt-in** via `planning.whats_next` config to avoid surprise token spend
 - **Incremental by default** — previous report + delta, with `--full` override for from-scratch regeneration
 
 ## Motivation
@@ -200,7 +200,7 @@ In `synchestra-spec-repo.yaml`:
 
 ```yaml
 planning:
-  whats-next: disabled          # disabled | incremental | full
+  whats_next: disabled          # disabled | incremental | full
 ```
 
 - **`disabled`** (default) — no automatic generation, no token spend
