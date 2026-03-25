@@ -79,6 +79,17 @@ planning, and managing the development of software projects with AI agents.
 - **Async-first.** Agents work independently and asynchronously. Coordination happens through the repo state, not
   real-time messaging.
 
+### Synchestra Hub
+
+You run everything locally with your agent of choice — it's fast, it's private, it works. But then you need to close
+your laptop. The agent isn't done. You wish it could keep going without you, but it can't. The work stops when you stop.
+
+**Synchestra Hub picks up where your laptop leaves off.** Run agents locally, on a remote VM, or in the cloud. Transfer
+work and context mid-flight. Come back to finished tasks, not stale sessions.
+
+Hub includes remote agent execution, dashboards, API access, and a Web UI. Self-hosted or managed — your choice. It
+builds on the same specs and CLI you already use. No lock-in — the open-source foundation works independently.
+
 ## Repository Types
 
 Synchestra operates with three kinds of repositories, each with a distinct role.
