@@ -96,6 +96,36 @@ state: embedded                   # tells CLI to look for .synchestra/ worktree
 state_branch: synchestra-state    # the orphan branch name
 ```
 
+### Config-less Mode
+
+Config-less mode allows Synchestra task commands to work without any configuration file (`synchestra-spec-repo.yaml` or `synchestra-state-repo.yaml`) on the main branch. This is the zero-friction path for "Option A" onboarding — the user runs `synchestra project init` and immediately starts using task commands.
+
+**How it works:**
+
+1. `resolve.StateRepoPath()` walks up the directory tree looking for config files (existing behavior)
+2. If no config file is found, it falls back to finding the git repo root
+3. If `.synchestra/` exists at the repo root, it is returned as the state store path
+4. If `.synchestra/` does not exist, a `NotFound` error suggests running `synchestra project init`
+
+**Defaults in config-less mode:**
+
+| Setting | Default value |
+|---|---|
+| State branch | `synchestra-state` |
+| Worktree path | `.synchestra/` |
+| Spec root | `spec/` |
+| Docs root | `docs/` |
+
+**When config-less mode is used:**
+
+- After `synchestra project init` (which creates the orphan branch and worktree)
+- When onboarding selects "Option A: single repo, default settings"
+- The `synchestra-spec-repo.yaml` file is still created by `project init` for explicit configuration, but task commands no longer require it to exist
+
+**Upgrading from config-less to configured:**
+
+Running `synchestra project init` always writes `synchestra-spec-repo.yaml` with `state_repo: worktree://synchestra-state`. If a user later needs custom configuration (multi-repo, dedicated state repo), they can edit or replace this file. The config-less fallback only activates when no config file exists at all.
+
 ### State Store Backend
 
 The existing `gitstore` backend works with minimal changes. The key difference is the git directory path:
