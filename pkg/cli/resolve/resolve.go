@@ -1,5 +1,7 @@
 package resolve
 
+// Features implemented: project-definition/state-repo, embedded-state
+
 import (
 	"fmt"
 	"os"
