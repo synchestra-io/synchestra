@@ -454,7 +454,7 @@ sessions/{session_id}/messages/{message_id}
   - processed: boolean
 ```
 
-Hub subscribes to `sessions/{session_id}/messages` via Firestore onSnapshot for real-time updates in both directions. Session status changes are visible via `sessions/{session_id}` onSnapshot.
+Hub subscribes to `sessions/{session_id}/messages` via Firestore onSnapshot for real-time updates in both directions. Session status changes are visible via `sessions/{session_id}` onSnapshot. The Hub is implemented with Angular and PrimeNG (not Ionic as noted in the Hub spec — that spec will be updated).
 
 ## Telegram bot integration
 
