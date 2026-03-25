@@ -1,9 +1,17 @@
 # [Synchestra](https://synchestra.io)
 
-**Synchestra** — as in *synch*ronized *orchestra* — is a modular, opinionated platform for orchestrating multi-platform
-AI agents asynchronously. It manages the **I/O** of AI-driven development: the **inputs** (prompts, specifications, task
-queues) and the **outputs** (code, documents, artifacts) — keeping token usage minimal, output velocity high, and humans
-in the loop.
+**Synchestra** — as in *synch*ronized *orchestra* — is a spec-driven coordination layer for AI-assisted development.
+It manages the **I/O** of AI-driven development: the **inputs** (prompts, specifications, task queues) and the
+**outputs** (code, documents, artifacts) — keeping token usage minimal, output velocity high, and humans in the loop.
+
+Synchestra is two things:
+
+- **Synchestra** (open source) — a mental model, spec format, and CLI that turns a git repository into a coordination
+  protocol for AI agents. Define work as structured specs. Run it locally with any agent runtime.
+- **Synchestra Hub** — a platform layer for remote agent execution, dashboards, and API access. Self-hosted or managed.
+  Hub builds on top of Synchestra — the specs and CLI you already use.
+
+Specs first. Then agents.
 
 ![Synchestra — every agent knows its part](spec/branding/illustrations/hero-scene.webp)
 
@@ -34,7 +42,7 @@ Synchestra is that coordination layer.
 
 ## What Synchestra Is
 
-Synchestra is a **mental framework, a set of tools, and a runtime** that turns a git repository into a coordination
+Synchestra is a **mental framework, a set of tools, and a platform** that turns a git repository into a coordination
 protocol for AI agents.
 
 At its core, Synchestra is a chain of small, automatable steps and background checks that anyone *could* do manually —
@@ -49,9 +57,9 @@ planning, and managing the development of software projects with AI agents.
   and error handling. Any agent platform can use them — with or without the full Synchestra runtime.
 - **Daemon.** Runs as a background process that spawns agents when new tasks are queued, manages headless agent sessions
   in highly focused mode, and runs pre/post micro-task chains around each prompt.
-- **Web UI and HTTP API.** Remote access to everything — edit projects, queue tasks from your phone, monitor progress.
+- **Synchestra Hub.** The platform layer — remote agent execution, dashboards, and API access. Self-hosted or managed.
   Users authenticate via GitHub OAuth or Firebase; their identity is used to sign prompt commits and co-author output
-  artifact commits.
+  artifact commits. Hub includes the Web UI, HTTP API, and agent dispatcher.
 - **Git hooks and CI guards.** Pre-commit, pre-push, and GitHub Actions workflows validate the structure and consistency
   of Synchestra project files on every change.
 
@@ -294,9 +302,9 @@ Beyond that, Synchestra adapts to how your project is organized:
 
 ### Compared to agent frameworks (LangChain, CrewAI, AutoGen)
 
-These are runtimes — they execute agents, manage prompts, and chain tool calls. Synchestra doesn't replace them. It sits
-beneath them as the shared state and coordination layer. Your CrewAI agents and your Claude Code session can coordinate
-through the same repo. Load [Synchestra skills](#skills) into any of these frameworks and agents gain structured task
+These are runtimes — they execute agents, manage prompts, and chain tool calls. Synchestra doesn't replace them. It's
+the layer above — defining what needs doing so agents can focus on how. Your agents across any platform can coordinate
+through the same repo. Load [Synchestra skills](#skills) into any runtime and agents gain structured task
 claiming, status reporting, and conflict-safe coordination without changing their runtime.
 
 ### Compared to project management tools (Linear, Jira)
@@ -369,15 +377,16 @@ See [feature specifications](spec/features/README.md) for detailed specs and dep
 
 ## Getting Started
 
-**Try it instantly:**
+**Start with specs and CLI (open source):**
 
 - **Fork a demo project** or use a Synchestra template repository to explore the structure and conventions locally.
+- Install the CLI and start defining specs, creating tasks, and coordinating agents from your terminal.
+
+**Scale with Synchestra Hub:**
+
 - **Sign in at [synchestra.io](https://synchestra.io)** with GitHub OAuth, choose the repo(s) you want to orchestrate,
   answer a few setup questions, and you're running.
-
-**For full control:**
-Install Synchestra on your own VM for persistent daemon mode, headless agent management, and full CLI access. For
-evaluation, Synchestra can provide a demo VM, or you can run it entirely within a GitHub Actions workflow.
+- Self-host Hub on your own VM, or use the managed service for remote agent execution, dashboards, and API access.
 
 ## Testing with Rehearse
 
