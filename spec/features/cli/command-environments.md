@@ -138,6 +138,8 @@ The core workflow commands for task lifecycle management. These are what agents 
 - Write access to the state store (for mutations)
 - Network access when the state store backend requires it (e.g., git remote, database server)
 
+**Config-less operation:** Coordination commands support [config-less mode](../embedded-state/README.md#config-less-mode). When no `synchestra-spec-repo.yaml` or `synchestra-state-repo.yaml` exists, the CLI falls back to detecting the `.synchestra/` worktree at the git repo root. This means task commands work immediately after `synchestra project init` — no config file required on the main branch.
+
 **Typical caller:** AI agent (via CLI or MCP), human developer, orchestration script.
 
 ### 4. 🧪 Execution — Agent environment, needs code/spec access
@@ -180,7 +182,7 @@ Quick-reference table of every CLI command.
 | `config set` | 🔧 Setup | mutation | `~/.synchestra.yaml` |
 | `config clear` | 🔧 Setup | mutation | `~/.synchestra.yaml` |
 | `project new` | 🔧 Setup | mutation | git (spec + code repos) |
-| `project info` | 🔧 Setup | read | `synchestra-spec-repo.yaml` |
+| `project info` | 🔧 Setup | read | `synchestra-spec-repo.yaml` or `.synchestra/` worktree |
 | `project set` | 🔧 Setup | mutation | git (spec repo) |
 | `project code add` | 🔧 Setup | mutation | git (spec repo) |
 | `project code remove` | 🔧 Setup | mutation | git (spec repo) |
