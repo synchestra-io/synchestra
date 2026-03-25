@@ -69,6 +69,7 @@ Core principles (see the [agent-skills spec](../../spec/features/agent-skills/RE
 | Skill | Description | CLI Command |
 |---|---|---|
 | [synchestra-project-init](synchestra-project-init/README.md) | Initialize embedded Synchestra state in a git repo | ✅ [project init](../../spec/features/cli/project/init/README.md) |
+| [synchestra-project-setup](synchestra-project-setup/README.md) | Guided project topology configuration and initialization | AI skill (no single CLI command) |
 
 ### Task Management
 
