@@ -63,7 +63,47 @@ func StateRepoPath(startDir string) (string, error) {
 
 		parent := filepath.Dir(current)
 		if parent == current {
-			return "", exitcode.NotFoundError("project not found: no synchestra-spec-repo.yaml or synchestra-state-repo.yaml in any parent directory")
+			// Config-less fallback: look for .synchestra/ at the git repo root.
+			return configLessFallback(startDir)
+		}
+		current = parent
+	}
+}
+
+// configLessFallback implements config-less mode resolution.
+// It finds the git repository root and checks for a .synchestra/ directory.
+// Features implemented: embedded-state
+func configLessFallback(startDir string) (string, error) {
+	absStart, err := filepath.Abs(startDir)
+	if err != nil {
+		return "", fmt.Errorf("resolving path: %w", err)
+	}
+
+	gitRoot, err := findGitRoot(absStart)
+	if err != nil {
+		return "", exitcode.NotFoundError("project not found: no synchestra-spec-repo.yaml or synchestra-state-repo.yaml in any parent directory")
+	}
+
+	worktreePath := filepath.Join(gitRoot, ".synchestra")
+	if info, statErr := os.Stat(worktreePath); statErr == nil && info.IsDir() {
+		return worktreePath, nil
+	}
+
+	return "", exitcode.NotFoundErrorf("no Synchestra project found in git repo %s; run 'synchestra project init' to set up", gitRoot)
+}
+
+// findGitRoot walks up from dir looking for a .git directory or file.
+// It returns the directory containing .git, or an error if none is found.
+func findGitRoot(dir string) (string, error) {
+	current := dir
+	for {
+		gitPath := filepath.Join(current, ".git")
+		if _, err := os.Stat(gitPath); err == nil {
+			return current, nil
+		}
+		parent := filepath.Dir(current)
+		if parent == current {
+			return "", fmt.Errorf("not a git repository: no .git found above %s", dir)
 		}
 		current = parent
 	}
