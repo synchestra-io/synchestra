@@ -34,6 +34,7 @@ Feature specifications for the Synchestra project, managed by Synchestra.
 | [source-references](source-references/README.md) | Conceptual | Language-agnostic `synchestra:` annotations that link source code to Synchestra resources (features, plans, docs, tasks) with strict validation and URL expansion |
 | [stakeholder](stakeholder/README.md) | Conceptual | Humans and AI agents that participate in workflow decisions — identity model, role-based routing, structured decisions, gates, and audit logging |
 | [runner](runner/README.md) | Conceptual | Remote hosts and cloud environments where AI agents execute sessions and claim tasks |
+| [channels](channels/README.md) | Conceptual | Bidirectional real-time messaging between users (Hub, Telegram) and Claude Code instances in sandbox containers via MCP channels |
 
 ## Feature Summaries
 
@@ -71,7 +72,7 @@ Proposals attach non-normative change requests directly to a feature without cha
 
 ### [UI](ui/README.md)
 
-The human-facing product surfaces for Synchestra. Defines a shared information architecture (home → project menu → Features / Tasks / Workers) with MVP flows for proposal creation and task creation/enqueueing. Two delivery surfaces: a progressive [web app](ui/web-app/README.md) communicating via the HTTP API, and a [TUI](ui/tui/README.md) delivered through the CLI operating on local git state. Introduces the Workers concept at the UI level; a dedicated workers feature spec is needed before going beyond visibility.
+The human-facing product surfaces for Synchestra. Defines a shared information architecture (home → project menu → Features / Tasks / Workers) with MVP flows for proposal creation and task creation/enqueueing. Two delivery surfaces: [Synchestra Hub](ui/hub/README.md) — a browser-based management interface at hub.synchestra.io for projects, runners, and tasks — and a [TUI](ui/tui/README.md) delivered through the CLI operating on local git state. Introduces the Workers concept at the UI level; a dedicated workers feature spec is needed before going beyond visibility.
 
 
 ### [Task Status Board](task-status-board/README.md)
@@ -108,7 +109,7 @@ The Synchestra GitHub App registered under the `synchestra-io` organization. Pro
 
 ### [Onboarding](onboarding/README.md)
 
-A guided wizard delivered through both the web app and the CLI that walks new users through first-time project setup. Offers two paths: "Connect your repositories" (GitHub App installation → spec repo selection → optional code repos → state repo provisioning → bring-your-own AI key → AI-powered repo analysis and scaffolding → project creation) and "Try the demo" (pre-built sample project with example features, tasks, and proposals). The wizard handles infrastructure bootstrapping — creating state repos, generating `synchestra-spec-repo.yaml`, and scaffolding initial feature structures — so users reach a working project in minutes.
+A guided wizard delivered through both the Hub and the CLI that walks new users through first-time project setup. Offers two paths: "Connect your repositories" (GitHub App installation → spec repo selection → optional code repos → state repo provisioning → bring-your-own AI key → AI-powered repo analysis and scaffolding → project creation) and "Try the demo" (pre-built sample project with example features, tasks, and proposals). The wizard handles infrastructure bootstrapping — creating state repos, generating `synchestra-spec-repo.yaml`, and scaffolding initial feature structures — so users reach a working project in minutes.
 
 ### [Sandbox](sandbox/README.md)
 
@@ -150,6 +151,10 @@ Humans and AI agents that participate in workflow decisions. Stakeholders are id
 
 Remote hosts, VMs, and cloud environments where AI agents execute sessions and claim tasks. A runner is a registered compute endpoint — users interact with agents on runners through sessions, ephemeral chat-like conversations surfaced in the web UI. Runners provide persistent availability, multi-environment support, and centralized visibility across all registered compute endpoints.
 
+### [Channels](channels/README.md)
+
+Bidirectional, real-time messaging between users and Claude Code instances running inside sandbox containers on remote runners. Messages flow from the Hub (browser) or Telegram through the Synchestra cloud layer (Cloud Run + Firestore) to runner hosts, into containers via the sandbox agent's gRPC interface, and reach Claude Code through a local MCP channel server implementing the Claude Code channels protocol. Firestore is the source of truth for all messages; Hub subscribes via onSnapshot for real-time delivery. Extends the sandbox agent with session management and messaging RPCs, and ships a Go-based channel MCP server in the container image.
+
 ```
 feature → proposals, development-plan, outstanding-questions (features are the spec unit)
 task-status-board ← conflict-resolution
@@ -177,6 +182,8 @@ testing-framework → acceptance-criteria (composes ACs into test flows), cli (n
 source-references → feature, cli, project-definition (synchestra: annotations link code to spec resources, validated by linter)
 stakeholder → task-status-board (decisions are tasks), development-plan (gates trigger on plan transitions), feature (_config.yaml for role overrides), cli (decision/stakeholder commands), agent-skills (decision-request skill), state-store (DecisionStore)
 stakeholder ← chat (workflows create decisions), ui (renders decision options), bots (delivers notifications, accepts responses)
+channels → runner (host compute layer), sandbox (agent gRPC extensions, container image), api (cloud endpoints), state-store (Firestore persistence)
+channels ← ui/hub (browser surface), bots (Telegram surface), chat (sessions may trigger workflows)
 ```
 
 `feature` is the foundational spec-layer concept — proposals, plans, and outstanding questions all attach to features.
@@ -219,7 +226,7 @@ All diagrams in feature specifications should use **mermaid syntax** instead of 
 - [acceptance-criteria](acceptance-criteria/README.md): 4 outstanding questions
 - [testing-framework](testing-framework/README.md): 3 outstanding questions
 - [ui](ui/README.md): 5 outstanding questions
-- [ui/web-app](ui/web-app/README.md): 5 outstanding questions
+- [ui/hub](ui/hub/README.md): 7 outstanding questions
 - [ui/tui](ui/tui/README.md): 5 outstanding questions
 - [bots](bots/README.md): 2 outstanding questions
 - [bots/synchestra-bot](bots/synchestra-bot/README.md): 5 outstanding questions
@@ -232,3 +239,4 @@ All diagrams in feature specifications should use **mermaid syntax** instead of 
 - [stakeholder/decision/audit](stakeholder/decision/audit/README.md): 4 outstanding questions
 - [stakeholder/gate](stakeholder/gate/README.md): 4 outstanding questions
 - [stakeholder/notification](stakeholder/notification/README.md): 4 outstanding questions
+- [channels](channels/README.md): 8 outstanding questions
