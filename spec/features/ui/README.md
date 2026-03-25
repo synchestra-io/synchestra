@@ -4,18 +4,18 @@
 
 ## Summary
 
-The UI feature defines Synchestra's shared information architecture for human-facing interfaces — the screens, navigation, and workflows that both the web app and the terminal UI implement. This document is the single source of truth for what the UI shows and what actions it supports; the subfeature specs ([web-app](web-app/README.md), [tui](tui/README.md)) define how each surface delivers it.
+The UI feature defines Synchestra's shared information architecture for human-facing interfaces — the screens, navigation, and workflows that both the Hub and the terminal UI implement. This document is the single source of truth for what the UI shows and what actions it supports; the subfeature specs ([hub](hub/README.md), [tui](tui/README.md)) define how each surface delivers it.
 
 ## Contents
 
 | Directory | Description |
 |---|---|
-| [web-app/](web-app/README.md) | Progressive web application (TypeScript, Nx, Angular, Ionic) — browser and mobile surface |
+| [hub/](hub/README.md) | Synchestra Hub — browser-based management interface for projects, runners, and tasks |
 | [tui/](tui/README.md) | Terminal UI delivered through the Synchestra [CLI](../cli/README.md) — keyboard-driven surface |
 
-### web-app
+### hub
 
-The graphical surface. A progressive web application that communicates with the Synchestra backend via the [HTTP API](../../../docs/api/README.md). Implementation lives in the [synchestra-app](https://github.com/synchestra-io/synchestra-app) repository. Covers authentication, responsive layout, PWA capabilities (offline access, installability), and browser-specific interaction patterns.
+Synchestra Hub — the graphical surface. A progressive web application at [hub.synchestra.io](https://hub.synchestra.io) that communicates with the Synchestra backend via the [HTTP API](../../../docs/api/README.md). Users browse projects (loading data directly from GitHub), manage AI-agent runners (VMs, cloud Docker images), and handle tasks including review requests from agents. Implementation lives in the [synchestra-app](https://github.com/synchestra-io/synchestra-app) repository. Self-hosting support is planned for a future release.
 
 ### tui
 
@@ -124,7 +124,7 @@ The UI feature presents and triggers workflows defined elsewhere — it does not
 | [Task Status Board](../task-status-board/README.md) | Board format, status lifecycle, claiming protocol |
 | [Agent Skills](../agent-skills/README.md) | Skills that back the task actions (create, enqueue) |
 | [Project Definition](../project-definition/README.md) | `synchestra-spec-repo.yaml` — source of the project list |
-| [HTTP API](../../../docs/api/README.md) | Backend for the web app surface |
+| [HTTP API](../../../docs/api/README.md) | Backend for the Hub surface |
 
 ## Outstanding Questions
 

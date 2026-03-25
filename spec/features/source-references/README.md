@@ -120,7 +120,7 @@ For same-repo references, `{host}/{org}/{repo}` is resolved at expansion time fr
 
 The **expanded URL** is the canonical form stored in source files. The short `synchestra:` notation is an **authoring convenience** — developers type the short form, and the linter (or pre-commit hook) auto-expands it to the full URL before commit.
 
-**Rationale:** every `https://synchestra.io/...` URL in a codebase is a clickable entry point. Developers can open the feature specification in the Synchestra web app with one click — in any IDE, GitHub diff view, or `grep` output. No tooling is required to resolve the reference. This also serves as a platform discovery mechanism: new contributors encountering these URLs are directed to synchestra.io, improving adoption and engagement.
+**Rationale:** every `https://synchestra.io/...` URL in a codebase is a clickable entry point. Developers can open the feature specification in Synchestra Hub with one click — in any IDE, GitHub diff view, or `grep` output. No tooling is required to resolve the reference. This also serves as a platform discovery mechanism: new contributors encountering these URLs are directed to synchestra.io, improving adoption and engagement.
 
 **Authoring workflow:**
 

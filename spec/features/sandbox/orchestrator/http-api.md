@@ -6,7 +6,7 @@
 >
 > **OpenAPI contract:** The formal OpenAPI 3.1 specification lives at [`spec/api/sandbox/`](../../../api/sandbox/README.md).
 
-The sandbox HTTP API is served by `synchestra serve --http` and provides RESTful endpoints for the web application to interact with sandbox containers. All sandbox endpoints are prefixed with `/api/v1/sandbox/`. Admin endpoints are prefixed with `/api/v1/admin/sandbox/`.
+The sandbox HTTP API is served by `synchestra serve --http` and provides RESTful endpoints for the Hub to interact with sandbox containers. All sandbox endpoints are prefixed with `/api/v1/sandbox/`. Admin endpoints are prefixed with `/api/v1/admin/sandbox/`.
 
 The API server acts as a stateless proxy — it authenticates requests, validates access permissions, and forwards operations to the appropriate container via the Container Orchestrator and gRPC. The host holds no session state: any host instance can serve any request for any project. Session state lives exclusively inside the container, and session logs are persisted to disk by the container agent.
 

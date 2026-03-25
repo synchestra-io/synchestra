@@ -402,7 +402,7 @@ planning:
 | [chat-feature](chat-feature/) | draft | — | chat, chat/workflow | XL | critical | @alex | — |
 | &ensp;[chat-infrastructure](chat-feature/chat-infrastructure/) | draft | — | chat | L | high | @alex | — |
 | &ensp;[chat-workflow-engine](chat-feature/chat-workflow-engine/) | draft | — | chat/workflow | M | high | @alex | — |
-| [user-auth](user-auth/) | approved | 2/4 steps | api, ui/web-app | M | high | @alex | 2026-03-15 |
+| [user-auth](user-auth/) | approved | 2/4 steps | api, ui/hub | M | high | @alex | 2026-03-15 |
 | [add-batch-mode](add-batch-mode/) | in_review | — | cli | S | medium | @alex | — |
 | [refactor-output](refactor-output/) | superseded | — | cli | — | — | @alex | — |
 
@@ -488,7 +488,7 @@ The plan author (human or AI agent) writes the plan document following the struc
 
 ```
 synchestra plan create --feature cli --slug add-batch-mode --title "Add batch mode to CLI" --author @alex
-synchestra plan create --feature api --feature ui/web-app --slug user-auth --title "User authentication" --author @alex
+synchestra plan create --feature api --feature ui/hub --slug user-auth --title "User authentication" --author @alex
 ```
 
 This creates the plan directory and template README, adds the plan to the `spec/plans/README.md` index, and adds back-references to each listed feature's README.
@@ -647,7 +647,7 @@ The same derived view is available through the REST API:
 GET /api/v1/plan/status?plan=user-auth
 ```
 
-Returns structured JSON with plan steps, mapped tasks, statuses, and unplanned tasks. The web app and TUI render this view on their respective surfaces.
+Returns structured JSON with plan steps, mapped tasks, statuses, and unplanned tasks. The Hub and TUI render this view on their respective surfaces.
 
 ## Task Artifacts
 

@@ -74,7 +74,7 @@ The options format does not prescribe UI layout. Instead, UIs infer the appropri
 | `free-text` or `allow_custom` | Text input/textarea |
 | `pick-one` + `allow_custom` | Options list with "Other" text input |
 
-These are suggestions, not requirements. Each UI surface (web app, TUI, bot) adapts to its constraints.
+These are suggestions, not requirements. Each UI surface (Hub, TUI, bot) adapts to its constraints.
 
 ### Examples
 

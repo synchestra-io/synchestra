@@ -49,7 +49,7 @@ The app subscribes to the following events:
 
 Installation follows GitHub's standard app installation flow, embedded into the Synchestra [onboarding](../onboarding/README.md) wizard:
 
-1. **Initiate** — user clicks "Install GitHub App" in the onboarding wizard (web app) or follows a URL (CLI).
+1. **Initiate** — user clicks "Install GitHub App" in the onboarding wizard (Hub) or follows a URL (CLI).
 2. **GitHub consent screen** — GitHub displays the app's requested permissions and lets the user choose:
    - **Organization-level install** — select which org and which repositories (all or a subset).
    - **Personal account install** — for repos owned by the user directly.

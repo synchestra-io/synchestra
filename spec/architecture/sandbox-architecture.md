@@ -37,7 +37,7 @@ The Sandbox feature provides isolated execution environments for running user-in
 #### Host-Side
 
 **HTTP Server** (`synchestra serve --http`)
-- REST API for web app (`/api/v1/sandbox/*`)
+- REST API for the Hub (`/api/v1/sandbox/*`)
 - Routes sandbox requests → gRPC client calls to containers
 - Validates user↔project access (authorization gate)
 - **Database**: Only `sandbox_user_project_access` and `sandbox_container_metadata` (NO state or secrets)
@@ -169,7 +169,7 @@ service SandboxAgent {
 6. Session artifacts (logs) retained in `/workspace/{project_id}/sessions/{session_id}/logs/` until cleanup
 
 **GetTaskState Flow:**
-1. Host (or web app) requests task state
+1. Host (or Hub) requests task state
 2. Container reads from `.synchestra/state.json` and returns
 3. No host-side state cache; container is source of truth
 

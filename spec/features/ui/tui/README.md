@@ -30,7 +30,7 @@ question, but it must fit within the existing [`synchestra <resource> <action>` 
 
 ### Data source
 
-Unlike the [web app](../web-app/README.md), which talks to the [HTTP API](../../../../docs/api/README.md), the TUI
+Unlike the [Hub](../hub/README.md), which talks to the [HTTP API](../../../../docs/api/README.md), the TUI
 operates on the **local git repository** directly. It reads project definitions, feature specs, task boards, and
 proposals from the filesystem. This means:
 

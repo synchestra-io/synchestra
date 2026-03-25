@@ -4,7 +4,7 @@
 
 ## Summary
 
-Onboarding is a guided wizard — delivered through both the web app and the CLI — that walks new users through their first Synchestra project setup. It offers two paths: connecting real repositories with a GitHub App installation and AI-powered analysis, or launching a pre-built demo project to explore Synchestra without committing any infrastructure.
+Onboarding is a guided wizard — delivered through both the Hub and the CLI — that walks new users through their first Synchestra project setup. It offers two paths: connecting real repositories with a GitHub App installation and AI-powered analysis, or launching a pre-built demo project to explore Synchestra without committing any infrastructure.
 
 ## Problem
 
@@ -143,7 +143,7 @@ Onboarding is complete when:
 
 - [GitHub App](../github-app/README.md) — installation flow is embedded in Step 1
 - [Project Definition](../project-definition/README.md) — `synchestra-spec-repo.yaml` format and repository layout
-- [UI](../ui/README.md) — web app and TUI surfaces deliver the wizard
+- [UI](../ui/README.md) — Hub and TUI surfaces deliver the wizard
 - [CLI](../cli/README.md) — `synchestra init` command entry point
 - [API](../api/README.md) — backend endpoints for repo analysis, project creation, and GitHub App callback
 

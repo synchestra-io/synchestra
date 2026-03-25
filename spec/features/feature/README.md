@@ -186,7 +186,7 @@ Features can contain sub-features as child directories. Each sub-feature is a fu
 ```
 spec/features/ui/
   README.md                  ← parent feature
-  web-app/
+  hub/
     README.md                ← sub-feature
   tui/
     README.md                ← sub-feature
@@ -205,7 +205,7 @@ Features are identified by their path relative to `spec/features/`:
 | Feature path        | Identifier          |
 |---------------------|---------------------|
 | `spec/features/cli/` | `cli`               |
-| `spec/features/ui/web-app/` | `ui/web-app` |
+| `spec/features/ui/hub/` | `ui/hub` |
 | `spec/features/task-status-board/` | `task-status-board` |
 
 This path-based identification is used in development plans (the `Features` header field), CLI commands, and cross-references between specs.
