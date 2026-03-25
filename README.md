@@ -16,7 +16,7 @@ Specs first. Then agents.
 ![Synchestra — every agent knows its part](spec/branding/illustrations/hero-scene.webp)
 
 Open this
-in [synchestra.io/app](https://synchestra.io/app/add-project#state-repo=github.com/synchestra-io/synchestra-state)
+in [Synchestra Hub](https://hub.synchestra.io/add-project#state-repo=github.com/synchestra-io/synchestra-state)
 
 ## Why Synchestra Exists
 
@@ -395,7 +395,7 @@ See [feature specifications](spec/features/README.md) for detailed specs and dep
 
 **Scale with Synchestra Hub:**
 
-- **Sign in at [synchestra.io](https://synchestra.io)** with GitHub OAuth, choose the repo(s) you want to orchestrate,
+- **Sign in at [hub.synchestra.io](https://hub.synchestra.io)** with GitHub OAuth, choose the repo(s) you want to orchestrate,
   answer a few setup questions, and you're running.
 - Self-host Hub on your own VM, or use the managed service for remote agent execution, dashboards, and API access.
 

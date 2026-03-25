@@ -75,12 +75,19 @@ Drop the negation ("not another X"). Position by architecture layer:
 - Hub introduced in a dedicated section (not buried, not dominant)
 - "Specs first. Then agents." as positioning thread
 
-**synchestra.io/hub** — Hub landing page:
+**synchestra.io/hub/** — Hub promo/landing page:
 
 - Focused on remote execution audience
 - Assumes reader may not know about specs yet
 - Explains the full stack: specs define work, Hub runs it
 - Self-hosted and managed options presented
+- Marketing and docs only — no interactive app features
+
+**hub.synchestra.io** — Hub WebUI/console (the actual app):
+
+- In-cloud frontend for remote agent execution, dashboards, and project management
+- Separate subdomain from marketing pages intentionally: corporate firewalls may block app domains that enable data upload/leakage, but read-only marketing/docs pages on the main domain remain accessible
+- Landing pages should reach as many users as possible; the app domain can be allowlisted separately
 
 ### Brand Family
 
