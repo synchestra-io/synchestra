@@ -213,7 +213,7 @@ This maps to the page structure:
 
 > Running one AI agent on one task works great. Running five agents across three platforms on a tree of interdependent tasks? That's where things fall apart. Context gets expensive, state scatters across chat logs and git history, and you become the glue — copying context between sessions, checking what's done, figuring out what's blocked.
 >
-> **Synchestra is the coordination layer.** One repo. One source of truth. Agents claim tasks atomically. State is schema-validated at every commit. Humans see exactly what's happening. No server. No database. Git is the protocol.
+> **Synchestra is the coordination layer.** One repo. One source of truth. Agents claim tasks atomically. State is schema-validated at every commit. Humans see exactly what's happening. No server needed. No database. Git is the protocol.
 
 ## Outstanding Questions
 
