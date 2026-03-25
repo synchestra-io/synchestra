@@ -33,6 +33,7 @@ Feature specifications for the Synchestra project, managed by Synchestra.
 | [bots](bots/README.md) | Conceptual | Messenger bots for conversational access to Synchestra — project management, container control, prompt relay, and notifications |
 | [source-references](source-references/README.md) | Conceptual | Language-agnostic `synchestra:` annotations that link source code to Synchestra resources (features, plans, docs, tasks) with strict validation and URL expansion |
 | [stakeholder](stakeholder/README.md) | Conceptual | Humans and AI agents that participate in workflow decisions — identity model, role-based routing, structured decisions, gates, and audit logging |
+| [runner](runner/README.md) | Conceptual | Remote hosts and cloud environments where AI agents execute sessions and claim tasks |
 
 ## Feature Summaries
 
@@ -144,6 +145,10 @@ Language-agnostic inline annotations using the `synchestra:` prefix that link so
 ### [Stakeholder](stakeholder/README.md)
 
 Humans and AI agents that participate in workflow decisions. Stakeholders are identified by inline string references (`alex@github`, `agent-x:model=opus`), assigned to roles (`code-reviewer`, `spec-approver`) that resolve hierarchically through the feature tree using `add`/`remove` overrides at each level. When a workflow hits a decision point — either a built-in gate (plan review, code review) or an agent-initiated blocker — a structured decision task is created with typed options (`pick-one`, `approve-reject`, etc.) and assigned to the resolved stakeholders. Responses are recorded in a per-task audit log. Sub-features cover [roles](stakeholder/role/README.md), [decisions](stakeholder/decision/README.md) (with [options](stakeholder/decision/options/README.md) and [audit](stakeholder/decision/audit/README.md)), [gates](stakeholder/gate/README.md), and [notifications](stakeholder/notification/README.md).
+
+### [Runner](runner/README.md)
+
+Remote hosts, VMs, and cloud environments where AI agents execute sessions and claim tasks. A runner is a registered compute endpoint — users interact with agents on runners through sessions, ephemeral chat-like conversations surfaced in the web UI. Runners provide persistent availability, multi-environment support, and centralized visibility across all registered compute endpoints.
 
 ```
 feature → proposals, development-plan, outstanding-questions (features are the spec unit)
