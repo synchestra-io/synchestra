@@ -63,7 +63,7 @@ stateDiagram-v2
 ## Outstanding Questions
 
 1. Should runners be project-scoped or organization-scoped? An org-scoped runner could serve multiple projects.
-2. What authentication model for runner-to-server communication — API keys, mTLS, or short-lived tokens?
+2. ~~What authentication model for runner-to-server communication — API keys, mTLS, or short-lived tokens?~~ **Resolved:** See [host-auth](../host-auth/README.md) --- two-tier token model (permanent registration token + short-lived access tokens) with Hub request signing.
 3. How do sessions relate to sandbox containers — is each session a new container, or can sessions share a persistent container on a runner?
 4. Should task routing rules (e.g., "GPU tasks go to gpu-runner") live in the runner config, project config, or task metadata?
 5. What is the recovery model when a runner goes offline mid-session — auto-reassign tasks, hold for reconnection, or fail?

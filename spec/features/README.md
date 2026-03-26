@@ -34,6 +34,7 @@ Feature specifications for the Synchestra project, managed by Synchestra.
 | [source-references](source-references/README.md) | Conceptual | Language-agnostic `synchestra:` annotations that link source code to Synchestra resources (features, plans, docs, tasks) with strict validation and URL expansion |
 | [stakeholder](stakeholder/README.md) | Conceptual | Humans and AI agents that participate in workflow decisions — identity model, role-based routing, structured decisions, gates, and audit logging |
 | [runner](runner/README.md) | Conceptual | Remote hosts and cloud environments where AI agents execute sessions and claim tasks |
+| [host-auth](host-auth/README.md) | Conceptual | Mutual authentication between runner hosts and the Synchestra Hub --- registration tokens, short-lived access tokens, and Hub request signing |
 | [channels](channels/README.md) | Conceptual | Bidirectional real-time messaging between users (Hub, Telegram) and Claude Code instances in sandbox containers via MCP channels |
 
 ## Feature Summaries
@@ -151,6 +152,10 @@ Humans and AI agents that participate in workflow decisions. Stakeholders are id
 
 Remote hosts, VMs, and cloud environments where AI agents execute sessions and claim tasks. A runner is a registered compute endpoint — users interact with agents on runners through sessions, ephemeral chat-like conversations surfaced in the web UI. Runners provide persistent availability, multi-environment support, and centralized visibility across all registered compute endpoints.
 
+### [Host-Hub Authentication](host-auth/README.md)
+
+Mutual authentication between runner hosts and the Synchestra Hub. Hosts prove identity using a two-tier token model: a permanent registration token (stored on disk) is exchanged for short-lived access tokens (held in memory) with server-dictated TTL. The Hub authenticates to hosts by signing requests with an Ed25519 private key; hosts verify using a public key published at a well-known URL. Registration happens through `synchestra-host hub connect` (interactive device flow) or `synchestra-host hub connect --token {token}` (pre-provisioned). Hosts are managed by one or more users (managers) and are independent of projects.
+
 ### [Channels](channels/README.md)
 
 Bidirectional, real-time messaging between users and Claude Code instances running inside sandbox containers on remote runners. Messages flow from the Hub (browser) or Telegram through the Synchestra cloud layer (Cloud Run + Firestore) to runner hosts, into containers via the sandbox agent's gRPC interface, and reach Claude Code through a local MCP channel server implementing the Claude Code channels protocol. Firestore is the source of truth for all messages; Hub subscribes via onSnapshot for real-time delivery. Extends the sandbox agent with session management and messaging RPCs, and ships a Go-based channel MCP server in the container image.
@@ -182,6 +187,7 @@ testing-framework → acceptance-criteria (composes ACs into test flows), cli (n
 source-references → feature, cli, project-definition (synchestra: annotations link code to spec resources, validated by linter)
 stakeholder → task-status-board (decisions are tasks), development-plan (gates trigger on plan transitions), feature (_config.yaml for role overrides), cli (decision/stakeholder commands), agent-skills (decision-request skill), state-store (DecisionStore)
 stakeholder ← chat (workflows create decisions), ui (renders decision options), bots (delivers notifications, accepts responses)
+host-auth → runner (prerequisite for runner registration), channels (authenticated host-hub messaging), api (token endpoints, public key endpoint)
 channels → runner (host compute layer), sandbox (agent gRPC extensions, container image), api (cloud endpoints), state-store (Firestore persistence)
 channels ← ui/hub (browser surface), bots (Telegram surface), chat (sessions may trigger workflows)
 ```
@@ -239,4 +245,5 @@ All diagrams in feature specifications should use **mermaid syntax** instead of 
 - [stakeholder/decision/audit](stakeholder/decision/audit/README.md): 4 outstanding questions
 - [stakeholder/gate](stakeholder/gate/README.md): 4 outstanding questions
 - [stakeholder/notification](stakeholder/notification/README.md): 4 outstanding questions
+- [host-auth](host-auth/README.md): 3 outstanding questions
 - [channels](channels/README.md): 8 outstanding questions
