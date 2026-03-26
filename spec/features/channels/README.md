@@ -237,46 +237,50 @@ rpc StreamOutbound(StreamOutboundRequest) returns (stream ChannelMessage) {}
 
 ### Messages
 
+> **Note:** The authoritative proto file is in `synchestra-servers` at
+> `proto/synchestra/sandbox/v1/agent.proto`. The definitions below reflect the
+> compiled implementation. Field numbers and names match the generated Go code.
+
 ```protobuf
+enum Direction {
+  DIRECTION_UNSPECIFIED = 0;
+  DIRECTION_INBOUND = 1;
+  DIRECTION_OUTBOUND = 2;
+}
+
 message StartSessionRequest {
-  string session_id = 1;
+  string project_id = 1;
+  // Which project this session belongs to.
+
+  string session_id = 2;
   // Used as worktree name AND routing key.
   // Format: user-provided slug or generated (e.g., "fix-auth", "session-a7x3").
 
-  string session_title = 2;
-  // Optional. Human-readable display label.
-
-  string project_id = 3;
-  // Which project this session belongs to.
+  string prompt = 3;
+  // For non-interactive: the prompt to pass as CLI arg.
+  // For interactive: optional initial prompt to seed the session.
 
   bool interactive = 4;
   // If true: start with channel MCP server for real-time messaging.
   // If false: prompt-only execution, no channel.
 
-  string prompt = 5;
-  // For non-interactive: the prompt to pass as CLI arg.
-  // For interactive: optional initial prompt to seed the session.
-
-  map<string, string> env_vars = 6;
-  // Additional env vars for Claude Code (API keys, model config, etc.).
+  string title = 5;
+  // Optional. Human-readable display label.
 }
 
 message StartSessionResponse {
-  bool success = 1;
-  string error_message = 2;
-  string worktree_path = 3;
+  string session_id = 1;
+  string worktree_path = 2;
   // Absolute path to the created worktree inside the container.
 }
 
 message StopSessionRequest {
   string session_id = 1;
-  string reason = 2;
-  // "user_requested", "idle_timeout", "resource_eviction", "maintenance".
 }
 
 message StopSessionResponse {
   bool success = 1;
-  string error_message = 2;
+  string error = 2;
 }
 
 message ChannelMessage {
@@ -293,8 +297,8 @@ message ChannelMessage {
   // Routing context passed through to the <channel> tag attributes.
   // e.g., sender, source_platform ("hub", "telegram"), type ("message", "permission_request", "permission_verdict").
 
-  string direction = 5;
-  // "inbound" (user -> Claude) or "outbound" (Claude -> user).
+  Direction direction = 5;
+  // DIRECTION_INBOUND (user -> Claude) or DIRECTION_OUTBOUND (Claude -> user).
 
   google.protobuf.Timestamp created_at = 6;
   // When the message was originally created (user typed it / Claude produced it).
@@ -303,13 +307,13 @@ message ChannelMessage {
 message ChannelMessageAck {
   string message_id = 1;
   bool delivered = 2;
-  string error_message = 3;
+  string error = 3;
   // e.g., "session not found", "channel not connected".
 }
 
 message StreamOutboundRequest {
-  // Empty. Streams all outbound messages from all sessions in this container.
-  // Host filters by session as needed.
+  string project_id = 1;
+  // Scopes the stream to a single project's sessions.
 }
 
 message ListChannelSessionsRequest {}
@@ -320,7 +324,7 @@ message ListChannelSessionsResponse {
 
 message ChannelSessionInfo {
   string session_id = 1;
-  string session_title = 2;
+  string title = 2;
   string project_id = 3;
   bool interactive = 4;
   bool channel_connected = 5;
