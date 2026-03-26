@@ -266,6 +266,9 @@ message StartSessionRequest {
 
   string title = 5;
   // Optional. Human-readable display label.
+
+  map<string, string> env_vars = 6;
+  // Additional env vars for Claude Code (API keys, model config, etc.).
 }
 
 message StartSessionResponse {
@@ -276,6 +279,8 @@ message StartSessionResponse {
 
 message StopSessionRequest {
   string session_id = 1;
+  string reason = 2;
+  // "user_requested", "idle_timeout", "resource_eviction", "maintenance".
 }
 
 message StopSessionResponse {
@@ -352,8 +357,11 @@ A Synchestra-owned Go binary that Claude Code spawns as a subprocess. It bridges
 {
   "mcpServers": {
     "synchestra-channel": {
-      "command": "/usr/local/bin/synchestra-channel",
-      "args": ["--agent-sock", "/var/run/synchestra-{project_id}.sock"]
+      "command": "synchestra-channel",
+      "args": ["--agent-sock", "/var/run/synchestra-{project_id}/channel.sock"],
+      "env": {
+        "SYNCHESTRA_SESSION": "{session_id}"
+      }
     }
   }
 }
