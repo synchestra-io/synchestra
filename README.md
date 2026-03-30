@@ -13,7 +13,7 @@ Synchestra is two things:
 
 Specs first. Then agents.
 
-![Synchestra — every agent knows its part](spec/branding/illustrations/hero-scene.webp)
+![Synchestra — every agent knows its part](https://github.com/synchestra-io/synchestra-marketing/raw/main/branding/illustrations/hero-scene.webp)
 
 Open this
 in [Synchestra Hub](https://hub.synchestra.io/add-project#state-repo=github.com/synchestra-io/synchestra-state)
