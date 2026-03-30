@@ -18,6 +18,14 @@ Specs first. Then agents.
 Open this
 in [Synchestra Hub](https://hub.synchestra.io/add-project#state-repo=github.com/synchestra-io/synchestra-state)
 
+## Built on SpecScore
+
+Synchestra is built on **[SpecScore](https://github.com/synchestra-io/specscore)** — an open-source specification framework that defines how to structure, write, and validate specifications for AI-driven development.
+
+SpecScore defines the **spec format** (features, plans, architecture). Synchestra adds **orchestration** (tasks, agents, coordination, platform). You can use SpecScore specs standalone with any tool — Synchestra is optimized for them but never required.
+
+Learn more: [specscore.org](https://specscore.org) | [SpecScore on GitHub](https://github.com/synchestra-io/specscore)
+
 ## Why Synchestra Exists
 
 AI agents are getting powerful. Running a single agent on a single task works. But real work isn't a single task — it's
@@ -42,8 +50,8 @@ Synchestra is that coordination layer.
 
 ## What Synchestra Is
 
-Synchestra is a **mental framework, a set of tools, and a platform** that turns a git repository into a coordination
-protocol for AI agents.
+Synchestra is a **set of tools and a platform** that turns a git repository into a coordination
+protocol for AI agents. The mental framework and spec format are defined by [SpecScore](https://github.com/synchestra-io/specscore) — Synchestra provides the tooling and platform layer on top.
 
 At its core, Synchestra is a chain of small, automatable steps and background checks that anyone *could* do manually —
 but nobody has time to do consistently. Think of it as a disciplined workflow engine tuned to one mission: envisioning,
@@ -106,6 +114,8 @@ high-frequency machine commits (task claims, status updates) would pollute the p
 
 ### Spec repository structure
 
+The `spec/` directory follows [SpecScore](https://github.com/synchestra-io/specscore) conventions. See SpecScore for the specification format.
+
 A spec repository (or combined spec+code repo) follows this structure:
 
 ```
@@ -130,8 +140,7 @@ repo/
 ```
 
 `spec/` and `docs/` live at the repository root — they are the product's specification and documentation. The locations
-of `spec/` and `docs/` are configurable per project via [
-`synchestra-spec-repo.yaml`](spec/features/project-definition/README.md).
+of `spec/` and `docs/` are configurable per project via `synchestra-spec-repo.yaml` (see [SpecScore project definition](https://github.com/synchestra-io/specscore)).
 
 ### State repository structure
 
@@ -310,6 +319,7 @@ Beyond that, Synchestra adapts to how your project is organized:
 | Coordination      | Real-time messaging                   | Async via repo state + optimistic locking |
 | Audit trail       | Event log in database                 | Git history                               |
 | Validation        | Application-level checks              | Schema-enforced at commit time            |
+| Spec format       | Proprietary per tool                  | Open standard (SpecScore)                 |
 
 ### Compared to agent frameworks (LangChain, CrewAI, AutoGen)
 
@@ -358,6 +368,10 @@ the first place.
 See [Task Status Board: Claiming a Task](spec/features/task-status-board/README.md#claiming-a-task-optimistic-locking)
 for details.
 
+**"What's the relationship between Synchestra and SpecScore?"**
+
+SpecScore is the open-source specification framework — it defines how to structure features, plans, and specs. Synchestra is the orchestration platform built on top. You can use SpecScore specs with any tool (Linear, Jira, custom). Synchestra adds task coordination, agent skills, and a platform layer. Your specs are portable and never locked in.
+
 **"Does this actually scale beyond a solo developer?"**
 
 Synchestra started small — one developer, a few projects, a $10/month VM. But the architecture scales naturally: git
@@ -370,19 +384,19 @@ aligned.
 
 Core features driving Synchestra's development:
 
-| Feature                                                                | Status      | Description                                                                                        |
-|------------------------------------------------------------------------|-------------|----------------------------------------------------------------------------------------------------|
-| [Feature](spec/features/feature/README.md)                             | Conceptual  | Feature structure, metadata, lifecycle, and conventions — the atomic unit of product specification |
-| [Micro-tasks](spec/features/micro-tasks/README.md)                     | Conceptual  | Pre/post prompt micro-task chains and background automation                                        |
-| [Cross-repo sync](spec/features/cross-repo-sync/README.md)             | Conceptual  | Cross-repository branching, task coordination, and merge strategy                                  |
-| [Model selection](spec/features/model-selection/README.md)             | Conceptual  | Smart model routing based on task complexity and configuration                                     |
-| [Conflict resolution](spec/features/conflict-resolution/README.md)     | Conceptual  | AI-powered merge conflict detection and resolution                                                 |
-| [Outstanding questions](spec/features/outstanding-questions/README.md) | Conceptual  | Question lifecycle management linked to tasks and features                                         |
-| [Proposals](spec/features/proposals/README.md)                         | Conceptual  | Non-normative change requests attached to features with review status and optional issue linkage   |
-| [Development plan](spec/features/development-plan/README.md)           | Conceptual  | Immutable planning documents that bridge feature specs and change requests to executable tasks     |
-| [UI](spec/features/ui/README.md)                                       | Conceptual  | Human-facing web and terminal interfaces for projects, features, tasks, proposals, and workers     |
-| [Agent skills](spec/features/agent-skills/README.md)                   | In Progress | Focused skills that teach AI agents to use Synchestra                                              |
-| [CLI](spec/features/cli/README.md)                                     | In Progress | The `synchestra` command-line interface                                                            |
+| Feature                                                                | Status      | Description                                                                                      |
+|------------------------------------------------------------------------|-------------|--------------------------------------------------------------------------------------------------|
+| [Micro-tasks](spec/features/micro-tasks/README.md)                     | Conceptual  | Pre/post prompt micro-task chains and background automation                                      |
+| [Cross-repo sync](spec/features/cross-repo-sync/README.md)             | Conceptual  | Cross-repository branching, task coordination, and merge strategy                                |
+| [Model selection](spec/features/model-selection/README.md)             | Conceptual  | Smart model routing based on task complexity and configuration                                   |
+| [Conflict resolution](spec/features/conflict-resolution/README.md)     | Conceptual  | AI-powered merge conflict detection and resolution                                               |
+| [Outstanding questions](spec/features/outstanding-questions/README.md) | Conceptual  | Question lifecycle management linked to tasks and features                                       |
+| [Proposals](spec/features/proposals/README.md)                         | Conceptual  | Non-normative change requests attached to features with review status and optional issue linkage |
+| [UI](spec/features/ui/README.md)                                       | Conceptual  | Human-facing web and terminal interfaces for projects, features, tasks, proposals, and workers   |
+| [Agent skills](spec/features/agent-skills/README.md)                   | In Progress | Focused skills that teach AI agents to use Synchestra                                            |
+| [CLI](spec/features/cli/README.md)                                     | In Progress | The `synchestra` command-line interface                                                          |
+
+Specification format features (feature structure, plans, acceptance criteria, source references, project definition) are defined by [SpecScore](https://github.com/synchestra-io/specscore).
 
 See [feature specifications](spec/features/README.md) for detailed specs and dependency graph.
 
@@ -476,7 +490,7 @@ Active [development plans](spec/plans/README.md) and their current state:
 | [hero-scene](spec/plans/hero-scene/) | draft | landing | — | — |
 | [superpowers-integration](spec/plans/superpowers-integration/) | draft | embedded-state, cli/project/init | — | — |
 
-Plans support [hierarchical nesting](spec/features/development-plan/README.md#plan-hierarchy) (roadmaps containing child plans) and optional [ROI metadata](spec/features/development-plan/README.md#optional-roi-metadata) for prioritization. A generated [What's Next report](spec/features/development-plan/README.md#whats-next-report) can be enabled to surface recommended next targets after plan or task completion.
+Plans support hierarchical nesting (roadmaps containing child plans) and optional ROI metadata for prioritization. A generated What's Next report can be enabled to surface recommended next targets after plan or task completion. See [SpecScore development plan](https://github.com/synchestra-io/specscore) for the plan format specification.
 
 ## Outstanding Questions
 
@@ -492,14 +506,11 @@ Plans support [hierarchical nesting](spec/features/development-plan/README.md#pl
 
 - [spec/](spec/README.md)
     - [features/](spec/features/README.md): 3 outstanding questions
-        - [feature](spec/features/feature/README.md): 4 outstanding questions
-        - [project-definition](spec/features/project-definition/README.md): 2 outstanding questions
         - [micro-tasks](spec/features/micro-tasks/README.md): 4 outstanding questions
         - [cross-repo-sync](spec/features/cross-repo-sync/README.md): 4 outstanding questions
         - [model-selection](spec/features/model-selection/README.md): 4 outstanding questions
         - [conflict-resolution](spec/features/conflict-resolution/README.md): 3 outstanding questions
         - [outstanding-questions](spec/features/outstanding-questions/README.md): 3 outstanding questions
-        - [development-plan](spec/features/development-plan/README.md): 4 outstanding questions
         - [agent-skills](spec/features/agent-skills/README.md): 3 outstanding questions
         - [cli](spec/features/cli/README.md): 3 outstanding questions
 
@@ -515,4 +526,5 @@ Apache License 2.0. See [LICENSE](LICENSE) for details.
 - [Skills](skills/README.md)
 - [CLI Spec](spec/features/cli/README.md)
 - [Self-Hosting](docs/self-hosting.md)
+- [SpecScore](https://github.com/synchestra-io/specscore)
 - [inGitDB](https://ingitdb.com)
