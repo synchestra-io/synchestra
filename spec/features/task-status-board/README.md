@@ -209,9 +209,9 @@ If both are set, `limit` takes precedence. When a task exceeds the retention win
 
 See [Spec-to-Execution Pipeline](../../architecture/spec-to-execution.md) for the full architectural view of how features, plans, and tasks connect across repository boundaries.
 
-Tasks generated from a [development plan](../development-plan/README.md) appear on the board like any other task. Each task's README carries a back-reference to its plan and plan step, but the board itself is unaware of plans — it tracks task status regardless of how tasks were created.
+Tasks generated from a [development plan](https://github.com/synchestra-io/specscore/blob/main/spec/features/development-plan/README.md) appear on the board like any other task. Each task's README carries a back-reference to its plan and plan step, but the board itself is unaware of plans — it tracks task status regardless of how tasks were created.
 
-The development plan feature provides a derived status view (`synchestra plan status`) that reads plan step references from tasks and aggregates board status into a flat, plan-oriented progress report. See [Development Plan: Derived status view](../development-plan/README.md#derived-status-view).
+The development plan feature provides a derived status view (`synchestra plan status`) that reads plan step references from tasks and aggregates board status into a flat, plan-oriented progress report. See [Development Plan: Derived status view](https://github.com/synchestra-io/specscore/blob/main/spec/features/development-plan/README.md#derived-status-view).
 
 ## Outstanding Questions
 

@@ -2,12 +2,22 @@
 
 Feature specifications for the Synchestra project, managed by Synchestra.
 
+## Specification Format
+
+Synchestra is built on **[SpecScore](https://github.com/synchestra-io/specscore)** — an open-source specification framework. The following specification-format features are defined in SpecScore:
+
+- [Feature](https://github.com/synchestra-io/specscore/blob/main/spec/features/feature/README.md) — Feature structure, metadata, lifecycle, conventions
+- [Acceptance Criteria](https://github.com/synchestra-io/specscore/blob/main/spec/features/acceptance-criteria/README.md) — AC format and conventions
+- [Source References](https://github.com/synchestra-io/specscore/blob/main/spec/features/source-references/README.md) — Code-to-spec traceability
+- [Development Plan](https://github.com/synchestra-io/specscore/blob/main/spec/features/development-plan/README.md) — Planning document format
+- [Project Definition](https://github.com/synchestra-io/specscore/blob/main/spec/features/project-definition/README.md) — Project configuration
+
+The features below are Synchestra-specific — they define orchestration, coordination, and platform capabilities built on top of SpecScore.
+
 ## Index
 
 | Feature | Status | Description |
 |---|---|---|
-| [feature](feature/README.md) | Conceptual | Feature structure, metadata, lifecycle, and conventions — the atomic unit of product specification |
-| [project-definition](project-definition/README.md) | Conceptual | `synchestra-spec-repo.yaml` format and supported repository layouts |
 | [micro-tasks](micro-tasks/README.md) | Conceptual | Pre/post prompt micro-task chains and background automation |
 | [cross-repo-sync](cross-repo-sync/README.md) | Conceptual | Cross-repository branching, task coordination, and merge strategy |
 | [model-selection](model-selection/README.md) | Conceptual | Smart model routing based on task complexity and configuration |
@@ -16,7 +26,6 @@ Feature specifications for the Synchestra project, managed by Synchestra.
 | [proposals](proposals/README.md) | Conceptual | Non-normative change requests attached to features with review status and optional tracker linkage |
 | [ui](ui/README.md) | Conceptual | Human-facing interfaces for project navigation, proposals, tasks, and workers across web and terminal surfaces |
 | [task-status-board](task-status-board/README.md) | Conceptual | Markdown task board in task directory READMEs for at-a-glance status visibility and claiming via optimistic locking |
-| [development-plan](development-plan/README.md) | Conceptual | Immutable planning documents that bridge feature specs and change requests to executable tasks |
 | [agent-skills](agent-skills/README.md) | In Progress | Dedicated, focused skills that AI agents use to interact with Synchestra |
 | [cli](cli/README.md) | In Progress | The `synchestra` CLI — primary interface for agents and humans |
 | [chat](chat/README.md) | Conceptual | Guided conversational interface that produces Synchestra artifacts (proposals, features, issues, PRs) through AI-assisted workflows |
@@ -27,25 +36,15 @@ Feature specifications for the Synchestra project, managed by Synchestra.
 | [sandbox](sandbox/README.md) | Conceptual | Isolated Docker container environments per project for executing user-initiated commands from the chat interface |
 | [embedded-state](embedded-state/README.md) | Conceptual | Zero-friction state management via orphan branch + git worktree — no separate repo required |
 | [state-store](state-store/README.md) | Conceptual | Pluggable state storage abstraction — composable Go interface (`state.Store`) with git-backed default implementation |
-| [acceptance-criteria](acceptance-criteria/README.md) | Conceptual | First-class verification artifacts — full specification in [synchestra-io/rehearse](https://github.com/synchestra-io/rehearse/blob/main/spec/features/acceptance-criteria/); Synchestra adds plan AC relationships and outstanding questions linkage |
 | [testing-framework](testing-framework/README.md) | Conceptual | Markdown-native testing framework — full specification in [synchestra-io/rehearse](https://github.com/synchestra-io/rehearse/blob/main/spec/features/testing-framework/) |
 | [lsp](lsp/README.md) | Conceptual | LSP server exposing specification navigation to IDEs — reuses the same Go packages as `synchestra feature` CLI commands |
 | [bots](bots/README.md) | Conceptual | Messenger bots for conversational access to Synchestra — project management, container control, prompt relay, and notifications |
-| [source-references](source-references/README.md) | Conceptual | Language-agnostic `synchestra:` annotations that link source code to Synchestra resources (features, plans, docs, tasks) with strict validation and URL expansion |
 | [stakeholder](stakeholder/README.md) | Conceptual | Humans and AI agents that participate in workflow decisions — identity model, role-based routing, structured decisions, gates, and audit logging |
 | [runner](runner/README.md) | Conceptual | Remote hosts and cloud environments where AI agents execute sessions and claim tasks |
 | [host-auth](host-auth/README.md) | Conceptual | Mutual authentication between runner hosts and the Synchestra Hub --- registration tokens, short-lived access tokens, and Hub request signing |
 | [channels](channels/README.md) | Conceptual | Bidirectional real-time messaging between users (Hub, Telegram) and Claude Code instances in sandbox containers via MCP channels |
 
 ## Feature Summaries
-
-### [Feature](feature/README.md)
-
-Defines the atomic unit of product specification in Synchestra — a feature is a directory under `spec/features/` with a mandatory README. The spec formalizes the structure every feature must follow (title, status, summary, problem, behavior, outstanding questions), the feature lifecycle (Conceptual → In Progress → Stable → Deprecated), nesting rules for sub-features, and how features relate to proposals, development plans, and tasks.
-
-### [Project Definition](project-definition/README.md)
-
-Defines the `synchestra-spec-repo.yaml` format, mandatory and optional fields, the three repository types (state, spec, code), and the two supported layouts for spec repositories: multi-project (under `synchestra/projects/`) and dedicated (project files at root). Synchestra auto-detects the layout by checking for a project file at the repository root.
 
 ### [Micro-Tasks](micro-tasks/README.md)
 
@@ -79,10 +78,6 @@ The human-facing product surfaces for Synchestra. Defines a shared information a
 ### [Task Status Board](task-status-board/README.md)
 
 A markdown table in task directory READMEs that provides at-a-glance visibility and serves as the source of truth for task state. Agents claim tasks by updating a board row and pushing through optimistic locking (git push-based). Conflicts on the same row indicate a claim collision; the CLI parses diffs by task ID to distinguish collisions from unrelated changes. See the [Claiming a Task](task-status-board/README.md#claiming-a-task-optimistic-locking) section for the full protocol.
-
-### [Development Plan](development-plan/README.md)
-
-An immutable planning document that bridges feature specifications and change requests to executable tasks. The plan captures the approach, rationale, acceptance criteria, and step-by-step decomposition in a flat, reviewable format (max two levels of nesting). Once approved, the plan is frozen — tasks generated from it evolve freely during execution while the plan remains a fixed reference for review gates and retrospective comparison.
 
 ### [Chat](chat/README.md)
 
@@ -124,10 +119,6 @@ Zero-friction onboarding path for Synchestra. Uses a git orphan branch checked o
 
 The pluggable abstraction layer for all Synchestra project coordination state. Defines a composable, hierarchical Go interface (`state.Store`) with sub-interfaces for tasks (`TaskStore`), chat (`ChatStore`), and project configuration (`ProjectStore`). Navigated like CLI subcommands — `store.Task().Claim(ctx, ...)` — keeping each interface focused and discoverable. The default git-backed implementation (`gitstore`) maps to the existing state repository design; future backends (SQLite, PostgreSQL, cloud databases) satisfy the same interface.
 
-### [Acceptance Criteria](acceptance-criteria/README.md)
-
-The contract between what a feature promises and what the system delivers. The full specification — file format, supported languages, identification scheme, statuses, and validation rules — lives in [synchestra-io/rehearse](https://github.com/synchestra-io/rehearse/blob/main/spec/features/acceptance-criteria/). Synchestra extends the base spec with mandatory AC sections in feature READMEs, development plan AC relationships (feature ACs vs. frozen plan ACs), and outstanding questions linkage for missing ACs.
-
 ### [Testing Framework](testing-framework/README.md)
 
 Turns specifications into executable verification — without leaving markdown. Composes acceptance criteria into multi-step test workflows that read as documentation and execute as test suites. The full specification — including the [test-scenario](https://github.com/synchestra-io/rehearse/blob/main/spec/features/testing-framework/test-scenario/) format and [test-runner](https://github.com/synchestra-io/rehearse/blob/main/spec/features/testing-framework/test-runner/) engine — lives in the [synchestra-io/rehearse](https://github.com/synchestra-io/rehearse/blob/main/spec/features/testing-framework/) repository. Synchestra integrates Rehearse as its testing framework.
@@ -139,10 +130,6 @@ A Language Server Protocol server that wraps the same Go packages powering the `
 ### [Bots](bots/README.md)
 
 Messenger bots that serve as conversational interfaces to Synchestra. Three kinds are recognized: [SynchestraBot](bots/synchestra-bot/README.md) (platform-operated, embedded in the server, Telegram-first), in-container bots (user-defined, running inside sandbox containers), and host-level bots (user-defined, running on the host machine). Only SynchestraBot is specified at this time. It provides project management commands, sandbox container control, prompt relay to in-container agents, and bidirectional notifications — built on [bots-go-framework/bots-fw](https://github.com/bots-go-framework/bots-fw) for platform-agnostic messenger support.
-
-### [Source References](source-references/README.md)
-
-Language-agnostic inline annotations using the `synchestra:` prefix that link source code to Synchestra resources — features, plans, docs, and tasks. A single `synchestra:{type}/{path}[@{org}/{repo}]` notation works in any language's comment syntax, is detectable by byte-level prefix search, and expands to clickable `synchestra.io` URLs. References are validated strictly: pointing to a non-existent resource is an error caught by linter, pre-commit hook, or PR check. Extends `synchestra feature refs` to include source-level references alongside spec-level dependency references.
 
 ### [Stakeholder](stakeholder/README.md)
 
@@ -161,7 +148,9 @@ Mutual authentication between runner hosts and the Synchestra Hub. Hosts prove i
 Bidirectional, real-time messaging between users and Claude Code instances running inside sandbox containers on remote runners. Messages flow from the Hub (browser) or Telegram through the Synchestra cloud layer (Cloud Run + Firestore) to runner hosts, into containers via the sandbox agent's gRPC interface, and reach Claude Code through a local MCP channel server implementing the Claude Code channels protocol. Firestore is the source of truth for all messages; Hub subscribes via onSnapshot for real-time delivery. Extends the sandbox agent with session management and messaging RPCs, and ships a Go-based channel MCP server in the container image.
 
 ```
-feature → proposals, development-plan, outstanding-questions (features are the spec unit)
+# SpecScore features (external): feature, acceptance-criteria, source-references, development-plan, project-definition
+# See https://github.com/synchestra-io/specscore
+
 task-status-board ← conflict-resolution
        ↑                ↑
 cross-repo-sync ────────┘
@@ -169,36 +158,36 @@ cross-repo-sync ────────┘
 micro-tasks (independent)
 model-selection (independent)
 outstanding-questions (independent)
-proposals → development-plan (proposals trigger plans)
-development-plan → task-status-board, cli (plans generate tasks)
-chat → feature, proposals, development-plan, task-status-board, agent-skills, ui, api
-ui → proposals, cli, task-status-board, agent-skills, development-plan, chat
+proposals → [specscore:development-plan] (proposals trigger plans)
+[specscore:development-plan] → task-status-board, cli (plans generate tasks)
+chat → [specscore:feature], proposals, [specscore:development-plan], task-status-board, agent-skills, ui, api
+ui → proposals, cli, task-status-board, agent-skills, [specscore:development-plan], chat
 api → cli (api mirrors cli contract)
 global-config ← cli (cli reads ~/.synchestra.yaml for repo resolution)
 github-app → api (callback endpoint)
-onboarding → github-app, project-definition, ui, cli, api (orchestrates first-time setup)
+onboarding → github-app, [specscore:project-definition], ui, cli, api (orchestrates first-time setup)
 sandbox → cli, api (containers execute commands, host routes via API)
 bots → sandbox, chat, api, state-store (SynchestraBot relays prompts to containers, routes complex workflows through chat, uses API for operations)
-lsp → cli/feature, feature (LSP server reuses CLI feature packages for IDE integration)
+lsp → cli/feature, [specscore:feature] (LSP server reuses CLI feature packages for IDE integration)
 state-store → task-status-board (board interface and claim atomicity), chat (chat persistence)
 state-store ← cli, api, agent-skills (all consumers of state go through state store)
-acceptance-criteria → feature (introduces mandatory AC section), development-plan (plan ACs can reference feature ACs)
-testing-framework → acceptance-criteria (composes ACs into test flows), cli (new test command group), feature (_tests/ directory)
-source-references → feature, cli, project-definition (synchestra: annotations link code to spec resources, validated by linter)
-stakeholder → task-status-board (decisions are tasks), development-plan (gates trigger on plan transitions), feature (_config.yaml for role overrides), cli (decision/stakeholder commands), agent-skills (decision-request skill), state-store (DecisionStore)
+[specscore:acceptance-criteria] → [specscore:feature] (mandatory AC section), [specscore:development-plan] (plan ACs can reference feature ACs)
+testing-framework → [specscore:acceptance-criteria] (composes ACs into test flows), cli (new test command group), [specscore:feature] (_tests/ directory)
+[specscore:source-references] → [specscore:feature], cli, [specscore:project-definition] (annotations link code to spec resources, validated by linter)
+stakeholder → task-status-board (decisions are tasks), [specscore:development-plan] (gates trigger on plan transitions), [specscore:feature] (_config.yaml for role overrides), cli (decision/stakeholder commands), agent-skills (decision-request skill), state-store (DecisionStore)
 stakeholder ← chat (workflows create decisions), ui (renders decision options), bots (delivers notifications, accepts responses)
 host-auth → runner (prerequisite for runner registration), channels (authenticated host-hub messaging), api (token endpoints, public key endpoint)
 channels → runner (host compute layer), sandbox (agent gRPC extensions, container image), api (cloud endpoints), state-store (Firestore persistence)
 channels ← ui/hub (browser surface), bots (Telegram surface), chat (sessions may trigger workflows)
 ```
 
-`feature` is the foundational spec-layer concept — proposals, plans, and outstanding questions all attach to features.
+[SpecScore `feature`](https://github.com/synchestra-io/specscore/blob/main/spec/features/feature/README.md) is the foundational spec-layer concept — proposals, plans, and outstanding questions all attach to features.
 
 ## Diagram Conventions
 
 All diagrams in feature specifications should use **mermaid syntax** instead of ASCII art. Mermaid provides better clarity, GitHub rendering support, and maintainability.
 `task-status-board` is foundational for execution — it provides the claiming mechanism (optimistic locking) and status visibility.
-`development-plan` bridges the spec-to-execution gap — proposals and feature specs flow through it to become tasks.
+[SpecScore `development-plan`](https://github.com/synchestra-io/specscore/blob/main/spec/features/development-plan/README.md) bridges the spec-to-execution gap — proposals and feature specs flow through it to become tasks.
 
 ## Outstanding Questions
 
@@ -207,15 +196,12 @@ All diagrams in feature specifications should use **mermaid syntax** instead of 
 
 ### Features with outstanding questions:
 
-- [feature](feature/README.md): 4 outstanding questions
-- [project-definition](project-definition/README.md): 2 outstanding questions
 - [micro-tasks](micro-tasks/README.md): 4 outstanding questions
 - [cross-repo-sync](cross-repo-sync/README.md): 4 outstanding questions
 - [model-selection](model-selection/README.md): 4 outstanding questions
 - [conflict-resolution](conflict-resolution/README.md): 3 outstanding questions
 - [outstanding-questions](outstanding-questions/README.md): 3 outstanding questions
 - [task-status-board](task-status-board/README.md): 4 outstanding questions
-- [development-plan](development-plan/README.md): 4 outstanding questions
 - [agent-skills](agent-skills/README.md): 3 outstanding questions
 - [cli](cli/README.md): 3 outstanding questions
 - [api](api/README.md): 3 outstanding questions
@@ -229,7 +215,6 @@ All diagrams in feature specifications should use **mermaid syntax** instead of 
 - [onboarding](onboarding/README.md): 5 outstanding questions
 - [sandbox](sandbox/README.md): 5 outstanding questions
 - [state-store](state-store/README.md): 4 outstanding questions
-- [acceptance-criteria](acceptance-criteria/README.md): 4 outstanding questions
 - [testing-framework](testing-framework/README.md): 3 outstanding questions
 - [ui](ui/README.md): 5 outstanding questions
 - [ui/hub](ui/hub/README.md): 7 outstanding questions
@@ -237,7 +222,6 @@ All diagrams in feature specifications should use **mermaid syntax** instead of 
 - [bots](bots/README.md): 2 outstanding questions
 - [bots/synchestra-bot](bots/synchestra-bot/README.md): 5 outstanding questions
 - [lsp](lsp/README.md): 5 outstanding questions
-- [source-references](source-references/README.md): 0 outstanding questions
 - [stakeholder](stakeholder/README.md): 5 outstanding questions
 - [stakeholder/role](stakeholder/role/README.md): 4 outstanding questions
 - [stakeholder/decision](stakeholder/decision/README.md): 4 outstanding questions

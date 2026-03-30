@@ -52,7 +52,7 @@ This is the MVP navigation surface. Additional entries (e.g., Settings, Agents, 
 
 ### Home screen
 
-Shows the list of [projects](../project-definition/README.md) the current user is working with. Each project entry is derived from a `synchestra-spec-repo.yaml` file the user has access to.
+Shows the list of [projects](https://github.com/synchestra-io/specscore/blob/main/spec/features/project-definition/README.md) the current user is working with. Each project entry is derived from a `synchestra-spec-repo.yaml` file the user has access to.
 
 Selecting a project opens the project menu.
 
@@ -123,7 +123,7 @@ The UI feature presents and triggers workflows defined elsewhere — it does not
 | [CLI](../cli/README.md) | TUI delivery surface; task mutation semantics; command contract |
 | [Task Status Board](../task-status-board/README.md) | Board format, status lifecycle, claiming protocol |
 | [Agent Skills](../agent-skills/README.md) | Skills that back the task actions (create, enqueue) |
-| [Project Definition](../project-definition/README.md) | `synchestra-spec-repo.yaml` — source of the project list |
+| [Project Definition](https://github.com/synchestra-io/specscore/blob/main/spec/features/project-definition/README.md) | `synchestra-spec-repo.yaml` — source of the project list |
 | [HTTP API](../../../docs/api/README.md) | Backend for the Hub surface |
 
 ## Outstanding Questions

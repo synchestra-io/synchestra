@@ -85,7 +85,7 @@ When a user uninstalls the GitHub App from their org or removes repositories:
 ## Dependencies
 
 - [API](../api/README.md) — callback endpoint for GitHub's OAuth redirect
-- [Project Definition](../project-definition/README.md) — installation maps to project repo configuration
+- [Project Definition](https://github.com/synchestra-io/specscore/blob/main/spec/features/project-definition/README.md) — installation maps to project repo configuration
 
 ## Outstanding Questions
 

@@ -29,7 +29,7 @@ By default, only **error**-level violations are reported. Use `--severity warnin
 | `oq-not-empty` | Feature/plan README files | Outstanding Questions section must either list questions or explicitly state "None at this time." (not blank) |
 | `heading-levels` | All markdown files | Heading structure must not skip levels (e.g., H2 → H4 is invalid; must be H2 → H3 → H4) |
 | `forward-refs` | Feature/plan README files | No references to features/plans that don't exist yet (e.g., `sandbox/vm` if that directory is not present) |
-| `code-annotations` | Go source files | Integration points should include `// Features implemented:` and `// Features depended on:` annotations (per [source-references](../../source-references/README.md) convention) |
+| `code-annotations` | Go source files | Integration points should include `// Features implemented:` and `// Features depended on:` annotations (per [source-references](https://github.com/synchestra-io/specscore/blob/main/spec/features/source-references/README.md) convention) |
 
 #### Info-Level Rules
 

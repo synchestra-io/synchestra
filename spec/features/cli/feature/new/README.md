@@ -18,7 +18,7 @@ For sub-features, use `--parent` to nest the new feature under an existing paren
 
 When creating a sub-feature, the parent's `## Contents` section is updated to include the new child. When creating a top-level feature, the feature index (`spec/features/README.md`) is updated with a new row.
 
-The generated README includes all required sections per the [feature spec](../../../feature/README.md): title with status, Summary, Problem, Behavior, Acceptance Criteria, and Outstanding Questions. If `--description` is provided, it is placed in the Summary section. If `--depends-on` is provided, a Dependencies section is included.
+The generated README includes all required sections per the [feature spec](https://github.com/synchestra-io/specscore/blob/main/spec/features/feature/README.md): title with status, Summary, Problem, Behavior, Acceptance Criteria, and Outstanding Questions. If `--description` is provided, it is placed in the Summary section. If `--depends-on` is provided, a Dependencies section is included.
 
 ## Parameters
 
@@ -89,7 +89,7 @@ Agents can then use the `lines` ranges to target specific sections for content p
 
 ## Behaviour
 
-1. Validate arguments: `--title` is required; slug (if provided) must be lowercase, hyphen-separated, and URL-safe per the [feature structural rules](../../../feature/README.md)
+1. Validate arguments: `--title` is required; slug (if provided) must be lowercase, hyphen-separated, and URL-safe per the [feature structural rules](https://github.com/synchestra-io/specscore/blob/main/spec/features/feature/README.md)
 2. Generate slug from title if `--slug` is not provided:
    - Lowercase the title
    - Replace spaces and underscores with hyphens

@@ -217,7 +217,7 @@ workflows:
 | [Chat](../README.md) | Workflows configure the chat layer. Each chat instance runs exactly one workflow. |
 | [Agent Skills](../../agent-skills/README.md) | Workflow steps reference skills/prompts from the skill infrastructure. |
 | [UI](../../ui/README.md) | The web UI renders workflow buttons based on `anchor-types`, `roles`, and `ui` configuration. |
-| [Project Definition](../../project-definition/README.md) | Workflow customization lives in `synchestra-spec-repo.yaml`. |
+| [Project Definition](https://github.com/synchestra-io/specscore/blob/main/spec/features/project-definition/README.md) | Workflow customization lives in `synchestra-spec-repo.yaml`. |
 | [CLI](../../cli/README.md) | `synchestra workflow list` shows available workflows. Workflows are primarily a web UI concept. |
 
 ## Outstanding Questions

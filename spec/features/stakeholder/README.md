@@ -104,8 +104,8 @@ How stakeholders learn about decisions and how responses flow back to requesting
 | [cli](../cli/README.md) | New `synchestra decision` and `synchestra stakeholder` command groups (planned addition to CLI spec) |
 | [agent-skills](../agent-skills/README.md) | `synchestra-decision-request` skill for agent-initiated decisions |
 | [state-store](../state-store/README.md) | `DecisionStore` sub-interface joins existing store hierarchy (planned addition to state-store spec) |
-| [development-plan](../development-plan/README.md) | Gates trigger on plan status transitions |
-| [feature](../feature/README.md) | `_config.yaml` for feature-scoped role overrides (planned addition to feature spec's reserved `_` prefix table) |
+| [development-plan](https://github.com/synchestra-io/specscore/blob/main/spec/features/development-plan/README.md) | Gates trigger on plan status transitions |
+| [feature](https://github.com/synchestra-io/specscore/blob/main/spec/features/feature/README.md) | `_config.yaml` for feature-scoped role overrides (planned addition to feature spec's reserved `_` prefix table) |
 | [github-app](../github-app/README.md) | GitHub review requests and PR comments as a notification delivery channel |
 | [chat](../chat/README.md) | Workflows can create decisions as part of guided conversations (planned addition to chat spec) |
 | [ui](../ui/README.md) | Renders decision tasks with structured options (buttons, selects) |

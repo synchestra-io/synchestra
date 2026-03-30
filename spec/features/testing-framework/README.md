@@ -50,9 +50,9 @@ See [`cli/test`](../cli/test/README.md) for the full `synchestra test` command r
 
 | Feature | Interaction |
 |---|---|
-| [Acceptance Criteria](../acceptance-criteria/README.md) | ACs are the atomic verification units that scenarios compose. The runner resolves and executes their verification scripts. |
-| [Feature](../feature/README.md) | Features gain `_tests/` directories for feature-scoped test scenarios. |
-| [Development Plan](../development-plan/README.md) | Plan step ACs can reference feature ACs; scenarios verify both during and after implementation. |
+| [Acceptance Criteria](https://github.com/synchestra-io/specscore/blob/main/spec/features/acceptance-criteria/README.md) | ACs are the atomic verification units that scenarios compose. The runner resolves and executes their verification scripts. |
+| [Feature](https://github.com/synchestra-io/specscore/blob/main/spec/features/feature/README.md) | Features gain `_tests/` directories for feature-scoped test scenarios. |
+| [Development Plan](https://github.com/synchestra-io/specscore/blob/main/spec/features/development-plan/README.md) | Plan step ACs can reference feature ACs; scenarios verify both during and after implementation. |
 | [CLI](../cli/README.md) | New `synchestra test` command group: `run`, `list`. |
 
 ## Acceptance Criteria

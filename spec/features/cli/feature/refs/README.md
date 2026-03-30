@@ -13,7 +13,7 @@ synchestra feature refs <feature_id> [--project <project_id>] [--fields <fields>
 
 Shows features that reference (depend on) a given feature. This is the inverse of `deps` — it scans all features' `## Dependencies` sections to find those that list the given feature ID.
 
-This is the spec → code counterpart to [`synchestra code deps`](../../code/deps/README.md), which answers the inverse question from the code side: "what specs does this code depend on?" Together, `feature refs` (spec → code) and `code deps` (code → spec) provide bidirectional traceability between source files and specifications via [source references](../../../source-references/README.md).
+This is the spec → code counterpart to [`synchestra code deps`](../../code/deps/README.md), which answers the inverse question from the code side: "what specs does this code depend on?" Together, `feature refs` (spec → code) and `code deps` (code → spec) provide bidirectional traceability between source files and specifications via [source references](https://github.com/synchestra-io/specscore/blob/main/spec/features/source-references/README.md).
 
 This is a read-only command. It pulls the latest state from the spec repository but does not mutate anything.
 

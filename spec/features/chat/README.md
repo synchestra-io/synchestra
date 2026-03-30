@@ -195,15 +195,15 @@ Workflow-specific configuration is documented in the [Workflow](workflow/README.
 
 | Feature | Interaction |
 |---|---|
-| [Feature](../feature/README.md) | Chats anchor to features. "Create Feature" workflow produces new feature specs. |
+| [Feature](https://github.com/synchestra-io/specscore/blob/main/spec/features/feature/README.md) | Chats anchor to features. "Create Feature" workflow produces new feature specs. |
 | [Proposals](../proposals/README.md) | "Create Proposal" workflow produces proposals under `features/{name}/proposals/`. Chats can also anchor to existing proposals. |
-| [Development Plan](../development-plan/README.md) | Standard-path chats produce artifacts that later trigger plans. Fast-path chats produce plans as reports. Chats can anchor to existing plans for discussion. |
+| [Development Plan](https://github.com/synchestra-io/specscore/blob/main/spec/features/development-plan/README.md) | Standard-path chats produce artifacts that later trigger plans. Fast-path chats produce plans as reports. Chats can anchor to existing plans for discussion. |
 | [Task Status Board](../task-status-board/README.md) | Fast-path chats create tasks directly. Tasks spawned by chats appear on the board like any other tasks. |
 | [Agent Skills](../agent-skills/README.md) | Workflow steps reference skills/prompts. The same skill infrastructure powers both chat-based and task-based agent work. |
 | [CLI](../cli/README.md) | `synchestra chat list`, `synchestra chat info {id}` for admin and debugging. Chats are primarily a web UI concept. |
 | [API](../api/README.md) | REST endpoints for chat lifecycle: create, send message, get status, finalize. The web UI consumes these. |
 | [UI](../ui/README.md) | The web UI renders workflow action buttons on documents and provides the chat interface. Button visibility depends on document type and user role. |
-| [Project Definition](../project-definition/README.md) | Chat and workflow configuration lives in `synchestra-spec-repo.yaml`. |
+| [Project Definition](https://github.com/synchestra-io/specscore/blob/main/spec/features/project-definition/README.md) | Chat and workflow configuration lives in `synchestra-spec-repo.yaml`. |
 
 ## Outstanding Questions
 

@@ -121,7 +121,7 @@ The incremental cost of adding LSP on top of working CLI packages is moderate â€
 | Feature | Interaction |
 |---|---|
 | [CLI / Feature](../cli/feature/README.md) | Reuses the same Go packages. The CLI is the batch interface; LSP is the persistent interface. |
-| [Feature](../feature/README.md) | Operates on feature specs. Parses feature READMEs, resolves feature IDs, validates structure. |
+| [Feature](https://github.com/synchestra-io/specscore/blob/main/spec/features/feature/README.md) | Operates on feature specs. Parses feature READMEs, resolves feature IDs, validates structure. |
 | [Agent Skills](../agent-skills/README.md) | Complementary approach. Skills serve agents via CLI; LSP serves humans via IDE. Same semantic layer, different delivery. |
 | [Outstanding Questions](../outstanding-questions/README.md) | LSP could surface OQ counts in hover info and highlight unresolved questions. |
 

@@ -34,7 +34,7 @@ Writes updated project configuration. Used during project initialization and whe
 
 Regenerates the auto-generated project overview README from current state. In the git backend, this rewrites the root `README.md` of the state repository.
 
-See [Project Definition](../../project-definition/) for the full configuration schema.
+See [Project Definition](https://github.com/synchestra-io/specscore/blob/main/spec/features/project-definition/README.md) for the full configuration schema.
 
 ## Types
 

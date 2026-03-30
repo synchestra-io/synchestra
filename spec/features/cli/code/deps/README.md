@@ -11,7 +11,7 @@ synchestra code deps [--path <pattern>] [--project <project_id>] [--type <type>]
 
 ## Description
 
-Shows the Synchestra resources (features, plans, docs) that source files depend on. Scans source files for [source references](../../../source-references/README.md) — `synchestra:` annotations and expanded `https://synchestra.io/` URLs in comments — and lists the referenced resources.
+Shows the Synchestra resources (features, plans, docs) that source files depend on. Scans source files for [source references](https://github.com/synchestra-io/specscore/blob/main/spec/features/source-references/README.md) — `synchestra:` annotations and expanded `https://synchestra.io/` URLs in comments — and lists the referenced resources.
 
 This is the code → specification counterpart to [`synchestra feature deps`](../../feature/deps/README.md), which shows spec → spec dependencies. Together they provide full traceability from code to specifications and between specifications.
 
@@ -35,7 +35,7 @@ This is a read-only command. It scans the working tree and does not mutate anyth
 ## Behaviour
 
 1. Expand the `--path` glob pattern to a list of matching files (default: `**/*`)
-2. Scan matched files for source references using the [comment-prefix detection rule](../../../source-references/README.md#detection-strategy)
+2. Scan matched files for source references using the [comment-prefix detection rule](https://github.com/synchestra-io/specscore/blob/main/spec/features/source-references/README.md#detection-strategy)
 3. Parse each detected reference, resolving type shortcuts to full repo paths
 4. If `--type` is specified, filter to matching resource type
 5. Deduplicate and sort results alphabetically by path

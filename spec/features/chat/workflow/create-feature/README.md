@@ -4,7 +4,7 @@
 
 ## Summary
 
-The "Create Feature" workflow guides a user through defining a new [feature](../../../feature/README.md) specification from scratch. The user starts from the features index (or any context where "New feature" is available), and the system creates a new feature document in a dedicated branch, iterates on the spec within the chat, and submits it for review.
+The "Create Feature" workflow guides a user through defining a new [feature](https://github.com/synchestra-io/specscore/blob/main/spec/features/feature/README.md) specification from scratch. The user starts from the features index (or any context where "New feature" is available), and the system creates a new feature document in a dedicated branch, iterates on the spec within the chat, and submits it for review.
 
 ## Problem
 
@@ -27,7 +27,7 @@ When the chat starts:
 
 1. The AI asks "What new feature are we going to create?"
 2. Based on the user's description, the system creates a new branch (e.g., `feature/{feature-slug}`)
-3. A feature directory and initial `README.md` are created on that branch following the [feature README structure](../../../feature/README.md#feature-readme-structure)
+3. A feature directory and initial `README.md` are created on that branch following the [feature README structure](https://github.com/synchestra-io/specscore/blob/main/spec/features/feature/README.md#feature-readme-structure)
 4. The chat anchors to the new document on the new branch
 
 The chat metadata includes the branch reference:
@@ -83,7 +83,7 @@ allow-create: true
 context:
   load:
     - anchor-document
-    - feature-conventions    # resolves to the Feature spec (spec/features/feature/README.md) and project conventions (CLAUDE.md)
+    - feature-conventions    # resolves to the SpecScore Feature spec (https://github.com/synchestra-io/specscore/blob/main/spec/features/feature/README.md) and project conventions (CLAUDE.md)
 retention: archive
 ui:
   icon: plus-circle
@@ -112,7 +112,7 @@ steps:
 |---|---|
 | [Chat](../../README.md) | This workflow runs on the chat layer. |
 | [Workflow](../README.md) | This is one of the built-in workflows. |
-| [Feature](../../../feature/README.md) | The primary artifact produced is a feature spec document following the feature conventions. |
+| [Feature](https://github.com/synchestra-io/specscore/blob/main/spec/features/feature/README.md) | The primary artifact produced is a feature spec document following the feature conventions. |
 | [Proposals](../../../proposals/README.md) | A newly created feature may later receive proposals through the "Create Proposal" workflow. |
 
 ## Outstanding Questions

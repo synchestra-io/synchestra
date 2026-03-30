@@ -121,7 +121,7 @@ workflows:
 |---|---|
 | [Chat](../../README.md) | This workflow runs on the chat layer. Tweak chats are typically short-lived. |
 | [Workflow](../README.md) | This is one of the built-in workflows. It has the simplest step sequence. |
-| [Feature](../../../feature/README.md) | Can tweak feature spec documents. |
+| [Feature](https://github.com/synchestra-io/specscore/blob/main/spec/features/feature/README.md) | Can tweak feature spec documents. |
 | [Proposals](../../../proposals/README.md) | Can tweak proposal documents. May escalate to "Create Proposal" for larger changes. |
 
 ## Outstanding Questions

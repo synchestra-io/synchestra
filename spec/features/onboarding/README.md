@@ -142,7 +142,7 @@ Onboarding is complete when:
 ## Dependencies
 
 - [GitHub App](../github-app/README.md) — installation flow is embedded in Step 1
-- [Project Definition](../project-definition/README.md) — `synchestra-spec-repo.yaml` format and repository layout
+- [Project Definition](https://github.com/synchestra-io/specscore/blob/main/spec/features/project-definition/README.md) — `synchestra-spec-repo.yaml` format and repository layout
 - [UI](../ui/README.md) — Hub and TUI surfaces deliver the wizard
 - [CLI](../cli/README.md) — `synchestra init` command entry point
 - [API](../api/README.md) — backend endpoints for repo analysis, project creation, and GitHub App callback

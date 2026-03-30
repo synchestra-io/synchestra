@@ -4,7 +4,7 @@
 
 Commands for querying source code relationships to Synchestra resources. Where `synchestra feature` operates on the specification graph (feature → feature dependencies), `synchestra code` operates on the code → specification graph (source files → features, plans, docs they reference).
 
-The primary data source is [source references](../../source-references/README.md) — `synchestra:` annotations and their expanded `https://synchestra.io/` URLs embedded in source file comments. All `code` commands scan source files for these references using the [comment-prefix detection rule](../../source-references/README.md#detection-strategy).
+The primary data source is [source references](https://github.com/synchestra-io/specscore/blob/main/spec/features/source-references/README.md) — `synchestra:` annotations and their expanded `https://synchestra.io/` URLs embedded in source file comments. All `code` commands scan source files for these references using the [comment-prefix detection rule](https://github.com/synchestra-io/specscore/blob/main/spec/features/source-references/README.md#detection-strategy).
 
 All `code` commands are **read-only** — they scan the working tree and optionally pull the spec repository for validation, but do not mutate anything.
 

@@ -134,7 +134,7 @@ steps:
 | [Chat](../../README.md) | This workflow runs on the chat layer. |
 | [Workflow](../README.md) | This is one of the built-in workflows. |
 | [Proposals](../../../proposals/README.md) | Issues can anchor to proposals. An issue about a proposal may lead to a revised proposal. |
-| [Feature](../../../feature/README.md) | Issues can anchor to features and link back to them. |
+| [Feature](https://github.com/synchestra-io/specscore/blob/main/spec/features/feature/README.md) | Issues can anchor to features and link back to them. |
 | [Task Status Board](../../../task-status-board/README.md) | Optionally creates a linked task for tracking the issue within Synchestra. |
 
 ## Outstanding Questions
