@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/synchestra-io/specscore/pkg/exitcode"
+	"github.com/synchestra-io/specscore/pkg/projectdef"
 	"github.com/synchestra-io/synchestra/pkg/cli/gitops"
 	"github.com/synchestra-io/synchestra/pkg/cli/reporef"
 )
@@ -107,7 +108,7 @@ func TestRunNew_ViaCobra(t *testing.T) {
 		t.Fatalf("command failed: %v\nstderr: %s", err, stderr.String())
 	}
 
-	specCfg, err := ReadSpecConfig(specDir)
+	specCfg, err := projectdef.ReadSpecConfig(specDir)
 	if err != nil {
 		t.Fatalf("reading spec config: %v", err)
 	}
@@ -129,7 +130,7 @@ func TestRunNew_ViaCobra(t *testing.T) {
 		t.Errorf("state SpecRepos = %v", stateCfg.SpecRepos)
 	}
 
-	codeCfg, err := ReadCodeConfig(codeDir)
+	codeCfg, err := projectdef.ReadCodeConfig(codeDir)
 	if err != nil {
 		t.Fatalf("reading code config: %v", err)
 	}
@@ -182,7 +183,7 @@ func TestRunNew_MultipleCodeRepos(t *testing.T) {
 		t.Fatalf("command failed: %v\nstderr: %s", err, stderr.String())
 	}
 
-	specCfg, err := ReadSpecConfig(specDir)
+	specCfg, err := projectdef.ReadSpecConfig(specDir)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -194,7 +195,7 @@ func TestRunNew_MultipleCodeRepos(t *testing.T) {
 	}
 
 	for _, cd := range []string{code1Dir, code2Dir} {
-		cfg, err := ReadCodeConfig(cd)
+		cfg, err := projectdef.ReadCodeConfig(cd)
 		if err != nil {
 			t.Fatalf("reading code config from %s: %v", cd, err)
 		}
@@ -399,7 +400,7 @@ func TestCheckSpecConflict_NoFile(t *testing.T) {
 
 func TestCheckSpecConflict_SameProject(t *testing.T) {
 	dir := t.TempDir()
-	if err := WriteSpecConfig(dir, SpecConfig{Title: "Test", StateRepo: "https://example.com/state"}); err != nil {
+	if err := projectdef.WriteSpecConfig(dir, projectdef.SpecConfig{Title: "Test", StateRepo: "https://example.com/state"}); err != nil {
 		t.Fatal(err)
 	}
 	err := checkSpecConflict(dir, "https://example.com/state")
@@ -410,7 +411,7 @@ func TestCheckSpecConflict_SameProject(t *testing.T) {
 
 func TestCheckSpecConflict_DifferentProject(t *testing.T) {
 	dir := t.TempDir()
-	if err := WriteSpecConfig(dir, SpecConfig{Title: "Other", StateRepo: "https://example.com/other-state"}); err != nil {
+	if err := projectdef.WriteSpecConfig(dir, projectdef.SpecConfig{Title: "Other", StateRepo: "https://example.com/other-state"}); err != nil {
 		t.Fatal(err)
 	}
 	err := checkSpecConflict(dir, "https://example.com/state")

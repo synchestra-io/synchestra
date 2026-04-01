@@ -20,7 +20,7 @@ import (
 const defaultSpecDir = "spec"
 const featuresSubDir = "features"
 
-// findSpecRepoRoot walks up from startDir looking for synchestra-spec-repo.yaml.
+// findSpecRepoRoot walks up from startDir looking for specscore-spec-repo.yaml.
 // As a fallback, it also checks for a spec/features/ directory (for repos that
 // are themselves spec repos but don't yet have the config file).
 // Returns the directory that serves as the spec repo root.
@@ -32,7 +32,7 @@ func findSpecRepoRoot(startDir string) (string, error) {
 
 	for {
 		// Primary: look for explicit config file
-		configPath := filepath.Join(current, "synchestra-spec-repo.yaml")
+		configPath := filepath.Join(current, "specscore-spec-repo.yaml")
 		if _, err := os.Stat(configPath); err == nil {
 			return current, nil
 		}
@@ -45,7 +45,7 @@ func findSpecRepoRoot(startDir string) (string, error) {
 
 		parent := filepath.Dir(current)
 		if parent == current {
-			return "", exitcode.NotFoundError("project not found: no synchestra-spec-repo.yaml or spec/features/ in any parent directory")
+			return "", exitcode.NotFoundError("project not found: no specscore-spec-repo.yaml or spec/features/ in any parent directory")
 		}
 		current = parent
 	}

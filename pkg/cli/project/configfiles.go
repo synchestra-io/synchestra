@@ -6,59 +6,24 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
+	"github.com/synchestra-io/specscore/pkg/projectdef"
 	"gopkg.in/yaml.v3"
 )
 
+// Re-export specscore constants for convenience.
 const (
-	SpecConfigFile    = "synchestra-spec-repo.yaml"
+	SpecConfigFile = projectdef.SpecConfigFile // "specscore-spec-repo.yaml"
+	CodeConfigFile = projectdef.CodeConfigFile // "specscore-code-repo.yaml"
+)
+
+// Synchestra-owned config file constants.
+const (
 	StateConfigFile   = "synchestra-state-repo.yaml"
-	CodeConfigFile    = "synchestra-code-repo.yaml"
 	EmbeddedStateFile = "synchestra-state.yaml"
 )
 
-// PlanningConfig holds planning-related settings from synchestra-spec-repo.yaml.
-type PlanningConfig struct {
-	WhatsNext string `yaml:"whats_next"`
-}
-
-type SpecConfig struct {
-	Title     string          `yaml:"title"`
-	StateRepo string          `yaml:"state_repo"`
-	Repos     []string        `yaml:"repos"`
-	Planning  *PlanningConfig `yaml:"planning,omitempty"`
-}
-
-// WhatsNextMode returns the effective whats_next mode, defaulting to "disabled".
-func (c SpecConfig) WhatsNextMode() string {
-	if c.Planning != nil && c.Planning.WhatsNext != "" {
-		return c.Planning.WhatsNext
-	}
-	return "disabled"
-}
-
-const worktreeScheme = "worktree://"
-
-// ParseStateRepo parses the state_repo field.
-// Returns (mode, branch):
-//   - ("worktree", branchName) for "worktree://branchName"
-//   - ("repo", "") for any other non-empty value (URL to external repo)
-//   - ("", "") if state_repo is empty or worktree:// has no branch name
-func (c SpecConfig) ParseStateRepo() (mode, branch string) {
-	if c.StateRepo == "" {
-		return "", ""
-	}
-	if strings.HasPrefix(c.StateRepo, worktreeScheme) {
-		b := c.StateRepo[len(worktreeScheme):]
-		if b == "" {
-			return "", ""
-		}
-		return "worktree", b
-	}
-	return "repo", ""
-}
-
+// StateConfig represents the contents of synchestra-state-repo.yaml.
 type StateConfig struct {
 	Title     string   `yaml:"title"`
 	MainRepo  string   `yaml:"main_repo"`
@@ -66,15 +31,11 @@ type StateConfig struct {
 	CodeRepos []string `yaml:"code_repos,omitempty"`
 }
 
-type CodeConfig struct {
-	SpecRepos []string `yaml:"spec_repos"`
-}
-
 // EmbeddedStateConfig lives on the orphan branch (inside the worktree).
 type EmbeddedStateConfig struct {
 	Title        string           `yaml:"title"`
-	Mode         string           `yaml:"mode"`          // "embedded"
-	SourceBranch string           `yaml:"source_branch"` // e.g. "main"
+	Mode         string           `yaml:"mode"`
+	SourceBranch string           `yaml:"source_branch"`
 	Sync         *EmbeddedSyncCfg `yaml:"sync,omitempty"`
 }
 
@@ -84,28 +45,8 @@ type EmbeddedSyncCfg struct {
 	Push string `yaml:"push"`
 }
 
-func WriteSpecConfig(dir string, cfg SpecConfig) error {
-	return writeYAML(filepath.Join(dir, SpecConfigFile), cfg)
-}
-
 func WriteStateConfig(dir string, cfg StateConfig) error {
 	return writeYAML(filepath.Join(dir, StateConfigFile), cfg)
-}
-
-func WriteCodeConfig(dir string, cfg CodeConfig) error {
-	return writeYAML(filepath.Join(dir, CodeConfigFile), cfg)
-}
-
-func ReadSpecConfig(dir string) (SpecConfig, error) {
-	var cfg SpecConfig
-	data, err := os.ReadFile(filepath.Join(dir, SpecConfigFile))
-	if err != nil {
-		return cfg, fmt.Errorf("reading spec config: %w", err)
-	}
-	if err := yaml.Unmarshal(data, &cfg); err != nil {
-		return cfg, fmt.Errorf("parsing spec config: %w", err)
-	}
-	return cfg, nil
 }
 
 func ReadStateConfig(dir string) (StateConfig, error) {
@@ -116,18 +57,6 @@ func ReadStateConfig(dir string) (StateConfig, error) {
 	}
 	if err := yaml.Unmarshal(data, &cfg); err != nil {
 		return cfg, fmt.Errorf("parsing state config: %w", err)
-	}
-	return cfg, nil
-}
-
-func ReadCodeConfig(dir string) (CodeConfig, error) {
-	var cfg CodeConfig
-	data, err := os.ReadFile(filepath.Join(dir, CodeConfigFile))
-	if err != nil {
-		return cfg, fmt.Errorf("reading code config: %w", err)
-	}
-	if err := yaml.Unmarshal(data, &cfg); err != nil {
-		return cfg, fmt.Errorf("parsing code config: %w", err)
 	}
 	return cfg, nil
 }

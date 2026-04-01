@@ -12,7 +12,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// specRepoConfig is the minimal structure of synchestra-spec-repo.yaml
+// specRepoConfig is the minimal structure of specscore-spec-repo.yaml
 // needed to resolve the state repo path.
 type specRepoConfig struct {
 	StateRepo string `yaml:"state_repo"`
@@ -20,7 +20,7 @@ type specRepoConfig struct {
 
 // StateRepoPath finds the state repo path for the current project.
 // It walks up from startDir looking for:
-//   - synchestra-spec-repo.yaml (reads state_repo field; worktree:// for embedded state)
+//   - specscore-spec-repo.yaml (reads state_repo field; worktree:// for embedded state)
 //   - synchestra-state-repo.yaml (direct detection)
 func StateRepoPath(startDir string) (string, error) {
 	current, err := filepath.Abs(startDir)
@@ -30,7 +30,7 @@ func StateRepoPath(startDir string) (string, error) {
 
 	for {
 		// Check for spec repo config (spec repo -> state repo via state_repo field)
-		specPath := filepath.Join(current, "synchestra-spec-repo.yaml")
+		specPath := filepath.Join(current, "specscore-spec-repo.yaml")
 		if _, err := os.Stat(specPath); err == nil {
 			data, err := os.ReadFile(specPath)
 			if err != nil {
@@ -83,7 +83,7 @@ func configLessFallback(startDir string) (string, error) {
 
 	gitRoot, err := findGitRoot(absStart)
 	if err != nil {
-		return "", exitcode.NotFoundError("project not found: no synchestra-spec-repo.yaml or synchestra-state-repo.yaml in any parent directory")
+		return "", exitcode.NotFoundError("project not found: no specscore-spec-repo.yaml or synchestra-state-repo.yaml in any parent directory")
 	}
 
 	worktreePath := filepath.Join(gitRoot, ".synchestra")

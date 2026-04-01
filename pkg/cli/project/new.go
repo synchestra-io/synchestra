@@ -14,6 +14,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/synchestra-io/specscore/pkg/exitcode"
+	"github.com/synchestra-io/specscore/pkg/projectdef"
 	"github.com/synchestra-io/synchestra/pkg/cli/gitops"
 	"github.com/synchestra-io/synchestra/pkg/cli/globalconfig"
 	"github.com/synchestra-io/synchestra/pkg/cli/reporef"
@@ -127,12 +128,12 @@ func runNew(cmd *cobra.Command, _ []string) error {
 		codeOriginURLs[i] = ref.OriginURL()
 	}
 
-	specCfg := SpecConfig{
+	specCfg := projectdef.SpecConfig{
 		Title:     title,
 		StateRepo: stateRef.OriginURL(),
 		Repos:     codeOriginURLs,
 	}
-	if err := WriteSpecConfig(specPath, specCfg); err != nil {
+	if err := projectdef.WriteSpecConfig(specPath, specCfg); err != nil {
 		return exitcode.UnexpectedErrorf("writing spec config: %v", err)
 	}
 
@@ -146,11 +147,11 @@ func runNew(cmd *cobra.Command, _ []string) error {
 	}
 
 	for _, cp := range codePaths {
-		codeCfg, _ := ReadCodeConfig(cp) // ignore error: file may not exist yet
+		codeCfg, _ := projectdef.ReadCodeConfig(cp) // ignore error: file may not exist yet
 		if !slices.Contains(codeCfg.SpecRepos, specOrigin) {
 			codeCfg.SpecRepos = append(codeCfg.SpecRepos, specOrigin)
 		}
-		if err := WriteCodeConfig(cp, codeCfg); err != nil {
+		if err := projectdef.WriteCodeConfig(cp, codeCfg); err != nil {
 			return exitcode.UnexpectedErrorf("writing code config: %v", err)
 		}
 	}
@@ -282,10 +283,10 @@ func ensureCheckoutMatchesRef(dir string, expected reporef.Ref) error {
 	return nil
 }
 
-// checkSpecConflict checks if synchestra-spec-repo.yaml exists and points to a
+// checkSpecConflict checks if specscore-spec-repo.yaml exists and points to a
 // different state repo (i.e., belongs to a different project).
 func checkSpecConflict(dir, expectedStateRepo string) error {
-	cfg, err := ReadSpecConfig(dir)
+	cfg, err := projectdef.ReadSpecConfig(dir)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			return nil

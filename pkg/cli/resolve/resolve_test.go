@@ -27,13 +27,13 @@ func initGitRepo(t *testing.T, dir string) string {
 }
 
 // TestStateRepoPath_SpecRepoWithWorktree verifies that a directory containing
-// synchestra-spec-repo.yaml with a worktree:// state_repo and a .synchestra/
+// specscore-spec-repo.yaml with a worktree:// state_repo and a .synchestra/
 // directory returns the worktree path.
 func TestStateRepoPath_SpecRepoWithWorktree(t *testing.T) {
 	dir := t.TempDir()
 
 	specYAML := []byte("state_repo: worktree://synchestra-state\n")
-	if err := os.WriteFile(filepath.Join(dir, "synchestra-spec-repo.yaml"), specYAML, 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "specscore-spec-repo.yaml"), specYAML, 0o644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -57,7 +57,7 @@ func TestStateRepoPath_SpecRepoWorktreeMissing(t *testing.T) {
 	dir := t.TempDir()
 
 	specYAML := []byte("state_repo: worktree://synchestra-state\n")
-	if err := os.WriteFile(filepath.Join(dir, "synchestra-spec-repo.yaml"), specYAML, 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "specscore-spec-repo.yaml"), specYAML, 0o644); err != nil {
 		t.Fatal(err)
 	}
 

@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/synchestra-io/specscore/pkg/exitcode"
+	"github.com/synchestra-io/specscore/pkg/projectdef"
 )
 
 // initTestRepo creates a git repo with an initial commit and a bare remote,
@@ -95,8 +96,8 @@ func TestInit_NewProject(t *testing.T) {
 		t.Errorf("board missing table header")
 	}
 
-	// Verify synchestra-spec-repo.yaml on main branch.
-	specCfg, err := ReadSpecConfig(workDir)
+	// Verify specscore-spec-repo.yaml on main branch.
+	specCfg, err := projectdef.ReadSpecConfig(workDir)
 	if err != nil {
 		t.Fatalf("reading spec config: %v", err)
 	}
@@ -195,7 +196,7 @@ func TestInit_CustomBranch(t *testing.T) {
 		t.Fatalf("init failed: %v", err)
 	}
 
-	specCfg, err := ReadSpecConfig(workDir)
+	specCfg, err := projectdef.ReadSpecConfig(workDir)
 	if err != nil {
 		t.Fatalf("reading spec config: %v", err)
 	}
@@ -235,7 +236,7 @@ func TestInit_ConflictsWithDedicatedProject(t *testing.T) {
 	workDir, _ := initTestRepo(t, "conflict")
 
 	// Write a spec config to simulate existing dedicated project.
-	if err := WriteSpecConfig(workDir, SpecConfig{Title: "Existing", StateRepo: "https://example.com/state"}); err != nil {
+	if err := projectdef.WriteSpecConfig(workDir, projectdef.SpecConfig{Title: "Existing", StateRepo: "https://example.com/state"}); err != nil {
 		t.Fatal(err)
 	}
 

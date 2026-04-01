@@ -13,12 +13,14 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/synchestra-io/specscore/pkg/exitcode"
+	"github.com/synchestra-io/specscore/pkg/projectdef"
 	"github.com/synchestra-io/synchestra/pkg/cli/gitops"
 )
 
 const (
 	defaultStateBranch = "synchestra-state"
 	worktreeDir        = ".synchestra"
+	worktreeScheme     = "worktree://"
 )
 
 func initCommand() *cobra.Command {
@@ -69,7 +71,7 @@ func runInit(cmd *cobra.Command, _ []string) error {
 	_ = gitops.WorktreePrune(repoRoot)
 
 	// Check for conflict with dedicated project setup (external state repo).
-	if cfg, err := ReadSpecConfig(repoRoot); err == nil {
+	if cfg, err := projectdef.ReadSpecConfig(repoRoot); err == nil {
 		mode, _ := cfg.ParseStateRepo()
 		if mode == "repo" {
 			return exitcode.ConflictError("this repository already has a dedicated project setup (" + SpecConfigFile + " with external state repo); embedded state cannot be used alongside it")
@@ -284,19 +286,19 @@ func ensureGitignoreEntry(repoRoot, entry string) error {
 	return nil
 }
 
-// ensureSpecConfig writes or updates synchestra-spec-repo.yaml with a worktree://
+// ensureSpecConfig writes or updates specscore-spec-repo.yaml with a worktree://
 // state_repo on the main branch. Preserves existing fields (title, repos, planning).
 func ensureSpecConfig(repoRoot, branch string) error {
 	expected := worktreeScheme + branch
 
 	// Read existing config (if any) to preserve other fields.
-	cfg, _ := ReadSpecConfig(repoRoot) // ignore error: file may not exist
+	cfg, _ := projectdef.ReadSpecConfig(repoRoot) // ignore error: file may not exist
 	if cfg.StateRepo == expected {
 		return nil // already correct
 	}
 
 	cfg.StateRepo = expected
-	if err := WriteSpecConfig(repoRoot, cfg); err != nil {
+	if err := projectdef.WriteSpecConfig(repoRoot, cfg); err != nil {
 		return exitcode.UnexpectedErrorf("writing spec config: %v", err)
 	}
 	return nil

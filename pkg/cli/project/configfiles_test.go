@@ -7,11 +7,13 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/synchestra-io/specscore/pkg/projectdef"
 )
 
 func TestWriteSpecConfig(t *testing.T) {
 	dir := t.TempDir()
-	cfg := SpecConfig{
+	cfg := projectdef.SpecConfig{
 		Title:     "Acme Platform",
 		StateRepo: "https://github.com/acme/acme-synchestra",
 		Repos: []string{
@@ -19,10 +21,10 @@ func TestWriteSpecConfig(t *testing.T) {
 			"https://github.com/acme/acme-web",
 		},
 	}
-	if err := WriteSpecConfig(dir, cfg); err != nil {
+	if err := projectdef.WriteSpecConfig(dir, cfg); err != nil {
 		t.Fatal(err)
 	}
-	data, err := os.ReadFile(filepath.Join(dir, "synchestra-spec-repo.yaml"))
+	data, err := os.ReadFile(filepath.Join(dir, "specscore-spec-repo.yaml"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -75,16 +77,16 @@ func TestWriteStateConfig(t *testing.T) {
 
 func TestWriteCodeConfig(t *testing.T) {
 	dir := t.TempDir()
-	cfg := CodeConfig{
+	cfg := projectdef.CodeConfig{
 		SpecRepos: []string{
 			"https://github.com/acme/acme-spec",
 			"https://github.com/acme/acme-rehearse",
 		},
 	}
-	if err := WriteCodeConfig(dir, cfg); err != nil {
+	if err := projectdef.WriteCodeConfig(dir, cfg); err != nil {
 		t.Fatal(err)
 	}
-	data, err := os.ReadFile(filepath.Join(dir, "synchestra-code-repo.yaml"))
+	data, err := os.ReadFile(filepath.Join(dir, "specscore-code-repo.yaml"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -100,7 +102,7 @@ func TestWriteCodeConfig(t *testing.T) {
 }
 
 func TestReadSpecConfig_NotExists(t *testing.T) {
-	_, err := ReadSpecConfig(t.TempDir())
+	_, err := projectdef.ReadSpecConfig(t.TempDir())
 	if err == nil {
 		t.Error("expected error for missing file")
 	}
@@ -109,10 +111,10 @@ func TestReadSpecConfig_NotExists(t *testing.T) {
 func TestReadSpecConfig_Exists(t *testing.T) {
 	dir := t.TempDir()
 	content := "title: Test\nstate_repo: https://github.com/org/state\nrepos:\n  - https://github.com/org/code\n"
-	if err := os.WriteFile(filepath.Join(dir, "synchestra-spec-repo.yaml"), []byte(content), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "specscore-spec-repo.yaml"), []byte(content), 0644); err != nil {
 		t.Fatal(err)
 	}
-	cfg, err := ReadSpecConfig(dir)
+	cfg, err := projectdef.ReadSpecConfig(dir)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -154,11 +156,11 @@ func TestReadStateConfig_Exists(t *testing.T) {
 func TestReadSpecConfig_PlanningWhatsNext(t *testing.T) {
 	dir := t.TempDir()
 	content := []byte("title: test\nplanning:\n  whats_next: incremental\n")
-	if err := os.WriteFile(filepath.Join(dir, "synchestra-spec-repo.yaml"), content, 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "specscore-spec-repo.yaml"), content, 0644); err != nil {
 		t.Fatal(err)
 	}
 
-	cfg, err := ReadSpecConfig(dir)
+	cfg, err := projectdef.ReadSpecConfig(dir)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -173,11 +175,11 @@ func TestReadSpecConfig_PlanningWhatsNext(t *testing.T) {
 func TestReadSpecConfig_PlanningWhatsNextDefault(t *testing.T) {
 	dir := t.TempDir()
 	content := []byte("title: test\n")
-	if err := os.WriteFile(filepath.Join(dir, "synchestra-spec-repo.yaml"), content, 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "specscore-spec-repo.yaml"), content, 0644); err != nil {
 		t.Fatal(err)
 	}
 
-	cfg, err := ReadSpecConfig(dir)
+	cfg, err := projectdef.ReadSpecConfig(dir)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -188,7 +190,7 @@ func TestReadSpecConfig_PlanningWhatsNextDefault(t *testing.T) {
 }
 
 func TestSpecConfig_ParseStateRepo_Worktree(t *testing.T) {
-	cfg := SpecConfig{StateRepo: "worktree://synchestra-state"}
+	cfg := projectdef.SpecConfig{StateRepo: "worktree://synchestra-state"}
 	mode, branch := cfg.ParseStateRepo()
 	if mode != "worktree" {
 		t.Errorf("mode = %q, want worktree", mode)
@@ -199,7 +201,7 @@ func TestSpecConfig_ParseStateRepo_Worktree(t *testing.T) {
 }
 
 func TestSpecConfig_ParseStateRepo_WorktreeBranchWithSlash(t *testing.T) {
-	cfg := SpecConfig{StateRepo: "worktree://feature/state"}
+	cfg := projectdef.SpecConfig{StateRepo: "worktree://feature/state"}
 	mode, branch := cfg.ParseStateRepo()
 	if mode != "worktree" {
 		t.Errorf("mode = %q, want worktree", mode)
@@ -210,7 +212,7 @@ func TestSpecConfig_ParseStateRepo_WorktreeBranchWithSlash(t *testing.T) {
 }
 
 func TestSpecConfig_ParseStateRepo_WorktreeEmptyBranch(t *testing.T) {
-	cfg := SpecConfig{StateRepo: "worktree://"}
+	cfg := projectdef.SpecConfig{StateRepo: "worktree://"}
 	mode, branch := cfg.ParseStateRepo()
 	if mode != "" {
 		t.Errorf("mode = %q, want empty (invalid)", mode)
@@ -221,7 +223,7 @@ func TestSpecConfig_ParseStateRepo_WorktreeEmptyBranch(t *testing.T) {
 }
 
 func TestSpecConfig_ParseStateRepo_URL(t *testing.T) {
-	cfg := SpecConfig{StateRepo: "https://github.com/acme/state"}
+	cfg := projectdef.SpecConfig{StateRepo: "https://github.com/acme/state"}
 	mode, branch := cfg.ParseStateRepo()
 	if mode != "repo" {
 		t.Errorf("mode = %q, want repo", mode)
@@ -232,7 +234,7 @@ func TestSpecConfig_ParseStateRepo_URL(t *testing.T) {
 }
 
 func TestSpecConfig_ParseStateRepo_Empty(t *testing.T) {
-	cfg := SpecConfig{}
+	cfg := projectdef.SpecConfig{}
 	mode, branch := cfg.ParseStateRepo()
 	if mode != "" {
 		t.Errorf("mode = %q, want empty", mode)
@@ -245,10 +247,10 @@ func TestSpecConfig_ParseStateRepo_Empty(t *testing.T) {
 func TestReadCodeConfig_Exists(t *testing.T) {
 	dir := t.TempDir()
 	content := "spec_repos:\n  - https://github.com/org/spec\n  - https://github.com/org/rehearse\n"
-	if err := os.WriteFile(filepath.Join(dir, "synchestra-code-repo.yaml"), []byte(content), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "specscore-code-repo.yaml"), []byte(content), 0644); err != nil {
 		t.Fatal(err)
 	}
-	cfg, err := ReadCodeConfig(dir)
+	cfg, err := projectdef.ReadCodeConfig(dir)
 	if err != nil {
 		t.Fatal(err)
 	}
