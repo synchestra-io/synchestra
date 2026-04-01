@@ -8,7 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/synchestra-io/specscore/pkg/exitcode"
-	"github.com/synchestra-io/synchestra/pkg/sourceref"
+	"github.com/synchestra-io/specscore/pkg/sourceref"
 )
 
 func depsCommand() *cobra.Command {
