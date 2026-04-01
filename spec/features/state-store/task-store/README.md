@@ -92,7 +92,7 @@ type ArtifactStore interface {
 
 Artifacts are named outputs produced by tasks — schemas, API contracts, migration plans, etc. They are scoped to a task (accessed via `store.Task().Artifact(ctx, taskSlug)`) or to a chat (via `store.Chat().Artifact(ctx, chatID)`). The same `ArtifactStore` interface is reused in both contexts.
 
-See [Development Plan](https://github.com/synchestra-io/specscore/blob/main/spec/features/development-plan/README.md) for how artifacts are declared in plans and consumed by downstream tasks.
+See [Plan](https://github.com/synchestra-io/specscore/blob/main/spec/features/plan/README.md) for how artifacts are declared in plans and consumed by downstream tasks.
 
 ## Types
 

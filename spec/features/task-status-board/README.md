@@ -60,6 +60,8 @@ planning → queued → in_progress → complete
 
 Note: `queued` tasks with unfulfilled `depends_on` cannot be claimed — they are implicitly waiting, but their status remains `queued` (not `blocked`). `blocked` is reserved for tasks that were in progress and got stuck for reasons beyond task dependencies.
 
+The task methodology — statuses, lifecycle, dependency references, and board format — is defined in the [SpecScore task feature](https://github.com/synchestra-io/specscore/blob/main/spec/features/task/README.md). Synchestra implements and extends that methodology with operational tooling: claiming, optimistic locking, CLI commands, and board rendering.
+
 ## Example
 
 ### Root board (`tasks/README.md`)
@@ -205,13 +207,13 @@ The number of tasks shown in "Recently Finished" is configurable in project sett
 
 If both are set, `limit` takes precedence. When a task exceeds the retention window, it is removed from the "Recently Finished" section entirely — it remains accessible via its task directory and through [`task list`](../cli/task/list/README.md) / [`task info`](../cli/task/info/README.md).
 
-## Interaction with Development Plans
+## Interaction with Plans
 
 See [Spec-to-Execution Pipeline](../../architecture/spec-to-execution.md) for the full architectural view of how features, plans, and tasks connect across repository boundaries.
 
-Tasks generated from a [development plan](https://github.com/synchestra-io/specscore/blob/main/spec/features/development-plan/README.md) appear on the board like any other task. Each task's README carries a back-reference to its plan and plan step, but the board itself is unaware of plans — it tracks task status regardless of how tasks were created.
+Tasks generated from a [plan](https://github.com/synchestra-io/specscore/blob/main/spec/features/plan/README.md) appear on the board like any other task. Each task's README carries a back-reference to its plan and plan task, but the board itself is unaware of plans — it tracks task status regardless of how tasks were created.
 
-The development plan feature provides a derived status view (`synchestra plan status`) that reads plan step references from tasks and aggregates board status into a flat, plan-oriented progress report. See [Development Plan: Derived status view](https://github.com/synchestra-io/specscore/blob/main/spec/features/development-plan/README.md#derived-status-view).
+The plan feature provides a derived status view (`synchestra plan status`) that reads plan task references from tasks and aggregates board status into a plan-oriented progress report.
 
 ## Outstanding Questions
 
