@@ -145,7 +145,7 @@ paths:
         prompt: gather-requirements
       - name: implement
         prompt: fast-implement
-        produces: [proposal, development-plan, pull-request]
+        produces: [proposal, plan, pull-request]
   standard:
     roles: ["*"]
     steps:

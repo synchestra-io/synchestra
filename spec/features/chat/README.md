@@ -168,7 +168,7 @@ Chat -> Tasks + Implementation + Plan (as report) -> PR
 The system implements the change during the conversation and produces a plan as a report of what was done. This path is available only to users with appropriate roles and only when the AI assesses the change as straightforward. The AI may suggest the fast path, or the user may request it.
 
 **Fast-path constraints:**
-- Limited to changes affecting a **single code repository.** Multi-repo changes require the standard path with a development plan and task status board to manage coordination.
+- Limited to changes affecting a **single code repository.** Multi-repo changes require the standard path with a plan and task status board to manage coordination.
 - All code changes go through a **PR with CI validation**, regardless of path.
 
 ## Project Configuration

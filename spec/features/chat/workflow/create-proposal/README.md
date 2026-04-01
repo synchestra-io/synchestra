@@ -75,7 +75,7 @@ If accepted:
 After finalization, the proposal is committed to the spec repo under the feature's `proposals/` directory. From there it enters the normal Synchestra pipeline:
 
 ```
-Proposal -> [Review] -> Development Plan -> Tasks -> Implementation -> PR
+Proposal -> [Review] -> Plan -> Tasks -> Implementation -> PR
 ```
 
 ### Workflow definition
