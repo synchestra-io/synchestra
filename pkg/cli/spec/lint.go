@@ -5,36 +5,16 @@ package spec
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 	"sort"
 	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/synchestra-io/specscore/pkg/exitcode"
+	"github.com/synchestra-io/specscore/pkg/lint"
 	"gopkg.in/yaml.v3"
 )
 
-// Violation represents a single linting violation.
-type Violation struct {
-	File     string `json:"file" yaml:"file"`
-	Line     int    `json:"line" yaml:"line"`
-	Severity string `json:"severity" yaml:"severity"`
-	Rule     string `json:"rule" yaml:"rule"`
-	Message  string `json:"message" yaml:"message"`
-}
-
-// LintOptions holds command options.
-type LintOptions struct {
-	SpecRoot string
-	Rules    []string // enabled rules; nil = all rules
-	Ignore   []string // disabled rules
-	Severity string   // minimum severity: error, warning, info
-	Format   string   // output format: text (default), json, yaml
-}
-
 func lintCommand() *cobra.Command {
-	var opts LintOptions
-
 	cmd := &cobra.Command{
 		Use:   "lint [PATH]",
 		Short: "Validate spec tree for structural convention violations",
@@ -56,48 +36,54 @@ invalid arguments, 10+ = unexpected error.`,
 			// Parse flags
 			rulesStr, _ := cmd.Flags().GetString("rules")
 			ignoreStr, _ := cmd.Flags().GetString("ignore")
-			opts.Severity, _ = cmd.Flags().GetString("severity")
-			opts.Format, _ = cmd.Flags().GetString("format")
-			opts.SpecRoot = specRoot
+			severity, _ := cmd.Flags().GetString("severity")
+			format, _ := cmd.Flags().GetString("format")
 
 			// Parse rules and ignore
 			if rulesStr != "" && ignoreStr != "" {
 				return exitcode.InvalidArgsError("--rules and --ignore are mutually exclusive")
 			}
 
+			var rules []string
 			if rulesStr != "" {
-				opts.Rules = strings.Split(rulesStr, ",")
-				for i := range opts.Rules {
-					opts.Rules[i] = strings.TrimSpace(opts.Rules[i])
+				rules = strings.Split(rulesStr, ",")
+				for i := range rules {
+					rules[i] = strings.TrimSpace(rules[i])
 				}
 			}
 
+			var ignore []string
 			if ignoreStr != "" {
-				opts.Ignore = strings.Split(ignoreStr, ",")
-				for i := range opts.Ignore {
-					opts.Ignore[i] = strings.TrimSpace(opts.Ignore[i])
+				ignore = strings.Split(ignoreStr, ",")
+				for i := range ignore {
+					ignore[i] = strings.TrimSpace(ignore[i])
 				}
 			}
 
 			// Validate severity
-			if opts.Severity != "error" && opts.Severity != "warning" && opts.Severity != "info" {
-				return exitcode.InvalidArgsErrorf("invalid severity level: %s", opts.Severity)
+			if severity != "error" && severity != "warning" && severity != "info" {
+				return exitcode.InvalidArgsErrorf("invalid severity level: %s", severity)
 			}
 
 			// Validate format
-			if opts.Format != "text" && opts.Format != "json" && opts.Format != "yaml" {
-				return exitcode.InvalidArgsErrorf("invalid format: %s", opts.Format)
+			if format != "text" && format != "json" && format != "yaml" {
+				return exitcode.InvalidArgsErrorf("invalid format: %s", format)
 			}
 
 			// Validate rule names
-			if err := validateRuleNames(opts.Rules); err != nil {
+			if err := lint.ValidateRuleNames(rules); err != nil {
 				return exitcode.InvalidArgsError(err.Error())
 			}
-			if err := validateRuleNames(opts.Ignore); err != nil {
+			if err := lint.ValidateRuleNames(ignore); err != nil {
 				return exitcode.InvalidArgsError(err.Error())
 			}
 
-			return runLint(opts)
+			return runLint(lint.Options{
+				SpecRoot: specRoot,
+				Rules:    rules,
+				Ignore:   ignore,
+				Severity: severity,
+			}, format)
 		},
 	}
 
@@ -109,52 +95,25 @@ invalid arguments, 10+ = unexpected error.`,
 	return cmd
 }
 
-func runLint(opts LintOptions) error {
-	// Check spec root exists
-	info, err := os.Stat(opts.SpecRoot)
-	if err != nil {
-		return exitcode.UnexpectedErrorf("spec root not found: %s", opts.SpecRoot)
-	}
-	if !info.IsDir() {
-		return exitcode.UnexpectedErrorf("spec root is not a directory: %s", opts.SpecRoot)
-	}
-
-	// Create linter and run checks
-	linter := newLinter(opts)
-	violations, err := linter.lint()
+func runLint(opts lint.Options, format string) error {
+	violations, err := lint.Lint(opts)
 	if err != nil {
 		return exitcode.UnexpectedErrorf("linting error: %v", err)
 	}
 
-	// Filter violations by severity
-	filtered := filterBySeverity(violations, opts.Severity)
-
 	// Output results
-	if err := outputViolations(filtered, opts.Format); err != nil {
+	if err := outputViolations(violations, format); err != nil {
 		return exitcode.UnexpectedErrorf("output error: %v", err)
 	}
 
 	// Determine exit code
-	if len(filtered) > 0 {
-		return exitcode.ConflictErrorf("%d violation(s) found", len(filtered))
+	if len(violations) > 0 {
+		return exitcode.ConflictErrorf("%d violation(s) found", len(violations))
 	}
 	return nil
 }
 
-func filterBySeverity(violations []Violation, minSeverity string) []Violation {
-	severityOrder := map[string]int{"error": 0, "warning": 1, "info": 2}
-	minLevel := severityOrder[minSeverity]
-
-	var filtered []Violation
-	for _, v := range violations {
-		if severityOrder[v.Severity] <= minLevel {
-			filtered = append(filtered, v)
-		}
-	}
-	return filtered
-}
-
-func outputViolations(violations []Violation, format string) error {
+func outputViolations(violations []lint.Violation, format string) error {
 	switch format {
 	case "json":
 		return outputJSON(violations)
@@ -165,9 +124,9 @@ func outputViolations(violations []Violation, format string) error {
 	}
 }
 
-func outputJSON(violations []Violation) error {
+func outputJSON(violations []lint.Violation) error {
 	if violations == nil {
-		violations = []Violation{}
+		violations = []lint.Violation{}
 	}
 	data, err := json.MarshalIndent(violations, "", "  ")
 	if err != nil {
@@ -177,7 +136,7 @@ func outputJSON(violations []Violation) error {
 	return nil
 }
 
-func outputYAML(violations []Violation) error {
+func outputYAML(violations []lint.Violation) error {
 	data, err := yaml.Marshal(violations)
 	if err != nil {
 		return err
@@ -190,7 +149,7 @@ func outputYAML(violations []Violation) error {
 	return nil
 }
 
-func outputText(violations []Violation) error {
+func outputText(violations []lint.Violation) error {
 	// Sort violations by file then line
 	sort.Slice(violations, func(i, j int) bool {
 		if violations[i].File != violations[j].File {
@@ -246,28 +205,4 @@ func plural(n int) string {
 		return ""
 	}
 	return "s"
-}
-
-// allRuleNames is the canonical list of known rule names.
-var allRuleNames = map[string]bool{
-	"readme-exists":      true,
-	"oq-section":         true,
-	"oq-not-empty":       true,
-	"index-entries":      true,
-	"heading-levels":     true,
-	"feature-ref-syntax": true,
-	"internal-links":     true,
-	"forward-refs":       true,
-	"code-annotations":   true,
-	"plan-hierarchy":     true,
-	"plan-roi-metadata":  true,
-}
-
-func validateRuleNames(names []string) error {
-	for _, name := range names {
-		if !allRuleNames[name] {
-			return fmt.Errorf("unknown rule %q", name)
-		}
-	}
-	return nil
 }
