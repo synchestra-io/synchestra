@@ -7,7 +7,7 @@ description: Generates or updates the WHATS-NEXT.md prioritization report for pl
 
 Generate or update `spec/plans/WHATS-NEXT.md` — an AI-generated prioritization report that surfaces completed work, in-progress plans, and recommended next targets.
 
-**CLI reference:** [development-plan feature spec](../../spec/features/development-plan/README.md)
+**CLI reference:** [plan feature spec](https://github.com/synchestra-io/specscore/blob/main/spec/features/plan/README.md)
 
 ## When to use
 

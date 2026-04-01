@@ -84,16 +84,16 @@ Use **mermaid diagrams** instead of ASCII art in all specification documents. Me
 
 When adding or updating diagrams in specs, convert ASCII art to mermaid or create new diagrams using mermaid syntax.
 
-## Development plans location and format
+## Plans location and format
 
-All development plans must be created in `spec/plans/` and follow the structure defined in [Development Plan specification](spec/features/development-plan/README.md).
+All plans must be created in `spec/plans/` and follow the structure defined in [Plan specification](https://github.com/synchestra-io/specscore/blob/main/spec/features/plan/README.md).
 
-- Plans start in `draft` status and follow the approval workflow: `draft` → `in_review` → `approved` → (optionally) `superseded`
-- Once approved, plans are immutable — edits require creating a new superseding plan
+- Plans start in `draft` status and follow the approval workflow: `draft` → `in_review` → `approved`
+- Plans are mutable; snapshots (git hash + action + comment) capture reference points for review and retrospective
 - Plans live nowhere else — not in `docs/superpowers/`, not in project directories, not in temporary locations
 - Use `synchestra plan create` to scaffold a new plan; use `synchestra plan submit` and `synchestra plan approve` for workflow progression
 
-See the [Development Plan specification](spec/features/development-plan/README.md#behavior) for complete structure, field requirements, and task generation rules.
+See the [Plan specification](https://github.com/synchestra-io/specscore/blob/main/spec/features/plan/README.md#behavior) for complete structure, field requirements, and task generation rules.
 
 ## Key conventions
 

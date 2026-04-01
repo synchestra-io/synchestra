@@ -24,7 +24,7 @@ Welcome to the Synchestra docs. Whether you're an AI agent looking for an endpoi
 
 ### Internal
 
-- [Superpowers](superpowers/) — Design specs and internal decision records. Implementation plans for features are stored as formal development plans in `spec/plans/` and follow the immutable approval workflow.
+- [Superpowers](superpowers/) — Design specs and internal decision records. Implementation plans for features are stored as formal plans in `spec/plans/` and follow the approval workflow with snapshots tracking history.
 
 ---
 

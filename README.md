@@ -131,9 +131,9 @@ repo/
           README.md
         sub-feature-2/
           README.md
-    plans/                           # Development plans (bridge specs → tasks)
+    plans/                           # Plans (bridge specs → tasks)
       plan-1/
-        README.md                    # Immutable plan: approach, steps, acceptance criteria
+        README.md                    # Plan: approach, tasks, acceptance criteria
 
   docs/                              # Product documentation (configurable per project)
     ...
@@ -478,7 +478,7 @@ are being built and refined through daily use on real projects.
 
 ## What's Next
 
-Active [development plans](spec/plans/README.md) and their current state:
+Active [plans](spec/plans/README.md) and their current state:
 
 | Plan | Status | Features | Effort | Impact |
 |------|--------|----------|--------|--------|
@@ -490,7 +490,7 @@ Active [development plans](spec/plans/README.md) and their current state:
 | [hero-scene](spec/plans/hero-scene/) | draft | landing | — | — |
 | [superpowers-integration](spec/plans/superpowers-integration/) | draft | embedded-state, cli/project/init | — | — |
 
-Plans support hierarchical nesting (roadmaps containing child plans) and optional ROI metadata for prioritization. A generated What's Next report can be enabled to surface recommended next targets after plan or task completion. See [SpecScore development plan](https://github.com/synchestra-io/specscore) for the plan format specification.
+Plans nest recursively — a plan is a composite task whose children may themselves be plans. Optional ROI metadata enables prioritization. A generated What's Next report can be enabled to surface recommended next targets after plan or task completion. See [SpecScore plan specification](https://github.com/synchestra-io/specscore/blob/main/spec/features/plan/README.md) for the plan format.
 
 ## Outstanding Questions
 

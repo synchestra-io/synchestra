@@ -2,16 +2,16 @@
 
 **Moved to `spec/plans/`**
 
-All development and implementation plans are now created as formal development plans in the `spec/plans/` directory and follow the [Development Plan specification](../../features/development-plan/README.md).
+All implementation plans are now created as formal plans in the `spec/plans/` directory and follow the [Plan specification](https://github.com/synchestra-io/specscore/blob/main/spec/features/plan/README.md).
 
-Development plans:
+Plans:
 - Start in `draft` status and progress through review to `approved`
-- Are immutable once approved — changes require creating a new superseding plan
-- Support complex task decomposition with dependencies and acceptance criteria
+- Are mutable; snapshots (git hash + action + comment) capture reference points
+- Support recursive task decomposition with dependencies and acceptance criteria
 - Generate executable tasks in the state store
 
 To create or manage plans, see:
-- [Development Plan specification](../../features/development-plan/README.md#behavior) — structure and format
+- [Plan specification](https://github.com/synchestra-io/specscore/blob/main/spec/features/plan/README.md#behavior) — structure and format
 - [CLI commands](../cli/plan.md) — `synchestra plan create`, `submit`, `approve`, etc.
 
 ## Outstanding Questions

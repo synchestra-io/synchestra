@@ -16,7 +16,7 @@
 
 ## Diagram Conventions
 
-All diagrams in development plans should use **mermaid syntax** instead of ASCII art. Mermaid provides better clarity, GitHub rendering support, and maintainability.
+All diagrams in plans should use **mermaid syntax** instead of ASCII art. Mermaid provides better clarity, GitHub rendering support, and maintainability.
 
 ## Outstanding Questions
 
