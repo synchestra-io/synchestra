@@ -5,10 +5,12 @@ package gitstore
 import (
 	"strings"
 	"testing"
+
+	"github.com/synchestra-io/specscore/pkg/task"
 )
 
 func TestTaskFileRoundTrip(t *testing.T) {
-	original := taskFileData{
+	original := task.TaskFileData{
 		Title:       "Implement API endpoints",
 		Description: "Description paragraph here.",
 		DependsOn:   []string{"setup-db", "define-schema"},
@@ -89,7 +91,7 @@ func TestTaskFileParseMultiParagraphDescription(t *testing.T) {
 }
 
 func TestTaskFileRenderEmptyDescription(t *testing.T) {
-	d := taskFileData{
+	d := task.TaskFileData{
 		Title:     "No Desc",
 		DependsOn: []string{"dep-a"},
 		Summary:   "Done",
@@ -104,7 +106,7 @@ func TestTaskFileRenderEmptyDescription(t *testing.T) {
 }
 
 func TestTaskFileRenderNoDeps(t *testing.T) {
-	d := taskFileData{
+	d := task.TaskFileData{
 		Title:       "Simple",
 		Description: "A task.",
 	}

@@ -8,13 +8,13 @@ import "context"
 // transitions, and access to nested board and artifact sub-interfaces.
 type TaskStore interface {
 	// Create creates a new task in planning status.
-	Create(ctx context.Context, params TaskCreateParams) (Task, error)
+	Create(ctx context.Context, params TaskCreateParams) (CoordinatedTask, error)
 
 	// Get returns a task by its slug. Returns ErrNotFound if the task does not exist.
-	Get(ctx context.Context, slug string) (Task, error)
+	Get(ctx context.Context, slug string) (CoordinatedTask, error)
 
 	// List returns tasks matching the given filter.
-	List(ctx context.Context, filter TaskFilter) ([]Task, error)
+	List(ctx context.Context, filter TaskFilter) ([]CoordinatedTask, error)
 
 	// Enqueue transitions a task from planning to queued.
 	Enqueue(ctx context.Context, slug string) error

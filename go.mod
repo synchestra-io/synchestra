@@ -7,7 +7,7 @@ require (
 	github.com/ingitdb/ingitdb-cli v0.53.1
 	github.com/spf13/cobra v1.10.2
 	github.com/synchestra-io/rehearse v0.2.0
-	github.com/synchestra-io/specscore v0.3.2
+	github.com/synchestra-io/specscore v0.3.3-0.20260401000000-000000000000
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -57,3 +57,5 @@ require (
 	golang.org/x/sys v0.42.0 // indirect
 	golang.org/x/text v0.35.0 // indirect
 )
+
+replace github.com/synchestra-io/specscore => ../specscore

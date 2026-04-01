@@ -30,7 +30,7 @@ type taskOutput struct {
 	AbortRequested string `json:"abort_requested,omitempty" yaml:"abort_requested,omitempty"`
 }
 
-func toTaskOutput(t state.Task) taskOutput {
+func toTaskOutput(t state.CoordinatedTask) taskOutput {
 	o := taskOutput{
 		Path:      t.Slug,
 		Status:    string(t.Status),
@@ -51,7 +51,7 @@ func toTaskOutput(t state.Task) taskOutput {
 	return o
 }
 
-func writeTaskList(w io.Writer, format string, tasks []state.Task) error {
+func writeTaskList(w io.Writer, format string, tasks []state.CoordinatedTask) error {
 	outputs := make([]taskOutput, len(tasks))
 	for i, t := range tasks {
 		outputs[i] = toTaskOutput(t)
@@ -78,7 +78,7 @@ func writeTaskList(w io.Writer, format string, tasks []state.Task) error {
 	}
 }
 
-func writeTask(w io.Writer, format string, t state.Task) error {
+func writeTask(w io.Writer, format string, t state.CoordinatedTask) error {
 	o := toTaskOutput(t)
 	switch format {
 	case "json":

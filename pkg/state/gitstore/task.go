@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/synchestra-io/specscore/pkg/task"
 	"github.com/synchestra-io/synchestra/pkg/cli/gitops"
 	"github.com/synchestra-io/synchestra/pkg/state"
 )
@@ -70,19 +71,19 @@ func (t *gitTaskStore) writeBoard(bd boardData) error {
 	return os.WriteFile(t.boardPath(), renderBoard(bd), 0o644)
 }
 
-func (t *gitTaskStore) readTaskFile(slug string) (taskFileData, error) {
+func (t *gitTaskStore) readTaskFile(slug string) (task.TaskFileData, error) {
 	p := filepath.Join(t.taskDir(slug), "README.md")
 	data, err := os.ReadFile(p)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			return taskFileData{}, state.ErrNotFound
+			return task.TaskFileData{}, state.ErrNotFound
 		}
-		return taskFileData{}, err
+		return task.TaskFileData{}, err
 	}
 	return parseTaskFile(data)
 }
 
-func (t *gitTaskStore) writeTaskFile(slug string, d taskFileData) error {
+func (t *gitTaskStore) writeTaskFile(slug string, d task.TaskFileData) error {
 	dir := t.taskDir(slug)
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return err
@@ -100,19 +101,20 @@ func (t *gitTaskStore) findRow(bd *boardData, slug string) (int, *boardRow) {
 	return -1, nil
 }
 
-// assembleTask builds a state.Task from a boardRow and taskFileData.
-func assembleTask(slug string, row boardRow, tf taskFileData) state.Task {
-	task := state.Task{
-		Slug:      slug,
-		Title:     tf.Title,
-		Status:    row.Status,
-		DependsOn: tf.DependsOn,
-		Run:       row.Branch,
-		Model:     row.Agent,
-		Requester: row.Requester,
-		Summary:   tf.Summary,
+// assembleTask builds a state.CoordinatedTask from a boardRow and task.TaskFileData.
+func assembleTask(slug string, row boardRow, tf task.TaskFileData) state.CoordinatedTask {
+	return state.CoordinatedTask{
+		Task: task.Task{
+			Slug:      slug,
+			Title:     tf.Title,
+			Status:    row.Status,
+			DependsOn: tf.DependsOn,
+			Requester: row.Requester,
+			Summary:   tf.Summary,
+		},
+		Run:   row.Branch,
+		Model: row.Agent,
 	}
-	return task
 }
 
 // commitFiles commits the listed repo-relative paths.
@@ -124,20 +126,20 @@ func (t *gitTaskStore) commitFiles(files []string, message string) error {
 // TaskStore methods
 // ---------------------------------------------------------------------------
 
-func (t *gitTaskStore) Create(_ context.Context, params state.TaskCreateParams) (state.Task, error) {
+func (t *gitTaskStore) Create(_ context.Context, params state.TaskCreateParams) (state.CoordinatedTask, error) {
 	// Write task file.
-	tf := taskFileData{
+	tf := task.TaskFileData{
 		Title:     params.Title,
 		DependsOn: params.DependsOn,
 	}
 	if err := t.writeTaskFile(params.Slug, tf); err != nil {
-		return state.Task{}, fmt.Errorf("write task file: %w", err)
+		return state.CoordinatedTask{}, fmt.Errorf("write task file: %w", err)
 	}
 
 	// Update board.
 	bd, err := t.readBoard()
 	if err != nil {
-		return state.Task{}, fmt.Errorf("read board: %w", err)
+		return state.CoordinatedTask{}, fmt.Errorf("read board: %w", err)
 	}
 	row := boardRow{
 		Slug:      params.Slug,
@@ -147,7 +149,7 @@ func (t *gitTaskStore) Create(_ context.Context, params state.TaskCreateParams) 
 	}
 	bd.Rows = append(bd.Rows, row)
 	if err := t.writeBoard(bd); err != nil {
-		return state.Task{}, fmt.Errorf("write board: %w", err)
+		return state.CoordinatedTask{}, fmt.Errorf("write board: %w", err)
 	}
 
 	// Commit.
@@ -156,38 +158,38 @@ func (t *gitTaskStore) Create(_ context.Context, params state.TaskCreateParams) 
 		filepath.Join("tasks", "README.md"),
 	}
 	if err := t.commitFiles(files, fmt.Sprintf("task: create %s", params.Slug)); err != nil {
-		return state.Task{}, fmt.Errorf("commit: %w", err)
+		return state.CoordinatedTask{}, fmt.Errorf("commit: %w", err)
 	}
 	if err := t.maybePush(); err != nil {
-		return state.Task{}, fmt.Errorf("push: %w", err)
+		return state.CoordinatedTask{}, fmt.Errorf("push: %w", err)
 	}
 
 	return assembleTask(params.Slug, row, tf), nil
 }
 
-func (t *gitTaskStore) Get(_ context.Context, slug string) (state.Task, error) {
+func (t *gitTaskStore) Get(_ context.Context, slug string) (state.CoordinatedTask, error) {
 	if err := t.maybePull(); err != nil {
-		return state.Task{}, fmt.Errorf("pull: %w", err)
+		return state.CoordinatedTask{}, fmt.Errorf("pull: %w", err)
 	}
 
 	tf, err := t.readTaskFile(slug)
 	if err != nil {
-		return state.Task{}, err
+		return state.CoordinatedTask{}, err
 	}
 
 	bd, err := t.readBoard()
 	if err != nil {
-		return state.Task{}, fmt.Errorf("read board: %w", err)
+		return state.CoordinatedTask{}, fmt.Errorf("read board: %w", err)
 	}
 	_, row := t.findRow(&bd, slug)
 	if row == nil {
-		return state.Task{}, state.ErrNotFound
+		return state.CoordinatedTask{}, state.ErrNotFound
 	}
 
 	return assembleTask(slug, *row, tf), nil
 }
 
-func (t *gitTaskStore) List(_ context.Context, filter state.TaskFilter) ([]state.Task, error) {
+func (t *gitTaskStore) List(_ context.Context, filter state.TaskFilter) ([]state.CoordinatedTask, error) {
 	if err := t.maybePull(); err != nil {
 		return nil, fmt.Errorf("pull: %w", err)
 	}
@@ -197,7 +199,7 @@ func (t *gitTaskStore) List(_ context.Context, filter state.TaskFilter) ([]state
 		return nil, fmt.Errorf("read board: %w", err)
 	}
 
-	var tasks []state.Task
+	var tasks []state.CoordinatedTask
 	for _, row := range bd.Rows {
 		if filter.Status != nil && row.Status != *filter.Status {
 			continue
@@ -218,7 +220,7 @@ func (t *gitTaskStore) transitionTask(
 	slug string,
 	allowed []state.TaskStatus,
 	newStatus state.TaskStatus,
-	updateTaskFile func(row *boardRow, tf *taskFileData),
+	updateTaskFile func(row *boardRow, tf *task.TaskFileData),
 	commitMsg string,
 ) error {
 	if err := t.maybePull(); err != nil {
@@ -365,7 +367,7 @@ func (t *gitTaskStore) Complete(_ context.Context, slug string, summary string) 
 	return t.transitionTask(slug,
 		[]state.TaskStatus{state.TaskStatusInProgress},
 		state.TaskStatusCompleted,
-		func(_ *boardRow, tf *taskFileData) { tf.Summary = summary },
+		func(_ *boardRow, tf *task.TaskFileData) { tf.Summary = summary },
 		fmt.Sprintf("task: complete %s", slug),
 	)
 }
@@ -374,7 +376,7 @@ func (t *gitTaskStore) Fail(_ context.Context, slug string, reason string) error
 	return t.transitionTask(slug,
 		[]state.TaskStatus{state.TaskStatusInProgress},
 		state.TaskStatusFailed,
-		func(_ *boardRow, tf *taskFileData) { tf.Summary = reason },
+		func(_ *boardRow, tf *task.TaskFileData) { tf.Summary = reason },
 		fmt.Sprintf("task: fail %s", slug),
 	)
 }
@@ -383,7 +385,7 @@ func (t *gitTaskStore) Block(_ context.Context, slug string, reason string) erro
 	return t.transitionTask(slug,
 		[]state.TaskStatus{state.TaskStatusInProgress},
 		state.TaskStatusBlocked,
-		func(_ *boardRow, tf *taskFileData) { tf.Summary = reason },
+		func(_ *boardRow, tf *task.TaskFileData) { tf.Summary = reason },
 		fmt.Sprintf("task: block %s", slug),
 	)
 }
@@ -392,7 +394,7 @@ func (t *gitTaskStore) Unblock(_ context.Context, slug string) error {
 	return t.transitionTask(slug,
 		[]state.TaskStatus{state.TaskStatusBlocked},
 		state.TaskStatusInProgress,
-		func(_ *boardRow, tf *taskFileData) { tf.Summary = "" },
+		func(_ *boardRow, tf *task.TaskFileData) { tf.Summary = "" },
 		fmt.Sprintf("task: unblock %s", slug),
 	)
 }
@@ -401,7 +403,7 @@ func (t *gitTaskStore) Release(_ context.Context, slug string) error {
 	return t.transitionTask(slug,
 		[]state.TaskStatus{state.TaskStatusClaimed},
 		state.TaskStatusQueued,
-		func(row *boardRow, _ *taskFileData) {
+		func(row *boardRow, _ *task.TaskFileData) {
 			row.Branch = ""
 			row.Agent = ""
 			row.Time = ""
@@ -527,6 +529,7 @@ func (b *gitBoard) Get(_ context.Context) (state.BoardView, error) {
 			Branch:    r.Branch,
 			Agent:     r.Agent,
 			Requester: r.Requester,
+			Time:      r.Time,
 		})
 	}
 	return view, nil

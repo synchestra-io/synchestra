@@ -2,76 +2,48 @@ package state
 
 // Features implemented: state-store
 
-import "time"
+import (
+	"time"
 
-// TaskStatus represents the lifecycle state of a task.
-type TaskStatus string
-
-const (
-	TaskStatusPlanning   TaskStatus = "planning"
-	TaskStatusQueued     TaskStatus = "queued"
-	TaskStatusClaimed    TaskStatus = "claimed"
-	TaskStatusInProgress TaskStatus = "in_progress"
-	TaskStatusCompleted  TaskStatus = "completed"
-	TaskStatusFailed     TaskStatus = "failed"
-	TaskStatusBlocked    TaskStatus = "blocked"
-	TaskStatusAborted    TaskStatus = "aborted"
+	"github.com/synchestra-io/specscore/pkg/task"
 )
 
-// Task represents a unit of work in the state store.
-type Task struct {
-	Slug      string
-	Title     string
-	Status    TaskStatus
-	Parent    string // parent task slug, empty for root tasks
-	DependsOn []string
-	Run       string // agent run ID (populated when claimed/in_progress)
-	Model     string // agent model ID (populated when claimed/in_progress)
-	Requester string
-	Reason    string // block/fail/abort reason
-	Summary   string // completion summary
-	CreatedAt time.Time
-	ClaimedAt *time.Time
-	UpdatedAt time.Time
-}
+// Type aliases for backward compatibility — callers can use either
+// state.TaskStatus or task.TaskStatus interchangeably.
+type TaskStatus = task.TaskStatus
 
-// TaskCreateParams holds parameters for creating a new task.
-type TaskCreateParams struct {
-	Slug      string
-	Title     string
-	Parent    string
-	DependsOn []string
-	Requester string
+// Re-export status constants so existing code using state.TaskStatusXxx
+// continues to compile without modification.
+const (
+	TaskStatusPlanning   = task.StatusPlanning
+	TaskStatusQueued     = task.StatusQueued
+	TaskStatusClaimed    = task.StatusClaimed
+	TaskStatusInProgress = task.StatusInProgress
+	TaskStatusCompleted  = task.StatusCompleted
+	TaskStatusFailed     = task.StatusFailed
+	TaskStatusBlocked    = task.StatusBlocked
+	TaskStatusAborted    = task.StatusAborted
+)
+
+// Type aliases for backward compatibility.
+type TaskCreateParams = task.CreateParams
+type TaskFilter = task.Filter
+type BoardView = task.BoardView
+type BoardRow = task.BoardRow
+
+// CoordinatedTask embeds specscore's Task with coordination-only fields
+// that belong in the orchestration layer (synchestra), not the library.
+type CoordinatedTask struct {
+	task.Task
+	Run       string     // agent run ID (populated when claimed/in_progress)
+	Model     string     // agent model ID (populated when claimed/in_progress)
+	ClaimedAt *time.Time // when the task was claimed
 }
 
 // ClaimParams holds parameters for claiming a task.
 type ClaimParams struct {
 	Run   string
 	Model string
-}
-
-// TaskFilter holds optional filters for listing tasks.
-// Nil pointer fields mean "don't filter on this field."
-type TaskFilter struct {
-	Status *TaskStatus
-	Parent *string
-}
-
-// BoardView represents a rendered task board.
-type BoardView struct {
-	Rows []BoardRow
-}
-
-// BoardRow represents a single row in the task board.
-type BoardRow struct {
-	Task      string
-	Status    TaskStatus
-	DependsOn []string
-	Branch    string
-	Agent     string
-	Requester string
-	StartedAt *time.Time
-	Duration  *time.Duration
 }
 
 // ChatStatus represents the lifecycle state of a chat.

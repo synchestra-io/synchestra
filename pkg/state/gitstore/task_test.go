@@ -140,7 +140,7 @@ func newLocalStore(t *testing.T) (state.Store, string) {
 	return s, dir
 }
 
-func createTask(t *testing.T, store state.Store, slug, title string) state.Task {
+func createTask(t *testing.T, store state.Store, slug, title string) state.CoordinatedTask {
 	t.Helper()
 	task, err := store.Task().Create(context.Background(), state.TaskCreateParams{
 		Slug:      slug,
