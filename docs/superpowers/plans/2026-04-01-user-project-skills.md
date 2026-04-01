@@ -2,155 +2,206 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use [superpowers:subagent-driven-development](../../../.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/subagent-driven-development) (recommended) or [superpowers:executing-plans](../../../.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/executing-plans) to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Implement a two-tier skill system allowing users to save personal skill collections in Firestore and manage project-specific skills in git, with seamless agent discovery at runtime.
+**Goal:** Implement a two-tier skill system: personal user skill collections (Firestore) and project-specific skills (git-backed in `synchestra/skills/`), with seamless agent discovery at runtime.
 
-**Architecture:** 
-- **User Skills:** Firestore-backed personal skill library, managed via Hub UI
-- **Project Skills:** Git-backed collection in `synchestra/skills/`, copied to `.claude/skills/` at runtime
-- **Integration:** Hub APIs and UI for CRUD, origin metadata tracking for migration path, runner logic to copy skills at clone time
+**Architecture:**
+- Shared skill types and SKILL.md parsing live in `synchestra` repo (`pkg/skills/`)
+- Hub API and Firestore integration live in `synchestra-cloud` repo
+- Hub frontend (Angular/PrimeNG) lives in `synchestra-hub` repo
+- Runner skill copying lives in `synchestra-servers` repo
 
-**Tech Stack:** 
-- Backend: Go (pkg/skills, API endpoints)
-- Database: Firestore (user skills collection)
-- Frontend: Angular + PrimeNG (Hub UI)
-- Runtime: Runner copies skills to `.claude/skills/`
+**Tech Stack:** Go (`gopkg.in/yaml.v3`, `os/exec` for git), Angular + PrimeNG (Hub UI), Firestore (user skills)
+
+**Cross-repo map:**
+
+| Repo | What changes |
+|---|---|
+| `synchestra` (this repo) | Shared `pkg/skills/` library: Skill type, SKILL.md parsing, project discovery |
+| `synchestra-cloud` | Firestore user skills CRUD, Hub API endpoints (user + project skills) |
+| `synchestra-hub` | Angular/PrimeNG components: user skills dashboard, project skills tab |
+| `synchestra-servers` | Runner: copy `synchestra/skills/` to `.claude/skills/` at clone time |
 
 ---
 
-## Phase 1: Core Infrastructure & Data Models
+## Phase 1: Shared Skill Library (synchestra repo)
 
-### Task 1: Skill Data Model and Validation
+### Task 1: Skill Data Model and SKILL.md Parsing
 
 **Files:**
-- Create: `pkg/skills/model.go`
-- Create: `pkg/skills/model_test.go`
+- Create: `pkg/skills/skill.go`
+- Create: `pkg/skills/skill_test.go`
 
 **Context:**
-This is the foundation. All other tasks depend on the Skill data structure and frontmatter parsing logic.
+Foundation type used by all repos. Follows codebase conventions: `gopkg.in/yaml.v3` for YAML, `// Features implemented:` header, standard library testing with `t.TempDir()` / `t.Fatal` / `t.Errorf`.
 
-- [ ] **Step 1: Write test for skill frontmatter parsing**
+- [ ] **Step 1: Write the failing tests**
 
 ```go
+// pkg/skills/skill_test.go
 package skills
 
+// Features implemented: agent-skills
+
 import (
+	"strings"
 	"testing"
 )
 
-func TestParseSkillFrontmatter(t *testing.T) {
-	content := `---
-skill_id: code-review
-name: Code Review
-description: Reviews pull requests
-origin: code-review@user123@github.com
-version: 1.0
-tags: [review, quality]
----
+func TestParseSkill_Valid(t *testing.T) {
+	raw := "---\nskill_id: code-review\nname: Code Review\ndescription: Reviews pull requests\norigin: code-review@user123@github.com\nversion: \"1.0\"\ntags:\n  - review\n  - quality\n---\n\n# Code Review\n\nSome content here."
 
-# Code Review
-
-Some content here.`
-
-	skill, err := ParseSkill("code-review", content)
+	skill, err := ParseSkill("code-review", []byte(raw))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-
 	if skill.SkillID != "code-review" {
-		t.Errorf("expected SkillID 'code-review', got '%s'", skill.SkillID)
+		t.Errorf("SkillID = %q, want %q", skill.SkillID, "code-review")
 	}
 	if skill.Name != "Code Review" {
-		t.Errorf("expected Name 'Code Review', got '%s'", skill.Name)
+		t.Errorf("Name = %q, want %q", skill.Name, "Code Review")
 	}
 	if skill.Description != "Reviews pull requests" {
-		t.Errorf("expected Description, got '%s'", skill.Description)
+		t.Errorf("Description = %q", skill.Description)
 	}
 	if skill.Origin != "code-review@user123@github.com" {
-		t.Errorf("expected Origin, got '%s'", skill.Origin)
+		t.Errorf("Origin = %q", skill.Origin)
 	}
 	if skill.Version != "1.0" {
-		t.Errorf("expected Version '1.0', got '%s'", skill.Version)
+		t.Errorf("Version = %q, want %q", skill.Version, "1.0")
 	}
-	if len(skill.Tags) != 2 || skill.Tags[0] != "review" {
-		t.Errorf("expected Tags [review, quality], got %v", skill.Tags)
+	if len(skill.Tags) != 2 || skill.Tags[0] != "review" || skill.Tags[1] != "quality" {
+		t.Errorf("Tags = %v, want [review quality]", skill.Tags)
 	}
-	if !string(skill.Content) == `# Code Review
-
-Some content here.` {
-		t.Errorf("expected content without frontmatter")
+	if !strings.Contains(string(skill.Body), "# Code Review") {
+		t.Errorf("Body missing content, got %q", string(skill.Body))
 	}
 }
 
-func TestParseSkillMissingRequired(t *testing.T) {
-	// Missing skill_id
-	content := `---
-name: Code Review
-description: Reviews PRs
----`
+func TestParseSkill_MissingSkillID(t *testing.T) {
+	raw := "---\nname: Code Review\ndescription: Reviews PRs\n---\n\ncontent"
 
-	_, err := ParseSkill("some-id", content)
+	_, err := ParseSkill("code-review", []byte(raw))
 	if err == nil {
 		t.Fatal("expected error for missing skill_id")
 	}
-	if err.Error() != "skill_id mismatch: expected 'some-id', got missing frontmatter" {
-		t.Errorf("unexpected error: %v", err)
+}
+
+func TestParseSkill_SkillIDMismatch(t *testing.T) {
+	raw := "---\nskill_id: wrong-id\nname: Code Review\ndescription: Reviews PRs\n---\n\ncontent"
+
+	_, err := ParseSkill("code-review", []byte(raw))
+	if err == nil {
+		t.Fatal("expected error for skill_id mismatch")
 	}
 }
 
-func TestSerializeSkillFrontmatter(t *testing.T) {
-	skill := &Skill{
+func TestParseSkill_MissingFrontmatter(t *testing.T) {
+	raw := "# Just markdown\n\nNo frontmatter."
+
+	_, err := ParseSkill("test", []byte(raw))
+	if err == nil {
+		t.Fatal("expected error for missing frontmatter")
+	}
+}
+
+func TestParseSkill_NoOrigin(t *testing.T) {
+	raw := "---\nskill_id: custom\nname: Custom Skill\ndescription: Project-created skill\n---\n\n# Custom"
+
+	skill, err := ParseSkill("custom", []byte(raw))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if skill.Origin != "" {
+		t.Errorf("Origin = %q, want empty", skill.Origin)
+	}
+}
+
+func TestSkill_Serialize(t *testing.T) {
+	skill := Skill{
 		SkillID:     "code-review",
 		Name:        "Code Review",
 		Description: "Reviews pull requests",
 		Origin:      "code-review@user123@github.com",
 		Version:     "1.0",
 		Tags:        []string{"review", "quality"},
-		Content:     []byte("# Code Review\n\nContent here."),
+		Body:        []byte("# Code Review\n\nContent here."),
 	}
 
-	output := skill.Serialize()
-	if !contains(output, "skill_id: code-review") {
-		t.Errorf("frontmatter missing skill_id")
+	data := skill.Serialize()
+	s := string(data)
+
+	if !strings.Contains(s, "skill_id: code-review") {
+		t.Error("missing skill_id in output")
 	}
-	if !contains(output, "origin: code-review@user123@github.com") {
-		t.Errorf("frontmatter missing origin")
+	if !strings.Contains(s, "origin: code-review@user123@github.com") {
+		t.Error("missing origin in output")
 	}
-	if !contains(output, "# Code Review\n\nContent here.") {
-		t.Errorf("content not preserved in output")
+	if !strings.Contains(s, "# Code Review\n\nContent here.") {
+		t.Error("missing body in output")
+	}
+
+	// Round-trip: serialize then parse should produce the same skill.
+	parsed, err := ParseSkill("code-review", data)
+	if err != nil {
+		t.Fatalf("round-trip parse failed: %v", err)
+	}
+	if parsed.SkillID != skill.SkillID {
+		t.Errorf("round-trip SkillID = %q, want %q", parsed.SkillID, skill.SkillID)
+	}
+	if parsed.Origin != skill.Origin {
+		t.Errorf("round-trip Origin = %q, want %q", parsed.Origin, skill.Origin)
 	}
 }
 
-func contains(s string, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
+func TestSkill_Serialize_NoOptionalFields(t *testing.T) {
+	skill := Skill{
+		SkillID:     "simple",
+		Name:        "Simple Skill",
+		Description: "A simple skill",
+		Body:        []byte("# Simple"),
 	}
-	return false
+
+	data := skill.Serialize()
+	s := string(data)
+
+	if strings.Contains(s, "origin:") {
+		t.Error("should not contain origin when empty")
+	}
+	if strings.Contains(s, "version:") {
+		t.Error("should not contain version when empty")
+	}
+	if strings.Contains(s, "tags:") {
+		t.Error("should not contain tags when empty")
+	}
 }
 ```
 
 - [ ] **Step 2: Run tests to verify they fail**
 
 ```bash
-cd /Users/alexandertrakhimenok/projects/synchestra-io/synchestra
-go test ./pkg/skills -v
+go test ./pkg/skills/ -v
 ```
 
-Expected: FAIL (package doesn't exist yet)
+Expected: FAIL — package does not exist.
 
-- [ ] **Step 3: Write the Skill data model**
+- [ ] **Step 3: Write the Skill type and parsing logic**
 
 ```go
+// pkg/skills/skill.go
 package skills
 
+// Features implemented: agent-skills
+
 import (
+	"bytes"
 	"fmt"
-	"regexp"
-	"strings"
+
+	"gopkg.in/yaml.v3"
 )
 
-// Skill represents a skill definition with frontmatter and content.
+// Skill represents a skill definition parsed from a SKILL.md file.
+// The file format is YAML frontmatter delimited by "---" followed by
+// a markdown body.
 type Skill struct {
 	SkillID     string   `yaml:"skill_id"`
 	Name        string   `yaml:"name"`
@@ -158,1047 +209,469 @@ type Skill struct {
 	Origin      string   `yaml:"origin,omitempty"`
 	Version     string   `yaml:"version,omitempty"`
 	Tags        []string `yaml:"tags,omitempty"`
-	Content     []byte   // Markdown content without frontmatter
+	Body        []byte   `yaml:"-"` // markdown content after frontmatter
 }
 
-// ParseSkill parses a SKILL.md file content and extracts frontmatter + body.
-// skillID is the expected skill_id; it must match the frontmatter.
-func ParseSkill(skillID string, content string) (*Skill, error) {
-	// Extract frontmatter
-	fm, body, err := extractFrontmatter(content)
+var frontmatterDelim = []byte("---")
+
+// ParseSkill parses a SKILL.md file. expectedID is the skill_id from the
+// directory name; it must match the frontmatter skill_id.
+func ParseSkill(expectedID string, data []byte) (*Skill, error) {
+	fm, body, err := splitFrontmatter(data)
 	if err != nil {
 		return nil, err
 	}
 
-	// Parse YAML frontmatter
-	parsedFM := parseFrontmatter(fm)
-
-	// Validate required fields
-	if parsedFM["skill_id"] == "" {
-		return nil, fmt.Errorf("skill_id mismatch: expected '%s', got missing frontmatter", skillID)
-	}
-	if parsedFM["skill_id"] != skillID {
-		return nil, fmt.Errorf("skill_id mismatch: expected '%s', got '%s'", skillID, parsedFM["skill_id"])
-	}
-	if parsedFM["name"] == "" {
-		return nil, fmt.Errorf("missing required field: name")
-	}
-	if parsedFM["description"] == "" {
-		return nil, fmt.Errorf("missing required field: description")
+	var s Skill
+	if err := yaml.Unmarshal(fm, &s); err != nil {
+		return nil, fmt.Errorf("parsing skill frontmatter: %w", err)
 	}
 
-	skill := &Skill{
-		SkillID:     parsedFM["skill_id"],
-		Name:        parsedFM["name"],
-		Description: parsedFM["description"],
-		Origin:      parsedFM["origin"],
-		Version:     parsedFM["version"],
-		Tags:        parseStringArray(parsedFM["tags"]),
-		Content:     []byte(body),
+	if s.SkillID == "" {
+		return nil, fmt.Errorf("skill_id is required in frontmatter")
+	}
+	if s.SkillID != expectedID {
+		return nil, fmt.Errorf("skill_id mismatch: frontmatter has %q, directory is %q", s.SkillID, expectedID)
+	}
+	if s.Name == "" {
+		return nil, fmt.Errorf("name is required in frontmatter")
+	}
+	if s.Description == "" {
+		return nil, fmt.Errorf("description is required in frontmatter")
 	}
 
-	return skill, nil
+	s.Body = body
+	return &s, nil
 }
 
-// Serialize converts a Skill back to SKILL.md format with frontmatter.
-func (s *Skill) Serialize() string {
-	var fm strings.Builder
-	fm.WriteString("---\n")
-	fm.WriteString(fmt.Sprintf("skill_id: %s\n", s.SkillID))
-	fm.WriteString(fmt.Sprintf("name: %s\n", s.Name))
-	fm.WriteString(fmt.Sprintf("description: %s\n", s.Description))
+// Serialize renders the skill back to SKILL.md format (frontmatter + body).
+func (s *Skill) Serialize() []byte {
+	fm, _ := yaml.Marshal(s) // Skill yaml tags control output
 
-	if s.Origin != "" {
-		fm.WriteString(fmt.Sprintf("origin: %s\n", s.Origin))
-	}
-	if s.Version != "" {
-		fm.WriteString(fmt.Sprintf("version: %s\n", s.Version))
-	}
-	if len(s.Tags) > 0 {
-		fm.WriteString(fmt.Sprintf("tags: %v\n", s.Tags))
-	}
-	fm.WriteString("---\n\n")
-	fm.Write(s.Content)
-
-	return fm.String()
-}
-
-// Helper: extract frontmatter and body from markdown
-func extractFrontmatter(content string) (string, string, error) {
-	lines := strings.Split(content, "\n")
-	if len(lines) < 3 || lines[0] != "---" {
-		return "", "", fmt.Errorf("missing frontmatter delimiter")
-	}
-
-	fmEnd := -1
-	for i := 1; i < len(lines); i++ {
-		if lines[i] == "---" {
-			fmEnd = i
-			break
+	var buf bytes.Buffer
+	buf.Write(frontmatterDelim)
+	buf.WriteByte('\n')
+	buf.Write(fm)
+	buf.Write(frontmatterDelim)
+	buf.WriteByte('\n')
+	if len(s.Body) > 0 {
+		buf.WriteByte('\n')
+		buf.Write(s.Body)
+		// Ensure trailing newline.
+		if s.Body[len(s.Body)-1] != '\n' {
+			buf.WriteByte('\n')
 		}
 	}
-	if fmEnd == -1 {
-		return "", "", fmt.Errorf("unclosed frontmatter")
+	return buf.Bytes()
+}
+
+// splitFrontmatter separates YAML frontmatter from the body.
+// Expects the file to start with "---\n".
+func splitFrontmatter(data []byte) (frontmatter, body []byte, err error) {
+	data = bytes.TrimLeft(data, "\n")
+	if !bytes.HasPrefix(data, frontmatterDelim) {
+		return nil, nil, fmt.Errorf("missing frontmatter: file must start with ---")
 	}
 
-	fm := strings.Join(lines[1:fmEnd], "\n")
-	body := strings.Join(lines[fmEnd+1:], "\n")
-	body = strings.TrimSpace(body)
+	// Find closing delimiter.
+	rest := data[len(frontmatterDelim)+1:] // skip "---\n"
+	idx := bytes.Index(rest, append(frontmatterDelim, '\n'))
+	if idx < 0 {
+		return nil, nil, fmt.Errorf("unclosed frontmatter: missing closing ---")
+	}
 
+	fm := rest[:idx]
+	body = bytes.TrimLeft(rest[idx+len(frontmatterDelim)+1:], "\n")
 	return fm, body, nil
-}
-
-// Helper: parse YAML-like frontmatter into map
-func parseFrontmatter(fm string) map[string]string {
-	result := make(map[string]string)
-	for _, line := range strings.Split(fm, "\n") {
-		line = strings.TrimSpace(line)
-		if line == "" || strings.HasPrefix(line, "#") {
-			continue
-		}
-		parts := strings.SplitN(line, ":", 2)
-		if len(parts) == 2 {
-			key := strings.TrimSpace(parts[0])
-			val := strings.TrimSpace(parts[1])
-			result[key] = val
-		}
-	}
-	return result
-}
-
-// Helper: parse tags field (YAML array)
-func parseStringArray(raw string) []string {
-	if raw == "" {
-		return nil
-	}
-	// Simple parser for [item1, item2] format
-	raw = strings.Trim(raw, "[]")
-	if raw == "" {
-		return nil
-	}
-	parts := strings.Split(raw, ",")
-	var result []string
-	for _, p := range parts {
-		p = strings.TrimSpace(p)
-		result = append(result, p)
-	}
-	return result
 }
 ```
 
 - [ ] **Step 4: Run tests to verify they pass**
 
 ```bash
-go test ./pkg/skills -v
+go test ./pkg/skills/ -v
 ```
 
-Expected: PASS
+Expected: PASS — all tests green.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add pkg/skills/model.go pkg/skills/model_test.go
-git commit -m "feat: add skill data model and frontmatter parsing"
+git add pkg/skills/skill.go pkg/skills/skill_test.go
+git commit -m "feat(skills): add Skill type and SKILL.md parsing with yaml.v3"
 ```
 
 ---
 
-## Phase 2: User Skills (Firestore)
-
-### Task 2: Firestore User Skills CRUD
-
-**Files:**
-- Create: `pkg/skills/firestore.go`
-- Create: `pkg/skills/firestore_test.go`
-
-**Context:**
-User skills are stored in Firestore. This task implements create, read, update, delete operations.
-
-- [ ] **Step 1: Write tests for Firestore operations**
-
-```go
-package skills
-
-import (
-	"context"
-	"testing"
-	"time"
-
-	"cloud.google.com/go/firestore"
-)
-
-// MockFirestore for testing (use firestore emulator in real env)
-type mockFS struct{}
-
-func TestCreateUserSkill(t *testing.T) {
-	ctx := context.Background()
-	repo := &FirestoreSkillRepository{} // initialized with real client in integration test
-
-	skill := &UserSkill{
-		SkillID:     "code-review",
-		Name:        "Code Review",
-		Description: "Reviews pull requests",
-		Content:     "# Code Review\n\nContent",
-		Tags:        []string{"review"},
-	}
-
-	userID := "user123"
-	docID, err := repo.CreateUserSkill(ctx, userID, skill)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	if docID == "" {
-		t.Fatal("expected non-empty docID")
-	}
-}
-
-func TestGetUserSkill(t *testing.T) {
-	ctx := context.Background()
-	repo := &FirestoreSkillRepository{}
-
-	userID := "user123"
-	skillID := "code-review"
-	skill, err := repo.GetUserSkill(ctx, userID, skillID)
-	if err != nil && !isNotFound(err) {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	if skill != nil && skill.SkillID != skillID {
-		t.Errorf("expected SkillID '%s', got '%s'", skillID, skill.SkillID)
-	}
-}
-
-func TestListUserSkills(t *testing.T) {
-	ctx := context.Background()
-	repo := &FirestoreSkillRepository{}
-
-	userID := "user123"
-	skills, err := repo.ListUserSkills(ctx, userID)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	if skills == nil {
-		t.Fatal("expected skills list, got nil")
-	}
-}
-
-func TestUpdateUserSkill(t *testing.T) {
-	ctx := context.Background()
-	repo := &FirestoreSkillRepository{}
-
-	userID := "user123"
-	skillID := "code-review"
-	updates := map[string]interface{}{
-		"name": "Enhanced Code Review",
-	}
-
-	err := repo.UpdateUserSkill(ctx, userID, skillID, updates)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-}
-
-func TestDeleteUserSkill(t *testing.T) {
-	ctx := context.Background()
-	repo := &FirestoreSkillRepository{}
-
-	userID := "user123"
-	skillID := "code-review"
-
-	err := repo.DeleteUserSkill(ctx, userID, skillID)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-}
-
-func isNotFound(err error) bool {
-	// Check if error is Firestore "not found"
-	return firestore.IsNotFound(err) || err == firestore.ErrNotFound
-}
-```
-
-- [ ] **Step 2: Run tests to verify they fail**
-
-```bash
-go test ./pkg/skills -v -run TestCreateUserSkill
-```
-
-Expected: FAIL (FirestoreSkillRepository not defined)
-
-- [ ] **Step 3: Write Firestore repository**
-
-```go
-package skills
-
-import (
-	"context"
-	"fmt"
-	"time"
-
-	"cloud.google.com/go/firestore"
-)
-
-// UserSkill represents a skill stored in Firestore user collection.
-type UserSkill struct {
-	SkillID     string    `firestore:"skill_id"`
-	Name        string    `firestore:"name"`
-	Description string    `firestore:"description"`
-	Content     string    `firestore:"content"` // full SKILL.md content
-	Tags        []string  `firestore:"tags"`
-	Version     string    `firestore:"version,omitempty"`
-	CreatedAt   time.Time `firestore:"created_at,serverTimestamp"`
-	UpdatedAt   time.Time `firestore:"updated_at,serverTimestamp"`
-}
-
-// FirestoreSkillRepository handles user skill CRUD in Firestore.
-type FirestoreSkillRepository struct {
-	client *firestore.Client
-}
-
-// NewFirestoreSkillRepository creates a new repository.
-func NewFirestoreSkillRepository(client *firestore.Client) *FirestoreSkillRepository {
-	return &FirestoreSkillRepository{client: client}
-}
-
-// CreateUserSkill creates a new skill in the user's collection.
-// Returns the document ID.
-func (r *FirestoreSkillRepository) CreateUserSkill(ctx context.Context, userID string, skill *UserSkill) (string, error) {
-	if skill.SkillID == "" {
-		return "", fmt.Errorf("skill_id is required")
-	}
-
-	doc := r.client.Collection("users").Doc(userID).Collection("skills").Doc(skill.SkillID)
-	_, err := doc.Set(ctx, skill)
-	if err != nil {
-		return "", fmt.Errorf("failed to create skill: %w", err)
-	}
-
-	return doc.ID, nil
-}
-
-// GetUserSkill retrieves a skill by ID.
-func (r *FirestoreSkillRepository) GetUserSkill(ctx context.Context, userID, skillID string) (*UserSkill, error) {
-	doc, err := r.client.Collection("users").Doc(userID).Collection("skills").Doc(skillID).Get(ctx)
-	if err != nil {
-		if firestore.IsNotFound(err) {
-			return nil, nil // not found is not an error
-		}
-		return nil, fmt.Errorf("failed to get skill: %w", err)
-	}
-
-	var skill UserSkill
-	if err := doc.DataTo(&skill); err != nil {
-		return nil, fmt.Errorf("failed to parse skill: %w", err)
-	}
-
-	return &skill, nil
-}
-
-// ListUserSkills lists all skills for a user.
-func (r *FirestoreSkillRepository) ListUserSkills(ctx context.Context, userID string) ([]*UserSkill, error) {
-	docs, err := r.client.Collection("users").Doc(userID).Collection("skills").Documents(ctx).GetAll()
-	if err != nil {
-		return nil, fmt.Errorf("failed to list skills: %w", err)
-	}
-
-	var skills []*UserSkill
-	for _, doc := range docs {
-		var skill UserSkill
-		if err := doc.DataTo(&skill); err != nil {
-			return nil, fmt.Errorf("failed to parse skill: %w", err)
-		}
-		skills = append(skills, &skill)
-	}
-
-	return skills, nil
-}
-
-// UpdateUserSkill updates specific fields of a skill.
-func (r *FirestoreSkillRepository) UpdateUserSkill(ctx context.Context, userID, skillID string, updates map[string]interface{}) error {
-	updates["updated_at"] = time.Now()
-
-	_, err := r.client.Collection("users").Doc(userID).Collection("skills").Doc(skillID).Update(ctx, toUpdatePaths(updates))
-	if err != nil {
-		return fmt.Errorf("failed to update skill: %w", err)
-	}
-
-	return nil
-}
-
-// DeleteUserSkill deletes a skill.
-func (r *FirestoreSkillRepository) DeleteUserSkill(ctx context.Context, userID, skillID string) error {
-	_, err := r.client.Collection("users").Doc(userID).Collection("skills").Doc(skillID).Delete(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to delete skill: %w", err)
-	}
-
-	return nil
-}
-
-// toUpdatePaths converts a map to firestore.Update paths
-func toUpdatePaths(updates map[string]interface{}) []firestore.Update {
-	var paths []firestore.Update
-	for key, val := range updates {
-		paths = append(paths, firestore.Update{Path: key, Value: val})
-	}
-	return paths
-}
-```
-
-- [ ] **Step 4: Run tests (with Firestore emulator)**
-
-```bash
-# Start Firestore emulator (if not running)
-# gcloud beta emulators firestore start
-
-FIRESTORE_EMULATOR_HOST=localhost:8080 go test ./pkg/skills -v -run TestCreateUserSkill
-```
-
-Expected: PASS (with emulator running)
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add pkg/skills/firestore.go pkg/skills/firestore_test.go
-git commit -m "feat: implement user skills Firestore repository"
-```
-
----
-
-### Task 3: Hub API Endpoints for User Skills
-
-**Files:**
-- Create: `synchestra-hub/src/api/skills.go` (or modify existing API router)
-- Create: `synchestra-hub/tests/api/skills_test.go`
-
-**Context:**
-Hub exposes REST endpoints for user skill CRUD. These are called by the Angular frontend.
-
-- [ ] **Step 1: Write API endpoint tests**
-
-```go
-package api
-
-import (
-	"bytes"
-	"encoding/json"
-	"net/http"
-	"net/http/httptest"
-	"testing"
-)
-
-func TestCreateUserSkillEndpoint(t *testing.T) {
-	// Setup
-	handler := setupTestHandler() // returns *http.ServeMux with routes
-
-	// Request body
-	body := map[string]interface{}{
-		"name":        "Code Review",
-		"description": "Reviews pull requests",
-		"content":     "# Code Review\n\n...",
-		"tags":        []string{"review"},
-	}
-	bodyBytes, _ := json.Marshal(body)
-
-	// Make request
-	req := httptest.NewRequest("POST", "/api/v1/users/user123/skills", bytes.NewReader(bodyBytes))
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer test-token")
-
-	w := httptest.NewRecorder()
-	handler.ServeHTTP(w, req)
-
-	if w.Code != http.StatusCreated {
-		t.Errorf("expected status 201, got %d", w.Code)
-	}
-
-	var resp map[string]interface{}
-	json.NewDecoder(w.Body).Decode(&resp)
-	if resp["skill_id"] == "" {
-		t.Error("expected skill_id in response")
-	}
-}
-
-func TestListUserSkillsEndpoint(t *testing.T) {
-	handler := setupTestHandler()
-
-	req := httptest.NewRequest("GET", "/api/v1/users/user123/skills", nil)
-	req.Header.Set("Authorization", "Bearer test-token")
-
-	w := httptest.NewRecorder()
-	handler.ServeHTTP(w, req)
-
-	if w.Code != http.StatusOK {
-		t.Errorf("expected status 200, got %d", w.Code)
-	}
-
-	var resp map[string]interface{}
-	json.NewDecoder(w.Body).Decode(&resp)
-	if resp["skills"] == nil {
-		t.Error("expected skills in response")
-	}
-}
-
-func TestGetUserSkillEndpoint(t *testing.T) {
-	handler := setupTestHandler()
-
-	req := httptest.NewRequest("GET", "/api/v1/users/user123/skills/code-review", nil)
-	req.Header.Set("Authorization", "Bearer test-token")
-
-	w := httptest.NewRecorder()
-	handler.ServeHTTP(w, req)
-
-	if w.Code != http.StatusOK && w.Code != http.StatusNotFound {
-		t.Errorf("expected status 200 or 404, got %d", w.Code)
-	}
-}
-
-func setupTestHandler() *http.ServeMux {
-	// In real implementation, wire up dependencies
-	return http.NewServeMux()
-}
-```
-
-- [ ] **Step 2: Run tests to verify they fail**
-
-```bash
-go test ./synchestra-hub/tests/api -v -run TestCreateUserSkillEndpoint
-```
-
-Expected: FAIL (handlers not defined)
-
-- [ ] **Step 3: Write API handlers**
-
-```go
-package api
-
-import (
-	"context"
-	"encoding/json"
-	"fmt"
-	"net/http"
-	"strings"
-
-	"synchestra/pkg/skills"
-)
-
-// CreateUserSkillRequest is the request body for creating a skill.
-type CreateUserSkillRequest struct {
-	SkillID     string   `json:"skill_id,omitempty"`
-	Name        string   `json:"name"`
-	Description string   `json:"description"`
-	Content     string   `json:"content"`
-	Tags        []string `json:"tags,omitempty"`
-	Version     string   `json:"version,omitempty"`
-}
-
-// SkillResponse is the response body for a skill.
-type SkillResponse struct {
-	SkillID     string `json:"skill_id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	CreatedAt   string `json:"created_at"`
-	UpdatedAt   string `json:"updated_at"`
-}
-
-// UserSkillsHandler handles all user skill endpoints.
-type UserSkillsHandler struct {
-	skillRepo *skills.FirestoreSkillRepository
-}
-
-// HandleCreateUserSkill creates a new user skill.
-// POST /api/v1/users/{user_id}/skills
-func (h *UserSkillsHandler) HandleCreateUserSkill(w http.ResponseWriter, r *http.Request) {
-	userID := extractUserID(r)
-	if userID == "" {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
-		return
-	}
-
-	var req CreateUserSkillRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid request body", http.StatusBadRequest)
-		return
-	}
-
-	// Auto-generate skill_id from name if not provided
-	if req.SkillID == "" {
-		req.SkillID = slugify(req.Name)
-	}
-
-	skill := &skills.UserSkill{
-		SkillID:     req.SkillID,
-		Name:        req.Name,
-		Description: req.Description,
-		Content:     req.Content,
-		Tags:        req.Tags,
-		Version:     req.Version,
-	}
-
-	ctx := r.Context()
-	docID, err := h.skillRepo.CreateUserSkill(ctx, userID, skill)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("failed to create skill: %v", err), http.StatusInternalServerError)
-		return
-	}
-
-	resp := map[string]string{
-		"skill_id": req.SkillID,
-		"doc_id":   docID,
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(resp)
-}
-
-// HandleListUserSkills lists all user skills.
-// GET /api/v1/users/{user_id}/skills
-func (h *UserSkillsHandler) HandleListUserSkills(w http.ResponseWriter, r *http.Request) {
-	userID := extractUserID(r)
-	if userID == "" {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
-		return
-	}
-
-	ctx := r.Context()
-	skillsList, err := h.skillRepo.ListUserSkills(ctx, userID)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("failed to list skills: %v", err), http.StatusInternalServerError)
-		return
-	}
-
-	if skillsList == nil {
-		skillsList = []*skills.UserSkill{}
-	}
-
-	resp := map[string]interface{}{
-		"skills": skillsList,
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
-}
-
-// HandleGetUserSkill gets a specific user skill.
-// GET /api/v1/users/{user_id}/skills/{skill_id}
-func (h *UserSkillsHandler) HandleGetUserSkill(w http.ResponseWriter, r *http.Request) {
-	userID := extractUserID(r)
-	skillID := extractSkillID(r)
-	if userID == "" || skillID == "" {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
-		return
-	}
-
-	ctx := r.Context()
-	skill, err := h.skillRepo.GetUserSkill(ctx, userID, skillID)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("failed to get skill: %v", err), http.StatusInternalServerError)
-		return
-	}
-
-	if skill == nil {
-		http.Error(w, "skill not found", http.StatusNotFound)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(skill)
-}
-
-// Helper: extract user ID from request context/token
-func extractUserID(r *http.Request) string {
-	// In real implementation, extract from JWT token
-	return "user123" // placeholder
-}
-
-// Helper: extract skill_id from URL path
-func extractSkillID(r *http.Request) string {
-	parts := strings.Split(r.URL.Path, "/")
-	if len(parts) > 0 {
-		return parts[len(parts)-1]
-	}
-	return ""
-}
-
-// Helper: convert name to slug
-func slugify(name string) string {
-	s := strings.ToLower(name)
-	s = strings.ReplaceAll(s, " ", "-")
-	return s
-}
-```
-
-- [ ] **Step 4: Register handlers in router**
-
-In your main router setup (e.g., `main.go` or `api/router.go`):
-
-```go
-func setupRoutes(skillRepo *skills.FirestoreSkillRepository) *http.ServeMux {
-	mux := http.NewServeMux()
-
-	skillHandler := &UserSkillsHandler{skillRepo: skillRepo}
-
-	mux.HandleFunc("POST /api/v1/users/{user_id}/skills", skillHandler.HandleCreateUserSkill)
-	mux.HandleFunc("GET /api/v1/users/{user_id}/skills", skillHandler.HandleListUserSkills)
-	mux.HandleFunc("GET /api/v1/users/{user_id}/skills/{skill_id}", skillHandler.HandleGetUserSkill)
-
-	return mux
-}
-```
-
-- [ ] **Step 5: Run tests**
-
-```bash
-go test ./synchestra-hub/tests/api -v
-```
-
-Expected: PASS
-
-- [ ] **Step 6: Commit**
-
-```bash
-git add synchestra-hub/api/skills.go synchestra-hub/tests/api/skills_test.go
-git commit -m "feat: add user skills API endpoints (CRUD)"
-```
-
----
-
-## Phase 3: Project Skills (Git-Backed)
-
-### Task 4: Project Skills Git Integration
+### Task 2: Project Skills Discovery and Mutation
 
 **Files:**
 - Create: `pkg/skills/project.go`
 - Create: `pkg/skills/project_test.go`
 
 **Context:**
-Project skills are stored in `synchestra/skills/{skill_id}/SKILL.md`. This task handles reading skills from disk and writing commits when adding skills from user collection.
+Read all skills from a project's `synchestra/skills/` directory, and write skills into it. Used by the runner (read) and by cloud API (write + git commit). Follows existing `pkg/cli/gitops/` pattern of using `os/exec` for git.
 
-- [ ] **Step 1: Write tests for project skill operations**
+- [ ] **Step 1: Write the failing tests**
 
 ```go
+// pkg/skills/project_test.go
 package skills
 
+// Features implemented: agent-skills
+
 import (
-	"context"
 	"os"
 	"path/filepath"
 	"testing"
 )
 
-func TestDiscoverProjectSkills(t *testing.T) {
-	// Setup temp project directory
-	tmpDir := t.TempDir()
-	skillsDir := filepath.Join(tmpDir, "synchestra", "skills")
-	os.MkdirAll(skillsDir, 0755)
-
-	// Create two skills
-	createTestSkill(t, skillsDir, "code-review", "---\nskill_id: code-review\nname: Code Review\ndescription: Reviews PRs\norigin: code-review@user123@github.com\n---\n# Code Review")
-	createTestSkill(t, skillsDir, "go-test", "---\nskill_id: go-test\nname: Go Testing\ndescription: Tests Go\n---\n# Go Testing")
-
-	// Discover skills
-	skills, err := DiscoverProjectSkills(tmpDir)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+func writeTestSkill(t *testing.T, dir, skillID, content string) {
+	t.Helper()
+	skillDir := filepath.Join(dir, "synchestra", "skills", skillID)
+	if err := os.MkdirAll(skillDir, 0755); err != nil {
+		t.Fatal(err)
 	}
-
-	if len(skills) != 2 {
-		t.Errorf("expected 2 skills, got %d", len(skills))
-	}
-
-	ids := []string{}
-	for _, s := range skills {
-		ids = append(ids, s.SkillID)
-	}
-
-	if !contains(ids, "code-review") || !contains(ids, "go-test") {
-		t.Errorf("expected skills code-review and go-test, got %v", ids)
+	if err := os.WriteFile(filepath.Join(skillDir, SkillFile), []byte(content), 0644); err != nil {
+		t.Fatal(err)
 	}
 }
 
-func TestAddSkillToProject(t *testing.T) {
-	tmpDir := t.TempDir()
-	skillsDir := filepath.Join(tmpDir, "synchestra", "skills")
-	os.MkdirAll(skillsDir, 0755)
+func TestDiscoverProjectSkills(t *testing.T) {
+	root := t.TempDir()
+	writeTestSkill(t, root, "code-review",
+		"---\nskill_id: code-review\nname: Code Review\ndescription: Reviews PRs\n---\n\n# Code Review")
+	writeTestSkill(t, root, "go-test",
+		"---\nskill_id: go-test\nname: Go Testing\ndescription: Tests Go code\n---\n\n# Go Testing")
 
+	skills, err := DiscoverProjectSkills(root)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(skills) != 2 {
+		t.Fatalf("got %d skills, want 2", len(skills))
+	}
+
+	ids := map[string]bool{}
+	for _, s := range skills {
+		ids[s.SkillID] = true
+	}
+	if !ids["code-review"] || !ids["go-test"] {
+		t.Errorf("missing expected skill IDs, got %v", ids)
+	}
+}
+
+func TestDiscoverProjectSkills_NoDir(t *testing.T) {
+	root := t.TempDir() // no synchestra/skills/ created
+
+	skills, err := DiscoverProjectSkills(root)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(skills) != 0 {
+		t.Errorf("got %d skills, want 0 for missing directory", len(skills))
+	}
+}
+
+func TestWriteProjectSkill(t *testing.T) {
+	root := t.TempDir()
 	skill := &Skill{
 		SkillID:     "new-skill",
 		Name:        "New Skill",
 		Description: "A new skill",
 		Origin:      "new-skill@user123@github.com",
-		Content:     []byte("# New Skill"),
+		Body:        []byte("# New Skill\n\nContent."),
 	}
 
-	err := AddSkillToProject(tmpDir, skill)
-	if err != nil {
+	if err := WriteProjectSkill(root, skill); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	// Verify file was created
-	skillFile := filepath.Join(skillsDir, "new-skill", "SKILL.md")
-	if _, err := os.Stat(skillFile); os.IsNotExist(err) {
-		t.Errorf("expected skill file at %s", skillFile)
+	// Verify file exists and round-trips.
+	path := filepath.Join(root, "synchestra", "skills", "new-skill", SkillFile)
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("skill file not found: %v", err)
 	}
 
-	// Verify content
-	content, _ := os.ReadFile(skillFile)
-	if !contains(string(content), "skill_id: new-skill") {
-		t.Errorf("skill content missing frontmatter")
+	parsed, err := ParseSkill("new-skill", data)
+	if err != nil {
+		t.Fatalf("round-trip parse failed: %v", err)
+	}
+	if parsed.Origin != "new-skill@user123@github.com" {
+		t.Errorf("Origin = %q, want %q", parsed.Origin, "new-skill@user123@github.com")
 	}
 }
 
-func createTestSkill(t *testing.T, skillsDir, skillID, content string) {
-	dir := filepath.Join(skillsDir, skillID)
-	os.MkdirAll(dir, 0755)
-	file := filepath.Join(dir, "SKILL.md")
-	os.WriteFile(file, []byte(content), 0644)
+func TestRemoveProjectSkill(t *testing.T) {
+	root := t.TempDir()
+	writeTestSkill(t, root, "doomed",
+		"---\nskill_id: doomed\nname: Doomed\ndescription: Will be removed\n---\n\n# Doomed")
+
+	if err := RemoveProjectSkill(root, "doomed"); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	dir := filepath.Join(root, "synchestra", "skills", "doomed")
+	if _, err := os.Stat(dir); !os.IsNotExist(err) {
+		t.Errorf("skill directory should be removed, got err=%v", err)
+	}
 }
 
-func contains(arr []string, s string) bool {
-	for _, item := range arr {
-		if item == s {
-			return true
+func TestCopySkillsToTarget(t *testing.T) {
+	root := t.TempDir()
+	target := t.TempDir()
+
+	writeTestSkill(t, root, "s1",
+		"---\nskill_id: s1\nname: S1\ndescription: Skill 1\n---\n\n# S1")
+	writeTestSkill(t, root, "s2",
+		"---\nskill_id: s2\nname: S2\ndescription: Skill 2\n---\n\n# S2")
+
+	n, err := CopySkillsToTarget(root, target)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if n != 2 {
+		t.Errorf("copied %d skills, want 2", n)
+	}
+
+	// Verify target has the files.
+	for _, id := range []string{"s1", "s2"} {
+		path := filepath.Join(target, id, SkillFile)
+		if _, err := os.Stat(path); err != nil {
+			t.Errorf("expected %s at target, got err: %v", id, err)
 		}
 	}
-	return false
+}
+
+func TestCopySkillsToTarget_NoSkills(t *testing.T) {
+	root := t.TempDir()
+	target := t.TempDir()
+
+	n, err := CopySkillsToTarget(root, target)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if n != 0 {
+		t.Errorf("copied %d skills, want 0", n)
+	}
 }
 ```
 
 - [ ] **Step 2: Run tests to verify they fail**
 
 ```bash
-go test ./pkg/skills -v -run TestDiscoverProjectSkills
+go test ./pkg/skills/ -v -run "TestDiscover|TestWrite|TestRemove|TestCopy"
 ```
 
-Expected: FAIL
+Expected: FAIL — functions not defined.
 
-- [ ] **Step 3: Write project skills operations**
+- [ ] **Step 3: Write the project skills operations**
 
 ```go
+// pkg/skills/project.go
 package skills
 
+// Features implemented: agent-skills
+
 import (
+	"errors"
 	"fmt"
+	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 )
 
-// DiscoverProjectSkills finds all skills in a project's synchestra/skills directory.
+// SkillFile is the filename for skill definitions.
+const SkillFile = "SKILL.md"
+
+// ProjectSkillsDir returns the path to the skills directory inside a project.
+func ProjectSkillsDir(projectRoot string) string {
+	return filepath.Join(projectRoot, "synchestra", "skills")
+}
+
+// DiscoverProjectSkills reads all skills from projectRoot/synchestra/skills/.
+// Returns an empty slice (not error) if the directory does not exist.
 func DiscoverProjectSkills(projectRoot string) ([]*Skill, error) {
-	skillsDir := filepath.Join(projectRoot, "synchestra", "skills")
+	dir := ProjectSkillsDir(projectRoot)
 
-	// Check if directory exists
-	if _, err := os.Stat(skillsDir); os.IsNotExist(err) {
-		return nil, nil // no skills directory
-	}
-
-	entries, err := os.ReadDir(skillsDir)
+	entries, err := os.ReadDir(dir)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read skills directory: %w", err)
+		if errors.Is(err, fs.ErrNotExist) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("reading skills directory: %w", err)
 	}
 
 	var skills []*Skill
-
 	for _, entry := range entries {
 		if !entry.IsDir() {
 			continue
 		}
-
 		skillID := entry.Name()
-		skillFile := filepath.Join(skillsDir, skillID, "SKILL.md")
-
-		// Read SKILL.md
-		content, err := os.ReadFile(skillFile)
+		data, err := os.ReadFile(filepath.Join(dir, skillID, SkillFile))
 		if err != nil {
-			return nil, fmt.Errorf("failed to read skill %s: %w", skillID, err)
+			if errors.Is(err, fs.ErrNotExist) {
+				continue // directory without SKILL.md, skip
+			}
+			return nil, fmt.Errorf("reading skill %s: %w", skillID, err)
 		}
-
-		// Parse skill
-		skill, err := ParseSkill(skillID, string(content))
+		skill, err := ParseSkill(skillID, data)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse skill %s: %w", skillID, err)
+			return nil, fmt.Errorf("parsing skill %s: %w", skillID, err)
 		}
-
 		skills = append(skills, skill)
 	}
-
 	return skills, nil
 }
 
-// AddSkillToProject writes a skill to the project's synchestra/skills directory.
-func AddSkillToProject(projectRoot string, skill *Skill) error {
-	skillDir := filepath.Join(projectRoot, "synchestra", "skills", skill.SkillID)
-
-	// Create directory
-	if err := os.MkdirAll(skillDir, 0755); err != nil {
-		return fmt.Errorf("failed to create skill directory: %w", err)
+// WriteProjectSkill writes a skill to projectRoot/synchestra/skills/{skill_id}/SKILL.md.
+func WriteProjectSkill(projectRoot string, skill *Skill) error {
+	dir := filepath.Join(ProjectSkillsDir(projectRoot), skill.SkillID)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return fmt.Errorf("creating skill directory: %w", err)
 	}
-
-	// Write SKILL.md
-	skillFile := filepath.Join(skillDir, "SKILL.md")
-	serialized := skill.Serialize()
-
-	if err := os.WriteFile(skillFile, []byte(serialized), 0644); err != nil {
-		return fmt.Errorf("failed to write skill file: %w", err)
+	data := skill.Serialize()
+	if err := os.WriteFile(filepath.Join(dir, SkillFile), data, 0644); err != nil {
+		return fmt.Errorf("writing skill file: %w", err)
 	}
-
 	return nil
 }
 
-// RemoveSkillFromProject deletes a skill directory from the project.
-func RemoveSkillFromProject(projectRoot string, skillID string) error {
-	skillDir := filepath.Join(projectRoot, "synchestra", "skills", skillID)
+// RemoveProjectSkill deletes the skill directory from the project.
+func RemoveProjectSkill(projectRoot string, skillID string) error {
+	dir := filepath.Join(ProjectSkillsDir(projectRoot), skillID)
+	if err := os.RemoveAll(dir); err != nil {
+		return fmt.Errorf("removing skill %s: %w", skillID, err)
+	}
+	return nil
+}
 
-	if err := os.RemoveAll(skillDir); err != nil {
-		return fmt.Errorf("failed to remove skill: %w", err)
+// CopySkillsToTarget copies all skills from projectRoot/synchestra/skills/
+// to targetDir (e.g., .claude/skills/). Returns the number of skills copied.
+func CopySkillsToTarget(projectRoot string, targetDir string) (int, error) {
+	srcDir := ProjectSkillsDir(projectRoot)
+
+	entries, err := os.ReadDir(srcDir)
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return 0, nil
+		}
+		return 0, fmt.Errorf("reading skills directory: %w", err)
 	}
 
-	return nil
+	n := 0
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+		skillID := entry.Name()
+		src := filepath.Join(srcDir, skillID, SkillFile)
+		if _, err := os.Stat(src); errors.Is(err, fs.ErrNotExist) {
+			continue
+		}
+
+		dstDir := filepath.Join(targetDir, skillID)
+		if err := os.MkdirAll(dstDir, 0755); err != nil {
+			return n, fmt.Errorf("creating target directory for %s: %w", skillID, err)
+		}
+
+		if err := copyFile(src, filepath.Join(dstDir, SkillFile)); err != nil {
+			return n, fmt.Errorf("copying skill %s: %w", skillID, err)
+		}
+		n++
+	}
+	return n, nil
+}
+
+func copyFile(src, dst string) error {
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+
+	out, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	_, err = io.Copy(out, in)
+	return err
 }
 ```
 
-- [ ] **Step 4: Run tests**
+- [ ] **Step 4: Run tests to verify they pass**
 
 ```bash
-go test ./pkg/skills -v
+go test ./pkg/skills/ -v
 ```
 
-Expected: PASS
+Expected: PASS — all tests green.
 
 - [ ] **Step 5: Commit**
 
 ```bash
 git add pkg/skills/project.go pkg/skills/project_test.go
-git commit -m "feat: implement project skills git operations"
+git commit -m "feat(skills): add project skill discovery, write, remove, and copy"
 ```
 
 ---
 
-### Task 5: Git Commit Integration for Adding Skills
+## Phase 2: Cloud API (synchestra-cloud repo)
+
+> **Note:** Tasks 3-5 target the `synchestra-cloud` repo. The implementing agent must explore that repo's conventions (router, middleware, Firestore patterns, auth) before writing code. The interfaces below define the contract; adapt to the repo's actual patterns.
+
+### Task 3: Firestore User Skills Repository
 
 **Files:**
-- Create: `pkg/gitops/skill_commit.go`
-- Create: `pkg/gitops/skill_commit_test.go`
+- Create: `pkg/skills/repository.go` (in synchestra-cloud)
+- Create: `pkg/skills/repository_test.go`
 
 **Context:**
-When a user adds a skill to a project via Hub UI, we need to create a git commit. This task handles that.
+CRUD for `users/{user_id}/skills/{skill_id}` subcollection. Check how `synchestra-cloud` initializes its Firestore client and follow that pattern.
 
-- [ ] **Step 1: Write test for commit creation**
+- [ ] **Step 1: Write failing tests for the repository interface and Firestore implementation**
 
-```go
-package gitops
-
-import (
-	"testing"
-)
-
-func TestCreateSkillAddCommit(t *testing.T) {
-	tmpDir := t.TempDir()
-	repo := initTestRepo(t, tmpDir)
-
-	skillID := "code-review"
-	skillPath := "synchestra/skills/code-review/SKILL.md"
-	skillContent := "---\nskill_id: code-review\nname: Code Review\n---\n# Code Review"
-
-	commit, err := CreateSkillAddCommit(repo, skillID, skillContent)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	if commit == "" {
-		t.Fatal("expected commit hash")
-	}
-
-	// Verify file exists
-	file, _ := repo.Workdir()
-	if _, err := os.Stat(filepath.Join(file, skillPath)); os.IsNotExist(err) {
-		t.Errorf("expected skill file at %s", skillPath)
-	}
-}
-
-func initTestRepo(t *testing.T, tmpDir string) *git.Repository {
-	repo, err := git.PlainInit(tmpDir, false)
-	if err != nil {
-		t.Fatalf("failed to init repo: %v", err)
-	}
-	return repo
-}
-```
-
-- [ ] **Step 2: Run test to verify it fails**
-
-```bash
-go test ./pkg/gitops -v -run TestCreateSkillAddCommit
-```
-
-Expected: FAIL
-
-- [ ] **Step 3: Write commit creation logic**
+The repository interface:
 
 ```go
-package gitops
+// UserSkillDoc is the Firestore document shape for users/{uid}/skills/{sid}.
+type UserSkillDoc struct {
+	SkillID     string    `firestore:"skill_id"`
+	Name        string    `firestore:"name"`
+	Description string    `firestore:"description"`
+	Content     string    `firestore:"content"` // raw SKILL.md content (frontmatter + body)
+	Tags        []string  `firestore:"tags,omitempty"`
+	Version     string    `firestore:"version,omitempty"`
+	CreatedAt   time.Time `firestore:"created_at"`
+	UpdatedAt   time.Time `firestore:"updated_at"`
+}
 
-import (
-	"fmt"
-	"os"
-	"path/filepath"
-
-	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing/object"
-)
-
-// CreateSkillAddCommit creates a git commit for adding a skill to the project.
-// Returns the commit hash.
-func CreateSkillAddCommit(repo *git.Repository, skillID string, skillContent string) (string, error) {
-	// Get worktree
-	wt, err := repo.Worktree()
-	if err != nil {
-		return "", fmt.Errorf("failed to get worktree: %w", err)
-	}
-
-	// Write skill file
-	skillPath := filepath.Join("synchestra", "skills", skillID, "SKILL.md")
-	skillDir := filepath.Join(wt.Filesystem.Root(), filepath.Dir(skillPath))
-
-	if err := os.MkdirAll(skillDir, 0755); err != nil {
-		return "", fmt.Errorf("failed to create skill directory: %w", err)
-	}
-
-	fullPath := filepath.Join(wt.Filesystem.Root(), skillPath)
-	if err := os.WriteFile(fullPath, []byte(skillContent), 0644); err != nil {
-		return "", fmt.Errorf("failed to write skill file: %w", err)
-	}
-
-	// Add to git
-	_, err = wt.Add(skillPath)
-	if err != nil {
-		return "", fmt.Errorf("failed to add file to git: %w", err)
-	}
-
-	// Create commit
-	sig := &object.Signature{
-		Name:  "Synchestra Bot",
-		Email: "bot@synchestra.io",
-		When:  object.Now(),
-	}
-
-	commitMsg := fmt.Sprintf("feat: add %s skill", skillID)
-	hash, err := wt.Commit(commitMsg, &git.CommitOptions{Author: sig})
-	if err != nil {
-		return "", fmt.Errorf("failed to create commit: %w", err)
-	}
-
-	return hash.String(), nil
+// UserSkillRepository defines CRUD for user skill collections.
+type UserSkillRepository interface {
+	Create(ctx context.Context, userID string, doc *UserSkillDoc) error
+	Get(ctx context.Context, userID, skillID string) (*UserSkillDoc, error)
+	List(ctx context.Context, userID string) ([]*UserSkillDoc, error)
+	Update(ctx context.Context, userID, skillID string, updates map[string]any) error
+	Delete(ctx context.Context, userID, skillID string) error
 }
 ```
 
-- [ ] **Step 4: Run test**
+Tests should use the Firestore emulator (`FIRESTORE_EMULATOR_HOST`). Write one test per method: create, get after create, list, update, delete, get-not-found.
+
+- [ ] **Step 2: Run tests to verify they fail**
+
+- [ ] **Step 3: Implement the Firestore-backed repository**
+
+Use `client.Collection("users").Doc(userID).Collection("skills").Doc(skillID)` path. Set `created_at` on create, `updated_at` on create and update.
+
+- [ ] **Step 4: Run tests with emulator**
 
 ```bash
-go test ./pkg/gitops -v
+FIRESTORE_EMULATOR_HOST=localhost:8080 go test ./pkg/skills/ -v
 ```
 
 Expected: PASS
@@ -1206,25 +679,141 @@ Expected: PASS
 - [ ] **Step 5: Commit**
 
 ```bash
-git add pkg/gitops/skill_commit.go pkg/gitops/skill_commit_test.go
-git commit -m "feat: implement git commit creation for adding skills"
+git add pkg/skills/
+git commit -m "feat(skills): add Firestore user skills repository"
 ```
 
 ---
 
-## Phase 4: Hub UI - User Skills & Project Skills
-
-### Task 6: Angular Skill Model and Service
+### Task 4: User Skills API Endpoints
 
 **Files:**
-- Create: `synchestra-hub/src/app/models/skill.model.ts`
-- Create: `synchestra-hub/src/app/services/skill.service.ts`
+- Create or modify: API routes file (in synchestra-cloud)
+- Create: handler file and tests
 
-- [ ] **Step 1: Create skill model**
+**Context:**
+REST endpoints called by Hub frontend. Follow the existing auth middleware pattern in synchestra-cloud to extract user ID from the request (JWT token or session).
+
+**Endpoints to implement:**
+
+| Method | Path | Handler |
+|---|---|---|
+| `POST` | `/api/v1/users/{user_id}/skills` | Create user skill |
+| `GET` | `/api/v1/users/{user_id}/skills` | List user skills |
+| `GET` | `/api/v1/users/{user_id}/skills/{skill_id}` | Get user skill |
+| `PUT` | `/api/v1/users/{user_id}/skills/{skill_id}` | Update user skill |
+| `DELETE` | `/api/v1/users/{user_id}/skills/{skill_id}` | Delete user skill |
+
+- [ ] **Step 1: Write failing handler tests**
+
+One test per endpoint. Use `httptest.NewRequest` + `httptest.NewRecorder`. Mock the repository interface — do NOT use a concrete Firestore dependency in handler tests.
+
+- [ ] **Step 2: Run tests to verify they fail**
+
+- [ ] **Step 3: Implement handlers**
+
+Each handler: parse request, validate, call repository, return JSON response. Auth: verify the requesting user matches `{user_id}` in the path (or is admin). Return 400 for bad input, 404 for not found, 409 for duplicate skill_id.
+
+Create request body example:
+```json
+{
+  "name": "Code Review",
+  "description": "Reviews pull requests",
+  "content": "---\nskill_id: code-review\n...",
+  "tags": ["review"],
+  "version": "1.0"
+}
+```
+
+If `skill_id` is not provided, derive it from name via slugification.
+
+- [ ] **Step 4: Register routes in the router**
+
+- [ ] **Step 5: Run tests**
+
+Expected: PASS
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add <handler files>
+git commit -m "feat(skills): add user skills API endpoints"
+```
+
+---
+
+### Task 5: Project Skills API Endpoints
+
+**Files:**
+- Create or modify: API routes file (in synchestra-cloud)
+- Create: handler file and tests
+
+**Context:**
+These endpoints modify the project repo on disk (or via GitHub API). When a user adds a skill, the cloud service must: clone/fetch the project repo, write the SKILL.md, commit, and push. Follow whatever git integration pattern synchestra-cloud already uses.
+
+**Endpoints to implement:**
+
+| Method | Path | Handler |
+|---|---|---|
+| `GET` | `/api/v1/projects/{project_id}/skills` | List skills in project repo |
+| `POST` | `/api/v1/projects/{project_id}/skills/add` | Add skill from user collection to project |
+| `POST` | `/api/v1/projects/{project_id}/skills` | Create new skill directly in project |
+| `POST` | `/api/v1/projects/{project_id}/skills/{skill_id}/save-favorite` | Save project skill to user collection |
+| `DELETE` | `/api/v1/projects/{project_id}/skills/{skill_id}` | Remove skill from project |
+
+- [ ] **Step 1: Write failing handler tests**
+
+For the `add` endpoint, mock both the user skill repository (to fetch the source skill) and the git operations (to avoid real clones in tests).
+
+- [ ] **Step 2: Run tests to verify they fail**
+
+- [ ] **Step 3: Implement handlers**
+
+**Add from collection** flow:
+1. Fetch skill from Firestore: `users/{user_id}/skills/{skill_id}`
+2. Parse the content, inject origin metadata: `{skill_id}@{user_id}@github.com`
+3. Use `skills.WriteProjectSkill()` (imported from `synchestra` repo's `pkg/skills/`)
+4. Git add, commit, push using existing gitops pattern
+5. Return 201
+
+**Create new** flow:
+1. Parse request body (name, description, content)
+2. Write to `synchestra/skills/{skill_id}/SKILL.md` — no origin metadata
+3. Git add, commit, push
+4. Return 201
+
+**Save to favorites** flow:
+1. Read `synchestra/skills/{skill_id}/SKILL.md` from project repo
+2. Create Firestore doc in `users/{user_id}/skills/{skill_id}`
+3. Strip or ignore origin metadata in the Firestore copy
+4. Return 201
+
+- [ ] **Step 4: Run tests**
+
+Expected: PASS
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add <handler files>
+git commit -m "feat(skills): add project skills API endpoints (add, create, save-favorite, remove)"
+```
+
+---
+
+## Phase 3: Hub Frontend (synchestra-hub repo)
+
+> **Note:** Tasks 6-8 target the `synchestra-hub` repo (Angular + PrimeNG). The implementing agent must explore the existing component patterns, routing, and PrimeNG usage before writing code.
+
+### Task 6: Skill Model and Service
+
+**Files:**
+- Create: `src/app/models/skill.model.ts`
+- Create: `src/app/services/skill.service.ts`
+
+- [ ] **Step 1: Create the TypeScript model**
 
 ```typescript
-// src/app/models/skill.model.ts
-
 export interface Skill {
   skill_id: string;
   name: string;
@@ -1237,10 +826,6 @@ export interface Skill {
   updated_at?: string;
 }
 
-export interface SkillListResponse {
-  skills: Skill[];
-}
-
 export interface CreateSkillRequest {
   skill_id?: string;
   name: string;
@@ -1251,1158 +836,204 @@ export interface CreateSkillRequest {
 }
 ```
 
-- [ ] **Step 2: Create skill service**
+- [ ] **Step 2: Create the HTTP service**
 
-```typescript
-// src/app/services/skill.service.ts
+Service methods:
+- `createUserSkill(userId, request)` → POST `/api/v1/users/{userId}/skills`
+- `getUserSkills(userId)` → GET `/api/v1/users/{userId}/skills`
+- `getUserSkill(userId, skillId)` → GET `/api/v1/users/{userId}/skills/{skillId}`
+- `updateUserSkill(userId, skillId, updates)` → PUT
+- `deleteUserSkill(userId, skillId)` → DELETE
+- `addSkillToProject(projectId, body)` → POST `/api/v1/projects/{projectId}/skills/add`
+- `createProjectSkill(projectId, body)` → POST `/api/v1/projects/{projectId}/skills`
+- `removeSkillFromProject(projectId, skillId)` → DELETE
+- `saveProjectSkillToFavorites(projectId, skillId)` → POST `.../save-favorite`
 
-import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { Skill, CreateSkillRequest, SkillListResponse } from '../models/skill.model';
-
-@Injectable({
-  providedIn: 'root'
-})
-export class SkillService {
-  private apiUrl = '/api/v1/users';
-
-  constructor(private http: HttpClient) {}
-
-  // User Skills
-  createUserSkill(userId: string, request: CreateSkillRequest): Observable<Skill> {
-    return this.http.post<Skill>(`${this.apiUrl}/${userId}/skills`, request);
-  }
-
-  getUserSkills(userId: string): Observable<SkillListResponse> {
-    return this.http.get<SkillListResponse>(`${this.apiUrl}/${userId}/skills`);
-  }
-
-  getUserSkill(userId: string, skillId: string): Observable<Skill> {
-    return this.http.get<Skill>(`${this.apiUrl}/${userId}/skills/${skillId}`);
-  }
-
-  updateUserSkill(userId: string, skillId: string, updates: Partial<Skill>): Observable<void> {
-    return this.http.put<void>(`${this.apiUrl}/${userId}/skills/${skillId}`, updates);
-  }
-
-  deleteUserSkill(userId: string, skillId: string): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${userId}/skills/${skillId}`);
-  }
-
-  // Project Skills
-  addSkillToProject(projectId: string, skillId: string, userId: string): Observable<void> {
-    return this.http.post<void>(`/api/v1/projects/${projectId}/skills/add`, {
-      skill_id: skillId,
-      user_id: userId,
-      source: 'user_collection'
-    });
-  }
-
-  removeSkillFromProject(projectId: string, skillId: string): Observable<void> {
-    return this.http.delete<void>(`/api/v1/projects/${projectId}/skills/${skillId}`);
-  }
-
-  saveProjectSkillToFavorites(projectId: string, skillId: string): Observable<void> {
-    return this.http.post<void>(`/api/v1/projects/${projectId}/skills/${skillId}/save-favorite`, {});
-  }
-}
-```
+Follow the existing `HttpClient` injection pattern in the hub.
 
 - [ ] **Step 3: Commit**
 
 ```bash
-git add synchestra-hub/src/app/models/skill.model.ts synchestra-hub/src/app/services/skill.service.ts
-git commit -m "feat: add skill model and service layer"
+git add src/app/models/skill.model.ts src/app/services/skill.service.ts
+git commit -m "feat(skills): add skill model and API service"
 ```
 
 ---
 
-### Task 7: User Skills Dashboard Component
+### Task 7: User Skills Dashboard Page
 
 **Files:**
-- Create: `synchestra-hub/src/app/features/skills/user-skills-dashboard/user-skills-dashboard.component.ts`
-- Create: `synchestra-hub/src/app/features/skills/user-skills-dashboard/user-skills-dashboard.component.html`
-- Create: `synchestra-hub/src/app/features/skills/user-skills-dashboard/user-skills-dashboard.component.css`
+- Create: component files under `src/app/features/skills/` (or wherever the hub puts feature pages)
+- Modify: routing module to add the new route
 
-- [ ] **Step 1: Create component TypeScript**
+**Context:**
+Use PrimeNG components: `p-table` or `p-dataView` for the list, `p-dialog` for modals, `p-button`, `p-inputText`, `p-chips` for tags, `p-tag` for tag badges.
 
-```typescript
-// src/app/features/skills/user-skills-dashboard/user-skills-dashboard.component.ts
+- [ ] **Step 1: Create the dashboard component**
 
-import { Component, OnInit } from '@angular/core';
-import { SkillService } from '../../../services/skill.service';
-import { Skill } from '../../../models/skill.model';
+Features:
+- List all user skills in a `p-dataView` or `p-table` with columns: name, description, tags, updated date
+- Search input (`p-inputText`) that filters client-side
+- "Create Skill" button opens a `p-dialog` with the skill editor form
+- Each row has actions: Edit (opens dialog), Delete (with `p-confirmDialog`)
+- Empty state message when no skills exist
 
-@Component({
-  selector: 'app-user-skills-dashboard',
-  templateUrl: './user-skills-dashboard.component.html',
-  styleUrls: ['./user-skills-dashboard.component.css']
-})
-export class UserSkillsDashboardComponent implements OnInit {
-  skills: Skill[] = [];
-  filteredSkills: Skill[] = [];
-  searchText = '';
-  selectedTags: string[] = [];
-  showCreateModal = false;
-  loading = false;
-  error: string | null = null;
+- [ ] **Step 2: Add route**
 
-  constructor(private skillService: SkillService) {}
+Register in the appropriate routing module (e.g., `/skills` under the user section).
 
-  ngOnInit(): void {
-    this.loadSkills();
-  }
+- [ ] **Step 3: Verify the page renders**
 
-  loadSkills(): void {
-    this.loading = true;
-    this.error = null;
-
-    // Get current user ID from auth service
-    const userId = this.getCurrentUserId();
-
-    this.skillService.getUserSkills(userId).subscribe({
-      next: (response) => {
-        this.skills = response.skills || [];
-        this.filterSkills();
-        this.loading = false;
-      },
-      error: (err) => {
-        this.error = 'Failed to load skills';
-        this.loading = false;
-      }
-    });
-  }
-
-  filterSkills(): void {
-    this.filteredSkills = this.skills.filter(skill => {
-      const matchesSearch = !this.searchText ||
-        skill.name.toLowerCase().includes(this.searchText.toLowerCase()) ||
-        skill.description.toLowerCase().includes(this.searchText.toLowerCase());
-
-      const matchesTags = this.selectedTags.length === 0 ||
-        this.selectedTags.some(tag => skill.tags?.includes(tag));
-
-      return matchesSearch && matchesTags;
-    });
-  }
-
-  onSearchChange(text: string): void {
-    this.searchText = text;
-    this.filterSkills();
-  }
-
-  onTagSelect(tag: string): void {
-    if (this.selectedTags.includes(tag)) {
-      this.selectedTags = this.selectedTags.filter(t => t !== tag);
-    } else {
-      this.selectedTags.push(tag);
-    }
-    this.filterSkills();
-  }
-
-  openCreateModal(): void {
-    this.showCreateModal = true;
-  }
-
-  closeCreateModal(): void {
-    this.showCreateModal = false;
-  }
-
-  onSkillCreated(skill: Skill): void {
-    this.skills.push(skill);
-    this.filterSkills();
-    this.closeCreateModal();
-  }
-
-  deleteSkill(skillId: string): void {
-    if (!confirm('Delete this skill?')) return;
-
-    const userId = this.getCurrentUserId();
-    this.skillService.deleteUserSkill(userId, skillId).subscribe({
-      next: () => {
-        this.skills = this.skills.filter(s => s.skill_id !== skillId);
-        this.filterSkills();
-      },
-      error: () => this.error = 'Failed to delete skill'
-    });
-  }
-
-  editSkill(skillId: string): void {
-    // Navigate to edit page or open modal
-  }
-
-  private getCurrentUserId(): string {
-    // Get from auth service
-    return 'user123'; // placeholder
-  }
-}
+```bash
+ng serve
+# Navigate to /skills
 ```
 
-- [ ] **Step 2: Create component template**
-
-```html
-<!-- src/app/features/skills/user-skills-dashboard/user-skills-dashboard.component.html -->
-
-<div class="skills-dashboard">
-  <div class="header">
-    <h1>My Skills</h1>
-    <button (click)="openCreateModal()" class="btn-primary">+ Create Skill</button>
-  </div>
-
-  <div class="controls">
-    <input type="text"
-           placeholder="Search skills..."
-           [(ngModel)]="searchText"
-           (input)="onSearchChange($event.target.value)"
-           class="search-input">
-  </div>
-
-  <div *ngIf="error" class="error-message">{{ error }}</div>
-
-  <div *ngIf="loading" class="loading">Loading skills...</div>
-
-  <div *ngIf="!loading && filteredSkills.length === 0" class="empty-state">
-    <p>No skills yet. <a (click)="openCreateModal()">Create one</a></p>
-  </div>
-
-  <div *ngIf="!loading && filteredSkills.length > 0" class="skills-grid">
-    <div *ngFor="let skill of filteredSkills" class="skill-card">
-      <div class="skill-header">
-        <h3>{{ skill.name }}</h3>
-        <div class="actions">
-          <button (click)="editSkill(skill.skill_id)" title="Edit">✎</button>
-          <button (click)="deleteSkill(skill.skill_id)" title="Delete">✕</button>
-        </div>
-      </div>
-
-      <p class="description">{{ skill.description }}</p>
-
-      <div *ngIf="skill.tags && skill.tags.length > 0" class="tags">
-        <span *ngFor="let tag of skill.tags" class="tag">{{ tag }}</span>
-      </div>
-
-      <div class="meta">
-        <span *ngIf="skill.version">v{{ skill.version }}</span>
-        <span *ngIf="skill.origin" class="origin">Imported from {{ skill.origin }}</span>
-      </div>
-    </div>
-  </div>
-
-  <app-skill-editor-modal
-    *ngIf="showCreateModal"
-    [mode]="'create'"
-    (close)="closeCreateModal()"
-    (save)="onSkillCreated($event)">
-  </app-skill-editor-modal>
-</div>
-```
-
-- [ ] **Step 3: Create component styles**
-
-```css
-/* src/app/features/skills/user-skills-dashboard/user-skills-dashboard.component.css */
-
-.skills-dashboard {
-  padding: 24px;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 32px;
-}
-
-.header h1 {
-  margin: 0;
-  font-size: 28px;
-  font-weight: 600;
-}
-
-.controls {
-  margin-bottom: 24px;
-}
-
-.search-input {
-  width: 100%;
-  max-width: 400px;
-  padding: 10px 16px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 14px;
-}
-
-.skills-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 20px;
-}
-
-.skill-card {
-  border: 1px solid #eee;
-  border-radius: 8px;
-  padding: 16px;
-  background: white;
-  transition: box-shadow 0.2s;
-}
-
-.skill-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-}
-
-.skill-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: start;
-  margin-bottom: 12px;
-}
-
-.skill-header h3 {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.actions button {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 4px 8px;
-  color: #666;
-}
-
-.actions button:hover {
-  color: #000;
-}
-
-.description {
-  margin: 8px 0;
-  color: #666;
-  font-size: 14px;
-}
-
-.tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin: 12px 0;
-}
-
-.tag {
-  background: #f0f0f0;
-  padding: 4px 10px;
-  border-radius: 4px;
-  font-size: 12px;
-  color: #333;
-}
-
-.meta {
-  display: flex;
-  gap: 12px;
-  font-size: 12px;
-  color: #999;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid #f0f0f0;
-}
-
-.error-message {
-  padding: 12px;
-  background: #fee;
-  color: #c33;
-  border-radius: 4px;
-  margin-bottom: 16px;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 48px 24px;
-  color: #999;
-}
-
-.empty-state a {
-  color: #0066cc;
-  cursor: pointer;
-}
-
-.loading {
-  text-align: center;
-  padding: 48px;
-  color: #999;
-}
-
-.btn-primary {
-  background: #0066cc;
-  color: white;
-  border: none;
-  padding: 10px 16px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.btn-primary:hover {
-  background: #0052a3;
-}
-```
+Expected: Page renders with empty state or skill list.
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add synchestra-hub/src/app/features/skills/user-skills-dashboard/
-git commit -m "feat: implement user skills dashboard component"
+git add src/app/features/skills/
+git commit -m "feat(skills): add user skills dashboard page with PrimeNG"
 ```
 
 ---
 
-### Task 8: Skill Editor Component (Shared)
+### Task 8: Project Skills Tab
 
 **Files:**
-- Create: `synchestra-hub/src/app/features/skills/skill-editor/skill-editor.component.ts`
-- Create: `synchestra-hub/src/app/features/skills/skill-editor/skill-editor.component.html`
+- Create: component files for the project skills section
+- Modify: project detail page to add the "Skills" tab
 
-- [ ] **Step 1: Create editor component**
+**Context:**
+This is a new tab on the existing project detail page. Use PrimeNG `p-tabView` if the project page already uses tabs, or add one.
 
-```typescript
-// src/app/features/skills/skill-editor/skill-editor.component.ts
+- [ ] **Step 1: Create the project skills component**
 
-import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { Skill, CreateSkillRequest } from '../../../models/skill.model';
-import { SkillService } from '../../../services/skill.service';
+Features:
+- List skills currently in the project (calls `GET /api/v1/projects/{id}/skills`)
+- "Add from Collection" button opens `p-dialog` listing user's saved skills
+- "Create New" button opens `p-dialog` with skill editor (no origin metadata)
+- Each skill row has:
+  - Star icon to "Save to My Collection" (calls save-favorite endpoint)
+  - Delete icon to remove from project (with confirmation)
+  - Origin badge if `origin` is present
 
-@Component({
-  selector: 'app-skill-editor',
-  templateUrl: './skill-editor.component.html',
-  styleUrls: ['./skill-editor.component.css']
-})
-export class SkillEditorComponent {
-  @Input() skill: Skill | null = null;
-  @Input() mode: 'create' | 'edit' = 'create';
-  @Output() save = new EventEmitter<Skill>();
-  @Output() cancel = new EventEmitter<void>();
+- [ ] **Step 2: Wire into project detail page**
 
-  form = {
-    skill_id: '',
-    name: '',
-    description: '',
-    content: '',
-    tags: '',
-    version: ''
-  };
+Add the component as a new tab or section on the existing project page.
 
-  saving = false;
-  error: string | null = null;
-
-  constructor(private skillService: SkillService) {}
-
-  ngOnInit(): void {
-    if (this.skill) {
-      this.form = {
-        skill_id: this.skill.skill_id,
-        name: this.skill.name,
-        description: this.skill.description,
-        content: this.skill.content,
-        tags: (this.skill.tags || []).join(', '),
-        version: this.skill.version || ''
-      };
-    }
-  }
-
-  onSave(): void {
-    if (!this.validateForm()) return;
-
-    this.saving = true;
-    this.error = null;
-
-    const request: CreateSkillRequest = {
-      skill_id: this.form.skill_id || undefined,
-      name: this.form.name,
-      description: this.form.description,
-      content: this.form.content,
-      tags: this.form.tags ? this.form.tags.split(',').map(t => t.trim()) : undefined,
-      version: this.form.version || undefined
-    };
-
-    const userId = this.getCurrentUserId();
-
-    if (this.mode === 'create') {
-      this.skillService.createUserSkill(userId, request).subscribe({
-        next: (skill) => {
-          this.saving = false;
-          this.save.emit(skill);
-        },
-        error: (err) => {
-          this.error = 'Failed to save skill';
-          this.saving = false;
-        }
-      });
-    } else if (this.skill) {
-      this.skillService.updateUserSkill(userId, this.skill.skill_id, request).subscribe({
-        next: () => {
-          this.saving = false;
-          this.save.emit({ ...this.skill, ...request } as Skill);
-        },
-        error: (err) => {
-          this.error = 'Failed to update skill';
-          this.saving = false;
-        }
-      });
-    }
-  }
-
-  onCancel(): void {
-    this.cancel.emit();
-  }
-
-  private validateForm(): boolean {
-    if (!this.form.name.trim()) {
-      this.error = 'Name is required';
-      return false;
-    }
-    if (!this.form.description.trim()) {
-      this.error = 'Description is required';
-      return false;
-    }
-    if (!this.form.content.trim()) {
-      this.error = 'Content is required';
-      return false;
-    }
-    return true;
-  }
-
-  private getCurrentUserId(): string {
-    return 'user123'; // from auth service
-  }
-}
-```
-
-- [ ] **Step 2: Create editor template**
-
-```html
-<!-- src/app/features/skills/skill-editor/skill-editor.component.html -->
-
-<div class="editor">
-  <h2>{{ mode === 'create' ? 'Create Skill' : 'Edit Skill' }}</h2>
-
-  <div *ngIf="error" class="error-message">{{ error }}</div>
-
-  <div class="form-group">
-    <label>Name *</label>
-    <input type="text" [(ngModel)]="form.name" placeholder="e.g., Code Review">
-  </div>
-
-  <div class="form-group">
-    <label>Description *</label>
-    <textarea [(ngModel)]="form.description" placeholder="Brief description of what this skill does"></textarea>
-  </div>
-
-  <div class="form-group">
-    <label>Skill Content *</label>
-    <textarea [(ngModel)]="form.content" class="monospace" placeholder="Paste SKILL.md content (with or without frontmatter)"></textarea>
-  </div>
-
-  <div class="form-row">
-    <div class="form-group">
-      <label>Tags</label>
-      <input type="text" [(ngModel)]="form.tags" placeholder="e.g., review, go, testing (comma-separated)">
-    </div>
-
-    <div class="form-group">
-      <label>Version</label>
-      <input type="text" [(ngModel)]="form.version" placeholder="e.g., 1.0">
-    </div>
-  </div>
-
-  <div class="actions">
-    <button (click)="onCancel()" class="btn-secondary">Cancel</button>
-    <button (click)="onSave()" [disabled]="saving" class="btn-primary">
-      {{ saving ? 'Saving...' : 'Save' }}
-    </button>
-  </div>
-</div>
-```
-
-- [ ] **Step 3: Commit**
+- [ ] **Step 3: Verify the tab renders**
 
 ```bash
-git add synchestra-hub/src/app/features/skills/skill-editor/
-git commit -m "feat: implement skill editor component (create/edit)"
+ng serve
+# Navigate to a project, check the Skills tab
 ```
 
----
+Expected: Tab renders, skills list loads.
 
-### Task 9: Project Skills Management Component
-
-**Files:**
-- Create: `synchestra-hub/src/app/features/projects/project-skills/project-skills.component.ts`
-- Create: `synchestra-hub/src/app/features/projects/project-skills/project-skills.component.html`
-
-- [ ] **Step 1: Create project skills component**
-
-```typescript
-// src/app/features/projects/project-skills/project-skills.component.ts
-
-import { Component, Input, OnInit } from '@angular/core';
-import { SkillService } from '../../../services/skill.service';
-import { Skill } from '../../../models/skill.model';
-
-@Component({
-  selector: 'app-project-skills',
-  templateUrl: './project-skills.component.html',
-  styleUrls: ['./project-skills.component.css']
-})
-export class ProjectSkillsComponent implements OnInit {
-  @Input() projectId: string = '';
-
-  projectSkills: Skill[] = [];
-  userSkills: Skill[] = [];
-  showAddModal = false;
-  showCreateModal = false;
-  loading = false;
-  error: string | null = null;
-
-  constructor(private skillService: SkillService) {}
-
-  ngOnInit(): void {
-    this.loadProjectSkills();
-    this.loadUserSkills();
-  }
-
-  loadProjectSkills(): void {
-    // Call API to get project skills
-    // this.skillService.getProjectSkills(this.projectId).subscribe(...)
-  }
-
-  loadUserSkills(): void {
-    const userId = this.getCurrentUserId();
-    this.skillService.getUserSkills(userId).subscribe({
-      next: (response) => {
-        this.userSkills = response.skills || [];
-      },
-      error: () => this.error = 'Failed to load user skills'
-    });
-  }
-
-  openAddModal(): void {
-    this.showAddModal = true;
-  }
-
-  openCreateModal(): void {
-    this.showCreateModal = true;
-  }
-
-  closeModals(): void {
-    this.showAddModal = false;
-    this.showCreateModal = false;
-  }
-
-  addSkillFromCollection(skillId: string): void {
-    const userId = this.getCurrentUserId();
-    this.skillService.addSkillToProject(this.projectId, skillId, userId).subscribe({
-      next: () => {
-        this.closeModals();
-        this.loadProjectSkills();
-      },
-      error: () => this.error = 'Failed to add skill to project'
-    });
-  }
-
-  onSkillCreated(skill: Skill): void {
-    this.projectSkills.push(skill);
-    this.closeModals();
-  }
-
-  removeSkill(skillId: string): void {
-    if (!confirm('Remove this skill from the project?')) return;
-
-    this.skillService.removeSkillFromProject(this.projectId, skillId).subscribe({
-      next: () => {
-        this.projectSkills = this.projectSkills.filter(s => s.skill_id !== skillId);
-      },
-      error: () => this.error = 'Failed to remove skill'
-    });
-  }
-
-  saveToFavorites(skillId: string): void {
-    this.skillService.saveProjectSkillToFavorites(this.projectId, skillId).subscribe({
-      next: () => {
-        alert('Skill saved to your collection');
-      },
-      error: () => this.error = 'Failed to save skill'
-    });
-  }
-
-  private getCurrentUserId(): string {
-    return 'user123'; // from auth service
-  }
-}
-```
-
-- [ ] **Step 2: Create project skills template**
-
-```html
-<!-- src/app/features/projects/project-skills/project-skills.component.html -->
-
-<div class="project-skills-section">
-  <div class="header">
-    <h2>Project Skills</h2>
-    <div class="actions">
-      <button (click)="openAddModal()" class="btn-secondary">+ Add from Collection</button>
-      <button (click)="openCreateModal()" class="btn-primary">+ Create New</button>
-    </div>
-  </div>
-
-  <div *ngIf="error" class="error-message">{{ error }}</div>
-
-  <div *ngIf="projectSkills.length === 0" class="empty-state">
-    <p>No skills configured yet.</p>
-  </div>
-
-  <div *ngIf="projectSkills.length > 0" class="skills-list">
-    <div *ngFor="let skill of projectSkills" class="skill-item">
-      <div class="skill-info">
-        <h3>{{ skill.name }}</h3>
-        <p>{{ skill.description }}</p>
-        <div *ngIf="skill.origin" class="origin">From: {{ skill.origin }}</div>
-      </div>
-
-      <div class="skill-actions">
-        <button (click)="saveToFavorites(skill.skill_id)" title="Save to My Collection">★</button>
-        <button (click)="removeSkill(skill.skill_id)" title="Remove">✕</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Add from Collection Modal -->
-  <div *ngIf="showAddModal" class="modal-overlay" (click)="closeModals()">
-    <div class="modal" (click)="$event.stopPropagation()">
-      <h3>Add Skill from Collection</h3>
-
-      <div class="user-skills-list">
-        <div *ngFor="let skill of userSkills" class="skill-option">
-          <div class="skill-info">
-            <strong>{{ skill.name }}</strong>
-            <p>{{ skill.description }}</p>
-          </div>
-          <button (click)="addSkillFromCollection(skill.skill_id)" class="btn-primary">Add</button>
-        </div>
-      </div>
-
-      <div class="actions">
-        <button (click)="closeModals()" class="btn-secondary">Close</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Create New Skill Modal -->
-  <div *ngIf="showCreateModal" class="modal-overlay" (click)="closeModals()">
-    <div class="modal" (click)="$event.stopPropagation()">
-      <app-skill-editor
-        [mode]="'create'"
-        (save)="onSkillCreated($event)"
-        (cancel)="closeModals()">
-      </app-skill-editor>
-    </div>
-  </div>
-</div>
-```
-
-- [ ] **Step 3: Commit**
+- [ ] **Step 4: Commit**
 
 ```bash
-git add synchestra-hub/src/app/features/projects/project-skills/
-git commit -m "feat: implement project skills management component"
+git add src/app/features/projects/
+git commit -m "feat(skills): add project skills tab with add/create/remove/favorite actions"
 ```
 
 ---
 
-## Phase 5: Runner Integration
+## Phase 4: Runner Integration (synchestra-servers repo)
 
-### Task 10: Runner - Copy Skills to .claude/skills/
+### Task 9: Copy Project Skills to .claude/skills/ at Clone Time
 
 **Files:**
-- Modify: `pkg/runner/clone.go` (or relevant runner setup code)
-- Create: `pkg/runner/skills.go` (if not already in clone.go)
+- Modify: runner setup/clone logic (in synchestra-servers)
 
-- [ ] **Step 1: Write test for skill copying**
+**Context:**
+The runner already clones project repos. After cloning, it needs one additional step: copy skills. Import `github.com/synchestra-io/synchestra/pkg/skills` and use `skills.CopySkillsToTarget()`.
 
-```go
-package runner
+- [ ] **Step 1: Write a failing test**
 
-import (
-	"os"
-	"path/filepath"
-	"testing"
-)
-
-func TestCopyProjectSkillsToClaude(t *testing.T) {
-	tmpDir := t.TempDir()
-
-	// Create project with skills
-	projectDir := filepath.Join(tmpDir, "project")
-	skillsDir := filepath.Join(projectDir, "synchestra", "skills")
-	os.MkdirAll(skillsDir, 0755)
-
-	// Create test skill
-	skillDir := filepath.Join(skillsDir, "test-skill")
-	os.MkdirAll(skillDir, 0755)
-	skillFile := filepath.Join(skillDir, "SKILL.md")
-	os.WriteFile(skillFile, []byte("---\nskill_id: test-skill\nname: Test\n---\n# Test"), 0644)
-
-	// Create target .claude/skills directory
-	claudeSkillsDir := filepath.Join(tmpDir, ".claude", "skills")
-
-	// Copy skills
-	err := CopyProjectSkillsToClaude(projectDir, claudeSkillsDir)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	// Verify copied
-	copiedFile := filepath.Join(claudeSkillsDir, "test-skill", "SKILL.md")
-	if _, err := os.Stat(copiedFile); os.IsNotExist(err) {
-		t.Errorf("expected skill copied to %s", copiedFile)
-	}
-}
-```
+Test that after runner setup, `.claude/skills/` contains the skills from `synchestra/skills/`. Use a temp directory with a fake project repo.
 
 - [ ] **Step 2: Run test to verify it fails**
 
-```bash
-go test ./pkg/runner -v -run TestCopyProjectSkillsToClaude
-```
+- [ ] **Step 3: Add the copy call**
 
-Expected: FAIL
-
-- [ ] **Step 3: Write skill copying function**
+In the runner's post-clone setup, add:
 
 ```go
-package runner
+import "github.com/synchestra-io/synchestra/pkg/skills"
 
-import (
-	"fmt"
-	"io"
-	"os"
-	"path/filepath"
-)
-
-// CopyProjectSkillsToClaude copies all skills from project's synchestra/skills/
-// to the target .claude/skills/ directory.
-func CopyProjectSkillsToClaude(projectRoot string, claudeSkillsDir string) error {
-	projectSkillsDir := filepath.Join(projectRoot, "synchestra", "skills")
-
-	// Check if source exists
-	if _, err := os.Stat(projectSkillsDir); os.IsNotExist(err) {
-		return nil // no skills to copy
-	}
-
-	// Create target directory
-	if err := os.MkdirAll(claudeSkillsDir, 0755); err != nil {
-		return fmt.Errorf("failed to create .claude/skills directory: %w", err)
-	}
-
-	// Read source directory
-	entries, err := os.ReadDir(projectSkillsDir)
-	if err != nil {
-		return fmt.Errorf("failed to read project skills: %w", err)
-	}
-
-	for _, entry := range entries {
-		if !entry.IsDir() {
-			continue
-		}
-
-		skillID := entry.Name()
-		sourcePath := filepath.Join(projectSkillsDir, skillID)
-		targetPath := filepath.Join(claudeSkillsDir, skillID)
-
-		// Create target skill directory
-		if err := os.MkdirAll(targetPath, 0755); err != nil {
-			return fmt.Errorf("failed to create skill directory: %w", err)
-		}
-
-		// Copy SKILL.md file
-		sourceFile := filepath.Join(sourcePath, "SKILL.md")
-		targetFile := filepath.Join(targetPath, "SKILL.md")
-
-		if err := copyFile(sourceFile, targetFile); err != nil {
-			return fmt.Errorf("failed to copy skill %s: %w", skillID, err)
-		}
-	}
-
-	return nil
+// After cloning the project repo...
+claudeSkillsDir := filepath.Join(projectRoot, ".claude", "skills")
+n, err := skills.CopySkillsToTarget(projectRoot, claudeSkillsDir)
+if err != nil {
+    return fmt.Errorf("copying project skills: %w", err)
 }
-
-// copyFile copies a single file from src to dst.
-func copyFile(src, dst string) error {
-	source, err := os.Open(src)
-	if err != nil {
-		return err
-	}
-	defer source.Close()
-
-	dest, err := os.Create(dst)
-	if err != nil {
-		return err
-	}
-	defer dest.Close()
-
-	if _, err := io.Copy(dest, source); err != nil {
-		return err
-	}
-
-	return nil
+if n > 0 {
+    log.Printf("copied %d project skills to .claude/skills/", n)
 }
 ```
 
 - [ ] **Step 4: Run test**
 
-```bash
-go test ./pkg/runner -v
-```
-
 Expected: PASS
 
-- [ ] **Step 5: Modify runner to call CopyProjectSkillsToClaude**
-
-In the runner's clone/setup phase (wherever project repo is cloned), add:
-
-```go
-// After cloning project repo...
-projectRoot := getProjectRoot() // the cloned project directory
-claudeSkillsDir := filepath.Join(projectRoot, ".claude", "skills")
-
-if err := CopyProjectSkillsToClaude(projectRoot, claudeSkillsDir); err != nil {
-	return fmt.Errorf("failed to setup skills: %w", err)
-}
-```
-
-- [ ] **Step 6: Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
-git add pkg/runner/skills.go pkg/runner/clone.go
-git commit -m "feat: copy project skills to .claude/skills/ at runtime"
+git add <runner files>
+git commit -m "feat(runner): copy project skills to .claude/skills/ at clone time"
 ```
 
 ---
 
-## Phase 6: Integration & Final Testing
+## Phase 5: Integration Testing & Documentation
 
-### Task 11: End-to-End Integration Test
+### Task 10: End-to-End Smoke Test
 
 **Files:**
-- Create: `tests/e2e/user_project_skills_test.go`
+- Create: test file in synchestra repo (or synchestra-cloud depending on where E2E tests live)
 
-- [ ] **Step 1: Write E2E test**
+- [ ] **Step 1: Write E2E test covering the full lifecycle**
 
-```go
-package e2e
+Test steps:
+1. Create a user skill via API → verify 201
+2. List user skills → verify the skill appears
+3. Add skill to project → verify `synchestra/skills/{id}/SKILL.md` exists with origin metadata
+4. Create a new skill directly in project → verify it exists without origin
+5. Save project skill to favorites → verify it appears in user skill list
+6. Remove skill from project → verify deleted
+7. Simulate runner: call `CopySkillsToTarget()` → verify `.claude/skills/` populated
 
-import (
-	"context"
-	"testing"
-	"time"
-
-	"synchestra/pkg/skills"
-)
-
-func TestE2EUserProjectSkillsWorkflow(t *testing.T) {
-	// 1. Create user skill in Firestore
-	skillRepo := setupFirestore(t)
-	userID := "test-user"
-
-	userSkill := &skills.UserSkill{
-		SkillID:     "code-review",
-		Name:        "Code Review",
-		Description: "Reviews PRs",
-		Content:     "# Code Review\n\n...",
-		Tags:        []string{"review"},
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	_, err := skillRepo.CreateUserSkill(ctx, userID, userSkill)
-	if err != nil {
-		t.Fatalf("failed to create user skill: %v", err)
-	}
-
-	// 2. Verify skill is in Firestore
-	retrieved, err := skillRepo.GetUserSkill(ctx, userID, "code-review")
-	if err != nil {
-		t.Fatalf("failed to get user skill: %v", err)
-	}
-
-	if retrieved.Name != "Code Review" {
-		t.Errorf("expected name 'Code Review', got '%s'", retrieved.Name)
-	}
-
-	// 3. Add skill to project (simulated: write to filesystem)
-	projectRoot := t.TempDir()
-	projectSkill := &skills.Skill{
-		SkillID:     "code-review",
-		Name:        "Code Review",
-		Description: "Reviews PRs",
-		Origin:      "code-review@test-user@github.com",
-		Content:     []byte("# Code Review\n\n..."),
-	}
-
-	if err := skills.AddSkillToProject(projectRoot, projectSkill); err != nil {
-		t.Fatalf("failed to add skill to project: %v", err)
-	}
-
-	// 4. Verify skill was written
-	discovered, err := skills.DiscoverProjectSkills(projectRoot)
-	if err != nil {
-		t.Fatalf("failed to discover project skills: %v", err)
-	}
-
-	if len(discovered) != 1 || discovered[0].SkillID != "code-review" {
-		t.Errorf("expected skill not found in project")
-	}
-
-	// 5. Copy to .claude/skills/
-	claudeDir := t.TempDir()
-	if err := runner.CopyProjectSkillsToClaude(projectRoot, claudeDir); err != nil {
-		t.Fatalf("failed to copy skills: %v", err)
-	}
-
-	// 6. Verify .claude/skills/ has the skill
-	claudeSkills, err := skills.DiscoverProjectSkills(claudeDir)
-	if err != nil {
-		t.Fatalf("failed to discover .claude/skills: %v", err)
-	}
-
-	if len(claudeSkills) != 1 {
-		t.Errorf("expected 1 skill in .claude/skills, got %d", len(claudeSkills))
-	}
-
-	t.Log("✓ E2E test passed: user skill → project skill → .claude/skills")
-}
-
-func setupFirestore(t *testing.T) *skills.FirestoreSkillRepository {
-	// Use Firestore emulator
-	client := // initialize with emulator
-	return skills.NewFirestoreSkillRepository(client)
-}
-```
-
-- [ ] **Step 2: Run E2E test**
-
-```bash
-go test ./tests/e2e -v
-```
+- [ ] **Step 2: Run the test**
 
 Expected: PASS
 
 - [ ] **Step 3: Commit**
 
 ```bash
-git add tests/e2e/user_project_skills_test.go
-git commit -m "test: add end-to-end integration test for user/project skills"
+git add <test files>
+git commit -m "test(skills): add end-to-end smoke test for user/project skills lifecycle"
 ```
 
 ---
 
-## Task 12: Documentation & Final Polish
+### Task 11: Feature Documentation
 
 **Files:**
-- Create: `docs/features/user-project-skills.md` (or update existing)
+- Create: `docs/features/user-project-skills.md` (in synchestra repo)
 
-- [ ] **Step 1: Write feature documentation**
+- [ ] **Step 1: Write feature docs**
 
-```markdown
-# User & Project Skills
-
-## Overview
-
-Synchestra provides a two-tier skill system:
-- **User Skills:** Personal collection stored in Firestore, managed in Hub UI
-- **Project Skills:** Git-backed skills in `synchestra/skills/`, copied to `.claude/skills/` at runtime
-
-## User Skills
-
-Create and organize a personal skill library in the Hub:
-
-1. Go to **My Skills** in your user menu
-2. Click **+ Create Skill**
-3. Write or import your SKILL.md
-4. Save to your collection
-
-**Re-using Skills:** Use your saved skills in multiple projects by adding them to the project via the **Skills** tab.
-
-## Project Skills
-
-Configure skills that agents will use when executing work in your project:
-
-### Add a Skill from Your Collection
-
-1. Go to your project's **Skills** tab
-2. Click **+ Add from Collection**
-3. Select the skill and confirm
-
-This copies the skill to your project repo in `synchestra/skills/`.
-
-### Create a New Project-Only Skill
-
-1. Go to your project's **Skills** tab
-2. Click **+ Create New**
-3. Write the skill definition
-4. Save
-
-The skill is added only to this project.
-
-### Save a Project Skill to Your Collection
-
-After creating a skill in a project, you can save it to your personal collection for reuse:
-
-1. Click the **★** icon on the skill
-2. Confirm save
-
-The skill is now in your **My Skills** collection.
-
-## At Runtime
-
-When the Synchestra runner executes an agent for your project:
-
-1. Runner clones your project repository
-2. Discovers all skills in `synchestra/skills/`
-3. Copies them to `.claude/skills/`
-4. Agent loads skills and can use them during execution
-
-Skills are available without any additional setup or network calls.
-
-## Skill File Format
-
-Skills are stored as `synchestra/skills/{skill_id}/SKILL.md` with frontmatter:
-
-\`\`\`markdown
----
-skill_id: code-review
-name: Code Review
-description: Reviews pull requests with actionable feedback
-origin: code-review@user123@github.com
-version: 1.0
-tags: [review, quality]
----
-
-# Code Review Skill
-
-[Skill content following Claude Code format]
-\`\`\`
-
-**Frontmatter fields:**
-- `skill_id` — unique identifier
-- `name` — display name
-- `description` — brief description
-- `origin` — where the skill came from (optional)
-- `version` — semantic version (optional)
-- `tags` — searchable tags (optional)
-```
+Cover:
+- Overview of the two-tier system (user skills + project skills)
+- How to manage user skills (Hub → My Skills)
+- How to manage project skills (Hub → Project → Skills tab)
+- SKILL.md format reference (frontmatter fields, origin metadata)
+- How the runner makes skills available to agents
+- Directory structure at runtime
 
 - [ ] **Step 2: Commit**
 
@@ -2410,32 +1041,3 @@ tags: [review, quality]
 git add docs/features/user-project-skills.md
 git commit -m "docs: add user and project skills feature documentation"
 ```
-
----
-
-## Summary
-
-**Complete Implementation Path:**
-
-| Phase | Focus | Output |
-|-------|-------|--------|
-| 1 | Core infrastructure | Skill model, validation, parsing |
-| 2 | User skills | Firestore CRUD, Hub API, UI dashboard |
-| 3 | Project skills | Git operations, commit integration, Hub API |
-| 4 | Hub frontend | Shared components, CRUD UI, project skills management |
-| 5 | Runtime | Copy skills to `.claude/skills/` |
-| 6 | Testing & docs | E2E tests, feature documentation |
-
-**Each task is 2-5 minutes of work with explicit code and commands.**
-
----
-
-**Plan complete and saved to `docs/superpowers/plans/2026-04-01-user-project-skills.md`.**
-
-Two execution options:
-
-**1. Subagent-Driven (recommended)** — I dispatch a fresh subagent per task, review between tasks, fast iteration
-
-**2. Inline Execution** — Execute tasks in this session using executing-plans, batch execution with checkpoints
-
-Which approach would you prefer?
