@@ -7,6 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/synchestra-io/specscore/pkg/exitcode"
+	"github.com/synchestra-io/specscore/pkg/feature"
 )
 
 func listCommand() *cobra.Command {
@@ -28,14 +29,14 @@ func runList(cmd *cobra.Command, _ []string) error {
 	projectFlag, _ := cmd.Flags().GetString("project")
 	fieldsFlag, _ := cmd.Flags().GetString("fields")
 
-	fields, err := parseFieldNames(fieldsFlag)
+	fields, err := feature.ParseFieldNames(fieldsFlag)
 	if err != nil {
 		return exitcode.InvalidArgsError(err.Error())
 	}
 
 	format := effectiveFormat(cmd)
-	if err := validateFormat(format); err != nil {
-		return err
+	if err := feature.ValidateFormat(format); err != nil {
+		return exitcode.InvalidArgsError(err.Error())
 	}
 
 	featuresDir, err := resolveFeaturesDir(projectFlag)
@@ -43,23 +44,24 @@ func runList(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	features, err := discoverFeatures(featuresDir)
+	discovered, err := feature.Discover(featuresDir)
 	if err != nil {
 		return exitcode.UnexpectedErrorf("discovering features: %v", err)
 	}
+	featureIDs := feature.FeatureIDs(discovered)
 
 	w := cmd.OutOrStdout()
 
 	if len(fields) > 0 || format == "yaml" || format == "json" {
-		var enriched []*enrichedFeature
-		for _, id := range features {
-			ef := resolveFields(featuresDir, id, fields)
+		var enriched []*feature.EnrichedFeature
+		for _, id := range featureIDs {
+			ef, _ := feature.ResolveFields(featuresDir, id, fields)
 			enriched = append(enriched, ef)
 		}
 		return writeEnrichedOutput(w, enriched, fields, format)
 	}
 
-	for _, id := range features {
+	for _, id := range featureIDs {
 		_, _ = fmt.Fprintln(w, id)
 	}
 	return nil

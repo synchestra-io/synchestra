@@ -5,13 +5,13 @@ package feature
 
 import (
 	"fmt"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/synchestra-io/specscore/pkg/exitcode"
+	"github.com/synchestra-io/specscore/pkg/feature"
 	"github.com/synchestra-io/synchestra/pkg/cli/gitops"
 )
 
@@ -50,33 +50,11 @@ func runNew(cmd *cobra.Command, _ []string) error {
 	commitFlag, _ := cmd.Flags().GetBool("commit")
 	pushFlag, _ := cmd.Flags().GetBool("push")
 
-	// Step 1: Validate arguments
-	if title == "" {
-		return exitcode.InvalidArgsError("missing required flag: --title")
-	}
 	if formatFlag != "yaml" && formatFlag != "json" && formatFlag != "text" {
 		return exitcode.InvalidArgsErrorf("invalid format: %s (supported: yaml, json, text)", formatFlag)
 	}
-	if !isValidStatus(statusFlag) {
-		return exitcode.InvalidArgsErrorf("invalid status: %s (supported: draft, approved, implemented)", statusFlag)
-	}
 	if pushFlag {
 		commitFlag = true
-	}
-
-	// Step 2: Generate or validate slug
-	slug := slugFlag
-	if slug == "" {
-		slug = generateSlug(title)
-	} else {
-		if err := validateSlug(slug); err != nil {
-			return exitcode.InvalidArgsErrorf("invalid slug: %v", err)
-		}
-	}
-
-	// Validate --parent and slash-in-slug mutual exclusion
-	if parentFlag != "" && strings.Contains(slug, "/") {
-		return exitcode.InvalidArgsError("cannot use --parent with a slug containing slashes; use one or the other")
 	}
 
 	// Parse --depends-on
@@ -96,82 +74,20 @@ func runNew(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	// Validate --depends-on feature IDs exist
-	for _, dep := range deps {
-		if !featureExists(featuresDir, dep) {
-			return exitcode.InvalidArgsErrorf("dependency feature not found: %s", dep)
-		}
+	// Delegate to specscore's feature.New
+	result, err := feature.New(featuresDir, feature.NewOptions{
+		Title:       title,
+		Slug:        slugFlag,
+		Parent:      parentFlag,
+		Status:      statusFlag,
+		Description: descFlag,
+		DependsOn:   deps,
+	})
+	if err != nil {
+		return err
 	}
 
-	// Step 3: Resolve full feature path
-	var featureID string
-	var parentID string
-
-	switch {
-	case parentFlag != "":
-		featureID = parentFlag + "/" + slug
-		parentID = parentFlag
-	case strings.Contains(slug, "/"):
-		featureID = slug
-		parts := strings.Split(slug, "/")
-		parentID = strings.Join(parts[:len(parts)-1], "/")
-	default:
-		featureID = slug
-	}
-
-	featureDir := filepath.Join(featuresDir, filepath.FromSlash(featureID))
-
-	// Step 4: Validate parent exists (for sub-features)
-	if parentID != "" {
-		if !featureExists(featuresDir, parentID) {
-			return exitcode.NotFoundErrorf("parent feature not found: %s", parentID)
-		}
-	}
-
-	// Step 5: Verify target doesn't exist
-	if _, err := os.Stat(featureDir); err == nil {
-		return exitcode.InvalidStateErrorf("feature already exists at: %s", featureID)
-	}
-
-	// Step 6: Create feature directory and README
-	if err := os.MkdirAll(featureDir, 0o755); err != nil {
-		return exitcode.UnexpectedErrorf("creating feature directory: %v", err)
-	}
-
-	readme := generateReadme(title, statusFlag, descFlag, deps)
-	readmePath := filepath.Join(featureDir, "README.md")
-	if err := os.WriteFile(readmePath, []byte(readme), 0o644); err != nil {
-		return exitcode.UnexpectedErrorf("writing README.md: %v", err)
-	}
-
-	// Track files changed for git commit
-	changedFiles := []string{readmePath}
-
-	// Step 7: Update parent's Contents section (sub-features)
-	if parentID != "" {
-		parentReadme := featureReadmePath(featuresDir, parentID)
-		changed, err := updateParentContents(parentReadme, filepath.Base(featureDir), descFlag)
-		if err != nil {
-			return exitcode.UnexpectedErrorf("updating parent contents: %v", err)
-		}
-		if changed {
-			changedFiles = append(changedFiles, parentReadme)
-		}
-	}
-
-	// Step 8: Update feature index for top-level features
-	if parentID == "" {
-		indexPath := filepath.Join(featuresDir, "README.md")
-		changed, err := updateFeatureIndex(indexPath, featureID, descFlag)
-		if err != nil {
-			return exitcode.UnexpectedErrorf("updating feature index: %v", err)
-		}
-		if changed {
-			changedFiles = append(changedFiles, indexPath)
-		}
-	}
-
-	// Step 9-10: Git operations
+	// Git operations (CLI-specific)
 	if commitFlag {
 		repoRoot := filepath.Dir(filepath.Dir(featuresDir)) // spec/features/ → repo root
 		if !gitops.IsGitRepo(repoRoot) {
@@ -179,16 +95,16 @@ func runNew(cmd *cobra.Command, _ []string) error {
 		}
 
 		// Make paths relative to repo root for git
-		relFiles := make([]string, 0, len(changedFiles))
-		for _, f := range changedFiles {
-			rel, err := filepath.Rel(repoRoot, f)
-			if err != nil {
+		relFiles := make([]string, 0, len(result.ChangedFiles))
+		for _, f := range result.ChangedFiles {
+			rel, relErr := filepath.Rel(repoRoot, f)
+			if relErr != nil {
 				rel = f
 			}
 			relFiles = append(relFiles, rel)
 		}
 
-		commitMsg := fmt.Sprintf("feat(spec): add feature %s", featureID)
+		commitMsg := fmt.Sprintf("feat(spec): add feature %s", result.FeatureID)
 
 		if pushFlag {
 			if err := gitops.CommitAndPush(repoRoot, relFiles, commitMsg); err != nil {
@@ -202,34 +118,7 @@ func runNew(cmd *cobra.Command, _ []string) error {
 	}
 
 	// Output: same as feature info
-	info, err := buildNewFeatureInfo(featureID, readmePath, statusFlag, deps)
-	if err != nil {
-		return exitcode.UnexpectedErrorf("building output: %v", err)
-	}
-
-	return writeFeatureInfo(cmd.OutOrStdout(), formatFlag, info)
-}
-
-// buildNewFeatureInfo constructs a featureInfo for the newly created feature.
-func buildNewFeatureInfo(featureID, readmePath, status string, deps []string) (featureInfo, error) {
-	sections, err := parseSections(readmePath)
-	if err != nil {
-		return featureInfo{}, err
-	}
-
-	if deps == nil {
-		deps = []string{}
-	}
-
-	return featureInfo{
-		Path:     featureID,
-		Status:   status,
-		Deps:     deps,
-		Refs:     []string{},
-		Children: nil,
-		Plans:    nil,
-		Sections: sections,
-	}, nil
+	return writeFeatureInfo(cmd.OutOrStdout(), formatFlag, result.Info)
 }
 
 // gitCommitOnly stages files and creates a commit without pushing.
@@ -245,143 +134,4 @@ func gitCommitOnly(repoDir string, files []string, message string) error {
 		return fmt.Errorf("git commit: %w\n%s", err, out)
 	}
 	return nil
-}
-
-// updateParentContents adds or updates the ## Contents section in the parent's README.
-// Returns true if the file was modified.
-func updateParentContents(parentReadmePath, childSlug, description string) (bool, error) {
-	content, err := os.ReadFile(parentReadmePath)
-	if err != nil {
-		return false, err
-	}
-
-	lines := strings.Split(string(content), "\n")
-	desc := description
-	if desc == "" {
-		desc = "TODO: Add description."
-	}
-
-	newRow := fmt.Sprintf("| [%s](%s/README.md) | %s |", childSlug, childSlug, desc)
-
-	// Find ## Contents section
-	contentsIdx := -1
-	for i, line := range lines {
-		if strings.TrimSpace(line) == "## Contents" {
-			contentsIdx = i
-			break
-		}
-	}
-
-	if contentsIdx >= 0 {
-		// Find the end of the table (next ## or end of section)
-		insertIdx := contentsIdx + 1
-		for insertIdx < len(lines) {
-			trimmed := strings.TrimSpace(lines[insertIdx])
-			if strings.HasPrefix(trimmed, "## ") && trimmed != "## Contents" {
-				break
-			}
-			insertIdx++
-		}
-		// Back up past trailing blank lines
-		for insertIdx > contentsIdx+1 && strings.TrimSpace(lines[insertIdx-1]) == "" {
-			insertIdx--
-		}
-		// Insert the new row
-		lines = append(lines[:insertIdx+1], lines[insertIdx:]...)
-		lines[insertIdx] = newRow
-	} else {
-		// Create ## Contents section after ## Summary
-		summaryIdx := -1
-		for i, line := range lines {
-			if strings.TrimSpace(line) == "## Summary" {
-				summaryIdx = i
-				break
-			}
-		}
-
-		insertAfter := 0
-		if summaryIdx >= 0 {
-			// Find end of Summary section
-			insertAfter = summaryIdx + 1
-			for insertAfter < len(lines) {
-				trimmed := strings.TrimSpace(lines[insertAfter])
-				if strings.HasPrefix(trimmed, "## ") {
-					break
-				}
-				insertAfter++
-			}
-		}
-
-		contentsBlock := []string{
-			"## Contents",
-			"",
-			"| Child | Description |",
-			"|---|---|",
-			newRow,
-			"",
-		}
-
-		newLines := make([]string, 0, len(lines)+len(contentsBlock))
-		newLines = append(newLines, lines[:insertAfter]...)
-		newLines = append(newLines, contentsBlock...)
-		newLines = append(newLines, lines[insertAfter:]...)
-		lines = newLines
-	}
-
-	result := strings.Join(lines, "\n")
-	if err := os.WriteFile(parentReadmePath, []byte(result), 0o644); err != nil {
-		return false, err
-	}
-	return true, nil
-}
-
-// updateFeatureIndex adds a new row to the feature index at spec/features/README.md.
-// Returns true if the file was modified.
-func updateFeatureIndex(indexPath, featureID, description string) (bool, error) {
-	content, err := os.ReadFile(indexPath)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return false, nil // No index file — skip silently
-		}
-		return false, err
-	}
-
-	lines := strings.Split(string(content), "\n")
-	desc := description
-	if desc == "" {
-		desc = "TODO: Add description."
-	}
-
-	newRow := fmt.Sprintf("| [%s](%s/README.md) | %s |", featureID, featureID, desc)
-
-	// Find the Contents table (look for a markdown table with links)
-	tableEnd := -1
-	inTable := false
-	for i, line := range lines {
-		trimmed := strings.TrimSpace(line)
-		if strings.HasPrefix(trimmed, "|") && strings.Contains(trimmed, "|") {
-			inTable = true
-			tableEnd = i
-		} else if inTable && trimmed == "" {
-			break
-		} else if inTable && strings.HasPrefix(trimmed, "## ") {
-			break
-		}
-	}
-
-	if tableEnd >= 0 {
-		// Insert after the last table row
-		insertIdx := tableEnd + 1
-		lines = append(lines[:insertIdx+1], lines[insertIdx:]...)
-		lines[insertIdx] = newRow
-	} else {
-		// Append to end
-		lines = append(lines, "", newRow)
-	}
-
-	result := strings.Join(lines, "\n")
-	if err := os.WriteFile(indexPath, []byte(result), 0o644); err != nil {
-		return false, err
-	}
-	return true, nil
 }

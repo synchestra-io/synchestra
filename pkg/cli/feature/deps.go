@@ -8,6 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/synchestra-io/specscore/pkg/exitcode"
+	"github.com/synchestra-io/specscore/pkg/feature"
 )
 
 func depsCommand() *cobra.Command {
@@ -33,14 +34,14 @@ func runDeps(cmd *cobra.Command, args []string) error {
 	fieldsFlag, _ := cmd.Flags().GetString("fields")
 	transitive, _ := cmd.Flags().GetBool("transitive")
 
-	fields, err := parseFieldNames(fieldsFlag)
+	fields, err := feature.ParseFieldNames(fieldsFlag)
 	if err != nil {
 		return exitcode.InvalidArgsError(err.Error())
 	}
 
 	format := effectiveFormat(cmd)
-	if err := validateFormat(format); err != nil {
-		return err
+	if err := feature.ValidateFormat(format); err != nil {
+		return exitcode.InvalidArgsError(err.Error())
 	}
 
 	featuresDir, err := resolveFeaturesDir(projectFlag)
@@ -48,16 +49,16 @@ func runDeps(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if !featureExists(featuresDir, featureID) {
+	if !feature.Exists(featuresDir, featureID) {
 		return exitcode.NotFoundErrorf("feature not found: %s", featureID)
 	}
 
 	w := cmd.OutOrStdout()
 
 	if transitive {
-		nodes := resolveTransitiveDeps(featuresDir, featureID)
+		nodes := feature.TransitiveDeps(featuresDir, featureID)
 		if len(fields) > 0 {
-			enrichTransitiveNodes(featuresDir, nodes, fields)
+			feature.EnrichTransitiveNodes(featuresDir, nodes, fields)
 		}
 		switch format {
 		case "yaml":
@@ -69,23 +70,23 @@ func runDeps(cmd *cobra.Command, args []string) error {
 				return writeEnrichedText(w, nodes, fields)
 			}
 			var sb strings.Builder
-			printTransitiveText(&sb, nodes, 0)
+			feature.PrintTransitiveText(&sb, nodes, 0)
 			_, _ = fmt.Fprint(w, sb.String())
 		}
 		return nil
 	}
 
 	// Non-transitive
-	readmePath := featureReadmePath(featuresDir, featureID)
-	deps, err := parseDependencies(readmePath)
+	readmePath := feature.ReadmePath(featuresDir, featureID)
+	deps, err := feature.ParseDependencies(readmePath)
 	if err != nil {
 		return exitcode.UnexpectedErrorf("reading feature %s: %v", featureID, err)
 	}
 
 	if len(fields) > 0 || format == "yaml" || format == "json" {
-		var enriched []*enrichedFeature
+		var enriched []*feature.EnrichedFeature
 		for _, dep := range deps {
-			ef := resolveFields(featuresDir, dep, fields)
+			ef, _ := feature.ResolveFields(featuresDir, dep, fields)
 			enriched = append(enriched, ef)
 		}
 		return writeEnrichedOutput(w, enriched, fields, format)
@@ -94,7 +95,7 @@ func runDeps(cmd *cobra.Command, args []string) error {
 	// Plain text output (original behavior)
 	errW := cmd.ErrOrStderr()
 	for _, dep := range deps {
-		if !featureExists(featuresDir, dep) {
+		if !feature.Exists(featuresDir, dep) {
 			_, _ = fmt.Fprintf(errW, "%s (not found)\n", dep)
 		} else {
 			_, _ = fmt.Fprintln(w, dep)

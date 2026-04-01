@@ -5,351 +5,12 @@ package feature
 import (
 	"bytes"
 	"encoding/json"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 
+	specfeature "github.com/synchestra-io/specscore/pkg/feature"
 	"gopkg.in/yaml.v3"
 )
-
-// ---------------------------------------------------------------------------
-// parseFieldNames
-// ---------------------------------------------------------------------------
-
-func TestParseFieldNames(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name      string
-		input     string
-		want      []string
-		wantErr   bool
-		errSubstr string
-	}{
-		{
-			name:  "empty string returns nil",
-			input: "",
-			want:  nil,
-		},
-		{
-			name:  "single valid field status",
-			input: "status",
-			want:  []string{"status"},
-		},
-		{
-			name:  "multiple valid fields",
-			input: "status,oq,deps",
-			want:  []string{"status", "oq", "deps"},
-		},
-		{
-			name:      "unknown field returns error",
-			input:     "invalid",
-			wantErr:   true,
-			errSubstr: "unknown field",
-		},
-		{
-			name:  "duplicate fields are deduplicated",
-			input: "status,status",
-			want:  []string{"status"},
-		},
-		{
-			name:  "whitespace around commas is trimmed",
-			input: " status , oq ",
-			want:  []string{"status", "oq"},
-		},
-		{
-			name:  "all seven valid fields",
-			input: "status,oq,deps,refs,children,plans,proposals",
-			want:  []string{"status", "oq", "deps", "refs", "children", "plans", "proposals"},
-		},
-		{
-			name:  "multiple duplicates preserve first occurrence order",
-			input: "oq,deps,oq,deps,status",
-			want:  []string{"oq", "deps", "status"},
-		},
-		{
-			name:      "mix of valid and invalid returns error",
-			input:     "status,bogus",
-			wantErr:   true,
-			errSubstr: "unknown field",
-		},
-		{
-			name:  "trailing comma produces no extra entries",
-			input: "status,",
-			want:  []string{"status"},
-		},
-		{
-			name:  "leading comma produces no extra entries",
-			input: ",deps",
-			want:  []string{"deps"},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			got, err := parseFieldNames(tt.input)
-
-			if tt.wantErr {
-				if err == nil {
-					t.Fatal("expected error, got nil")
-				}
-				if !strings.Contains(err.Error(), tt.errSubstr) {
-					t.Errorf("error %q does not contain %q", err.Error(), tt.errSubstr)
-				}
-				return
-			}
-
-			if err != nil {
-				t.Fatalf("unexpected error: %v", err)
-			}
-
-			if tt.want == nil && got != nil {
-				t.Fatalf("got %v, want nil", got)
-			}
-			if len(got) != len(tt.want) {
-				t.Fatalf("got %v (len %d), want %v (len %d)", got, len(got), tt.want, len(tt.want))
-			}
-			for i := range got {
-				if got[i] != tt.want[i] {
-					t.Errorf("field[%d] = %q, want %q", i, got[i], tt.want[i])
-				}
-			}
-		})
-	}
-}
-
-// ---------------------------------------------------------------------------
-// countOutstandingQuestions
-// ---------------------------------------------------------------------------
-
-func TestCountOutstandingQuestions(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name    string
-		content string
-		want    int
-	}{
-		{
-			name: "three OQ items",
-			content: `# Feature: Test
-
-## Outstanding Questions
-
-- Question 1
-- Question 2
-- Question 3
-`,
-			want: 3,
-		},
-		{
-			name: "no OQ section returns zero",
-			content: `# Feature: Test
-
-## Summary
-
-Just a summary.
-`,
-			want: 0,
-		},
-		{
-			name: "OQ section with None text returns zero",
-			content: `# Feature: Test
-
-## Outstanding Questions
-
-None at this time.
-`,
-			want: 0,
-		},
-		{
-			name: "OQ section with single item",
-			content: `# Feature: Test
-
-## Outstanding Questions
-
-- Only one question
-`,
-			want: 1,
-		},
-		{
-			name: "OQ section stops at next heading",
-			content: `# Feature: Test
-
-## Outstanding Questions
-
-- Question A
-- Question B
-
-## Dependencies
-
-- dep1
-`,
-			want: 2,
-		},
-		{
-			name: "OQ with mixed content counts only bullet items",
-			content: `# Feature: Test
-
-## Outstanding Questions
-
-Some preamble text.
-
-- Actual question 1
-
-More text between items.
-
-- Actual question 2
-`,
-			want: 2,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			dir := t.TempDir()
-			readmePath := filepath.Join(dir, "README.md")
-			if err := os.WriteFile(readmePath, []byte(tt.content), 0o644); err != nil {
-				t.Fatal(err)
-			}
-
-			got, err := countOutstandingQuestions(readmePath)
-			if err != nil {
-				t.Fatalf("unexpected error: %v", err)
-			}
-			if got != tt.want {
-				t.Errorf("got %d, want %d", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestCountOutstandingQuestions_NonexistentFile(t *testing.T) {
-	t.Parallel()
-
-	_, err := countOutstandingQuestions("/tmp/does-not-exist-at-all/README.md")
-	if err == nil {
-		t.Fatal("expected error for nonexistent file, got nil")
-	}
-}
-
-// ---------------------------------------------------------------------------
-// resolveFields
-// ---------------------------------------------------------------------------
-
-func TestResolveFields(t *testing.T) {
-	t.Parallel()
-
-	readmeContent := `# Feature: Test Feature
-
-**Status:** Approved
-
-## Dependencies
-
-- some-dep
-- another-dep
-
-## Outstanding Questions
-
-- Question 1
-- Question 2
-- Question 3
-`
-
-	featuresDir := setupTestFeatures(t, map[string]string{
-		"test-feature": readmeContent,
-		"some-dep":     "# Feature: Some Dep\n\n**Status:** Draft\n",
-		"another-dep":  "# Feature: Another Dep\n\n**Status:** Approved\n",
-	})
-
-	t.Run("status field", func(t *testing.T) {
-		t.Parallel()
-		ef := resolveFields(featuresDir, "test-feature", []string{"status"})
-
-		if ef.Path != "test-feature" {
-			t.Errorf("Path = %q, want %q", ef.Path, "test-feature")
-		}
-		if ef.Status != "Approved" {
-			t.Errorf("Status = %q, want %q", ef.Status, "Approved")
-		}
-		if ef.OQ != nil {
-			t.Errorf("OQ should be nil when not requested, got %v", *ef.OQ)
-		}
-	})
-
-	t.Run("oq field", func(t *testing.T) {
-		t.Parallel()
-		ef := resolveFields(featuresDir, "test-feature", []string{"oq"})
-
-		if ef.OQ == nil {
-			t.Fatal("OQ should not be nil")
-		}
-		if *ef.OQ != 3 {
-			t.Errorf("OQ = %d, want 3", *ef.OQ)
-		}
-		if ef.Status != "" {
-			t.Errorf("Status should be empty when not requested, got %q", ef.Status)
-		}
-	})
-
-	t.Run("deps field", func(t *testing.T) {
-		t.Parallel()
-		ef := resolveFields(featuresDir, "test-feature", []string{"deps"})
-
-		if len(ef.Deps) != 2 {
-			t.Fatalf("got %d deps %v, want 2", len(ef.Deps), ef.Deps)
-		}
-		// parseDependencies returns bare IDs in file order; verify both are present.
-		wantDeps := map[string]bool{"some-dep": true, "another-dep": true}
-		for _, d := range ef.Deps {
-			if !wantDeps[d] {
-				t.Errorf("unexpected dep %q", d)
-			}
-			delete(wantDeps, d)
-		}
-		if len(wantDeps) > 0 {
-			t.Errorf("missing deps: %v", wantDeps)
-		}
-	})
-
-	t.Run("empty fields returns enrichedFeature with only Path", func(t *testing.T) {
-		t.Parallel()
-		ef := resolveFields(featuresDir, "test-feature", nil)
-
-		if ef.Path != "test-feature" {
-			t.Errorf("Path = %q, want %q", ef.Path, "test-feature")
-		}
-		if ef.Status != "" {
-			t.Errorf("Status should be empty, got %q", ef.Status)
-		}
-		if ef.OQ != nil {
-			t.Errorf("OQ should be nil, got %v", *ef.OQ)
-		}
-		if ef.Deps != nil {
-			t.Errorf("Deps should be nil, got %v", ef.Deps)
-		}
-	})
-
-	t.Run("multiple fields at once", func(t *testing.T) {
-		t.Parallel()
-		ef := resolveFields(featuresDir, "test-feature", []string{"status", "oq", "deps"})
-
-		if ef.Status != "Approved" {
-			t.Errorf("Status = %q, want %q", ef.Status, "Approved")
-		}
-		if ef.OQ == nil || *ef.OQ != 3 {
-			t.Errorf("OQ = %v, want 3", ef.OQ)
-		}
-		if len(ef.Deps) != 2 {
-			t.Errorf("got %d deps, want 2", len(ef.Deps))
-		}
-	})
-}
 
 // ---------------------------------------------------------------------------
 // enrichedFeature YAML output
@@ -362,7 +23,7 @@ func TestWriteEnrichedYAML(t *testing.T) {
 		t.Parallel()
 
 		oq := 3
-		features := []*enrichedFeature{
+		features := []*specfeature.EnrichedFeature{
 			{
 				Path:   "test-feature",
 				Status: "Approved",
@@ -387,7 +48,7 @@ func TestWriteEnrichedYAML(t *testing.T) {
 	t.Run("omitempty hides unrequested fields", func(t *testing.T) {
 		t.Parallel()
 
-		features := []*enrichedFeature{
+		features := []*specfeature.EnrichedFeature{
 			{Path: "minimal-feature"},
 		}
 
@@ -400,7 +61,7 @@ func TestWriteEnrichedYAML(t *testing.T) {
 		if !strings.Contains(output, "path: minimal-feature") {
 			t.Errorf("YAML output missing path:\n%s", output)
 		}
-		for _, absent := range []string{"status:", "oq:", "deps:", "refs:", "plans:", "proposals:", "children:", "focus:", "cycle:"} {
+		for _, absent := range []string{"status:", "oq:", "deps:", "refs:", "plans:", "proposals:", "focus:", "cycle:"} {
 			if strings.Contains(output, absent) {
 				t.Errorf("YAML output should not contain %q (omitempty):\n%s", absent, output)
 			}
@@ -410,7 +71,7 @@ func TestWriteEnrichedYAML(t *testing.T) {
 	t.Run("multiple features", func(t *testing.T) {
 		t.Parallel()
 
-		features := []*enrichedFeature{
+		features := []*specfeature.EnrichedFeature{
 			{Path: "feature-a", Status: "Draft"},
 			{Path: "feature-b", Status: "Approved"},
 		}
@@ -431,7 +92,7 @@ func TestWriteEnrichedYAML(t *testing.T) {
 
 		oq := 2
 		focus := true
-		features := []*enrichedFeature{
+		features := []*specfeature.EnrichedFeature{
 			{
 				Path:   "round-trip",
 				Focus:  &focus,
@@ -446,7 +107,7 @@ func TestWriteEnrichedYAML(t *testing.T) {
 			t.Fatalf("writeEnrichedYAML error: %v", err)
 		}
 
-		var decoded []enrichedFeature
+		var decoded []specfeature.EnrichedFeature
 		if err := yaml.Unmarshal(buf.Bytes(), &decoded); err != nil {
 			t.Fatalf("yaml.Unmarshal error: %v", err)
 		}
@@ -476,7 +137,7 @@ func TestWriteEnrichedJSON(t *testing.T) {
 		t.Parallel()
 
 		oq := 5
-		features := []*enrichedFeature{
+		features := []*specfeature.EnrichedFeature{
 			{
 				Path:   "json-feature",
 				Status: "Draft",
@@ -502,7 +163,7 @@ func TestWriteEnrichedJSON(t *testing.T) {
 	t.Run("omitempty hides unrequested fields", func(t *testing.T) {
 		t.Parallel()
 
-		features := []*enrichedFeature{
+		features := []*specfeature.EnrichedFeature{
 			{Path: "minimal-json"},
 		}
 
@@ -515,7 +176,7 @@ func TestWriteEnrichedJSON(t *testing.T) {
 		if !strings.Contains(output, `"path": "minimal-json"`) {
 			t.Errorf("JSON output missing path:\n%s", output)
 		}
-		for _, absent := range []string{`"status"`, `"oq"`, `"deps"`, `"refs"`, `"plans"`, `"proposals"`, `"children"`, `"focus"`, `"cycle"`} {
+		for _, absent := range []string{`"status"`, `"oq"`, `"deps"`, `"refs"`, `"plans"`, `"proposals"`, `"focus"`, `"cycle"`} {
 			if strings.Contains(output, absent) {
 				t.Errorf("JSON output should not contain %q (omitempty):\n%s", absent, output)
 			}
@@ -527,7 +188,7 @@ func TestWriteEnrichedJSON(t *testing.T) {
 
 		oq := 1
 		cycle := true
-		features := []*enrichedFeature{
+		features := []*specfeature.EnrichedFeature{
 			{
 				Path:  "json-round",
 				Cycle: &cycle,
@@ -571,7 +232,7 @@ func TestWriteEnrichedText(t *testing.T) {
 	t.Run("simple feature with status", func(t *testing.T) {
 		t.Parallel()
 
-		features := []*enrichedFeature{
+		features := []*specfeature.EnrichedFeature{
 			{Path: "my-feat", Status: "Approved"},
 		}
 
@@ -593,7 +254,7 @@ func TestWriteEnrichedText(t *testing.T) {
 		t.Parallel()
 
 		oq := 4
-		features := []*enrichedFeature{
+		features := []*specfeature.EnrichedFeature{
 			{Path: "oq-feat", OQ: &oq},
 		}
 
@@ -611,7 +272,7 @@ func TestWriteEnrichedText(t *testing.T) {
 	t.Run("feature with deps list", func(t *testing.T) {
 		t.Parallel()
 
-		features := []*enrichedFeature{
+		features := []*specfeature.EnrichedFeature{
 			{Path: "dep-feat", Deps: []string{"x", "y"}},
 		}
 
@@ -630,7 +291,7 @@ func TestWriteEnrichedText(t *testing.T) {
 		t.Parallel()
 
 		focus := true
-		features := []*enrichedFeature{
+		features := []*specfeature.EnrichedFeature{
 			{Path: "focused-feat", Focus: &focus, Status: "Draft"},
 		}
 
@@ -649,7 +310,7 @@ func TestWriteEnrichedText(t *testing.T) {
 		t.Parallel()
 
 		cycle := true
-		features := []*enrichedFeature{
+		features := []*specfeature.EnrichedFeature{
 			{Path: "cycle-feat", Cycle: &cycle},
 		}
 
@@ -667,11 +328,11 @@ func TestWriteEnrichedText(t *testing.T) {
 	t.Run("nested children with indentation", func(t *testing.T) {
 		t.Parallel()
 
-		features := []*enrichedFeature{
+		features := []*specfeature.EnrichedFeature{
 			{
 				Path:   "parent",
 				Status: "Approved",
-				Children: []*enrichedFeature{
+				ChildNodes: []*specfeature.EnrichedFeature{
 					{Path: "parent/child", Status: "Draft"},
 				},
 			},
@@ -694,7 +355,7 @@ func TestWriteEnrichedText(t *testing.T) {
 	t.Run("no fields produces plain path output", func(t *testing.T) {
 		t.Parallel()
 
-		features := []*enrichedFeature{
+		features := []*specfeature.EnrichedFeature{
 			{Path: "plain-feat"},
 		}
 
@@ -712,79 +373,6 @@ func TestWriteEnrichedText(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// boolPtr
-// ---------------------------------------------------------------------------
-
-func TestBoolPtr(t *testing.T) {
-	t.Parallel()
-
-	t.Run("true", func(t *testing.T) {
-		t.Parallel()
-		p := boolPtr(true)
-		if p == nil {
-			t.Fatal("expected non-nil pointer")
-		}
-		if *p != true {
-			t.Errorf("got %v, want true", *p)
-		}
-	})
-
-	t.Run("false", func(t *testing.T) {
-		t.Parallel()
-		p := boolPtr(false)
-		if p == nil {
-			t.Fatal("expected non-nil pointer")
-		}
-		if *p != false {
-			t.Errorf("got %v, want false", *p)
-		}
-	})
-
-	t.Run("returns distinct pointers", func(t *testing.T) {
-		t.Parallel()
-		p1 := boolPtr(true)
-		p2 := boolPtr(true)
-		if p1 == p2 {
-			t.Error("expected distinct pointers for separate calls")
-		}
-	})
-}
-
-// ---------------------------------------------------------------------------
-// validateFormat
-// ---------------------------------------------------------------------------
-
-func TestValidateFormat(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name    string
-		format  string
-		wantErr bool
-	}{
-		{name: "text is valid", format: "text", wantErr: false},
-		{name: "yaml is valid", format: "yaml", wantErr: false},
-		{name: "json is valid", format: "json", wantErr: false},
-		{name: "invalid format", format: "csv", wantErr: true},
-		{name: "empty format", format: "", wantErr: true},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			err := validateFormat(tt.format)
-			if tt.wantErr && err == nil {
-				t.Error("expected error, got nil")
-			}
-			if !tt.wantErr && err != nil {
-				t.Errorf("unexpected error: %v", err)
-			}
-		})
-	}
-}
-
-// ---------------------------------------------------------------------------
 // writeEnrichedOutput dispatching
 // ---------------------------------------------------------------------------
 
@@ -792,7 +380,7 @@ func TestWriteEnrichedOutput(t *testing.T) {
 	t.Parallel()
 
 	oq := 2
-	features := []*enrichedFeature{
+	features := []*specfeature.EnrichedFeature{
 		{Path: "dispatch-feat", Status: "Approved", OQ: &oq},
 	}
 

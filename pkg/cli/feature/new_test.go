@@ -23,7 +23,7 @@ func setupSpecRepo(t *testing.T) (tmpDir, featDir string) {
 	if err := os.MkdirAll(featDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	// Write index README with an existing table so updateFeatureIndex can append.
+	// Write index README with an existing table so UpdateFeatureIndex can append.
 	indexContent := "# Features\n\n| Feature | Description |\n|---|---|\n"
 	if err := os.WriteFile(filepath.Join(featDir, "README.md"), []byte(indexContent), 0o644); err != nil {
 		t.Fatal(err)
@@ -265,113 +265,5 @@ func TestRunNew_ParentSlugConflict(t *testing.T) {
 	}
 	if exitErr.ExitCode() != 2 {
 		t.Errorf("expected exit code 2, got %d", exitErr.ExitCode())
-	}
-}
-
-// TestUpdateParentContents_NewSection verifies that updateParentContents creates
-// a brand-new ## Contents section when none exists, inserting it after
-// ## Summary.
-func TestUpdateParentContents_NewSection(t *testing.T) {
-	dir := t.TempDir()
-	readmePath := filepath.Join(dir, "README.md")
-	initial := "# Parent\n\n## Summary\n\nContent.\n\n## Problem\n\nTODO\n"
-	if err := os.WriteFile(readmePath, []byte(initial), 0o644); err != nil {
-		t.Fatal(err)
-	}
-
-	modified, err := updateParentContents(readmePath, "child-slug", "Child description")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if !modified {
-		t.Fatal("expected modified=true, got false")
-	}
-
-	data, readErr := os.ReadFile(readmePath)
-	if readErr != nil {
-		t.Fatal(readErr)
-	}
-	result := string(data)
-
-	if !strings.Contains(result, "## Contents") {
-		t.Errorf("expected '## Contents' in result:\n%s", result)
-	}
-	if !strings.Contains(result, "| [child-slug](child-slug/README.md) | Child description |") {
-		t.Errorf("expected child row in Contents table:\n%s", result)
-	}
-	summaryIdx := strings.Index(result, "## Summary")
-	contentsIdx := strings.Index(result, "## Contents")
-	if summaryIdx == -1 || contentsIdx == -1 {
-		t.Fatalf("both headings must be present, got:\n%s", result)
-	}
-	if contentsIdx < summaryIdx {
-		t.Errorf("## Contents should appear after ## Summary, got:\n%s", result)
-	}
-}
-
-// TestUpdateParentContents_ExistingSection verifies that updateParentContents
-// appends a new row to an already-present ## Contents table.
-func TestUpdateParentContents_ExistingSection(t *testing.T) {
-	dir := t.TempDir()
-	readmePath := filepath.Join(dir, "README.md")
-	initial := "# Parent\n\n## Summary\n\nParent.\n\n## Contents\n\n| Feature | Description |\n|---|---|\n| [old-child](old-child/README.md) | Old child desc |\n"
-	if err := os.WriteFile(readmePath, []byte(initial), 0o644); err != nil {
-		t.Fatal(err)
-	}
-
-	modified, err := updateParentContents(readmePath, "new-child", "New child desc")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if !modified {
-		t.Fatal("expected modified=true, got false")
-	}
-
-	data, readErr := os.ReadFile(readmePath)
-	if readErr != nil {
-		t.Fatal(readErr)
-	}
-	result := string(data)
-
-	if !strings.Contains(result, "| [new-child](new-child/README.md) | New child desc |") {
-		t.Errorf("expected new row in Contents table:\n%s", result)
-	}
-	if !strings.Contains(result, "old-child") {
-		t.Errorf("expected existing row to still be present:\n%s", result)
-	}
-}
-
-// TestUpdateFeatureIndex verifies that updateFeatureIndex appends a new feature
-// row to the index README.
-func TestUpdateFeatureIndex(t *testing.T) {
-	dir := t.TempDir()
-	indexPath := filepath.Join(dir, "README.md")
-	initial := "# Features\n\n| Feature | Description |\n|---|---|\n| [old-feature](old-feature/README.md) | Old feature desc |\n"
-	if err := os.WriteFile(indexPath, []byte(initial), 0o644); err != nil {
-		t.Fatal(err)
-	}
-
-	modified, err := updateFeatureIndex(indexPath, "new-feature", "New feature desc")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if !modified {
-		t.Fatal("expected modified=true, got false")
-	}
-
-	data, readErr := os.ReadFile(indexPath)
-	if readErr != nil {
-		t.Fatal(readErr)
-	}
-	result := string(data)
-
-	if !strings.Contains(result, "new-feature") {
-		t.Errorf("expected 'new-feature' in index:\n%s", result)
-	}
-	if !strings.Contains(result, "New feature desc") {
-		t.Errorf("expected 'New feature desc' in index:\n%s", result)
-	}
-	if !strings.Contains(result, "old-feature") {
-		t.Errorf("expected existing 'old-feature' row to be preserved:\n%s", result)
 	}
 }
