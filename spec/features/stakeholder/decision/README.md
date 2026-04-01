@@ -27,7 +27,7 @@ Every decision accumulates a record of stakeholder responses in a `decisions.md`
 
 Synchestra agents encounter two situations that require external input:
 
-1. **Workflow gates** — a development plan needs review, code needs approval, a spec needs sign-off. These are predictable decision points defined by the project's workflow.
+1. **Workflow gates** — a plan needs review, code needs approval, a spec needs sign-off. These are predictable decision points defined by the project's workflow.
 2. **Agent blockers** — an agent is implementing a task and encounters an ambiguity, a trade-off, or a choice it cannot make autonomously. Today it calls `task block` and waits, but there is no structured way to describe what it needs or from whom.
 
 Both cases require the same mechanism: create a structured request, assign it to the right stakeholders, collect responses, and feed the outcome back into the workflow.
@@ -130,7 +130,7 @@ options:
 
 # Decision: Approve plan "add-batch-mode"
 
-Review the development plan for adding batch mode to the CLI.
+Review the plan for adding batch mode to the CLI.
 
 ## Context
 

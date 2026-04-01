@@ -14,7 +14,7 @@ The stakeholder feature formalizes three things that are currently implicit:
 
 ## Problem
 
-Synchestra has well-defined decision points — development plans go through `in_review → approved`, proposals have review status, code gets reviewed before merge. But three questions are unanswered:
+Synchestra has well-defined decision points — plans go through `in_review → approved`, proposals have review status, code gets reviewed before merge. But three questions are unanswered:
 
 - **Who** reviews or approves? Today this is implicit — whoever happens to be around.
 - **How** are decisions requested? Agents that hit blockers have no structured way to ask for input. They call `task block` and hope someone notices.
@@ -29,7 +29,7 @@ Stakeholders sit between the "what" layer (features, proposals) and the "who/whe
 ```mermaid
 graph LR
     A["Feature<br/>(what)"]
-    B["Development plan<br/>(how)"]
+    B["Plan<br/>(how)"]
     C["Tasks<br/>(who/when)"]
     S["Stakeholder<br/>(who decides)"]
 
@@ -104,7 +104,7 @@ How stakeholders learn about decisions and how responses flow back to requesting
 | [cli](../cli/README.md) | New `synchestra decision` and `synchestra stakeholder` command groups (planned addition to CLI spec) |
 | [agent-skills](../agent-skills/README.md) | `synchestra-decision-request` skill for agent-initiated decisions |
 | [state-store](../state-store/README.md) | `DecisionStore` sub-interface joins existing store hierarchy (planned addition to state-store spec) |
-| [development-plan](https://github.com/synchestra-io/specscore/blob/main/spec/features/development-plan/README.md) | Gates trigger on plan status transitions |
+| [plan](https://github.com/synchestra-io/specscore/blob/main/plan/README.md) | Gates trigger on plan status transitions |
 | [feature](https://github.com/synchestra-io/specscore/blob/main/spec/features/feature/README.md) | `_config.yaml` for feature-scoped role overrides (planned addition to feature spec's reserved `_` prefix table) |
 | [github-app](../github-app/README.md) | GitHub review requests and PR comments as a notification delivery channel |
 | [chat](../chat/README.md) | Workflows can create decisions as part of guided conversations (planned addition to chat spec) |

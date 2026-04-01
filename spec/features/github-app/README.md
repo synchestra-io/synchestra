@@ -29,7 +29,7 @@ The app requests the minimum permissions required for Synchestra's coordination 
 |---|---|---|
 | Repository contents | Read & Write | Read specs, features, tasks; push state changes to state repos |
 | Issues | Read & Write | Sync issues with Synchestra tasks; create issues from proposals |
-| Pull requests | Read & Write | Track PR status; create PRs from development plans |
+| Pull requests | Read & Write | Track PR status; create PRs from plans |
 | Webhooks | Read-only | Receive event notifications |
 | Metadata | Read-only | Repository metadata for project discovery |
 

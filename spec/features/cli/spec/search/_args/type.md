@@ -19,7 +19,7 @@ synchestra spec search <query> --type <type>
 | Value | Matches files under | Description |
 |---|---|---|
 | `feature` | `spec/features/` | Feature specifications |
-| `plan` | `spec/plans/` | Development plans |
+| `plan` | `spec/plans/` | Plans |
 | `proposal` | `spec/features/*/proposals/` | Feature proposals |
 
 ## Behavior

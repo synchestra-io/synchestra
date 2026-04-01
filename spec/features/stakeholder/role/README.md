@@ -10,7 +10,7 @@ Roles are defined at the project level and overridden per-feature using `add`/`r
 
 ## Problem
 
-When a development plan needs review or an agent needs input, someone must decide who handles it. Today this is implicit — there is no structured mapping from "this needs a code review" to "these specific people/agents should review it." The result is ad hoc assignment, missed reviews, and no way to enforce that the right people are involved for the right scope.
+When a plan needs review or an agent needs input, someone must decide who handles it. Today this is implicit — there is no structured mapping from "this needs a code review" to "these specific people/agents should review it." The result is ad hoc assignment, missed reviews, and no way to enforce that the right people are involved for the right scope.
 
 ## Behavior
 
@@ -37,7 +37,7 @@ Role names are lowercase, hyphen-separated identifiers. There is no fixed set of
 | Role | Typical purpose |
 |---|---|
 | `code-reviewer` | Reviews implementation before merge |
-| `spec-approver` | Approves feature specs and development plans |
+| `spec-approver` | Approves feature specs and plans |
 | `domain-expert` | Provides domain-specific input on decisions |
 | `tech-lead` | Final authority on technical direction |
 | `product-owner` | Approves feature scope and priorities |

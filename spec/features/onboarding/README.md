@@ -108,7 +108,7 @@ For users who want to explore before committing:
 - Synchestra provisions a **pre-built sample project** with:
   - Example features with specifications and proposals
   - Example tasks in various states (queued, in_progress, completed)
-  - A sample development plan
+  - A sample plan
   - Realistic but synthetic content so the user can navigate the full UI
 - No GitHub App installation required.
 - No AI key required.

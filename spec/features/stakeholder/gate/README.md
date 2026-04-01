@@ -10,7 +10,7 @@ Synchestra ships with built-in gates for the most common decision points. The da
 
 ## Problem
 
-Synchestra has implicit approval points — development plans transition through `in_review → approved`, code gets reviewed before merge. But nothing enforces these checkpoints or routes them to the right people. A plan can be approved by anyone, a code review can be skipped entirely, and there is no way to require that specific roles sign off before a workflow proceeds.
+Synchestra has implicit approval points — plans transition through `in_review → approved`, code gets reviewed before merge. But nothing enforces these checkpoints or routes them to the right people. A plan can be approved by anyone, a code review can be skipped entirely, and there is no way to require that specific roles sign off before a workflow proceeds.
 
 ## Behavior
 

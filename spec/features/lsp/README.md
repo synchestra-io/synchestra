@@ -131,7 +131,7 @@ Not defined yet.
 
 ## Outstanding Questions
 
-- Should the LSP server support specification files beyond feature READMEs (e.g., development plans, proposal documents, acceptance criteria)?
+- Should the LSP server support specification files beyond feature READMEs (e.g., plans, proposal documents, acceptance criteria)?
 - Should the LSP server integrate with git to show feature status changes (e.g., "this feature was modified in the current branch but not yet pushed")?
 - Is there value in a "spec preview" capability — rendering how a feature's metadata and relationships will look after the current edits are saved?
 - Should the LSP server expose custom commands (e.g., `synchestra.featureCreate`) that IDEs can bind to keyboard shortcuts or command palette entries?
