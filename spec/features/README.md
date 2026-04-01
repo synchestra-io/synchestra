@@ -9,7 +9,8 @@ Synchestra is built on **[SpecScore](https://github.com/synchestra-io/specscore)
 - [Feature](https://github.com/synchestra-io/specscore/blob/main/spec/features/feature/README.md) — Feature structure, metadata, lifecycle, conventions
 - [Acceptance Criteria](https://github.com/synchestra-io/specscore/blob/main/spec/features/acceptance-criteria/README.md) — AC format and conventions
 - [Source References](https://github.com/synchestra-io/specscore/blob/main/spec/features/source-references/README.md) — Code-to-spec traceability
-- [Development Plan](https://github.com/synchestra-io/specscore/blob/main/spec/features/development-plan/README.md) — Planning document format
+- [Plan](https://github.com/synchestra-io/specscore/blob/main/spec/features/plan/README.md) — Planning document format
+- [Task](https://github.com/synchestra-io/specscore/blob/main/spec/features/task/README.md) — Discrete units of work within a plan
 - [Project Definition](https://github.com/synchestra-io/specscore/blob/main/spec/features/project-definition/README.md) — Project configuration
 
 The features below are Synchestra-specific — they define orchestration, coordination, and platform capabilities built on top of SpecScore.
@@ -148,7 +149,7 @@ Mutual authentication between runner hosts and the Synchestra Hub. Hosts prove i
 Bidirectional, real-time messaging between users and Claude Code instances running inside sandbox containers on remote runners. Messages flow from the Hub (browser) or Telegram through the Synchestra cloud layer (Cloud Run + Firestore) to runner hosts, into containers via the sandbox agent's gRPC interface, and reach Claude Code through a local MCP channel server implementing the Claude Code channels protocol. Firestore is the source of truth for all messages; Hub subscribes via onSnapshot for real-time delivery. Extends the sandbox agent with session management and messaging RPCs, and ships a Go-based channel MCP server in the container image.
 
 ```
-# SpecScore features (external): feature, acceptance-criteria, source-references, development-plan, project-definition
+# SpecScore features (external): feature, acceptance-criteria, source-references, plan, task, project-definition
 # See https://github.com/synchestra-io/specscore
 
 task-status-board ← conflict-resolution
@@ -158,10 +159,10 @@ cross-repo-sync ────────┘
 micro-tasks (independent)
 model-selection (independent)
 outstanding-questions (independent)
-proposals → [specscore:development-plan] (proposals trigger plans)
-[specscore:development-plan] → task-status-board, cli (plans generate tasks)
-chat → [specscore:feature], proposals, [specscore:development-plan], task-status-board, agent-skills, ui, api
-ui → proposals, cli, task-status-board, agent-skills, [specscore:development-plan], chat
+proposals → [specscore:plan] (proposals trigger plans)
+[specscore:plan] → task-status-board, cli (plans generate tasks)
+chat → [specscore:feature], proposals, [specscore:plan], task-status-board, agent-skills, ui, api
+ui → proposals, cli, task-status-board, agent-skills, [specscore:plan], chat
 api → cli (api mirrors cli contract)
 global-config ← cli (cli reads ~/.synchestra.yaml for repo resolution)
 github-app → api (callback endpoint)
@@ -171,10 +172,10 @@ bots → sandbox, chat, api, state-store (SynchestraBot relays prompts to contai
 lsp → cli/feature, [specscore:feature] (LSP server reuses CLI feature packages for IDE integration)
 state-store → task-status-board (board interface and claim atomicity), chat (chat persistence)
 state-store ← cli, api, agent-skills (all consumers of state go through state store)
-[specscore:acceptance-criteria] → [specscore:feature] (mandatory AC section), [specscore:development-plan] (plan ACs can reference feature ACs)
+[specscore:acceptance-criteria] → [specscore:feature] (mandatory AC section), [specscore:plan] (plan ACs can reference feature ACs)
 testing-framework → [specscore:acceptance-criteria] (composes ACs into test flows), cli (new test command group), [specscore:feature] (_tests/ directory)
 [specscore:source-references] → [specscore:feature], cli, [specscore:project-definition] (annotations link code to spec resources, validated by linter)
-stakeholder → task-status-board (decisions are tasks), [specscore:development-plan] (gates trigger on plan transitions), [specscore:feature] (_config.yaml for role overrides), cli (decision/stakeholder commands), agent-skills (decision-request skill), state-store (DecisionStore)
+stakeholder → task-status-board (decisions are tasks), [specscore:plan] (gates trigger on plan transitions), [specscore:feature] (_config.yaml for role overrides), cli (decision/stakeholder commands), agent-skills (decision-request skill), state-store (DecisionStore)
 stakeholder ← chat (workflows create decisions), ui (renders decision options), bots (delivers notifications, accepts responses)
 host-auth → runner (prerequisite for runner registration), channels (authenticated host-hub messaging), api (token endpoints, public key endpoint)
 channels → runner (host compute layer), sandbox (agent gRPC extensions, container image), api (cloud endpoints), state-store (Firestore persistence)
@@ -187,7 +188,7 @@ channels ← ui/hub (browser surface), bots (Telegram surface), chat (sessions m
 
 All diagrams in feature specifications should use **mermaid syntax** instead of ASCII art. Mermaid provides better clarity, GitHub rendering support, and maintainability.
 `task-status-board` is foundational for execution — it provides the claiming mechanism (optimistic locking) and status visibility.
-[SpecScore `development-plan`](https://github.com/synchestra-io/specscore/blob/main/spec/features/development-plan/README.md) bridges the spec-to-execution gap — proposals and feature specs flow through it to become tasks.
+[SpecScore `plan`](https://github.com/synchestra-io/specscore/blob/main/spec/features/plan/README.md) bridges the spec-to-execution gap — proposals and feature specs flow through plans to become tasks. The [task](https://github.com/synchestra-io/specscore/blob/main/spec/features/task/README.md) feature defines the methodology-level task concept that Synchestra implements.
 
 ## Outstanding Questions
 
