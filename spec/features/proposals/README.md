@@ -250,9 +250,9 @@ Proposal content is included only when:
 - A workflow is operating on proposal review or proposal implementation
 - A proposal is being incorporated into the main feature spec
 
-## Interaction with Development Plans
+## Interaction with Plans
 
-An approved proposal is a trigger for [development plan](https://github.com/synchestra-io/specscore/blob/main/spec/features/development-plan/README.md) creation. When a plan is created from a proposal:
+An approved proposal is a trigger for [plan](https://github.com/synchestra-io/specscore/blob/main/spec/features/plan/README.md) creation. When a plan is created from a proposal:
 
 - The plan's **Source type** is `change-request` and its **Source** field links to the proposal.
 - The proposal gains a **Plan** field linking forward to the plan.

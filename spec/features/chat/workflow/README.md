@@ -19,7 +19,7 @@ Synchestra ships with a predefined set of built-in workflows that are useful out
 
 ### create-proposal
 
-Guides a user through brainstorming, exploring approaches, and drafting a formal change request (proposal) for an existing feature. Supports a fast path for maintainers where the change is implemented immediately and a development plan is produced as a report.
+Guides a user through brainstorming, exploring approaches, and drafting a formal change request (proposal) for an existing feature. Supports a fast path for maintainers where the change is implemented immediately and a plan is produced as a report.
 
 ### create-feature
 

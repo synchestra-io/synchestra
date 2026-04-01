@@ -34,7 +34,7 @@ The tweak workflow can target both spec repo documents and code repo files, but 
 | Code file | no (requires `allow-code-changes: true`) | Always PR with CI |
 
 **Code change constraints:**
-- Code tweaks are limited to a **single code repository.** If the change requires modifications across multiple repos, the system suggests escalating to the "Create Proposal" workflow — multi-repo changes need a development plan and task status board.
+- Code tweaks are limited to a **single code repository.** If the change requires modifications across multiple repos, the system suggests escalating to the "Create Proposal" workflow — multi-repo changes need a plan and task status board.
 - All code changes go through a **PR with CI validation**, regardless of the user's role.
 
 ### Steps

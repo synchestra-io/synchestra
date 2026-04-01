@@ -6,7 +6,7 @@
 
 The "Create a Proposal" workflow guides a user through brainstorming, exploring approaches, and drafting a formal change request ([proposal](../../../proposals/README.md)) for an existing feature. It is the flagship [workflow](../README.md) and the most common entry point for contributing changes to a Synchestra-managed project.
 
-For maintainers and authorized contributors, a fast path allows the system to implement the change during the conversation and produce a development plan as a report of what was done.
+For maintainers and authorized contributors, a fast path allows the system to implement the change during the conversation and produce a plan as a report of what was done.
 
 ## Problem
 
@@ -53,13 +53,13 @@ The AI reviews the draft proposal for completeness, clarity, and compliance with
 
 When a maintainer or authorized contributor initiates this workflow, the AI may suggest the fast path after the Explore step:
 
-> "This change looks straightforward — would you like me to implement it now and produce a development plan as a report?"
+> "This change looks straightforward — would you like me to implement it now and produce a plan as a report?"
 
 If accepted:
 
 1. Tasks are created in the state repo
 2. Agents implement the change in a code branch
-3. A development plan is produced documenting what was done (plan-as-report)
+3. A plan is produced documenting what was done (plan-as-report)
 4. A PR is prepared with the code changes
 
 **Fast-path constraints:**
@@ -68,7 +68,7 @@ If accepted:
 - If multi-repo changes are detected, the AI suggests the standard path instead
 - All code changes go through a **PR with CI validation**
 
-**Produces (fast path):** `proposal`, `development-plan`, `pull-request`
+**Produces (fast path):** `proposal`, `plan`, `pull-request`
 
 ### Standard-path output
 
@@ -120,7 +120,7 @@ steps:
 | [Chat](../../README.md) | This workflow runs on the chat layer. Each "Create a Proposal" action starts a new chat. |
 | [Workflow](../README.md) | This is one of the built-in workflows. Its structure and steps follow the workflow schema. |
 | [Proposals](../../../proposals/README.md) | The primary artifact produced is a proposal document, committed to the feature's `proposals/` directory. |
-| [Development Plan](https://github.com/synchestra-io/specscore/blob/main/spec/features/development-plan/README.md) | Fast-path produces a plan-as-report. Standard-path proposals later trigger plan creation through the normal pipeline. |
+| [Plan](https://github.com/synchestra-io/specscore/blob/main/spec/features/plan/README.md) | Fast-path produces a plan-as-report. Standard-path proposals later trigger plan creation through the normal pipeline. |
 | [Feature](https://github.com/synchestra-io/specscore/blob/main/spec/features/feature/README.md) | The workflow anchors to features and produces proposals that attach to them. |
 
 ## Outstanding Questions

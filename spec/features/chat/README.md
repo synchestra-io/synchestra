@@ -20,7 +20,7 @@ Workflows are declarative YAML recipes that bridge user-facing actions to the ch
 
 ## Problem
 
-Synchestra has a well-defined pipeline for going from specifications to executed tasks: features describe what to build, development plans describe how to build it, and tasks track who is doing what. But entering this pipeline today requires manual authorship — a human writes a proposal, creates a plan, or files an issue outside Synchestra entirely.
+Synchestra has a well-defined pipeline for going from specifications to executed tasks: features describe what to build, plans describe how to build it, and tasks track who is doing what. But entering this pipeline today requires manual authorship — a human writes a proposal, creates a plan, or files an issue outside Synchestra entirely.
 
 This creates three problems:
 
@@ -162,10 +162,10 @@ The chat produces documents that enter the normal Synchestra pipeline. Other hum
 **Fast path (maintainers and authorized contributors):**
 
 ```
-Chat -> Tasks + Implementation + Dev Plan (as report) -> PR
+Chat -> Tasks + Implementation + Plan (as report) -> PR
 ```
 
-The system implements the change during the conversation and produces a development plan as a report of what was done. This path is available only to users with appropriate roles and only when the AI assesses the change as straightforward. The AI may suggest the fast path, or the user may request it.
+The system implements the change during the conversation and produces a plan as a report of what was done. This path is available only to users with appropriate roles and only when the AI assesses the change as straightforward. The AI may suggest the fast path, or the user may request it.
 
 **Fast-path constraints:**
 - Limited to changes affecting a **single code repository.** Multi-repo changes require the standard path with a development plan and task status board to manage coordination.
@@ -197,7 +197,7 @@ Workflow-specific configuration is documented in the [Workflow](workflow/README.
 |---|---|
 | [Feature](https://github.com/synchestra-io/specscore/blob/main/spec/features/feature/README.md) | Chats anchor to features. "Create Feature" workflow produces new feature specs. |
 | [Proposals](../proposals/README.md) | "Create Proposal" workflow produces proposals under `features/{name}/proposals/`. Chats can also anchor to existing proposals. |
-| [Development Plan](https://github.com/synchestra-io/specscore/blob/main/spec/features/development-plan/README.md) | Standard-path chats produce artifacts that later trigger plans. Fast-path chats produce plans as reports. Chats can anchor to existing plans for discussion. |
+| [Plan](https://github.com/synchestra-io/specscore/blob/main/spec/features/plan/README.md) | Standard-path chats produce artifacts that later trigger plans. Fast-path chats produce plans as reports. Chats can anchor to existing plans for discussion. |
 | [Task Status Board](../task-status-board/README.md) | Fast-path chats create tasks directly. Tasks spawned by chats appear on the board like any other tasks. |
 | [Agent Skills](../agent-skills/README.md) | Workflow steps reference skills/prompts. The same skill infrastructure powers both chat-based and task-based agent work. |
 | [CLI](../cli/README.md) | `synchestra chat list`, `synchestra chat info {id}` for admin and debugging. Chats are primarily a web UI concept. |
