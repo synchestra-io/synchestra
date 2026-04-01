@@ -11,7 +11,7 @@ graph TB
     subgraph "Spec repo (intent)"
         F["Feature<br/>what to build"]
         P["Proposal<br/>what to change"]
-        DP["Development Plan<br/>how to build it"]
+        DP["Plan<br/>how to build it"]
     end
 
     subgraph "State repo (execution)"
@@ -40,7 +40,7 @@ Each layer has a different **mutability profile**:
 |------------------|-------------------|---------------------|------------|
 | Intent (what)    | Feature spec      | Versioned, evolving | Spec       |
 | Intent (what)    | Proposal          | Versioned until incorporated | Spec |
-| Approach (how)   | Development plan  | Immutable once approved | Spec   |
+| Approach (how)   | Plan              | Mutable; snapshots track history | Spec   |
 | Execution (who)  | Tasks             | Highly fluid        | State      |
 | Execution (who)  | Artifacts         | Write-once per task | State      |
 | Output           | Code branches     | Standard git flow   | Code       |
@@ -54,7 +54,7 @@ sequenceDiagram
     participant Human
     participant Feature as Feature Spec
     participant Proposal as Proposal
-    participant Plan as Dev Plan
+    participant Plan as Plan
     participant Tasks as Tasks
     participant Board as Status Board
     participant Code as Code Repo
@@ -68,10 +68,10 @@ sequenceDiagram
         Proposal-->>Feature: Incorporated when implemented
     end
 
-    Human->>Plan: Author development plan
-    Note over Plan: draft → in_review → approved (frozen)
+    Human->>Plan: Author plan
+    Note over Plan: draft → in_review → approved
 
-    Plan->>Tasks: Generate tasks from steps
+    Plan->>Tasks: Generate tasks from plan tasks
     Note over Tasks: planning → queued
 
     loop For each claimable task
@@ -104,7 +104,7 @@ graph LR
     DP -->|"Features header"| F
     DP -->|"Source field"| PR
     DP -->|"Task mapping"| T
-    T -->|"Plan + Plan step"| DP
+    T -->|"Plan + Plan task"| DP
     T -->|"Inputs field"| A
     T -->|"Produces"| A
 ```
@@ -112,7 +112,7 @@ graph LR
 Every link is bidirectional or navigable in both directions. You can start at any node and trace the full chain:
 
 - **From a feature:** see its plans, which show tasks, which show artifacts and code branches
-- **From a task:** see its plan step, which shows the plan, which shows the feature and acceptance criteria
+- **From a task:** see its plan task, which shows the plan, which shows the feature and acceptance criteria
 - **From a plan:** see both the original intent (feature/proposal) and the execution state (tasks + derived status)
 
 ## Status and mutability
@@ -125,8 +125,8 @@ graph LR
         F["Feature spec<br/>──────────<br/>Living document.<br/>Updated when proposals<br/>are incorporated."]
     end
 
-    subgraph "Frozen"
-        DP["Development plan<br/>──────────<br/>Immutable after approval.<br/>Snapshot of intent.<br/>Never tracks status."]
+    subgraph "Snapshot-tracked"
+        DP["Plan<br/>──────────<br/>Mutable document.<br/>Snapshots capture<br/>reference points.<br/>Never tracks status."]
     end
 
     subgraph "Fluid"
@@ -139,21 +139,21 @@ graph LR
 
 **Why this matters:**
 - Features **evolve** because the product definition changes over time. Proposals are the mechanism for controlled evolution.
-- Plans are **frozen** because reviewers need a stable document to approve, and retrospectives need a fixed reference to compare against.
+- Plans are **mutable** — they evolve as execution reveals complexity. Snapshots (git hash + action + comment) capture reference points for review and retrospective.
 - Tasks are **fluid** because real execution always deviates from the plan. Agents discover complexity, humans reprioritize, parallel work gets restructured. Freezing tasks would fight reality.
 
-The development plan bridges these two worlds. It is the last frozen artifact before execution begins — the point where intent crystallizes into a reviewable, approvable approach.
+The plan bridges these two worlds. Snapshots mark the moments where intent crystallizes — approval, checkpoints, completion — while the plan itself remains a living document.
 
 ## Derived status: no duplication
 
-Plans do not track task status. Instead, Synchestra derives a progress view on the fly by mapping plan steps to their linked tasks:
+Plans do not track task status. Instead, Synchestra derives a progress view on the fly by mapping plan tasks to their linked execution tasks:
 
 ```mermaid
 graph LR
-    subgraph "Plan (frozen, in spec repo)"
-        S1["Step 1"]
-        S2["Step 2"]
-        S3["Step 3"]
+    subgraph "Plan (in spec repo)"
+        S1["Task 1"]
+        S2["Task 2"]
+        S3["Task 3"]
     end
 
     subgraph "Tasks (live, in state store)"
@@ -173,9 +173,9 @@ graph LR
 ```
 
 The derived view shows:
-- **Step 1:** complete (Task 1 is done)
-- **Step 2:** in progress (Task 2 has sub-tasks, one done, one queued)
-- **Step 3:** queued (Task 3 hasn't started)
+- **Task 1:** complete (Task 1 is done)
+- **Task 2:** in progress (Task 2 has sub-tasks, one done, one queued)
+- **Task 3:** queued (Task 3 hasn't started)
 - **Unplanned:** Task X exists but wasn't in the original plan
 
 One source of truth (tasks), two views (flat plan progress for humans, deep task tree for agents).
@@ -202,7 +202,7 @@ graph TB
     end
 
     SF -->|"plan references<br/>features"| SP
-    SP -->|"tasks generated<br/>from plan steps"| ST
+    SP -->|"tasks generated<br/>from plan tasks"| ST
     ST -->|"agents work on<br/>code branches"| CB
     ST --- SA
 ```
@@ -230,7 +230,7 @@ graph TB
     end
 
     SF2 -->|"plan references<br/>features"| SP2
-    SP2 -->|"tasks generated<br/>from plan steps"| ST2
+    SP2 -->|"tasks generated<br/>from plan tasks"| ST2
     ST2 --- SA2
 ```
 

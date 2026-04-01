@@ -4,7 +4,7 @@
 flowchart LR
     subgraph Input["📥 Input"]
         SPEC[Feature Spec]
-        PLAN[Development Plan]
+        PLAN[Plan]
         QUEUE[Task Queue]
     end
 

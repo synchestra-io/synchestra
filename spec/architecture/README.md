@@ -9,7 +9,7 @@ These are cross-cutting concerns that features and specifications build upon.
 | Document | Description |
 |---|---|
 | [repository-types/](repository-types/README.md) | The three git repository types (spec, state, code) — what they hold, why they're separate, how they connect, and rules for each |
-| [spec-to-execution.md](spec-to-execution.md) | How features, development plans, and tasks connect across repository boundaries |
+| [spec-to-execution.md](spec-to-execution.md) | How features, plans, and tasks connect across repository boundaries |
 | [sandbox-architecture.md](sandbox-architecture.md) | Sandbox feature design: stateless host, autonomous containers per project, gRPC communication, state management |
 | [sandbox-security.md](sandbox-security.md) | Security model for sandbox: credential encryption, container hardening, user isolation, threat analysis |
 
@@ -19,7 +19,7 @@ Defines the three kinds of repositories Synchestra operates with: the spec repos
 
 ### spec-to-execution.md
 
-The end-to-end pipeline from product intent to running work. Shows how features (what), development plans (how), and tasks (who/when) relate across the spec and state repositories. Covers the three-layer architecture, the complete lifecycle sequence, artifact relationships, mutability profiles, derived status without duplication, and repository boundaries.
+The end-to-end pipeline from product intent to running work. Shows how features (what), plans (how), and tasks (who/when) relate across the spec and state repositories. Covers the three-layer architecture, the complete lifecycle sequence, artifact relationships, mutability profiles, derived status without duplication, and repository boundaries.
 
 ### sandbox-architecture.md
 
