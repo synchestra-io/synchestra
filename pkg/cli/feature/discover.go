@@ -12,7 +12,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/synchestra-io/synchestra/pkg/cli/exitcode"
+	"github.com/synchestra-io/specscore/pkg/exitcode"
 )
 
 // featuresDir returns the default features directory name.

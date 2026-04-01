@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/synchestra-io/synchestra/pkg/cli/exitcode"
+	"github.com/synchestra-io/specscore/pkg/exitcode"
 	"github.com/synchestra-io/synchestra/pkg/cli/gitops"
 	"github.com/synchestra-io/synchestra/pkg/cli/reporef"
 )

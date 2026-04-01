@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/synchestra-io/synchestra/pkg/cli/exitcode"
+	"github.com/synchestra-io/specscore/pkg/exitcode"
 	"gopkg.in/yaml.v3"
 )
 

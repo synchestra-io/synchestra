@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/synchestra-io/synchestra/pkg/cli/exitcode"
+	"github.com/synchestra-io/specscore/pkg/exitcode"
 )
 
 // initGitRepo initialises a bare-minimum git repository in dir so that

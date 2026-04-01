@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/synchestra-io/synchestra/pkg/cli/exitcode"
+	"github.com/synchestra-io/specscore/pkg/exitcode"
 )
 
 // setupSpecRepo creates a temp dir with a spec/features directory tree, writes a

@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/synchestra-io/synchestra/pkg/cli/exitcode"
+	"github.com/synchestra-io/specscore/pkg/exitcode"
 )
 
 func TestPullCommand_Help(t *testing.T) {

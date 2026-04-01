@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/synchestra-io/synchestra/pkg/cli/exitcode"
+	"github.com/synchestra-io/specscore/pkg/exitcode"
 )
 
 func TestAbortedCommand_Help(t *testing.T) {

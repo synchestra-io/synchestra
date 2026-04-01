@@ -8,7 +8,7 @@ import (
 	"errors"
 	"os"
 
-	"github.com/synchestra-io/synchestra/pkg/cli/exitcode"
+	"github.com/synchestra-io/specscore/pkg/exitcode"
 	"github.com/synchestra-io/synchestra/pkg/cli/resolve"
 	"github.com/synchestra-io/synchestra/pkg/state"
 	"github.com/synchestra-io/synchestra/pkg/state/gitstore"
@@ -62,4 +62,3 @@ func mapStoreError(err error) *exitcode.Error {
 		return exitcode.UnexpectedError(err.Error())
 	}
 }
-

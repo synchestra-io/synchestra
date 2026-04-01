@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/synchestra-io/synchestra/pkg/cli/exitcode"
+	"github.com/synchestra-io/specscore/pkg/exitcode"
 )
 
 // initTestRepo creates a git repo with an initial commit and a bare remote,
