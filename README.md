@@ -400,12 +400,22 @@ Specification format features (feature structure, plans, acceptance criteria, so
 
 See [feature specifications](spec/features/README.md) for detailed specs and dependency graph.
 
+## Installation
+
+Install the latest CLI binary:
+
+```bash
+curl -fsSL https://synchestra.io/get-cli | sh
+```
+
+Or download directly from [synchestra-releases](https://github.com/synchestra-io/synchestra-releases/releases).
+
 ## Getting Started
 
 **Start with specs and CLI (open source):**
 
+- Install the CLI (see above) and start defining specs, creating tasks, and coordinating agents from your terminal.
 - **Fork a demo project** or use a Synchestra template repository to explore the structure and conventions locally.
-- Install the CLI and start defining specs, creating tasks, and coordinating agents from your terminal.
 
 **Scale with Synchestra Hub:**
 
