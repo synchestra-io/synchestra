@@ -74,7 +74,7 @@ jobs:
 
           gh release upload "${RELEASE_TAG}" \
             --repo synchestra-io/synchestra-releases \
-            dist/*.tar.gz dist/*.zip dist/*checksums*.txt dist/ai-plugin.zip
+            dist/*.tar.gz dist/*.zip dist/*checksums*.txt ai-plugin.zip
 
       - name: Upload snapshot artifacts
         if: ${{ !startsWith(github.ref, 'refs/tags/') && inputs.tag == '' }}
