@@ -59,6 +59,23 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Publish to synchestra-releases
+        if: ${{ startsWith(github.ref, 'refs/tags/') || inputs.tag != '' }}
+        env:
+          GH_TOKEN: ${{ secrets.RELEASES_REPO_TOKEN }}
+        run: |
+          TAG="${{ inputs.tag || github.ref_name }}"
+          RELEASE_TAG="cli-${TAG}"
+
+          gh release create "${RELEASE_TAG}" \
+            --repo synchestra-io/synchestra-releases \
+            --title "Synchestra CLI ${TAG}" \
+            --notes "Synchestra CLI binaries ${TAG}"
+
+          gh release upload "${RELEASE_TAG}" \
+            --repo synchestra-io/synchestra-releases \
+            dist/*.tar.gz dist/*.zip dist/*checksums*.txt dist/ai-plugin.zip
+
       - name: Upload snapshot artifacts
         if: ${{ !startsWith(github.ref, 'refs/tags/') && inputs.tag == '' }}
         uses: actions/upload-artifact@v4
