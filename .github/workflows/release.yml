@@ -72,14 +72,25 @@ jobs:
           TAG="${{ inputs.tag || github.ref_name }}"
           RELEASE_TAG="cli-${TAG}"
 
+          # Generate release notes from merged PRs since previous tag.
+          PREV_TAG="$(git tag --sort=-v:refname | grep '^v' | head -1)"
+          if [ -n "$PREV_TAG" ] && [ "$PREV_TAG" != "$TAG" ]; then
+            NOTES="$(gh api repos/${{ github.repository }}/releases/generate-notes \
+              -f tag_name="${TAG}" -f previous_tag_name="${PREV_TAG}" \
+              --jq '.body' 2>/dev/null || true)"
+          fi
+          if [ -z "$NOTES" ]; then
+            NOTES="$(git log --oneline "${PREV_TAG:+${PREV_TAG}..}HEAD" 2>/dev/null | head -20 || echo 'Synchestra CLI binaries')"
+          fi
+
           gh release create "${RELEASE_TAG}" \
             --repo synchestra-io/synchestra-releases \
             --title "Synchestra CLI ${TAG}" \
-            --notes "Synchestra CLI binaries ${TAG}"
+            --notes "${NOTES}"
 
           gh release upload "${RELEASE_TAG}" \
             --repo synchestra-io/synchestra-releases \
-            dist/*.tar.gz dist/*.zip dist/*checksums*.txt ai-plugin.zip
+            dist/*.tar.gz dist/*.zip dist/checksums.txt ai-plugin.zip
 
       - name: Upload snapshot artifacts
         if: ${{ !startsWith(github.ref, 'refs/tags/') && inputs.tag == '' }}
