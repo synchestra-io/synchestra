@@ -44,6 +44,7 @@ The features below are Synchestra-specific — they define orchestration, coordi
 | [runner](runner/README.md) | Conceptual | Remote hosts and cloud environments where AI agents execute sessions and claim tasks |
 | [host-auth](host-auth/README.md) | Conceptual | Mutual authentication between runner hosts and the Synchestra Hub --- registration tokens, short-lived access tokens, and Hub request signing |
 | [channels](channels/README.md) | Conceptual | Bidirectional real-time messaging between users (Hub, Telegram) and Claude Code instances in sandbox containers via MCP channels |
+| [routines](routines/README.md) | Conceptual | Cross-platform scheduled and triggered agent workflows. A routine is a spec-native, runtime-portable unit of recurring or event-driven work that runs on a chosen runner and produces reviewable git artifacts. |
 
 ## Feature Summaries
 
@@ -148,6 +149,10 @@ Mutual authentication between runner hosts and the Synchestra Hub. Hosts prove i
 
 Bidirectional, real-time messaging between users and Claude Code instances running inside sandbox containers on remote runners. Messages flow from the Hub (browser) or Telegram through the Synchestra cloud layer (Cloud Run + Firestore) to runner hosts, into containers via the sandbox agent's gRPC interface, and reach Claude Code through a local MCP channel server implementing the Claude Code channels protocol. Firestore is the source of truth for all messages; Hub subscribes via onSnapshot for real-time delivery. Extends the sandbox agent with session management and messaging RPCs, and ships a Go-based channel MCP server in the container image.
 
+### [Routines](routines/README.md)
+
+Cross-platform scheduled and triggered agent workflows. A routine binds four declarative components — a trigger (cron, git event, task state, or manual), a runtime adapter (Claude Code headless, Copilot CLI, raw LLM API, etc.), a runner target (local, VM, cloud), and a body (prompt, skill, or task reference) — into a versioned spec under `spec/routines/`. Routines are runtime- and compute-portable: the same spec runs on any supported runtime and any registered runner without rewrite. Every run produces a reviewable git artifact (branch, PR, or task update) by default, keeping humans in the loop and making runs first-class citizens of the work graph.
+
 ```
 # SpecScore features (external): feature, acceptance-criteria, source-references, plan, task, project-definition
 # See https://github.com/synchestra-io/specscore
@@ -232,3 +237,4 @@ All diagrams in feature specifications should use **mermaid syntax** instead of 
 - [stakeholder/notification](stakeholder/notification/README.md): 4 outstanding questions
 - [host-auth](host-auth/README.md): 3 outstanding questions
 - [channels](channels/README.md): 8 outstanding questions
+- [routines](routines/README.md): 7 outstanding questions
