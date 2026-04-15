@@ -138,7 +138,7 @@ sequenceDiagram
     A->>A: Execute agent runtime headlessly
     A-->>R: Output (transcript, artifacts)
     R-->>D: Result
-    D->>G: Commit transcript + artifact deltas; update child task status
+    D->>G: Commit transcript + artifact deltas, update child task status
     D->>D: Open PR / notify (per artifacts config)
 ```
 
