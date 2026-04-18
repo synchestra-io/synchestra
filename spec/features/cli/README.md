@@ -66,6 +66,9 @@ Each command group reserves a range for non-generic exit codes that are specific
 | `50–59` | `spec` |
 | `60–69` | `state` |
 | `70–79` | `code` |
+| `80–89` | `runner` |
+| `90–99` | `session` |
+| `100–109` | `auth` |
 
 Standard exit codes (`0–10`) should be preferred whenever possible. Use a group-specific code only when the error semantics cannot be expressed by a standard code.
 
@@ -171,6 +174,9 @@ For an overview of which commands run in which environments (host, agent contain
 | [server](server/README.md) | Background daemon management |
 | [mcp](mcp/README.md) | stdio MCP server for AI agents |
 | [test](test/README.md) | Run and list markdown-native test scenarios |
+| [auth](auth/README.md) | User-to-Hub authentication for CLI |
+| [runner](runner/README.md) | Remote runner management and work dispatch |
+| [session](session/README.md) | Inspect and control runtime sessions created by dispatch |
 
 ### `_args`
 
@@ -219,6 +225,18 @@ Starts a stdio-based MCP server for AI agent tools (Claude Code, Cursor, etc.). 
 ### `test`
 
 Runs and lists markdown-native test scenarios powered by [Rehearse](https://github.com/synchestra-io/rehearse). Delegates to the test runner for scenario parsing, AC resolution, and execution. See [test/README.md](test/README.md).
+
+### `auth`
+
+User-to-Hub authentication. Owns `login`, `logout`, and `whoami`. Distinct from [host-auth](../host-auth/README.md), which governs machine-to-Hub credentials. See [auth/README.md](auth/README.md).
+
+### `runner`
+
+Commands for managing remote runners and dispatching plans or tasks to them. The CLI surface over the product-level [Runner](../runner/README.md) feature. See [runner/README.md](runner/README.md).
+
+### `session`
+
+Commands for inspecting and controlling the runtime sessions created by `runner dispatch`. Sessions are orthogonal to tasks — they report runtime state (alive/idle/crashed), not SpecScore lifecycle state. See [session/README.md](session/README.md).
 
 ## Outstanding Questions
 

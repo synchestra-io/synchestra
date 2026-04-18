@@ -28,12 +28,16 @@ A runner is a named compute endpoint registered with a Synchestra project. Regis
 
 ### Sessions
 
-A session is an ephemeral interaction between a user and an agent running on a runner. Sessions:
+A session is an ephemeral execution context on a runner that carries one agent through one unit of work (a plan, a task, or an interactive chat). Sessions:
 
-- Are created on demand (user opens a chat) or by the system (agent claims a task)
-- Have a chat-like interface in the web UI, similar to ChatGPT
+- Are created by one of three triggers:
+  - **User chat** — a user opens a conversation with an agent via the web UI
+  - **System claim** — the runner's agent autonomously claims a queued task
+  - **CLI dispatch** — a user or agent invokes [`synchestra runner dispatch`](../cli/runner/dispatch/README.md), which creates a session programmatically
+- Present a chat-like interface in the web UI when user-facing; CLI-initiated sessions are headless but produce the same session record
 - Track which tasks the agent has claimed and their progress
 - Can be reviewed after completion (conversation history, task outcomes)
+- Are exposed over the CLI via [CLI Session](../cli/session/README.md) for programmatic observation and control
 
 ### Runner Lifecycle
 
