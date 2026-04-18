@@ -26,7 +26,7 @@ The `code` and `feature` command groups are complementary views of the same depe
 
 | Command | Description | Skill |
 |---|---|---|
-| [deps](deps/README.md) | Show Synchestra resources that source files depend on | [synchestra-code-deps](../../../../ai-plugin/skills/synchestra-code-deps/README.md) |
+| [deps](deps/README.md) | Show Synchestra resources that source files depend on | [synchestra-code-deps](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-code-deps/README.md) |
 
 ## Outstanding Questions
 

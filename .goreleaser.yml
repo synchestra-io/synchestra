@@ -6,9 +6,6 @@ before:
   hooks:
     - go mod tidy
     - go generate ./...
-    # Create a zip archive of the ai-plugin directory to attach to the release.
-    # Must be outside dist/ — GoReleaser cleans dist/ after before hooks run.
-    - sh -c "cd ai-plugin && zip -r ../ai-plugin.zip . --exclude '*/.DS_Store'"
 
 builds:
   - id: synchestra

@@ -1,7 +1,7 @@
 # Command: `synchestra code deps`
 
 **Parent:** [code](../README.md)
-**Skill:** [synchestra-code-deps](../../../../../ai-plugin/skills/synchestra-code-deps/README.md)
+**Skill:** [synchestra-code-deps](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-code-deps/README.md)
 
 ## Synopsis
 

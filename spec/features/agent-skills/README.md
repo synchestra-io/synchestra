@@ -54,16 +54,17 @@ On non-zero exit, the CLI writes a human-readable explanation to stderr.
 
 ## Skill File Format
 
-Skills live in `ai-plugin/skills/{skill-name}/README.md` in the main Synchestra repository.
+Skills live in the dedicated [`ai-plugin-synchestra`](https://github.com/synchestra-io/ai-plugin-synchestra) repository, published as the `synchestra-cli` plugin under the `synchestra-io` Claude Code marketplace. Each skill has its own directory under `skills/` with a `README.md`.
 
 ```
-ai-plugin/skills/
-  README.md                       ← skills index, vision, and available skills table
-  synchestra-claim-task/
-    README.md
-  synchestra-feature-info/
-    README.md
-  ...
+ai-plugin-synchestra/
+  skills/
+    README.md                       ← skills index, vision, and available skills table
+    synchestra-claim-task/
+      README.md
+    synchestra-feature-info/
+      README.md
+    ...
 ```
 
 Each skill README follows a consistent structure:
@@ -79,13 +80,13 @@ Each skill README follows a consistent structure:
 Skills are distributed to agents through:
 - **Synchestra CLI:** `synchestra skills list` and `synchestra skills show <name>` for on-demand access
 - **MCP server:** Skills exposed as MCP tools that agents can discover and call
-- **Direct file access:** Agents working in the Synchestra repo can read skills directly from `ai-plugin/skills/`
+- **Direct file access:** Agents can read skills directly from the [`ai-plugin-synchestra`](https://github.com/synchestra-io/ai-plugin-synchestra/tree/main/skills) repo or a local install
 
 ## Plans
 
 - [Agent Skills Roadmap](../../plans/agent-skills-roadmap/README.md) — phased plan for building out navigation, mutation, and workflow skills
 
-See the [skills README](../../../ai-plugin/skills/README.md) for the full list of available skills, the vision for how skills transform agent workflows, and token cost analysis.
+See the [skills README](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/README.md) for the full list of available skills, the vision for how skills transform agent workflows, and token cost analysis.
 
 ## Outstanding Questions
 

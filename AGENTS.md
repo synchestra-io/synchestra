@@ -20,8 +20,9 @@ This repository is both the specification and the CLI implementation for Synches
 - `spec/` is the technical source of truth. Use it for behavior, data model, task lifecycle, CLI semantics, and repository layout.
 - `pkg/` contains the Go implementation of the CLI, organized by domain (`cli/`, `state/`).
 - `main.go` is the CLI entry point.
-- `skills/` packages the CLI into agent-facing skills. Each skill is a concrete wrapper around a single `synchestra` command and links back to the relevant CLI spec.
 - `docs/` contains user-facing explanations of the platform and API surface. Use it when you need the conceptual stack or public interface rather than internal feature requirements.
+
+Skills and the Claude Code plugin that wraps the CLI live in a separate repository: [`synchestra-io/ai-plugin-synchestra`](https://github.com/synchestra-io/ai-plugin-synchestra). Cross-repo coordination is expected when adding a CLI command that needs a corresponding skill. See [ADR-0001](spec/decisions/0001-extract-ai-plugin.md) for rationale.
 
 Key specification files:
 

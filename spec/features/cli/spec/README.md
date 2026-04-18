@@ -16,13 +16,13 @@ Specification commands treat spec repositories as queryable data structures, not
 
 | Command | Description | Skill |
 |---|---|---|
-| [lint](lint/README.md) | Validate spec tree for structural convention violations | [synchestra-spec-lint](../../../../ai-plugin/skills/synchestra-spec-lint/README.md) |
+| [lint](lint/README.md) | Validate spec tree for structural convention violations | [synchestra-spec-lint](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-spec-lint/README.md) |
 
 ### Search
 
 | Command | Description | Skill |
 |---|---|---|
-| [search](search/README.md) | Keyword search across spec documents with metadata filtering and cross-reference context | [synchestra-spec-search](../../../../ai-plugin/skills/synchestra-spec-search/README.md) |
+| [search](search/README.md) | Keyword search across spec documents with metadata filtering and cross-reference context | [synchestra-spec-search](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-spec-search/README.md) |
 
 ## Outstanding Questions
 

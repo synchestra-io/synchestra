@@ -1,7 +1,7 @@
 # Command: `synchestra feature refs`
 
 **Parent:** [feature](../README.md)
-**Skill:** [synchestra-feature-refs](../../../../../ai-plugin/skills/synchestra-feature-refs/README.md)
+**Skill:** [synchestra-feature-refs](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-feature-refs/README.md)
 
 ## Synopsis
 

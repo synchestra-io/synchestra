@@ -225,7 +225,7 @@ Synchestra's philosophy is **commit often**. When an agent starts work, it must:
 
 If the push fails due to a merge conflict, another agent already claimed the task. The agent moves on to the next
 available task or exits. This is standard distributed locking — implemented through git, requiring zero additional
-infrastructure. The [synchestra-claim-task](ai-plugin/skills/synchestra-claim-task/README.md) skill handles this entire
+infrastructure. The [synchestra-claim-task](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-claim-task/README.md) skill handles this entire
 flow for agents automatically.
 See [Task Status Board: Claiming a Task](spec/features/task-status-board/README.md#claiming-a-task-optimistic-locking)
 for the full protocol.
@@ -241,7 +241,7 @@ launches a specialized AI sub-agent that:
 
 ## Skills
 
-Synchestra ships with a library of [skills](ai-plugin/skills/README.md) — focused, self-contained instructions that
+Synchestra ships with a library of [skills](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/README.md) — focused, self-contained instructions that
 teach AI agents how to perform specific Synchestra operations. Each skill wraps a
 single [CLI command](spec/features/cli/README.md) and tells the agent exactly when to use it, what parameters to pass,
 and how to handle every exit code.
@@ -250,7 +250,7 @@ and how to handle every exit code.
 reading files one by one — burning 5–10x more tokens than necessary. Skills provide structured, token-efficient access:
 `feature info` returns ~500 tokens of metadata instead of loading a 3,000-token README. `feature deps --transitive`
 resolves full dependency chains in one call instead of recursive file reads. See
-the [skills README](ai-plugin/skills/README.md) for the full vision and token cost analysis.
+the [skills README](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/README.md) for the full vision and token cost analysis.
 
 **Skills work with any orchestrator.** While skills are designed for the integrated Synchestra workflow, they don't
 require it. Any agent platform that supports custom instructions — Claude Code, Cursor, Windsurf, GPT, custom scripts —
@@ -266,30 +266,30 @@ gains structured task management and spec navigation, even if the rest of your w
 
 | Skill                                                                           | What it does                             |
 |---------------------------------------------------------------------------------|------------------------------------------|
-| [synchestra-task-new](ai-plugin/skills/synchestra-task-new/README.md)           | Create a new task                        |
-| [synchestra-task-enqueue](ai-plugin/skills/synchestra-task-enqueue/README.md)   | Move a task from planning to queued      |
-| [synchestra-claim-task](ai-plugin/skills/synchestra-claim-task/README.md)       | Claim a task before starting work        |
-| [synchestra-task-start](ai-plugin/skills/synchestra-task-start/README.md)       | Begin work on a claimed task             |
-| [synchestra-task-status](ai-plugin/skills/synchestra-task-status/README.md)     | Query or update task status              |
-| [synchestra-task-complete](ai-plugin/skills/synchestra-task-complete/README.md) | Mark a task as completed                 |
-| [synchestra-task-fail](ai-plugin/skills/synchestra-task-fail/README.md)         | Mark a task as failed                    |
-| [synchestra-task-block](ai-plugin/skills/synchestra-task-block/README.md)       | Mark a task as blocked                   |
-| [synchestra-task-unblock](ai-plugin/skills/synchestra-task-unblock/README.md)   | Resume a blocked task                    |
-| [synchestra-task-release](ai-plugin/skills/synchestra-task-release/README.md)   | Release a claimed task back to the queue |
-| [synchestra-task-abort](ai-plugin/skills/synchestra-task-abort/README.md)       | Request abortion of a task               |
-| [synchestra-task-aborted](ai-plugin/skills/synchestra-task-aborted/README.md)   | Report a task has been aborted           |
-| [synchestra-task-list](ai-plugin/skills/synchestra-task-list/README.md)         | List tasks with filtering                |
-| [synchestra-task-info](ai-plugin/skills/synchestra-task-info/README.md)         | Show full task details and context       |
+| [synchestra-task-new](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-task-new/README.md)           | Create a new task                        |
+| [synchestra-task-enqueue](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-task-enqueue/README.md)   | Move a task from planning to queued      |
+| [synchestra-claim-task](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-claim-task/README.md)       | Claim a task before starting work        |
+| [synchestra-task-start](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-task-start/README.md)       | Begin work on a claimed task             |
+| [synchestra-task-status](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-task-status/README.md)     | Query or update task status              |
+| [synchestra-task-complete](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-task-complete/README.md) | Mark a task as completed                 |
+| [synchestra-task-fail](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-task-fail/README.md)         | Mark a task as failed                    |
+| [synchestra-task-block](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-task-block/README.md)       | Mark a task as blocked                   |
+| [synchestra-task-unblock](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-task-unblock/README.md)   | Resume a blocked task                    |
+| [synchestra-task-release](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-task-release/README.md)   | Release a claimed task back to the queue |
+| [synchestra-task-abort](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-task-abort/README.md)       | Request abortion of a task               |
+| [synchestra-task-aborted](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-task-aborted/README.md)   | Report a task has been aborted           |
+| [synchestra-task-list](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-task-list/README.md)         | List tasks with filtering                |
+| [synchestra-task-info](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-task-info/README.md)         | Show full task details and context       |
 
 **Feature Navigation (5 skills):**
 
 | Skill                                                                         | What it does                                                  |
 |-------------------------------------------------------------------------------|---------------------------------------------------------------|
-| [synchestra-feature-info](ai-plugin/skills/synchestra-feature-info/README.md) | Show feature metadata, section TOC, and children              |
-| [synchestra-feature-list](ai-plugin/skills/synchestra-feature-list/README.md) | List all features with optional metadata fields               |
-| [synchestra-feature-tree](ai-plugin/skills/synchestra-feature-tree/README.md) | Display feature hierarchy with focus/direction support        |
-| [synchestra-feature-deps](ai-plugin/skills/synchestra-feature-deps/README.md) | Show dependencies with optional transitive resolution         |
-| [synchestra-feature-refs](ai-plugin/skills/synchestra-feature-refs/README.md) | Show reverse dependencies with optional transitive resolution |
+| [synchestra-feature-info](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-feature-info/README.md) | Show feature metadata, section TOC, and children              |
+| [synchestra-feature-list](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-feature-list/README.md) | List all features with optional metadata fields               |
+| [synchestra-feature-tree](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-feature-tree/README.md) | Display feature hierarchy with focus/direction support        |
+| [synchestra-feature-deps](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-feature-deps/README.md) | Show dependencies with optional transitive resolution         |
+| [synchestra-feature-refs](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-feature-refs/README.md) | Show reverse dependencies with optional transitive resolution |
 
 See the [agent-skills feature spec](spec/features/agent-skills/README.md) for design principles and
 the [agent skills roadmap](spec/plans/agent-skills-roadmap/README.md) for what's coming next.

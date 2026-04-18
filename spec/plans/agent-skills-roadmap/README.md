@@ -5,7 +5,7 @@
   - [agent-skills](../../features/agent-skills/README.md)
   - [cli/feature](../../features/cli/feature/README.md)
 **Source type:** feature
-**Source:** [Agent Skills feature spec](../../features/agent-skills/README.md), [Skills Vision](../../../ai-plugin/skills/README.md)
+**Source:** [Agent Skills feature spec](../../features/agent-skills/README.md), [Skills Vision](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/README.md)
 **Author:** @alex
 
 ## Context
@@ -211,7 +211,7 @@ Scaffold a new feature directory with README template, update parent feature's c
 **Depends on:** Step 1.3 (spec lint — needed to verify post-mutation consistency)
 **Produces:**
   - `feature new` CLI command ([spec](../../features/cli/feature/new/README.md)) — ✅ implemented
-  - `synchestra-feature-new` skill ([skill](../../../ai-plugin/skills/synchestra-feature-new/SKILL.md)) — ✅ created
+  - `synchestra-feature-new` skill ([skill](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-feature-new/SKILL.md)) — ✅ created
   - README template with standard sections (Summary, Problem, Behavior, Dependencies, Acceptance Criteria, Outstanding Questions)
 **Task mapping:** `agent-skills-roadmap/feature-new`
 
