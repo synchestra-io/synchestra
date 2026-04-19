@@ -41,6 +41,17 @@ Skill directory names **must not repeat** the plugin namespace. A directory name
 
 Skill frontmatter `name:` values, if set, must match the directory name and use lowercase letters, digits, and hyphens only (no colons). See [ADR-0003](../../decisions/0003-skill-naming-plugin-namespace.md) for the decision record.
 
+### Selective menu visibility
+
+Not every resource-level skill should appear in the human's `/` slash menu. Most Synchestra skills are agent-facing — the human invokes the `synchestra` CLI directly from a terminal, while the skill exists so Claude can use it during autonomous work. Only a subset (daily-workflow entry points, conversational exploration) is worth exposing to human invocation.
+
+Each resource-level `SKILL.md` declares `user-invocable:` **explicitly** in its frontmatter:
+
+- `user-invocable: true` — human naturally types `/synchestra-cli:<name>` to invoke. Daily-workflow and conversational skills.
+- `user-invocable: false` — primarily agent-driven. Claude still auto-invokes based on the description; the skill is simply hidden from the `/` menu.
+
+The flag affects menu visibility only. Descriptions still load into context, auto-invocation still works, full `SKILL.md` still loads when dispatched. See [ADR-0005](../../decisions/0005-user-invocable-visibility.md) for the classification rule and initial assignments.
+
 ### Skills wrap the CLI
 
 Skills are not an alternative to the CLI — they wrap it. Each reference file (`references/<verb>.md`) gives the agent:
@@ -160,6 +171,8 @@ See the [skills README](https://github.com/synchestra-io/ai-plugin-synchestra/bl
 - [ADR-0001](../../decisions/0001-extract-ai-plugin.md) — AI plugin extracted to a dedicated repository
 - [ADR-0002](../../decisions/0002-progressive-disclosure-skills.md) — progressive-disclosure skill structure
 - [ADR-0003](../../decisions/0003-skill-naming-plugin-namespace.md) — skill directory names must not repeat the plugin namespace
+- [ADR-0004](../../decisions/0004-layered-plugin-architecture.md) — layered plugin architecture (CLI wrappers + methodology plugins)
+- [ADR-0005](../../decisions/0005-user-invocable-visibility.md) — per-resource `user-invocable` visibility
 
 ## Outstanding Questions
 
