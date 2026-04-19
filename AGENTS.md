@@ -22,7 +22,7 @@ This repository is both the specification and the CLI implementation for Synches
 - `main.go` is the CLI entry point.
 - `docs/` contains user-facing explanations of the platform and API surface. Use it when you need the conceptual stack or public interface rather than internal feature requirements.
 
-Skills and the Claude Code plugin that wraps the CLI live in a separate repository: [`synchestra-io/ai-plugin-synchestra`](https://github.com/synchestra-io/ai-plugin-synchestra). Cross-repo coordination is expected when adding a CLI command that needs a corresponding skill. See [ADR-0001](spec/decisions/0001-extract-ai-plugin.md) for rationale.
+Skills and the Claude Code plugin that wraps the CLI live in a separate repository: [`synchestra-io/ai-plugin-synchestra`](https://github.com/synchestra-io/ai-plugin-synchestra) (plugin manifest name `synchestra-cli`). Cross-repo coordination is expected when adding a CLI command that needs a corresponding skill. The broader plugin ecosystem follows a two-layer shape: CLI-wrapper plugins (like `synchestra-cli` and `specscore-cli`) at the base, methodology plugins on top. All three ship through the shared [`synchestra-io/ai-marketplace`](https://github.com/synchestra-io/ai-marketplace). See [ADR-0001](spec/decisions/0001-extract-ai-plugin.md), [ADR-0002](spec/decisions/0002-progressive-disclosure-skills.md), [ADR-0003](spec/decisions/0003-skill-naming-plugin-namespace.md), and [ADR-0004](spec/decisions/0004-layered-plugin-architecture.md) for the full decision record.
 
 Key specification files:
 

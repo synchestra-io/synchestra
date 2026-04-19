@@ -4,7 +4,7 @@
 
 ## Summary
 
-A set of dedicated, focused skills that AI agents use to interact with Synchestra — claiming tasks, reporting status, updating progress, and more. Each skill wraps a single Synchestra CLI command with clear trigger conditions, parameters, and exit code handling.
+A set of resource-level skills that AI agents use to interact with Synchestra — one skill per CLI resource group (`task`, `feature`, `runner`, `session`, …) with per-verb instructions loaded on demand via Claude Code's progressive-disclosure mechanism. Skills expose *when* to call the CLI, *what* to run, and *how* to interpret results, while keeping the slash-menu surface scannable.
 
 ## Problem
 
@@ -18,21 +18,33 @@ Skills solve this by providing machine-readable instructions that agent platform
 
 ## Design Principles
 
-### One skill per action
+### One skill per CLI resource, one reference per action
 
-Each skill maps to exactly one Synchestra CLI command. No multi-purpose skills. This keeps skills small, testable, and easy to reason about.
+Each skill covers a single Synchestra CLI resource group (`task`, `feature`, `runner`, `session`, `auth`, `project`, `spec`, `code`). The skill's `SKILL.md` is a thin **index** — a table mapping user intent to the correct reference file. Per-verb instructions live in `references/<verb>.md` and are loaded on demand only when the agent needs them.
 
-Examples of individual skills:
-- `synchestra-claim-task` — claim a task for work
-- `synchestra-report-status` — report progress on a claimed task
-- `synchestra-complete-task` — mark a task as complete
-- `synchestra-fail-task` — mark a task as failed with reason
-- `synchestra-release-task` — release a claimed task back to the queue
-- `synchestra-list-tasks` — list available tasks
+This replaces the earlier "one skill per CLI command" rule. The resource-level grouping keeps the slash menu scannable (~10 entries instead of ~34) while preserving 1:1 traceability between CLI commands and reference files. See [ADR-0002](../../decisions/0002-progressive-disclosure-skills.md) for the decision record.
+
+Examples of resource-level skills:
+
+- `task` — covers all task verbs (claim, start, status, complete, fail, release, abort, block, unblock, enqueue, new, info, list)
+- `feature` — covers feature queries (list, tree, info, deps, refs, new)
+- `runner` — covers remote runner management and `dispatch`
+- `session` — covers runtime session inspection
+- `auth` — covers user-to-Hub authentication
+- `whats-next` — meta skill that helps agents pick their next task
+
+### Plugin namespace provides the prefix
+
+Claude Code automatically prefixes a plugin's skills with the plugin manifest's `name` field. For the `synchestra-cli` plugin (repository [`ai-plugin-synchestra`](https://github.com/synchestra-io/ai-plugin-synchestra)), skills are invoked as `/synchestra-cli:<skill-name>`.
+
+Skill directory names **must not repeat** the plugin namespace. A directory named `synchestra-task/` inside a plugin named `synchestra-cli` would render as `/synchestra-cli:synchestra-task` — a double prefix. The correct form is `task/` → `/synchestra-cli:task`.
+
+Skill frontmatter `name:` values, if set, must match the directory name and use lowercase letters, digits, and hyphens only (no colons). See [ADR-0003](../../decisions/0003-skill-naming-plugin-namespace.md) for the decision record.
 
 ### Skills wrap the CLI
 
-Skills are not an alternative to the CLI — they wrap it. The skill provides the agent with:
+Skills are not an alternative to the CLI — they wrap it. Each reference file (`references/<verb>.md`) gives the agent:
+
 - **When to use it** — trigger conditions
 - **What to run** — the exact CLI command with parameter descriptions
 - **What happens next** — exit code interpretation and follow-up actions
@@ -44,43 +56,98 @@ All Synchestra CLI commands follow a consistent exit code contract:
 | Exit code | Meaning |
 |---|---|
 | `0` | Success |
-| `1` | Claim conflict (another agent claimed first) |
+| `1` | Conflict (e.g., another agent claimed first) |
 | `2` | Invalid arguments |
-| `3` | Task not found |
-| `4` | Invalid state transition (e.g., completing an unclaimed task) |
+| `3` | Resource not found |
+| `4` | Invalid state transition |
 | `10+` | Unexpected errors |
 
-On non-zero exit, the CLI writes a human-readable explanation to stderr.
+Command-group-specific ranges (e.g., `40–49` for `task`) are documented in [`spec/features/cli/README.md`](../cli/README.md#exit-code-contract). On non-zero exit, the CLI writes a human-readable explanation to stderr.
+
+## Progressive Disclosure
+
+Claude Code skills load in three tiers. Synchestra skills exploit all three to keep token cost low:
+
+| Tier | Loaded when | Contents |
+|---|---|---|
+| 1. Frontmatter `description` | Always (at plugin install / session start) | One-line routing hint per resource-level skill |
+| 2. `SKILL.md` body | When the Skill tool is invoked | Index table: intent → reference file |
+| 3. `references/<verb>.md` | When the agent follows a markdown link via the Read tool | Full instructions for one CLI verb |
+
+Only tier 1 is always in the agent's context. Tier 2 loads on skill invocation. Tier 3 loads only when the agent explicitly reads the file after picking the right verb from the index. This is how a plugin with 34 CLI verbs fits comfortably under 10 slash-menu entries without sacrificing per-verb detail.
 
 ## Skill File Format
 
-Skills live in the dedicated [`ai-plugin-synchestra`](https://github.com/synchestra-io/ai-plugin-synchestra) repository, published as the `synchestra-cli` plugin under the `synchestra-io` Claude Code marketplace. Each skill has its own directory under `skills/` with a `README.md`.
+Skills live in the dedicated [`ai-plugin-synchestra`](https://github.com/synchestra-io/ai-plugin-synchestra) repository, published as the `synchestra-cli` plugin via the `synchestra-io` Claude Code marketplace. Each resource-level skill is a directory containing `SKILL.md` and a `references/` subdirectory with per-verb files.
 
 ```
 ai-plugin-synchestra/
   skills/
-    README.md                       ← skills index, vision, and available skills table
-    synchestra-claim-task/
-      README.md
-    synchestra-feature-info/
-      README.md
-    ...
+    README.md                   ← skills index, vision, and available skills table
+    task/
+      SKILL.md                  ← index table for all task verbs
+      references/
+        claim.md
+        start.md
+        status.md
+        complete.md
+        fail.md
+        release.md
+        abort.md
+        block.md
+        unblock.md
+        new.md
+        enqueue.md
+        info.md
+        list.md
+    feature/
+      SKILL.md
+      references/
+        list.md
+        tree.md
+        info.md
+        deps.md
+        refs.md
+        new.md
+    runner/
+    session/
+    auth/
+    project/
+    spec/
+    code/
+    whats-next/
 ```
 
-Each skill README follows a consistent structure:
-- **Name and description** — what the skill does
+### `SKILL.md` structure (the index)
+
+Each resource-level `SKILL.md` contains:
+
+- **Frontmatter** — `description:` (required), `name:` (optional, matches directory name)
+- **Brief body** — one or two sentences identifying the resource
+- **Index table** — intent phrasing in the left column, reference link in the right column
+
+The index table uses **user intent** as the left-column phrasing, not verb names. "Reserve a queued task for yourself" is preferred over "claim" because it matches how the agent reasons about the action.
+
+### `references/<verb>.md` structure
+
+Each per-verb reference file contains the full instructions for one CLI command:
+
 - **When to use** — trigger conditions for the agent
-- **Command** — the CLI invocation with parameters
+- **Command** — the CLI invocation with parameters (link to canonical `_args/` spec)
 - **Parameters** — description of each flag
 - **Exit codes** — what each code means and what the agent should do
 - **Examples** — concrete usage
 
+Reference files do not have their own frontmatter or plugin-namespace exposure. They are plain markdown loaded by the agent via the Read tool.
+
 ## Distribution
 
 Skills are distributed to agents through:
-- **Synchestra CLI:** `synchestra skills list` and `synchestra skills show <name>` for on-demand access
-- **MCP server:** Skills exposed as MCP tools that agents can discover and call
-- **Direct file access:** Agents can read skills directly from the [`ai-plugin-synchestra`](https://github.com/synchestra-io/ai-plugin-synchestra/tree/main/skills) repo or a local install
+
+- **Claude Code plugin install:** `/plugin install synchestra-cli@synchestra-io` after adding the [`synchestra-io` marketplace](https://github.com/synchestra-io/ai-marketplace)
+- **Synchestra CLI:** `synchestra skill list` and `synchestra skill show <name>` for on-demand access (reads from the locally installed plugin or the published repository)
+- **MCP server:** skills exposed as MCP tools that agents on other platforms can discover and call
+- **Direct file access:** agents can read skills directly from the [`ai-plugin-synchestra`](https://github.com/synchestra-io/ai-plugin-synchestra/tree/main/skills) repository or a local install
 
 ## Plans
 
@@ -88,8 +155,15 @@ Skills are distributed to agents through:
 
 See the [skills README](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/README.md) for the full list of available skills, the vision for how skills transform agent workflows, and token cost analysis.
 
+## Related Decisions
+
+- [ADR-0001](../../decisions/0001-extract-ai-plugin.md) — AI plugin extracted to a dedicated repository
+- [ADR-0002](../../decisions/0002-progressive-disclosure-skills.md) — progressive-disclosure skill structure
+- [ADR-0003](../../decisions/0003-skill-naming-plugin-namespace.md) — skill directory names must not repeat the plugin namespace
+
 ## Outstanding Questions
 
 - Should skills include platform-specific instructions (e.g., "in Claude Code, add this to your CLAUDE.md")?
 - How are skills versioned? Does the CLI version imply the skill version, or are they independent?
 - Should there be a machine-readable skill manifest (e.g., `skill.yaml`) alongside the README, or is the README sufficient?
+- Should the canonical `SKILL.md` index-table format be stricter (e.g., required column headers, enforced phrasing conventions) so index tables stay consistent across resource skills?

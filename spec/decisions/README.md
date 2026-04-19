@@ -56,6 +56,9 @@ Decisions that affect only the marketing/positioning narrative belong in [`synch
 | ADR | Title | Status |
 |---|---|---|
 | [0001](0001-extract-ai-plugin.md) | Extract AI plugin to a dedicated repository | Accepted |
+| [0002](0002-progressive-disclosure-skills.md) | Progressive-disclosure skill structure | Accepted |
+| [0003](0003-skill-naming-plugin-namespace.md) | Skill directory names must not repeat the plugin namespace | Accepted |
+| [0004](0004-layered-plugin-architecture.md) | Layered plugin architecture — CLI wrappers and methodology plugins | Accepted |
 
 ## Outstanding Questions
 
