@@ -166,7 +166,7 @@ The `user_ids` list is populated from the managers model above — every manager
 
 #### Authorization responsibility
 
-Host-level authorization checks (is UID U permitted on host H?) are performed by synchestra-cloud when it receives a session-creation request, before forwarding the spawn to the host. The host itself does not enforce user-level ACL today — it trusts signed requests from hub. See [fix-auth plan](../../../../synchestra-cloud/spec/plans/fix-auth/README.md) for the migration moving the `user.hosts`-based check to `host.user_ids`, and for future consideration of host-side caching of denials.
+Host-level authorization checks (is UID U permitted on host H?) are performed by synchestra-cloud when it receives a session-creation request, before forwarding the spawn to the host. The host itself does not enforce user-level ACL today — it trusts signed requests from hub. See [2026-04-20-fix-auth plan](../../../../synchestra-cloud/spec/plans/2026-04-20-fix-auth/README.md) for the migration moving the `user.hosts`-based check to `host.user_ids`, and for future consideration of host-side caching of denials.
 
 ### Error Handling
 

@@ -2,7 +2,7 @@
 
 **Status:** Draft
 
-> **Reconciliation pending.** This spec predates the [fix-auth plan](../../../../synchestra-cloud/spec/plans/fix-auth/README.md) and the canonical [project feature](../project/README.md). Once fix-auth ships, this spec MUST be reworked to:
+> **Reconciliation pending.** This spec predates the [2026-04-20-fix-auth plan](../../../../synchestra-cloud/spec/plans/2026-04-20-fix-auth/README.md) and the canonical [project feature](../project/README.md) / [project/members](../project/members/README.md) split. Once fix-auth ships, this spec MUST be reworked to:
 >
 > - Drop the bespoke `served_projects` primitive. Authorization will derive from `project.user_ids` (project ACL) and `host.user_ids` / `runner.user_ids` (host ACL), per the established two-axis model.
 > - Align token-claim shape with the reconciled membership model (likely carrying the user's `project.user_ids` memberships at token-issue time, or a signed manifest that hosts cache).
