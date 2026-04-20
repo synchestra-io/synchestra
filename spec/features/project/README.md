@@ -18,11 +18,11 @@ The members sub-feature owns the implementation substance of project ACL: the ya
 
 ## Problem
 
-The concept of a "project" has existed across the codebase without a canonical data model. Symptoms:
+Synchestra's session model binds work to projects: sessions run under a project, runners scope to projects, authorization checks project membership. A durable spec pins three things that would otherwise drift across call sites:
 
-1. **Project identity was ambiguous.** No stable rule for what a project ID *is*. This feature pins it: the project ID is the primary state-repo reference.
-2. **Per-user favorites were used as ACLs.** `users/{uid}.projects` (a user-document map) was checked as an access-control list in session creation. That meant a user granted access by a collaborator couldn't exercise that access until they unilaterally updated their own user document. Authority belongs on the resource, not scattered across members.
-3. **Authorization authority had no canonical home.** Firestore, per-user maps, and nothing on the project itself — none was definitive. This feature makes the yaml at `.synchestra/project-members.yaml` authoritative (see [members](members/README.md)) and keeps the per-user map as favorites-only.
+1. **The ID format** — a stable repo-reference shape (`{provider}/{namespace}/{slug}`) so code repos, URLs, and integrations can name a project consistently.
+2. **The lifecycle** — projects live in hub before they have a state repo; the model must accommodate both phases without a separate "draft project" concept.
+3. **The state boundary** — project-level state (ACL, metadata) lives on the project; per-user state (favorites, recency) lives on the user document. The membership mechanics live in the [members](members/README.md) sub-feature.
 
 ## Behavior
 
