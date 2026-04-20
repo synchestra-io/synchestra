@@ -150,6 +150,24 @@ Managers are users with authority over a host record. The management model is:
 - To invalidate a token, a manager reconnects the host (issuing a new token and revoking the old one) or explicitly revokes it via the UI or CLI.
 - A host is independent of projects --- it is a shared compute resource that multiple users and projects can use.
 
+### User Access Control
+
+Host authorization uses two orthogonal fields, mirroring the runner pattern used elsewhere in Synchestra:
+
+| Field on `hosts/{host_id}` | Purpose |
+|---|---|
+| `owner_uid: string` | Creator of the host record; default admin; always present in `user_ids`. |
+| `user_ids: []string` | **ACL.** The authoritative list of UIDs permitted to use the host. A user is allowed to create sessions on the host if and only if their UID is in `user_ids`. |
+| `project_ids: []string` | **Scoping, not ACL.** The list of Synchestra projects this host serves. Entries are literal project IDs or the wildcard `"*"` (any project). A future extension will allow regex patterns matching full project IDs — see [project#req:project_ids-regex-future](../project/README.md#req-project_ids-regex-future). |
+
+The `user_ids` list is populated from the managers model above — every manager's UID is in `user_ids`, and `user_ids` is the single source of truth for "who can call this host." Future extensions MAY add non-manager entries (read-only collaborators, delegated automation accounts), tracked under Outstanding Questions.
+
+**Distinction from `users/{uid}.hosts`.** The `hosts` map on the user document is a per-user favorites / recently-used list for UI display and quick access. It is NOT an ACL. A user may have access to a host they have not added to their favorites (because a manager granted them access directly) and can exercise that access. A user SHOULD NOT be denied access solely because a host is absent from their `user.hosts` map.
+
+#### Authorization responsibility
+
+Host-level authorization checks (is UID U permitted on host H?) are performed by synchestra-cloud when it receives a session-creation request, before forwarding the spawn to the host. The host itself does not enforce user-level ACL today — it trusts signed requests from hub. See [fix-auth plan](../../../../synchestra-cloud/spec/plans/fix-auth/README.md) for the migration moving the `user.hosts`-based check to `host.user_ids`, and for future consideration of host-side caching of denials.
+
 ### Error Handling
 
 | Scenario | Behavior |
@@ -187,3 +205,5 @@ Managers are users with authority over a host record. The management model is:
 1. Should the Hub public key endpoint support multiple active keys (for overlap during rotation), or is the single-key-with-retry-on-failure approach sufficient?
 2. What is the maximum number of managers per host? Should there be a limit?
 3. Should `synchestra-host hub status` show active sessions and resource usage in addition to connection state?
+4. Should `user_ids` evolve into a role-based structure (e.g., `hosts/{id}/members/{uid}` subcollection with role fields like `owner`, `admin`, `user`) to distinguish administrative authority from mere usage rights? The current flat list conflates "can manage" with "can use." Same question applies to `runners.user_ids` and `projects.user_ids` — should be resolved consistently across all three.
+5. Should this feature be merged with [user-authentication](../user-authentication/README.md) into a single `authentication` feature? Host-auth describes server-to-server (hub ↔ host) authentication; user-authentication describes end-user (browser / CLI → host) authentication via OIDC. They address different callers but share the same host, managers model, and ACL primitives. See draft merge proposal at [../user-authentication/proposals/merge-with-host-auth/](../user-authentication/proposals/merge-with-host-auth/README.md) for options and tradeoffs.
