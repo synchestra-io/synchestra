@@ -44,7 +44,7 @@ The features below are Synchestra-specific — they define orchestration, coordi
 | [runner](runner/README.md) | Conceptual | Remote hosts and cloud environments where AI agents execute sessions and claim tasks |
 | [host-auth](host-auth/README.md) | Conceptual | Mutual authentication between runner hosts and the Synchestra Hub --- registration tokens, short-lived access tokens, and Hub request signing |
 | [user-authentication](user-authentication/README.md) | Draft | End-user authentication to hosts via OIDC — hub as default issuer plus operator-configurable additional providers (Google, Microsoft, Okta, self-hosted IdPs). Pending reconciliation with the canonical project / host ACL model after fix-auth ships. |
-| [project](project/README.md) | Draft | Canonical project data model and ACL — `projects/{id}.user_ids` as the authoritative membership list; `users/{uid}.projects` as a per-user favorites map |
+| [project](project/README.md) | Draft | Canonical project data model and ACL — project ID as repo reference (`{provider}/{namespace}/{slug}`); yaml-authoritative membership at `.synchestra/project-members.yaml` with `(iss, sub, role)` federated identities; Firestore `projects/{id}` as a cache for cloud-mediated auth; host-local TTL cache for bypass-auth hosts |
 | [channels](channels/README.md) | Conceptual | Bidirectional real-time messaging between users (Hub, Telegram) and Claude Code instances in sandbox containers via MCP channels |
 | [routines](routines/README.md) | Conceptual | Cross-platform scheduled and triggered agent workflows. A routine is a spec-native, runtime-portable unit of recurring or event-driven work that runs on a chosen runner and produces reviewable git artifacts. |
 

@@ -4,135 +4,297 @@
 
 ## Summary
 
-A Synchestra project is a named unit of work — a logical grouping of specs, sessions, and code repositories that users collaborate on. Projects are first-class entities in synchestra-cloud's Firestore with their own ACL. Membership in a project's `user_ids` list authorizes a user to create sessions targeting that project. The `users/{uid}.projects` map is a per-user favorites / recently-used list for UI display, **not** an access-control mechanism.
+A Synchestra project is a named unit of work identified canonically by its primary repository reference (e.g., `github.com/synchestra-io/synchestra`). Project membership — who may create sessions for the project — is governed by an ACL stored in `.synchestra/project-members.yaml` within the project's state repo. Identity is the OIDC federated tuple `(iss, sub)` so that self-hosted Synchestra hosts can authorize requests against OIDC token claims without mapping through a cloud identity service. synchestra-cloud maintains a Firestore cache (`projects/{id}`) of the yaml's membership for the cloud-mediated flow; bypass-auth hosts read the yaml directly through a local TTL-based cache.
 
 ## Problem
 
-The concept of a "project" has existed across the codebase without a canonical data model. Three symptoms of this gap:
+Three forces shape this design:
 
-1. **`user.projects` is used as both favorites and ACL.** Today, `synchestra-cloud/internal/api/sessions.go` rejects session creation with `"project not owned by caller"` when `user.projects[project_id]` is missing. That check treats a per-user map as an access-control list, which means a user who has been granted project access by a collaborator cannot exercise it until they manually add the project to their own `user.projects` map. Ownership and favoriting are conflated.
-2. **No top-level project document exists.** Runners declare `project_ids` (the projects they serve), but there is no `projects/{project_id}` Firestore document describing the project itself. Project membership cannot be granted, revoked, or enumerated except by reading every user document.
-3. **Membership is unilateral.** Because "is user U a member of project P?" is answered by reading `users/U.projects[P]`, users effectively grant themselves membership. There is no server-enforced grant / revoke semantics.
+1. **Self-hosted hosts must authorize without synchestra-cloud.** The [user-authentication](../user-authentication/README.md) feature promises that a host configured with its own OIDC issuers can validate requests locally. That promise requires the authoritative ACL to be locally readable — Firestore-only authority forces a runtime dependency on cloud.
+2. **Per-user favorites must not be ACLs.** Historical code treated `users/{uid}.projects` as both a UI favorites map and an access-control check. A user granted access by a collaborator couldn't exercise that access until they unilaterally updated their own user document. Authority belongs on the resource, not scattered across members.
+3. **Identity must round-trip through OIDC tokens.** A self-hosted host verifying an OIDC token receives `(iss, sub)` claims. Any mapping layer between those claims and an internal Synchestra UID is a lookup against some authoritative source — defeating the bypass-auth goal. Identity-in-ACL must match identity-in-token.
 
-This feature formalizes the project data model and ACL, and establishes the correct split: `user.projects` is a UI-display favorites list; `project.user_ids` is the authoritative ACL.
+This feature formalizes the project as: (a) a repo-addressable unit of work, (b) with a repo-hosted yaml ACL using `(iss, sub)` identities, (c) cached in Firestore for cloud-mediated flow and in-memory for bypass-auth hosts.
 
 ## Behavior
 
-### Project data model
+### Project identity
 
-Projects live at `projects/{project_id}` in synchestra-cloud's Firestore.
+Project IDs are state-repository references of the form `{provider}/{namespace}/{slug}`:
 
-```
-Project {
-  project_id: string        // canonical ID — see "Project ID format"
-  owner_uid: string         // creator; default admin; always in user_ids
-  user_ids: []string        // ACL: UIDs permitted to use the project (includes owner)
-  name: string              // human-readable display name
-  description: string       // optional
-  created_at: timestamp
-  updated_at: timestamp
-}
-```
+- `github.com/synchestra-io/synchestra`
+- `gitlab.company.com/org/repo`
+- `git.internal.corp/team/service`
 
-The shape deliberately mirrors `runners/{id}` and `hosts/{id}` (both of which already use `owner_uid` + `user_ids: []string`). This is the consistent Synchestra ACL pattern.
+There is no separate "project URL" field. The ID itself addresses the project's state repo. Fetch URLs for the yaml are derived from the ID (see [Fetch mechanism](#fetch-mechanism)).
 
-#### REQ: project-acl-is-user_ids
+#### REQ: project-id-is-repo-reference
 
-A user is permitted to operate on a project if and only if the user's UID is present in `project.user_ids`. All authorization checks that previously relied on `user.projects[id]` MUST be migrated to read `project.user_ids`.
-
-#### REQ: user-projects-is-favorites
-
-The `users/{uid}.projects` map is a per-user favorites / recently-used list for UI ordering and quick access. It MUST NOT be used as an ACL primitive. The map MAY be stale, empty, or missing projects the user has access to — none of these conditions affect authorization. A user MUST NOT be denied access solely because a project is absent from their `user.projects` map.
-
-#### REQ: owner-in-user_ids
-
-When a project is created, the creator's UID MUST be placed in both `owner_uid` and `user_ids`. Removing the owner's UID from `user_ids` while `owner_uid` still references it is a data-integrity error.
-
-### Project ID format
-
-Project IDs are stable strings of the form `{source}/{namespace}/{slug}` — e.g., `github.com/acme/webapp`. The full string is used in UI paths, authorization checks, and runner scoping.
+A project's ID MUST be its primary state repository reference in the form `{provider}/{namespace}/{slug}`. The provider segment MUST be a DNS name. Namespace and slug follow the provider's own path conventions.
 
 #### REQ: project-id-stable
 
-A project's ID is stable across its lifetime. Renaming a project changes its `name`, never its `project_id`.
+A project's ID is stable across its lifetime. Renaming changes metadata (display name) only; the ID never changes. Migrating a project between providers is equivalent to creating a new project.
 
-### Membership management
+### Authoritative ACL: `.synchestra/project-members.yaml`
 
-Membership is managed server-side via synchestra-cloud API endpoints (exact endpoint shape is out of scope for this spec — documented here to establish the responsibility model).
+The project's membership list is a yaml file at the root of its state repository:
 
-#### REQ: membership-grant
+```yaml
+schema_version: 1
+members:
+  - iss: https://securetoken.google.com/synchestra-hub
+    sub: abc123
+    role: owner
+    alias: "122@synchestra.io"          # optional; display-only
 
-An existing member of a project (any UID in `project.user_ids`) MAY grant membership to another user by appending the target UID to `project.user_ids`. Grant is effective immediately for new authorization checks.
+  - iss: https://securetoken.google.com/synchestra-hub
+    sub: def456
+    role: owner                          # multi-owner supported
 
-#### REQ: membership-revoke
+  - iss: https://token.actions.githubusercontent.com
+    sub: "1234567"
+    role: member
+    alias: "user1@github.com"
+```
 
-A member MAY remove another UID from `project.user_ids`. Revocation is effective immediately for new sessions. Sessions already running are NOT terminated by revocation — session termination is an independent operation.
+#### REQ: members-file-location
 
-#### REQ: owner-revoke-protection
+The authoritative ACL MUST live at `.synchestra/project-members.yaml` at the root of the project's state repository.
 
-The `owner_uid` MUST NOT be removed from `user_ids` by a normal revoke. Transferring ownership is a separate operation that updates both fields atomically.
+#### REQ: schema-version
+
+The file MUST carry a top-level `schema_version` integer. Current format is `1`. Parsers that encounter a higher version SHOULD refuse to authorize rather than guess.
+
+#### REQ: member-entry-shape
+
+Each entry in `members` MUST include `iss` (full issuer URL), `sub` (OIDC subject within that issuer), and `role`. `alias` is optional and display-only.
+
+#### REQ: role-enum-v1
+
+Under `schema_version: 1`, `role` MUST be one of `owner | member`. Parsers MUST reject unknown role values. Additional roles (e.g., `admin`, `viewer`) are forward-compatible extensions bound to future schema versions.
+
+#### REQ: owner-required
+
+At least one member with `role: owner` MUST be present. A project without any owner is invalid and MUST be rejected by parsers.
+
+#### REQ: owner-authority
+
+Members with `role: owner` have Synchestra-level admin authority (destroy project, rotate secrets, change metadata, transfer ownership). Access to edit the yaml itself is governed by the state repo's own ACL (e.g., GitHub push access) and is the **meta-ACL** above yaml-role authority. Operators MUST keep state-repo push access aligned with intended yaml editors; the two form a two-layer governance model.
+
+### Identity model: `(iss, sub)`
+
+ACL entries identify users by their OIDC federated tuple. Authorization matches access-token claims directly against yaml entries with no intermediate mapping.
+
+#### REQ: iss-sub-tuple
+
+Authorization matches a token's (`iss`, `sub`) claims against yaml entries. Both MUST match exactly for a member match.
+
+#### REQ: iss-is-full-url
+
+`iss` MUST be the full issuer URL. Short names, aliases, or abbreviations are display-only and are NOT the authoritative key.
+
+#### REQ: issuer-short-name-registry
+
+Synchestra ships with bundled short-name defaults for well-known issuers:
+
+| Short name | Full `iss` |
+|---|---|
+| `synchestra.io` | `https://securetoken.google.com/synchestra-hub` |
+| `github.com` | `https://token.actions.githubusercontent.com` |
+| `google.com` | `https://accounts.google.com` |
+| `microsoft.com` | `https://login.microsoftonline.com/common/v2.0` |
+
+Operators MAY override or extend this registry via host config `auth.oidc.issuers[*].short_name`. The registry is used ONLY for display (alias rendering, UI labels); authorization matches on full `iss`.
+
+### Firestore cache
+
+For the cloud-mediated authorization flow, synchestra-cloud maintains a Firestore document at `projects/{project_id}` projected from the yaml. The document carries:
+
+- Project metadata (name, description, timestamps)
+- Membership projected to support `array-contains`–style queries keyed by `(iss, sub)`
+- Cache freshness markers (`cache_updated_at`, `cache_source`)
+
+Exact field names and encoding are implementation concerns — see the fix-auth-v2 plan for the concrete Firestore shape.
+
+#### REQ: firestore-is-cache
+
+The Firestore `projects/{id}` document is a cache, not authority. Any value disagreement with the authoritative yaml MUST be resolved in favor of the yaml (by re-fetching and updating the cache).
+
+#### REQ: cache-projection
+
+The cache membership list is projected from yaml members whose `role` grants session-creation access. In v1, that is both `owner` and `member`.
+
+### Lifecycle
+
+A project moves through two phases:
+
+#### Pre-repo phase
+
+The project exists in hub (created via UI or API) but has no state repository yet.
+
+- **Authority:** Firestore. `projects/{id}` is seeded by cloud when the project is created; initial membership is the creator as owner.
+- **Authorization flow:** cloud-mediated only. Bypass-auth hosts cannot serve project-bound requests for this project.
+- `cache_source: "bootstrap"`.
+
+#### Post-repo phase
+
+The state repository exists and contains `.synchestra/project-members.yaml`.
+
+- **Authority:** yaml.
+- **Authorization flow:** both cloud-mediated (via Firestore cache) and bypass-auth (via host-local cache) work.
+- `cache_source: "yaml"`.
+
+#### Transition
+
+When the state repo is created for a pre-repo project, synchestra writes an initial `project-members.yaml` seeded from the current Firestore contents, commits, and pushes. From that commit onward, yaml is authoritative. The transition is a one-way door: yaml never reverts to bootstrap.
+
+#### REQ: two-phase-lifecycle
+
+A project MUST be in exactly one of two phases: pre-repo (Firestore-authoritative) or post-repo (yaml-authoritative). Transition occurs on state-repo creation and is one-way.
+
+#### REQ: bypass-auth-requires-post-repo
+
+A bypass-auth host MUST NOT authorize project-bound requests against a pre-repo project (no yaml to fetch). Projectless requests and host-scoped requests are unaffected.
+
+### Fetch mechanism
+
+Both the cloud-side cache reconciler and host-side cache fetch the yaml via HTTPS single-file GET. No git clone, no working copy.
+
+#### REQ: fetch-url-derivation
+
+The fetch URL is derived from the project ID using a provider-specific template:
+
+| Provider | Template |
+|---|---|
+| `github.com` | `https://raw.githubusercontent.com/{org}/{repo}/main/.synchestra/project-members.yaml` |
+| `gitlab.com` | `https://gitlab.com/{org}/{repo}/-/raw/main/.synchestra/project-members.yaml` |
+| self-hosted | provider-specific; operator-configured per host |
+
+#### REQ: private-repo-tokens
+
+For private state repos, fetchers MUST present a bearer token. synchestra-cloud uses the synchestra GitHub App's installation token. Bypass-auth hosts use `git_tokens: { "github.com": "...", ... }` keyed by provider domain in host config.
+
+### Cache semantics
+
+#### Cloud cache (Firestore)
+
+- Populated by a webhook handler in synchestra-cloud on state-repo push (via the [github-app](../github-app/README.md) feature for GitHub state repos).
+- Read by cloud-mediated session creation.
+- Updated out-of-band by the `synchestra project members reload <project_id>` CLI as a webhook-failure fallback. The CLI is cloud-only — it does not propagate to hosts.
+- Near-real-time propagation under normal operation.
+
+#### Host cache (in-memory)
+
+- Populated lazily on the first project-bound request for a given project ID.
+- TTL-based refresh (default 5 minutes, configurable via host config `members_cache_ttl`).
+- LRU size cap (default 1000 entries) to bound memory.
+- No pre-fetch list; the host's `project_ids` config continues to serve as scoping (*is this host willing to serve project P?*) — orthogonal to ACL.
+- **No host-side invalidation API in v1.** Propagation latency for yaml changes is bounded by TTL. Host admin API and cloud-to-host push channel are flagged as possible future extensions if real-world latency requirements demand it.
+
+#### REQ: cloud-cache-reconciler
+
+synchestra-cloud MUST maintain the `projects/{id}` Firestore cache consistent with the authoritative yaml. Reconciliation is triggered by state-repo push webhook (normal path) or by `synchestra project members reload <project_id>` (manual fallback).
+
+#### REQ: host-cache-lazy
+
+Bypass-auth hosts MUST fetch project-members.yaml lazily on the first project-bound request for a given project. Hosts MUST NOT pre-fetch based on any configuration list.
+
+#### REQ: host-cache-ttl-default
+
+The default host cache TTL is 5 minutes, operator-configurable. Entries past TTL MUST be refreshed on next access before authorization proceeds.
+
+#### REQ: no-host-invalidation-api-v1
+
+In v1, bypass-auth hosts MUST NOT expose an external cache-invalidation API. TTL is the sole invalidation mechanism. Operator tooling that needs faster propagation reduces TTL.
+
+### User favorites map
+
+`users/{uid}.projects` is a per-user favorites / recently-used list for UI ordering. It is NOT an ACL.
+
+#### REQ: user-favorites-not-acl
+
+The `users/{uid}.projects` map MUST NOT be used as an authorization primitive in any code path. Stale or missing entries MUST NOT cause authorization failures. UI MAY use the map for sorting and quick access.
 
 ### Runner / host scoping against projects
 
-Runners and hosts declare `project_ids: []string` to scope which projects they serve. This is a scoping concern, orthogonal to project ACL.
+Runners and hosts declare `project_ids: []string` to scope *willingness* to serve projects — independent of ACL membership.
 
 #### REQ: project_ids-literal
 
-Today, each entry in a runner or host's `project_ids` MUST be either a literal project ID or the wildcard `"*"` (meaning all projects). A runner serves a project if either the literal project ID is in its `project_ids` or `"*"` is.
+Each entry in a runner or host's `project_ids` MUST be a literal project ID or the wildcard `"*"` (serve any). A runner serves a project iff a literal match or the wildcard is present.
 
 #### REQ: project_ids-regex-future
 
-A future extension of the matcher MAY treat `project_ids` entries as regular expressions matching the full project ID. Example: `github.com/acme/(.+)` would match any project under the `acme` GitHub organization. Implementation of regex support is **out of scope for this spec's first delivery** and is recorded here to establish forward-compatibility:
-
-- When regex support lands, plain strings continue to match literally (backwards compatibility).
-- Regex patterns are anchored against the full project ID (implicit `^...$`).
-- The `"*"` wildcard continues to be recognized as the any-project shortcut.
+A future extension of the matcher MAY treat `project_ids` entries as regular expressions matching the full project ID. Because project IDs are themselves repo references, this maps naturally to provider/org-wide matching — e.g., `github.com/acme/(.+)` matches any project under the `acme` GitHub organization. Plain strings continue to match literally (backwards compatible); patterns are anchored against the full project ID.
 
 ## Interaction with Other Features
 
 | Feature | Interaction |
 |---|---|
-| [host-auth](../host-auth/README.md) | Hosts and runners have their own `user_ids` ACL. A user accessing a project-bound resource is checked against both `project.user_ids` and the runner / host's `user_ids`. |
-| [runner](../runner/README.md) | Runners declare `project_ids` (scoping). A session binds a project to a runner; the runner's `project_ids` must include the session's project (literal match or wildcard). |
-| [channels](../channels/README.md) | Session messages carry the session's `project_id` (when present); downstream authorization uses the project ACL documented here. |
+| [host-auth](../host-auth/README.md) | Hosts and runners have their own `user_ids` ACL. Project-bound requests are gated by both host-level and project-level ACL. Projectless and host-scoped requests bypass project ACL entirely. |
+| [user-authentication](../user-authentication/README.md) | Defines how hosts validate OIDC tokens from configured issuers. The `(iss, sub)` tuple produced by validation is matched against the project yaml ACL. Bypass-auth mode requires post-repo project state. |
+| [runner](../runner/README.md) | Runners declare `project_ids` (scoping). A session binds a project to a runner; the runner's `project_ids` must include the session's project ID. |
+| [github-app](../github-app/README.md) | Provides the webhook infrastructure for triggering cloud reconciler updates on state-repo push. |
+| [channels](../channels/README.md) | Session messages carry the session's `project_id`; downstream authorization uses the project ACL documented here. |
 
 ## Dependencies
 
-None. This feature formalizes an existing implicit concept in the codebase.
+- [github-app](../github-app/README.md) — webhook-triggered cache reconciliation for GitHub-hosted state repos. Non-GitHub providers work but rely on CLI reload as the sole reconciliation trigger until provider-specific webhook handlers are added.
 
 ## Acceptance Criteria
 
-### AC: projects-collection-exists
+### AC: project-identity
 
-**Requirements:** project#req:project-acl-is-user_ids, project#req:owner-in-user_ids
+**Requirements:** project#req:project-id-is-repo-reference, project#req:project-id-stable
 
-A top-level `projects/{project_id}` Firestore collection exists with the documented shape. Creating a project initializes `owner_uid` and places the owner's UID in `user_ids`. Reading the doc returns the ACL.
+Project IDs are `{provider}/{namespace}/{slug}` repo references; the ID is stable; renames change metadata only.
 
-### AC: acl-migrated-off-user-map
+### AC: yaml-is-authoritative
 
-**Requirements:** project#req:project-acl-is-user_ids, project#req:user-projects-is-favorites
+**Requirements:** project#req:members-file-location, project#req:schema-version, project#req:member-entry-shape, project#req:role-enum-v1, project#req:owner-required, project#req:owner-authority
 
-All authorization checks in synchestra-cloud that previously read `user.projects[id]` are migrated to read `project.user_ids`. A user who has been added to `project.user_ids` by a collaborator (without updating their own `user.projects` map) can successfully create a session in that project.
+The project ACL is the yaml at `.synchestra/project-members.yaml` with `schema_version: 1`, structured members carrying `(iss, sub, role)`, role from the v1 enum, at least one owner present. Yaml-role authority is meta-gated by state-repo push access.
 
-### AC: membership-grant-revoke
+### AC: iss-sub-identity
 
-**Requirements:** project#req:membership-grant, project#req:membership-revoke, project#req:owner-revoke-protection
+**Requirements:** project#req:iss-sub-tuple, project#req:iss-is-full-url, project#req:issuer-short-name-registry
 
-A member can grant membership to another user by appending to `user_ids`; the new member gains access immediately. A member can revoke another user by removing their UID; the revoked user is denied on next session creation but running sessions are not terminated. The owner's UID cannot be removed from `user_ids` by the revoke operation.
+Authorization matches on the full `(iss, sub)` tuple from OIDC token claims. Short-name registry is display-only.
 
-### AC: project_ids-regex-reserved
+### AC: cache-is-not-authority
 
-**Requirements:** project#req:project_ids-literal, project#req:project_ids-regex-future
+**Requirements:** project#req:firestore-is-cache, project#req:cache-projection
 
-The runner/host `project_ids` matcher accepts literal IDs and the `"*"` wildcard today. The spec documents regex patterns as a forward-compatible future extension. No implementation of regex matching is required for this feature's first delivery.
+Firestore `projects/{id}` is a cache; yaml is the authority. Disagreement resolves in favor of the yaml. The cache projects members whose role grants access.
+
+### AC: lifecycle-phases
+
+**Requirements:** project#req:two-phase-lifecycle, project#req:bypass-auth-requires-post-repo
+
+Projects have pre-repo (Firestore-authoritative) and post-repo (yaml-authoritative) phases. Bypass-auth hosts serve project-bound requests only for post-repo projects.
+
+### AC: fetch-mechanism
+
+**Requirements:** project#req:fetch-url-derivation, project#req:private-repo-tokens, project#req:cloud-cache-reconciler, project#req:host-cache-lazy, project#req:host-cache-ttl-default, project#req:no-host-invalidation-api-v1
+
+Yaml is fetched via HTTPS single-file GET with provider-specific URL templates. Private repos use bearer tokens. Cloud reconciler is webhook-triggered; host cache is lazy + TTL-refreshed (default 5 min) with no external invalidation API in v1.
+
+### AC: favorites-not-acl
+
+**Requirements:** project#req:user-favorites-not-acl
+
+`users/{uid}.projects` is a favorites map only; its contents (or absence) have no authorization effect.
 
 ## Outstanding Questions
 
-- Should `user_ids` evolve into a role-based structure (e.g., a `projects/{id}/members/{uid}` subcollection with role fields like `owner`, `admin`, `member`) as collaboration needs grow? The flat list is adequate for current scale but may not carry the semantics needed for team deployments. (Same question applies to `runners.user_ids` and `hosts.user_ids`.)
-- Should projects optionally be private (invite-only, current implicit default) vs discoverable (any user with the ID can request access)? No discovery model exists today.
-- Should a migration script convert every distinct `user.projects[id]` entry across all users into a `projects/{id}` document with that user in `user_ids`, or should projects bootstrap lazily on first access under the new model?
+- Should `role` expand to `admin` and `viewer` as first-class v2 enum values? The flat `owner | member` split is sufficient for initial collaboration but may not carry the semantics needed for team deployments.
+- What is the default behavior when a project's yaml cannot be fetched (state repo down, 404, network error)? Current position: deny the request. Alternatives: allow previously-cached entries past TTL as a grace period, or fall back to the Firestore cache for bypass-auth hosts that have network to cloud.
+- Should bundled issuer short-name defaults be versioned alongside `schema_version`, or maintained separately with their own cadence? Versioning with schema keeps updates atomic; separate versioning allows hotfix-style additions of newly-supported IdPs without a schema bump.
+- How are non-GitHub state repos reconciled into the Firestore cache without webhooks? Current position: CLI reload only. Revisit when a real non-GitHub use case appears.
+- Is the pre-repo → post-repo transition automatic (synchestra writes the initial yaml on state-repo creation) or operator-triggered? Current position: automatic; needs explicit documentation of which action triggers it.
+- Should projects optionally be private (invite-only, current implicit default) vs. discoverable (any user with the ID can request access)? No discovery model exists today.
 - When the regex extension to `project_ids` is delivered, should it support negative patterns (exclusions) or only inclusions?
-- Should host-level authorization cache recent ACL denials to reject repeat attempts at the edge before hitting synchestra-cloud? See [fix-auth plan](../../../../synchestra-cloud/spec/plans/fix-auth/README.md) for current position.
 
 ---
 *This document follows the https://specscore.md/feature-specification*
