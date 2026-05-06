@@ -47,6 +47,7 @@ The features below are Synchestra-specific — they define orchestration, coordi
 | [project](project/README.md) | Draft | Project identity (repo reference), two-phase lifecycle (pre-repo Firestore / post-repo yaml), favorites-vs-ACL distinction, runner/host scoping. Membership primitive is a sub-feature at [project/members](project/members/README.md). |
 | [channels](channels/README.md) | Conceptual | Bidirectional real-time messaging between users (Hub, Telegram) and Claude Code instances in sandbox containers via MCP channels |
 | [routines](routines/README.md) | Conceptual | Cross-platform scheduled and triggered agent workflows. A routine is a spec-native, runtime-portable unit of recurring or event-driven work that runs on a chosen runner and produces reviewable git artifacts. |
+| [plugins](plugins/README.md) | Deferred | Plugin SPI for Synchestra/SpecScore. Intentionally not on the 2026 roadmap; ride Spec Kit's existing extension system instead. Records the V7 design (plugins contribute commands; project composes them into workflow-event hooks or micro-task chain steps) for when the question returns. |
 
 ## Feature Summaries
 
@@ -154,6 +155,10 @@ Bidirectional, real-time messaging between users and Claude Code instances runni
 ### [Routines](routines/README.md)
 
 Cross-platform scheduled and triggered agent workflows. A routine binds four declarative components — a trigger (cron, git event, task state, or manual), a runtime adapter (Claude Code headless, Copilot CLI, raw LLM API, etc.), a runner target (local, VM, cloud), and a body (prompt, skill, or task reference) — into a versioned spec under `spec/routines/`. Routines are runtime- and compute-portable: the same spec runs on any supported runtime and any registered runner without rewrite. Every run produces a reviewable git artifact (branch, PR, or task update) by default, keeping humans in the loop and making runs first-class citizens of the work graph.
+
+### [Plugins](plugins/README.md)
+
+Plugin SPI for Synchestra and SpecScore — **intentionally deferred** for 2026. Until plugin authors are knocking, extensibility ships into GitHub Spec Kit's existing extension system (via three first-party extensions: `speckit-specscore`, `speckit-synchestra`, `speckit-rehearse`) rather than a parallel one. The intended shape when revisited is V7: plugins contribute namespaced commands; the project composes them into either workflow-event hooks (Spec Kit-style) or [micro-task](micro-tasks/README.md) chain steps (Synchestra-style). One plugin shape, two event surfaces. Trigger conditions and the full rationale live in [`synchestra-marketing/decisions/2026-05-01-plugin-system-strategy.md`](https://github.com/synchestra-io/synchestra-marketing/blob/main/decisions/2026-05-01-plugin-system-strategy.md).
 
 ```
 # SpecScore features (external): feature, acceptance-criteria, source-references, plan, task, project-definition
