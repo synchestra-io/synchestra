@@ -278,3 +278,6 @@ Unquoted multi-word queries use AND semantics (all terms must appear in the same
 - Should `--section` accept multiple section names (comma-separated or repeated flag)?
 - How should matches in non-feature files (e.g., top-level `spec/README.md`) be presented when `--refs` is used?
 - Should there be a `--limit <n>` flag to cap result count, or is the expectation that spec trees are small enough to return all matches?
+
+---
+*This document follows the https://specscore.md/feature-specification*

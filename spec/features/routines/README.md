@@ -189,3 +189,6 @@ stateDiagram-v2
 ## Outstanding Questions
 
 None at this time.
+
+---
+*This document follows the https://specscore.md/feature-specification*

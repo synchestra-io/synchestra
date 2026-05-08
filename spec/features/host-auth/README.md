@@ -207,3 +207,6 @@ Host-level authorization checks (is UID U permitted on host H?) are performed by
 3. Should `synchestra-host hub status` show active sessions and resource usage in addition to connection state?
 4. Should `user_ids` evolve into a role-based structure (e.g., `hosts/{id}/members/{uid}` subcollection with role fields like `owner`, `admin`, `user`) to distinguish administrative authority from mere usage rights? The current flat list conflates "can manage" with "can use." Same question applies to `runners.user_ids` and `projects.user_ids` — should be resolved consistently across all three.
 5. Should this feature be merged with [user-authentication](../user-authentication/README.md) into a single `authentication` feature? Host-auth describes server-to-server (hub ↔ host) authentication; user-authentication describes end-user (browser / CLI → host) authentication via OIDC. They address different callers but share the same host, managers model, and ACL primitives. See draft merge proposal at [../user-authentication/proposals/merge-with-host-auth/](../user-authentication/proposals/merge-with-host-auth/README.md) for options and tradeoffs.
+
+---
+*This document follows the https://specscore.md/feature-specification*

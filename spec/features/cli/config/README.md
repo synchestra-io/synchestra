@@ -31,3 +31,6 @@ Removes a config value from `~/.synchestra.yaml`, reverting it to its default. O
 ## Outstanding Questions
 
 None at this time.
+
+---
+*This document follows the https://specscore.md/feature-specification*

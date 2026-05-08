@@ -180,3 +180,6 @@ See the [skills README](https://github.com/synchestra-io/ai-plugin-synchestra/bl
 - How are skills versioned? Does the CLI version imply the skill version, or are they independent?
 - Should there be a machine-readable skill manifest (e.g., `skill.yaml`) alongside the README, or is the README sufficient?
 - Should the canonical `SKILL.md` index-table format be stricter (e.g., required column headers, enforced phrasing conventions) so index tables stay consistent across resource skills?
+
+---
+*This document follows the https://specscore.md/feature-specification*

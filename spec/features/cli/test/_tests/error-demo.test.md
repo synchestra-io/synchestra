@@ -21,3 +21,6 @@ exit 1
 ```bash
 echo "this still runs"
 ```
+
+---
+*This document follows the https://specscore.md/scenario-specification*

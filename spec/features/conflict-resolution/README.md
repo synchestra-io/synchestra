@@ -50,3 +50,6 @@ The AI merge sub-agent assigns a confidence score to its resolution. Below a con
 - How does this interact with branch protection rules that require PR reviews?
 - What happens when the conflict resolution itself conflicts with another concurrent push? (Recursive conflict.)
 - Should resolved conflicts be logged in a dedicated audit section of the affected document?
+
+---
+*This document follows the https://specscore.md/feature-specification*

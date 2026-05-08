@@ -39,3 +39,6 @@ Stops a running Synchestra daemon by reading the PID file and sending SIGTERM. I
 ## Outstanding Questions
 
 - What is the timeout for waiting for the process to exit before sending SIGKILL?
+
+---
+*This document follows the https://specscore.md/feature-specification*

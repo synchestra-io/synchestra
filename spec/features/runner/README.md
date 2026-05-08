@@ -71,3 +71,6 @@ stateDiagram-v2
 3. How do sessions relate to sandbox containers — is each session a new container, or can sessions share a persistent container on a runner?
 4. Should task routing rules (e.g., "GPU tasks go to gpu-runner") live in the runner config, project config, or task metadata?
 5. What is the recovery model when a runner goes offline mid-session — auto-reassign tasks, hold for reconnection, or fail?
+
+---
+*This document follows the https://specscore.md/feature-specification*

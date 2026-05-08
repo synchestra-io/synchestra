@@ -123,3 +123,6 @@ Not defined yet.
 - How should role resolution interact with cross-repo-sync — if a decision spans multiple repositories, are stakeholders resolved per-repo or at the coordination level?
 - Should there be a default timeout for decisions, and what happens when a decision expires — auto-reject, escalate, or leave blocked?
 - When an agent ID is resolvable and dispatched directly, should there be a fallback timeout after which the task is re-queued for manual pickup (in case the agent fails silently)?
+
+---
+*This document follows the https://specscore.md/feature-specification*

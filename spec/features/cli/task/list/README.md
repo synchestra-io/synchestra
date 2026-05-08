@@ -94,3 +94,6 @@ deploy-staging,Deploy staging,"implement-api,write-tests"
 
 - Should there be a `--depth` flag to limit how deep in the task hierarchy to list?
 - Should there be `--assigned-to` filtering by run ID?
+
+---
+*This document follows the https://specscore.md/feature-specification*

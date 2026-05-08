@@ -173,3 +173,6 @@ type ArtifactRef struct {
 - Should there be `Delete` or `Archive` methods on `TaskStore`, or is accumulation by design (with the recently-finished section handling visibility)?
 - Should `Artifact()` accessor drop `context.Context` for consistency with `Board()` (both are namespace accessors, not leaf I/O), deferring context to the leaf methods like `Get` and `Put`?
 - Should `ArtifactStore.Put` accept `io.Reader` instead of `[]byte` for large artifacts?
+
+---
+*This document follows the https://specscore.md/feature-specification*

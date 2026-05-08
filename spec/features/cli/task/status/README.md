@@ -81,3 +81,6 @@ When `abort_requested` is `true`, agents should wrap up current work and transit
 
 - Should query output be YAML, JSON, or a simple key-value format? Should there be a `--format` flag?
 - Should `--reason` be strictly required for `failed`/`blocked`, or just strongly encouraged?
+
+---
+*This document follows the https://specscore.md/feature-specification*

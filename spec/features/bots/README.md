@@ -55,3 +55,6 @@ Not defined yet.
 
 - Should in-container bots and host-level bots share a common registration/discovery mechanism, or are they fundamentally different enough to warrant separate specs?
 - Do we need a bot permission model beyond the existing user/project authorization?
+
+---
+*This document follows the https://specscore.md/feature-specification*

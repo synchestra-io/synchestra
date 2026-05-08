@@ -93,3 +93,6 @@ When a user uninstalls the GitHub App from their org or removes repositories:
 - What additional permissions will be needed for future features (e.g., GitHub Actions integration, commit status checks)?
 - How should Synchestra handle partial installations where the user grants access to only some repos in an org — should it warn that some project repos are not covered?
 - Should the app support GitHub Enterprise Server installations, or only github.com for the initial version?
+
+---
+*This document follows the https://specscore.md/feature-specification*

@@ -56,3 +56,6 @@ Like all mutation commands, `task new` is atomic: the CLI commits the new task f
 
 - Should there be a `--assignee` / `--requester` parameter?
 - Should the description be read from stdin if not provided as a flag?
+
+---
+*This document follows the https://specscore.md/feature-specification*

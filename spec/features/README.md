@@ -244,3 +244,6 @@ All diagrams in feature specifications should use **mermaid syntax** instead of 
 - [stakeholder/notification](stakeholder/notification/README.md): 4 outstanding questions
 - [host-auth](host-auth/README.md): 3 outstanding questions
 - [channels](channels/README.md): 8 outstanding questions
+
+---
+*This document follows the https://specscore.md/features-index-specification*

@@ -428,3 +428,6 @@ These decisions were made during feature specification and should not be revisit
 - What computed fields should `--fields` support beyond status/oq/deps/refs/children/plans/proposals?
 - Should Phase 2 mutation commands support `--dry-run` to preview changes without committing?
 - Is there a role for a `skill recommend` meta-command that suggests which skill to use given a natural language intent?
+
+---
+*This document follows the https://specscore.md/plan-specification*

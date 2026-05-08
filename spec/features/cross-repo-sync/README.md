@@ -98,3 +98,6 @@ branch_prefix: synchestra/
 - How does Synchestra handle repos with different branching models (e.g., one uses trunk-based, another uses gitflow)?
 - What is the story for cross-repo changes that require database migrations or infrastructure changes?
 - How does the task claiming protocol work when the "push" needs to happen to a different repo than the state repo?
+
+---
+*This document follows the https://specscore.md/feature-specification*

@@ -88,3 +88,6 @@ Not defined yet.
 - Should notification preferences be per-stakeholder, per-role, or per-gate (e.g., "email me for spec-review but bot me for code-review")?
 - What is the retry strategy for failed notification delivery — should Synchestra retry, or is delivery best-effort with the task board as the fallback source of truth?
 - Should there be a "digest" mode that batches multiple pending decisions into a single notification for stakeholders who are assigned to many roles?
+
+---
+*This document follows the https://specscore.md/feature-specification*

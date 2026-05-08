@@ -166,3 +166,6 @@ The `focus: true` field marks the target feature in YAML output (equivalent to `
 ## Outstanding Questions
 
 - Should there be a `--depth` flag to limit tree depth?
+
+---
+*This document follows the https://specscore.md/feature-specification*

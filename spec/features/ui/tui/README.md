@@ -86,3 +86,6 @@ does not prescribe it.
 - How should the TUI handle long-running mutations (e.g., `task new` with `--enqueue` that does commit-and-push)? Show a
   spinner? Stream CLI output?
 - Should the TUI be available to agents in headless mode, or is it strictly for human interactive use?
+
+---
+*This document follows the https://specscore.md/feature-specification*

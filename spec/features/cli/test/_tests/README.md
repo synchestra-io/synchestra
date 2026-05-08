@@ -11,3 +11,6 @@ These scenarios are executed by the runner itself (dogfooding).
 ## Outstanding Questions
 
 None at this time.
+
+---
+*This document follows the https://specscore.md/scenarios-index-specification*

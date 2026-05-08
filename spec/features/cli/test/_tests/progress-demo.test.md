@@ -22,3 +22,6 @@ echo "slow operation complete"
 ```bash
 echo "all done"
 ```
+
+---
+*This document follows the https://specscore.md/scenario-specification*

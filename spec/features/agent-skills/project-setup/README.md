@@ -109,3 +109,6 @@ The skill activates when:
 ## Outstanding Questions
 
 None at this time.
+
+---
+*This document follows the https://specscore.md/feature-specification*

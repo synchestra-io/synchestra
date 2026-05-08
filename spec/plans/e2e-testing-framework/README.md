@@ -1930,3 +1930,6 @@ Expected: Scenario runs and reports results. May need debugging — this is the 
 git add spec/features/cli/project/new/_acs/ spec/features/cli/project/new/README.md spec/tests/
 git commit -m "feat(dogfood): add initial ACs for project new and CLI lifecycle E2E scenario"
 ```
+
+---
+*This document follows the https://specscore.md/plan-specification*

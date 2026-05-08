@@ -105,3 +105,6 @@ synchestra feature refs micro-tasks --project synchestra
 ## Outstanding Questions
 
 None at this time.
+
+---
+*This document follows the https://specscore.md/feature-specification*

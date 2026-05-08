@@ -127,3 +127,6 @@ micro-tasks:
 - How are custom `cmd` values resolved — PATH lookup, relative to project root, or registered scripts?
 - What is the logging/observability story for micro-task execution? Are results stored as documents?
 - How does `model_class` interact with the model-selection feature — does micro-task config feed into the same routing logic?
+
+---
+*This document follows the https://specscore.md/feature-specification*

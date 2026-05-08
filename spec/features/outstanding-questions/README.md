@@ -68,3 +68,6 @@ When a linked task completes:
 - What is the schema for a question entry? (Fields: text, status, linked_task, resolved_at, resolution_summary?)
 - Can questions have priority or urgency levels?
 - Should there be a project-wide view of all outstanding questions across all documents?
+
+---
+*This document follows the https://specscore.md/feature-specification*

@@ -37,3 +37,6 @@ Displays the contents of the spec repo's `synchestra-spec-repo.yaml` for the spe
 ## Outstanding Questions
 
 - Should `info` also show derived information (e.g., resolved local paths for each repo, clone status)?
+
+---
+*This document follows the https://specscore.md/feature-specification*

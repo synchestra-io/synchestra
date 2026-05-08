@@ -115,3 +115,6 @@ The choice affects offline behavior and rendering fidelity. This is an open ques
 - How does GitHub OAuth token refresh work in the context of long-lived PWA sessions?
 - What is the timeline and requirements for self-hosting support?
 - How does runner provisioning integrate with cloud provider APIs (AWS, GCP, etc.)?
+
+---
+*This document follows the https://specscore.md/feature-specification*

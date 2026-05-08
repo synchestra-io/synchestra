@@ -341,3 +341,6 @@ Adopting the `ComputeBackend` interface requires the following changes to existi
 3. Should backend selection be immutable per-project, or should projects be able to migrate between backends?
 4. For Kubernetes mode, should Synchestra use a CRD+operator pattern or a simpler Deployment-per-project approach?
 5. Should cloud serverless workspace sync (to/from cloud storage) happen on every start/stop, or only on explicit save points?
+
+---
+*This document follows the https://specscore.md/feature-specification*

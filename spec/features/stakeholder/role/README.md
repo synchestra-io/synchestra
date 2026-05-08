@@ -108,3 +108,6 @@ Not defined yet.
 - Should `_config.yaml` support conditions (e.g., different reviewers for different file types within a feature)?
 - Should role definitions support description/purpose metadata for discoverability (e.g., `code-reviewer: { description: "Reviews implementation code", add: [...] }`)?
 - How should role resolution work when a feature is referenced by a cross-repo task — does resolution follow the spec repo's feature tree or the code repo's directory structure?
+
+---
+*This document follows the https://specscore.md/feature-specification*

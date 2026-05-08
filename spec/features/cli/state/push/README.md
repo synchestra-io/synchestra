@@ -44,3 +44,6 @@ The CLI resolves the project's state repo path using the `state_repo` field in `
 ## Outstanding Questions
 
 None at this time.
+
+---
+*This document follows the https://specscore.md/feature-specification*

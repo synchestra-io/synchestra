@@ -58,3 +58,6 @@ If the state transition is rejected for any other reason, exit **4**.
 ## Outstanding Questions
 
 - Should there be a bulk enqueue command for multiple tasks at once?
+
+---
+*This document follows the https://specscore.md/feature-specification*

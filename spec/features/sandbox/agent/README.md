@@ -515,3 +515,6 @@ If future changes require breaking changes:
 2. ~~Should we add bulk operations (BulkStoreCredentials, BulkDeleteCredentials)?~~ **Resolved**: Yes — consider batch-only mode where single-credential operations are a batch of one item. See also http-api.md Q4.
 3. Should we add metrics/prometheus support (command execution count, latencies)?
 4. Should we support streaming from multiple log streams (stdout + stderr merged)? **Pros**: single connection for all output, simpler client code, preserves interleaving order. **Cons**: harder to separate stdout from stderr after merging, more complex server multiplexing, potential ordering ambiguity across streams.
+
+---
+*This document follows the https://specscore.md/feature-specification*

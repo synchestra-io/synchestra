@@ -46,3 +46,6 @@ The command implicitly uses a `--current in_progress` guard — it will fail wit
 ## Outstanding Questions
 
 None at this time.
+
+---
+*This document follows the https://specscore.md/feature-specification*

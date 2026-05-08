@@ -120,3 +120,6 @@ steps:
 - When creating a sub-feature, should the parent feature's README be automatically updated with the new Contents entry, or should that be a separate step?
 - Should the system suggest related existing features during the Understand step to avoid duplicates?
 - How should the feature slug be determined — AI-suggested based on the description, user-specified, or a combination?
+
+---
+*This document follows the https://specscore.md/feature-specification*

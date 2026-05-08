@@ -47,3 +47,6 @@ Manages projects in the server config. Does not require the server to be running
 ## Outstanding Questions
 
 None at this time.
+
+---
+*This document follows the https://specscore.md/feature-specification*

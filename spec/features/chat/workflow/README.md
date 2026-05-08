@@ -226,3 +226,6 @@ workflows:
 - How should workflow versioning work — when Synchestra ships an updated built-in workflow, how does it interact with project-level customizations?
 - Should there be a `synchestra workflow test` command that simulates a workflow run for validation purposes?
 - What is the exact set of `anchor-types` values — is it a fixed enum or extensible?
+
+---
+*This document follows the https://specscore.md/feature-specification*

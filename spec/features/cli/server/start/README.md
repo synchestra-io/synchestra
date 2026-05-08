@@ -43,3 +43,6 @@ The daemon writes its PID to the configured `pid_file` and redirects output to t
 ## Outstanding Questions
 
 None at this time.
+
+---
+*This document follows the https://specscore.md/feature-specification*

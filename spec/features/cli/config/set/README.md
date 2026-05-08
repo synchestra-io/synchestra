@@ -40,3 +40,6 @@ At least one parameter must be provided.
 ## Outstanding Questions
 
 None at this time.
+
+---
+*This document follows the https://specscore.md/feature-specification*

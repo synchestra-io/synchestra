@@ -154,3 +154,6 @@ Onboarding is complete when:
 - Should the demo project be stored in a real GitHub repo (e.g., a template repo the user forks) or exist only in Synchestra's local/server state?
 - Should onboarding support importing an existing `synchestra-spec-repo.yaml` for users migrating from a manual setup?
 - How should the CLI handle the GitHub App callback — poll a Synchestra endpoint, use a local HTTP server, or rely on `gh` CLI auth?
+
+---
+*This document follows the https://specscore.md/feature-specification*

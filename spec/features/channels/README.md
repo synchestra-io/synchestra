@@ -529,3 +529,6 @@ Not defined yet.
 6. Should the channel MCP server support file attachments (images, logs) or is text-only sufficient for MVP?
 7. What is the retention policy default --- keep history indefinitely, 7 days, 30 days, or until explicit session cleanup?
 8. How does the channel MCP server handle Claude Code restarts within the same session (e.g., Claude Code crashes but the container and worktree survive)?
+
+---
+*This document follows the https://specscore.md/feature-specification*

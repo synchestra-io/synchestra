@@ -276,3 +276,6 @@ This creates a bidirectional, traceable chain: **proposal → plan → tasks**.
 ## Outstanding Questions
 
 None at this time.
+
+---
+*This document follows the https://specscore.md/feature-specification*

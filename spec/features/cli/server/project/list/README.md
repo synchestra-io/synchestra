@@ -38,3 +38,6 @@ Cross-linked with the API endpoint [`GET /api/v1/project/list`](../../../../../a
 ## Outstanding Questions
 
 None at this time.
+
+---
+*This document follows the https://specscore.md/feature-specification*

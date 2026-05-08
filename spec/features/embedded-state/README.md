@@ -205,3 +205,6 @@ The reverse is not supported — collapsing a dedicated state repo into embedded
 - Should `synchestra project init` also scaffold an initial `spec/features/` structure on the main branch, or only set up state? Scaffolding is an onboarding concern and may belong in a separate command.
 - How should CI/CD pipelines interact with the orphan branch? Should we provide a GitHub Actions workflow template that runs on `synchestra-state` pushes?
 - Should `synchestra project init` require a remote, or support purely local (offline) usage? Local-only mode would skip the push step and set sync policy to `manual`.
+
+---
+*This document follows the https://specscore.md/feature-specification*

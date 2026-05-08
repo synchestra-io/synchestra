@@ -210,3 +210,6 @@ For projects with hundreds of concurrent agents or thousands of tasks, database 
 - Should the git backend batch multiple mutations into a single commit when they occur within a short window (e.g., creating a task and immediately enqueuing it)?
 - How should the git backend handle partial failures (e.g., commit succeeds but push fails due to network error)?
 - Should `AppendMessages` write to a local buffer file or hold messages in memory until finalize?
+
+---
+*This document follows the https://specscore.md/feature-specification*

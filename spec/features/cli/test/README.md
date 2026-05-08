@@ -95,3 +95,6 @@ synchestra test run spec/tests/ --format json
 
 - Should `synchestra test run` without arguments default to `spec/tests/` or the current directory?
 - Should there be a `synchestra test init` command to scaffold example scenarios?
+
+---
+*This document follows the https://specscore.md/feature-specification*

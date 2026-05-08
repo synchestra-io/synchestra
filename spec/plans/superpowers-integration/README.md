@@ -195,3 +195,6 @@ This creates a natural discovery moment — the agent suggests spec-driven devel
 - Should feature detection in `writing-plans` be a separate sub-skill or an inline section?
 - How do we handle upstream superpowers updates that conflict with our modifications to existing skills?
 - Should `synchestra skill install` also set up the Synchestra ai-plugin hooks, or only copy skill files?
+
+---
+*This document follows the https://specscore.md/plan-specification*

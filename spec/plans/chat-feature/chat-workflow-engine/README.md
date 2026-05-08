@@ -248,3 +248,6 @@ Steps 2, 3, 8, and 9 can start in parallel after Step 1. Step 4 depends on Step 
 - Should the check runner support parallel execution of independent checks, or always run checks sequentially?
 - How should the fast path handle CI failures — keep the chat open until CI passes, or finalize the chat and let the user handle failures through the normal PR workflow?
 - Should workflow discovery cache results, or resolve dynamically on each request?
+
+---
+*This document follows the https://specscore.md/plan-specification*

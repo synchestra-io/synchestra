@@ -53,3 +53,6 @@ More detailed than `task status`, which only shows status fields. Use `task info
 
 - Should `task info` include auto-generated minimal context (the parent chain, sibling awareness) or just the raw task README? Including assembled context is more useful for agents but adds coupling to the output format.
 - How deep should the parent chain go? All the way to the project root, or limited to a fixed depth (e.g., 3 levels)?
+
+---
+*This document follows the https://specscore.md/feature-specification*

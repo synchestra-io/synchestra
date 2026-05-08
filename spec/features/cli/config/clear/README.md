@@ -44,3 +44,6 @@ At least one parameter must be provided.
 ## Outstanding Questions
 
 - Should `clear` succeed silently if the field is already absent, or exit with a specific code?
+
+---
+*This document follows the https://specscore.md/feature-specification*

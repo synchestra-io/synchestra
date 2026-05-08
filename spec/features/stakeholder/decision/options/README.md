@@ -147,3 +147,6 @@ Not defined yet.
 - Should options support a `default` field to pre-select a recommended choice?
 - Should there be a `description` field per option for cases where even the label is too short to convey meaning, or is that always better handled in the decision's markdown body?
 - Should `pick-many` support `min`/`max` constraints on how many items can be selected?
+
+---
+*This document follows the https://specscore.md/feature-specification*

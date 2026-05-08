@@ -138,3 +138,6 @@ $ synchestra spec lint /path/to/custom/spec
 - Should certain directories (e.g., `spec/proposals/`, `spec/archived/`) be excluded or have relaxed rules?
 - Should `spec lint` validate that feature README files have specific required sections beyond OQ (e.g., "Summary", "Design Principles")?
 - Should code annotations checking be scoped to specific directories (e.g., only `pkg/cli/`) or all `.go` files?
+
+---
+*This document follows the https://specscore.md/feature-specification*

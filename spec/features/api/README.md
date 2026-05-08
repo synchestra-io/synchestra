@@ -47,3 +47,6 @@ The normative API specification lives in [`spec/api/`](../../api/README.md) as O
 - Should the API support WebSocket or SSE for real-time task status updates?
 - Should batch operations be supported (e.g., enqueue multiple tasks in one request)?
 - How should the API handle long-running git operations — synchronous response or async with polling?
+
+---
+*This document follows the https://specscore.md/feature-specification*

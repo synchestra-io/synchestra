@@ -66,3 +66,6 @@ The [`synchestra config`](../cli/config/README.md) command group provides `show`
 
 - Should the file support additional settings beyond `repos_dir` (e.g., default `--format`, default git remote name)?
 - Should `repos_dir` support environment variable interpolation (e.g., `$HOME/synchestra/repos`)?
+
+---
+*This document follows the https://specscore.md/feature-specification*

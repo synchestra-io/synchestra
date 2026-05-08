@@ -49,3 +49,6 @@ If a code repo is already in the project's `repos` list, it is skipped (not an e
 ## Outstanding Questions
 
 None at this time.
+
+---
+*This document follows the https://specscore.md/feature-specification*

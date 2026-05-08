@@ -22,3 +22,6 @@ Adds a new project (spec + state repo pair) to `synchestra-server.yaml`. See [ad
 ## Outstanding Questions
 
 None at this time.
+
+---
+*This document follows the https://specscore.md/feature-specification*

@@ -107,3 +107,6 @@ type ChatMessage struct {
 - Should there be a `Checkpoint` method that flushes messages to durable storage without finalizing the chat?
 - Should `ChatCreateParams` include an optional `ID` field, or is the store always responsible for generating chat IDs? If store-generated, what format (UUID, timestamp-based, etc.)?
 - Should there be `Delete` or `Archive` methods, or is accumulation by design (with retention policies handled externally)?
+
+---
+*This document follows the https://specscore.md/feature-specification*

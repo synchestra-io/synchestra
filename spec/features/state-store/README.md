@@ -149,3 +149,6 @@ Each backend provides a `StoreFactory`. The CLI selects the backend based on pro
 - How should the store handle migrations when the state schema evolves (e.g., new fields on tasks)?
 - Is a caching layer in front of the store useful? A cache introduces consistency risks with the atomic claim protocol — stale reads could cause phantom claims. If pursued, it should default to passthrough (no caching) and require explicit opt-in.
 - Should `StoreOptions` include backend-specific configuration (connection strings, etc.), or should each backend define its own options type?
+
+---
+*This document follows the https://specscore.md/feature-specification*

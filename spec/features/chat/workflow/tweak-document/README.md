@@ -129,3 +129,6 @@ workflows:
 - Should maintainers be able to direct-commit code changes (bypassing PR), or should code always require a PR regardless of role?
 - Should there be a size/complexity heuristic that automatically suggests escalating to a proposal workflow if the "tweak" grows too large?
 - Should the tweak workflow support batch changes (e.g., "fix all typos in this feature spec"), or is that a separate workflow?
+
+---
+*This document follows the https://specscore.md/feature-specification*

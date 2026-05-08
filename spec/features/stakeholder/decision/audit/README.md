@@ -125,3 +125,6 @@ Not defined yet.
 - Should the audit log include a machine-readable frontmatter section summarizing all outcomes for programmatic access?
 - Should there be a project-wide audit index that aggregates decision outcomes across all tasks for reporting purposes?
 - How should the audit log handle decision expiry — is "expired" an outcome, and what metadata accompanies it?
+
+---
+*This document follows the https://specscore.md/feature-specification*

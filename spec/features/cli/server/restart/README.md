@@ -36,3 +36,6 @@ Restarts the Synchestra daemon by stopping then starting it. If the daemon is no
 ## Outstanding Questions
 
 - Should restart support graceful connection draining before stopping?
+
+---
+*This document follows the https://specscore.md/feature-specification*

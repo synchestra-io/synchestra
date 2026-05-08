@@ -19,3 +19,6 @@ The default backend. Maps every `state.Store` method to file operations, markdow
 
 - Should backends be registered via a plugin mechanism, or is compile-time selection sufficient?
 - How should backend-specific configuration (connection strings, credentials) be passed — via `StoreOptions` or backend-specific option types?
+
+---
+*This document follows the https://specscore.md/feature-specification*

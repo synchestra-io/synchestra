@@ -67,3 +67,6 @@ Synchestra is not always the direct caller of the LLM. When an agent runs inside
 - How does dynamic assessment handle tasks where the description is vague? (Default to `medium`? Ask for clarification?)
 - Should there be a cost budget feature that constrains model selection? (e.g., "this project has a $50/day budget, optimize accordingly")
 - How does model_class mapping stay current as new models are released?
+
+---
+*This document follows the https://specscore.md/feature-specification*

@@ -45,3 +45,6 @@ Like all mutation commands, `task start` is atomic: the CLI commits the status c
 ## Outstanding Questions
 
 None at this time.
+
+---
+*This document follows the https://specscore.md/feature-specification*

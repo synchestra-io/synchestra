@@ -164,3 +164,6 @@ The `--slug` flag overrides this entirely, but the provided slug is still valida
 - Should the generated template include optional sections like `## Interaction with Other Features` or `## Configuration` based on additional flags?
 - When updating the parent's `## Contents` section: if the section does not exist yet, should the command create it? (Likely yes, to support the first sub-feature case.)
 - Should the commit message format be configurable, or is `feat(spec): add feature {feature_id}` sufficient?
+
+---
+*This document follows the https://specscore.md/feature-specification*

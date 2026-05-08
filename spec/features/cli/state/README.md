@@ -36,3 +36,6 @@ Equivalent to `pull` followed by `push`, with conflict retry. The go-to command 
 
 - Should there be a `synchestra state info` subcommand to show current sync policy, last pull/push timestamps, and pending local commits?
 - Should there be a `synchestra state status` subcommand to show sync health (e.g., "3 local commits unpushed, last pull 2m ago")?
+
+---
+*This document follows the https://specscore.md/feature-specification*

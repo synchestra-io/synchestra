@@ -86,3 +86,6 @@ These verbs are part of this feature's intended surface but do not yet have thei
 1. Should `runner list` include metadata fields in default output, or require a flag (`--long`, `--format json`) to surface them?
 2. Does `runner status <name>` need a dedicated subfeature spec, or can its behavior be fully captured in this group README?
 3. When the authenticated user has zero registered runners, should `dispatch` produce a guided prompt pointing to `runner add`, or return exit code `80` with a stderr hint and nothing else?
+
+---
+*This document follows the https://specscore.md/feature-specification*

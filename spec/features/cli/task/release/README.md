@@ -46,3 +46,6 @@ The command implicitly uses a `--current claimed` guard — it will fail with ex
 ## Outstanding Questions
 
 None at this time.
+
+---
+*This document follows the https://specscore.md/feature-specification*

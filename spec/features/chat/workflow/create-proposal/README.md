@@ -128,3 +128,6 @@ steps:
 - Should the fast path be offered proactively by the AI, or should the user explicitly request it via a UI toggle?
 - When the fast path produces a PR, should the chat remain open until the PR is merged, or finalize once the PR is created?
 - Should the Explore step be skippable for users who already know exactly what they want?
+
+---
+*This document follows the https://specscore.md/feature-specification*

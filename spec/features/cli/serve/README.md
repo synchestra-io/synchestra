@@ -57,3 +57,6 @@ Exit codes `1` (Conflict) and `4` (Invalid state transition) do not apply — `s
 
 - Should `serve` support hot-reload when spec/state files change (file watching)?
 - Should there be a `--log-level` argument?
+
+---
+*This document follows the https://specscore.md/feature-specification*

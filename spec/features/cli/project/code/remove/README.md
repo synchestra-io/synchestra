@@ -46,3 +46,6 @@ If a code repo is not in the project's `repos` list, it is skipped (not an error
 ## Outstanding Questions
 
 - Should the command warn if removing the last code repo (leaving the project with none)?
+
+---
+*This document follows the https://specscore.md/feature-specification*

@@ -387,3 +387,6 @@ echo "Exit codes correct: pass=$pass_rc, fail=$fail_rc"
 ```bash
 rm -rf "$FIXTURE_DIR"
 ```
+
+---
+*This document follows the https://specscore.md/scenario-specification*

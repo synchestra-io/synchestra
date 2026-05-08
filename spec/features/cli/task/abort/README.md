@@ -46,3 +46,6 @@ The `--reason` parameter is optional but recommended — it tells the working ag
 ## Outstanding Questions
 
 None at this time.
+
+---
+*This document follows the https://specscore.md/feature-specification*

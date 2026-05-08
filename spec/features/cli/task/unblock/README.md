@@ -44,3 +44,6 @@ Implicitly uses `--current blocked` as a guard — fails if the task is not curr
 ## Outstanding Questions
 
 None at this time.
+
+---
+*This document follows the https://specscore.md/feature-specification*

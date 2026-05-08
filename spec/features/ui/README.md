@@ -133,3 +133,6 @@ The UI feature presents and triggers workflows defined elsewhere — it does not
 - Should the task-status-board rendering in the UI be a generic markdown table renderer, or should tasks have a purpose-built component?
 - What authentication model does the UI use? The [API](../../../docs/api/README.md) requires Bearer tokens created via `synchestra auth token create`. The root README mentions GitHub OAuth and Firebase. Which applies to each surface?
 - Should the feature detail screen support navigating into sub-features, or only root features for MVP?
+
+---
+*This document follows the https://specscore.md/feature-specification*

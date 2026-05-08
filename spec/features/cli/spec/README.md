@@ -29,3 +29,6 @@ Specification commands treat spec repositories as queryable data structures, not
 - Should `spec lint` support a `--fix` flag for auto-fixing certain violations (e.g., adding missing OQ sections)?
 - Should there be a `--watch` mode for continuous linting during spec editing?
 - ~~Should `spec search` support semantic search in addition to keyword matching, or stick to keyword-only for phase 1?~~ Resolved: keyword-first with spec-aware enrichment (`--section`, `--status`, `--type`, `--refs`). See [search spec](search/README.md).
+
+---
+*This document follows the https://specscore.md/feature-specification*

@@ -232,3 +232,6 @@ Steps 2, 3, and 4 can run in parallel after Step 1. Steps 5 and 6 can run in par
 - Should the conversation compaction (summary generation) be synchronous (blocking the chat turn) or asynchronous (using a slightly stale summary)?
 - How should the API handle authentication — reuse existing Synchestra API auth, or introduce chat-specific session tokens?
 - Should the checkpoint interval be time-based (every N minutes), message-count-based (every N messages), or both?
+
+---
+*This document follows the https://specscore.md/plan-specification*

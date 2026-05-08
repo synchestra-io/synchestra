@@ -97,3 +97,6 @@ Exit codes `100`–`109` are reserved for the CLI Auth feature. This range is re
 2. Should `auth login` support `--token <value>` for non-interactive flows (CI, headless servers)? Out of MVP scope, but the subfeature spec should explicitly state deferral so it is easy to add later.
 3. Token refresh strategy — silent refresh before expiry vs. fail-on-expiry-and-prompt — and how it surfaces to the CLI user.
 4. Does `auth` need a `token` subfeature (e.g., `auth token list`, `auth token revoke`) for users who have multiple active sessions across machines?
+
+---
+*This document follows the https://specscore.md/feature-specification*

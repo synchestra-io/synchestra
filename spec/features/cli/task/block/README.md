@@ -46,3 +46,6 @@ The transition is atomic: the CLI commits the status change and pushes to the st
 ## Outstanding Questions
 
 None at this time.
+
+---
+*This document follows the https://specscore.md/feature-specification*

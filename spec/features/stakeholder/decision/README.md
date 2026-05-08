@@ -208,3 +208,6 @@ Not defined yet.
 - Should decisions support attachments (files, images, links) in addition to text context?
 - What is the maximum nesting depth for follow-up decisions before the system should escalate to a human?
 - Should there be a way to delegate a decision — a stakeholder receives it but reassigns to someone else?
+
+---
+*This document follows the https://specscore.md/feature-specification*

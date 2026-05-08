@@ -45,3 +45,6 @@ Cross-linked with the API endpoint [`POST /api/v1/project/add`](../../../../../a
 ## Outstanding Questions
 
 - Should this command validate that the spec and state repos cross-reference each other?
+
+---
+*This document follows the https://specscore.md/feature-specification*

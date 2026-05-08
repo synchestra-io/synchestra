@@ -99,3 +99,6 @@ Metadata and sections are merged into one command because by the time an agent c
 - Should `feature info` support `--sections-only` (skip metadata) or `--meta-only` (skip sections) flags?
 - How deep should `sections` nesting go? Only `h2` + `h3`? Or all heading levels?
 - Should sections include the heading's markdown level (e.g., `level: 2`) for agents that want to understand document structure?
+
+---
+*This document follows the https://specscore.md/feature-specification*

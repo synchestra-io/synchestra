@@ -48,3 +48,6 @@ Phases 3-5 from the original roadmap do not yet have their own detailed developm
 - Should phases 3-5 have their own detailed development plans, or are the step descriptions in this high-level plan sufficient for task generation?
 - What is the target technology stack for the server-side components — Go (matching the existing CLI), or a different language better suited for real-time chat (e.g., TypeScript/Node.js)?
 - Should the web UI be part of the existing [UI](../../features/ui/README.md) feature's implementation plan, or does it warrant its own plan?
+
+---
+*This document follows the https://specscore.md/plan-specification*

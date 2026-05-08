@@ -211,3 +211,6 @@ Workflow-specific configuration is documented in the [Workflow](workflow/README.
 - How should the context assembly strategy handle very long documents as anchors — should there be a size limit or automatic summarization of the anchor itself?
 - Should finalized chats be linkable from the artifacts they produced (e.g., a proposal README links back to "this proposal was developed in chat X")?
 - What is the exact `chat-id` format — UUID, timestamp-based, slug-based, or a combination?
+
+---
+*This document follows the https://specscore.md/feature-specification*

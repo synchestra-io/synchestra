@@ -59,3 +59,6 @@ Additional key-value settings (e.g., `--allow-proposals=true`) are written to `s
 
 - Should `set` support unsetting / removing config keys?
 - Should changing `--spec-repo` remove `synchestra-spec-repo.yaml` from the old spec repo?
+
+---
+*This document follows the https://specscore.md/feature-specification*

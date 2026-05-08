@@ -52,3 +52,6 @@ The command implicitly guards that the current status is `claimed` or `in_progre
 ## Outstanding Questions
 
 None at this time.
+
+---
+*This document follows the https://specscore.md/feature-specification*

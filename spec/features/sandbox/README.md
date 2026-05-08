@@ -45,3 +45,6 @@ Observability strategy spanning both host-side (orchestrator, HTTP API) and cont
 3. Are there compliance requirements (HIPAA, PCI-DSS, SOC 2) affecting credential handling?
 4. ~~Should container images be signed (Docker Content Trust)?~~ **Resolved**: The requirement for signed Docker images is configurable per host.
 5. ~~Should containers auto-terminate after idle period (e.g., 24 hours)?~~ **Resolved**: Yes, containers auto-terminate after an idle timeout that is configurable per host.
+
+---
+*This document follows the https://specscore.md/feature-specification*

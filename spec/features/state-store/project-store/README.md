@@ -49,3 +49,6 @@ type ProjectConfig struct {
 
 - Should `ProjectConfig` include additional fields like project description, owner, or creation timestamp?
 - Should `RebuildREADME` be triggered automatically after state-mutating operations, or always explicitly?
+
+---
+*This document follows the https://specscore.md/feature-specification*

@@ -22,3 +22,6 @@ Removes one or more code repos from the project's `repos` list in `synchestra-sp
 ## Outstanding Questions
 
 None at this time.
+
+---
+*This document follows the https://specscore.md/feature-specification*

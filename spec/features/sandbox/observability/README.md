@@ -362,3 +362,6 @@ internal/sandbox/observability/
 3. Should session command output be indexed for search (e.g., "find all sessions that had OOM errors")? This would require a separate log stream with different retention/indexing policies.
 4. What OpenTelemetry exporter should be the default — OTLP (gRPC), Jaeger, or stdout for local development?
 5. Should alert thresholds (e.g., 90% disk, 5% error rate) be configurable at runtime or fixed at deploy time?
+
+---
+*This document follows the https://specscore.md/feature-specification*

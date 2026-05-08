@@ -136,3 +136,6 @@ Not defined yet.
 - Is there value in a "spec preview" capability — rendering how a feature's metadata and relationships will look after the current edits are saved?
 - Should the LSP server expose custom commands (e.g., `synchestra.featureCreate`) that IDEs can bind to keyboard shortcuts or command palette entries?
 - How should the server handle spec repositories that don't yet have the CLI's feature-parsing packages implemented? Graceful degradation with partial capabilities, or refuse to start?
+
+---
+*This document follows the https://specscore.md/feature-specification*

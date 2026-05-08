@@ -699,3 +699,6 @@ All metrics use the `synchestra_sandbox_` prefix. Labels follow Prometheus namin
 ## Outstanding Questions
 
 None at this time.
+
+---
+*This document follows the https://specscore.md/feature-specification*

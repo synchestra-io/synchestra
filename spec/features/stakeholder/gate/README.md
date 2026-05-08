@@ -126,3 +126,6 @@ Not defined yet.
 - Should gates be configurable per-feature (e.g., CLI features require 2 code reviewers, UI features require 1), or only at the project level?
 - Should there be a `bypass` mechanism for emergencies — e.g., a project owner can force-approve past a gate with an audit trail entry?
 - How should gates interact with the fast-path in [chat workflows](../../chat/workflow/README.md) — should maintainer fast-path skip gates, or should gates apply regardless?
+
+---
+*This document follows the https://specscore.md/feature-specification*

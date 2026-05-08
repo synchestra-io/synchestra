@@ -45,3 +45,6 @@ Claiming is atomic: the CLI commits the status change and merges to local main. 
 ## Outstanding Questions
 
 None at this time.
+
+---
+*This document follows the https://specscore.md/feature-specification*

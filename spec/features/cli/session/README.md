@@ -116,3 +116,6 @@ Exit codes `90`–`99` are reserved for the CLI Session feature. This range is r
 2. Should `session logs` support pagination for very long outputs (offset/limit), or is `--since` the only slicing primitive in MVP?
 3. Should `session stop` accept a list of session IDs for batch cancellation, or is one-at-a-time the MVP contract?
 4. Is there a scenario where a CLI-initiated session and a UI chat session need distinct verbs, or are they unified under this feature?
+
+---
+*This document follows the https://specscore.md/feature-specification*

@@ -58,3 +58,6 @@ Until then, prefer adding to [agent-skills](../agent-skills/README.md) for Synch
 - What concrete signal should trip trigger condition #1 — a GitHub label that auto-counts, a survey, an explicit RFC-request issue template? Without an instrumented tripwire, "≥3 authors asking" silently becomes "we never noticed."
 - If [micro-tasks](../micro-tasks/README.md) ships with semantics V7 cannot express (chain-level shared state, transactional rollback across steps, DAG-not-linear ordering), does this feature graduate from *Deferred* to *Conceptual* with a redesign, or is the deferral extended further?
 - How are Spec Kit breaking changes (manifest 1.0 → 2.0) absorbed without breaking the three first-party extensions before this feature graduates? Pin-and-patch is workable short-term; a longer-term answer is owed before plugin count grows.
+
+---
+*This document follows the https://specscore.md/feature-specification*

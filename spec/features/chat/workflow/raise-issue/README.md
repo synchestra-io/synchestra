@@ -142,3 +142,6 @@ steps:
 - Should the "propose a fix" step be able to escalate to the "Tweak Document" or "Create Proposal" workflow if the fix is straightforward enough?
 - For private repos where code quoting is disabled, should the AI still be able to reference file paths and line numbers without quoting content?
 - What issue tracker integrations should be supported beyond GitHub Issues (GitLab, Jira, Linear), and should this be part of the initial spec or deferred?
+
+---
+*This document follows the https://specscore.md/feature-specification*

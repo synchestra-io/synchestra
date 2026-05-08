@@ -41,3 +41,6 @@ See [`synchestra state pull/push/sync`](../state/README.md) for manual bulk sync
 ## Outstanding Questions
 
 None at this time.
+
+---
+*This document follows the https://specscore.md/feature-specification*

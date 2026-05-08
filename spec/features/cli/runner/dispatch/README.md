@@ -109,3 +109,6 @@ Exit codes `80`–`89` are reserved for the CLI Runner feature; `101`–`109` fo
 1. Should `--watch` be added for synchronous UX, or is `session logs --follow` sufficient composition?
 2. Should the Hub queue dispatches when the runner is at capacity, or reject them (current spec: reject with 81)?
 3. When the runner's default agent is already correct but the user passes `--agent` with the same value, is that a no-op or an error? Leaning no-op.
+
+---
+*This document follows the https://specscore.md/feature-specification*

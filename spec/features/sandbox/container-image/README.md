@@ -112,3 +112,6 @@ Returns exit code 0 if healthy, non-zero otherwise.
 ## Outstanding Questions
 
 None at this time.
+
+---
+*This document follows the https://specscore.md/feature-specification*

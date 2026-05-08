@@ -149,3 +149,6 @@ Not defined yet.
 - Should notification preferences sync with any existing notification configuration, or is the bot its own independent notification channel?
 - How should the bot handle concurrent prompts to the same container (queue, reject, or allow parallel)?
 - Should the linking flow support team-level linking (e.g., a shared Telegram group linked to a project) in a future iteration, or is that covered by the "group support" extension?
+
+---
+*This document follows the https://specscore.md/feature-specification*

@@ -59,3 +59,6 @@ MCP client configuration (e.g., Claude Code `settings.json`):
 
 - Should `synchestra mcp` support multi-project if run in a server dir, or always single-project?
 - What MCP tools and resources should be exposed? (Presumably mirrors CLI commands as MCP tools.)
+
+---
+*This document follows the https://specscore.md/feature-specification*
