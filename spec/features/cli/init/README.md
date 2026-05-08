@@ -12,13 +12,13 @@
 
 Top-level `synchestra init` command — the one-stop bootstrap entry-point for a Synchestra-managed project. Creates `synchestra.yaml` at the repo root, sets up the chosen state mode (embedded by default), and is idempotent on rerun. Top-level placement deliberately breaks Synchestra's strict noun-verb CLI convention for the bootstrap entry-point — the same exception every CLI ecosystem makes (`git init`, `npm init`, `cargo init`).
 
-This Feature defines the contract; the unified Idea collapses the existing `project init` and `project new` commands into this surface. Phase 2 MVP: embedded mode only. Separate-repo and Hub-managed modes are deferred but the surface is designed to accept them.
+This Feature defines the contract. Per the unified Idea, the legacy `project init` and `project new` subcommands have been removed; `synchestra init` is the sole bootstrap surface. v1 ships embedded mode only — separate-repo and hub-managed modes are recognized by the flag parser but exit `2` with "not yet implemented." The surface is designed to accept them in a future release.
 
 ## Problem
 
-Today's Synchestra CLI offers `synchestra project init` (embedded mode, single repo) and `synchestra project new` (multi-repo project). New users have to choose between them based on internal architecture knowledge. Worse, the choice is irreversible without manual config-file surgery: starting with `project init` and later wanting Hub registration means the user has to know that "Hub registration" exists at all, which command sets it up, and which YAML file to edit.
+Earlier Synchestra CLI iterations carried two parallel bootstrap commands — `synchestra project init` (embedded mode, single repo) and `synchestra project new` (multi-repo project). New users had to choose between them based on internal architecture knowledge, and the choice was irreversible without manual config-file surgery (starting with `project init` and later wanting Hub registration meant editing YAML files by hand).
 
-A top-level `synchestra init` collapses the decision into a single entrypoint that takes a `--state-mode` choice. The user no longer needs to know which subcommand to invoke; the CLI surface matches the muscle-memory established by `git init`, `npm init`, and `cargo init`.
+A top-level `synchestra init` collapses the decision into a single entrypoint that takes a `--state-mode` choice. The user no longer needs to know which subcommand to invoke; the CLI surface matches the muscle-memory established by `git init`, `npm init`, and `cargo init`. Per the source Idea's "no users yet, no migration" stance, the legacy commands were deleted outright rather than aliased.
 
 ## Behavior
 
@@ -66,7 +66,7 @@ When `--state-mode embedded`, `synchestra init` MUST set up the orphan branch an
 2. Write `synchestra-state.yaml` (per the [state-repo-config](../../state-repo-config/README.md) Feature) on the orphan branch root with `mode: embedded` and a `spec_repos:` entry for the current repo's origin URL.
 3. Create a worktree at `.synchestra/` pointing at the orphan branch.
 
-The `.gitignore` update is governed separately by `gitignore-synchestra-entry`. These steps MAY delegate to existing internal helpers used by `synchestra project init`; the surface contract is what this REQ governs.
+The `.gitignore` update is governed separately by `gitignore-synchestra-entry`. Implementation may factor common helpers into shared internal packages; the surface contract is what this REQ governs.
 
 ### Idempotence
 
@@ -178,7 +178,7 @@ The command is registered on the root `cobra.Command` in `pkg/cli/main.go` along
 ## Outstanding Questions
 
 - The `--force` flag for re-init (allowing mode change) is intentionally deferred to a follow-up Feature. The MVP's escape hatch is manual file editing.
-- Deprecation warnings on `synchestra project init` and `synchestra project new` are intended but tracked separately; this Feature does not specify them. Tracked as a follow-up `cli/project/init#deprecation` (TBD) Feature.
+- ~~Deprecation warnings on `synchestra project init` and `synchestra project new`~~ — resolved: per the source Idea's "no users yet, no migration" stance, both legacy commands were deleted outright rather than aliased.
 - Whether `synchestra init` should also write a starter `synchestra.yaml` containing a commented-out example of the `hub:` block (to aid discovery) is a UX choice deferred to implementation.
 - The shared internal package for orphan-branch / worktree logic (factored out of `pkg/cli/project/`) needs its own naming decision; package name TBD at implementation time.
 

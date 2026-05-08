@@ -46,10 +46,26 @@ func WorktreePrune(repoDir string) error {
 // CreateOrphanBranch creates an orphan branch with no history.
 // It checks out the orphan branch, removes all tracked files, and returns.
 // The caller is responsible for adding files, committing, and switching back.
+//
+// When the source branch tracks zero files (e.g. the source branch's only
+// commit is empty, or the repository was just initialized), the index is
+// already empty and `git rm -rf .` would fail with `pathspec '.' did not
+// match any files`. We probe `git ls-files` first and skip the rm in that
+// case — there is nothing to remove.
 func CreateOrphanBranch(repoDir, branch string) error {
 	cmd := exec.Command("git", "-C", repoDir, "checkout", "--orphan", branch)
 	if out, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("creating orphan branch %s: %w\n%s", branch, err, out)
+	}
+	// Skip the index-clear when the index is already empty. `git ls-files -z`
+	// outputs zero bytes when no files are tracked.
+	lsFiles := exec.Command("git", "-C", repoDir, "ls-files", "-z")
+	out, err := lsFiles.Output()
+	if err != nil {
+		return fmt.Errorf("listing tracked files on orphan branch %s: %w", branch, err)
+	}
+	if len(out) == 0 {
+		return nil
 	}
 	// Remove all tracked files from the index (clean slate for the orphan branch).
 	cmd = exec.Command("git", "-C", repoDir, "rm", "-rf", "--quiet", ".")

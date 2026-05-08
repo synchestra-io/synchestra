@@ -16,7 +16,6 @@ Commands follow a `synchestra <resource> <action>` pattern using **singular noun
 synchestra config show
 synchestra config set
 synchestra config clear
-synchestra project new
 synchestra project info
 synchestra project set
 synchestra project code add
@@ -31,11 +30,13 @@ synchestra server project list
 synchestra server project add
 ```
 
+Bootstrap is the one documented exception to this pattern: the top-level [`synchestra init`](init/README.md) is a bare verb (matching `git init`, `npm init`, `cargo init`).
+
 **Singular nouns** — resource names are always singular (`task`, `skill`, `project`), never plural. This matches the convention used by `gh` (`gh repo list`, `gh issue new`), `kubectl` (`kubectl pod list`), and most modern CLIs. The resource name identifies the *type*, not a collection.
 
 **Verb subcommands** — every action is an explicit subcommand. A bare resource name (e.g., `synchestra task`) shows help, never performs an implicit action like listing. Common verbs: `list`, `new`, `show`, `delete`, `update`.
 
-**Prefer `new` over `create`** — use `new` as the subcommand for creating resources (e.g., `task new`, `project new`, `skill new`). The word `create` is intentionally avoided to stay consistent across all Synchestra commands and to align with tools like `gh` (`gh issue new`, `gh pr new`).
+**Prefer `new` over `create`** — use `new` as the subcommand for creating resources (e.g., `task new`, `skill new`, `feature new`). The word `create` is intentionally avoided to stay consistent across all Synchestra commands and to align with tools like `gh` (`gh issue new`, `gh pr new`).
 
 **Nesting** — sub-resources nest under their parent: `synchestra server project add`. Limit nesting to three levels (`<group> <resource> <action>`) to keep commands ergonomic.
 

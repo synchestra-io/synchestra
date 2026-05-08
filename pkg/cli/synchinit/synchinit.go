@@ -18,7 +18,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/synchestra-io/specscore/pkg/exitcode"
 	"github.com/synchestra-io/synchestra/pkg/cli/gitops"
-	"github.com/synchestra-io/synchestra/pkg/cli/project"
 )
 
 // Canonical synchestra.yaml schema-pointer comment per
@@ -315,16 +314,18 @@ func provisionEmbeddedState(repoRoot, branch string, noPush bool, stdout, stderr
 		return exitcode.UnexpectedErrorf("creating orphan branch: %v", err)
 	}
 
-	cfg := project.EmbeddedStateConfig{
+	specRepos := specReposFromOrigin(repoRoot)
+	cfg := EmbeddedStateConfig{
 		Title:        title,
 		Mode:         "embedded",
 		SourceBranch: originalBranch,
-		Sync: &project.EmbeddedSyncCfg{
+		Sync: &EmbeddedSyncCfg{
 			Pull: "on_commit",
 			Push: "on_commit",
 		},
+		SpecRepos: specRepos,
 	}
-	if err := project.WriteEmbeddedStateConfig(repoRoot, cfg); err != nil {
+	if err := WriteEmbeddedStateConfig(repoRoot, cfg); err != nil {
 		_ = gitops.CheckoutBranch(repoRoot, originalBranch)
 		return exitcode.UnexpectedErrorf("writing embedded state config: %v", err)
 	}
@@ -346,7 +347,7 @@ func provisionEmbeddedState(repoRoot, branch string, noPush bool, stdout, stderr
 		return exitcode.UnexpectedErrorf("writing state-branch README: %v", err)
 	}
 
-	if err := gitops.Commit(repoRoot, []string{project.EmbeddedStateFile, "tasks/README.md", "README.md"}, "Initialize Synchestra state"); err != nil {
+	if err := gitops.Commit(repoRoot, []string{EmbeddedStateFile, "tasks/README.md", "README.md"}, "Initialize Synchestra state"); err != nil {
 		_ = gitops.CheckoutBranch(repoRoot, originalBranch)
 		return exitcode.UnexpectedErrorf("committing initial state: %v", err)
 	}
@@ -406,6 +407,18 @@ func isValidWorktree(repoRoot, worktreePath string) bool {
 		}
 	}
 	return false
+}
+
+// specReposFromOrigin returns a single-element list with the repo's
+// `origin` URL when the remote exists, or nil when it doesn't. The
+// embedded synchestra-state.yaml carries this list so state-side
+// tooling can navigate back to the spec repo.
+func specReposFromOrigin(repoRoot string) []string {
+	url, err := gitops.GetOriginURL(repoRoot)
+	if err != nil || strings.TrimSpace(url) == "" {
+		return nil
+	}
+	return []string{strings.TrimSpace(url)}
 }
 
 // ensureGitignoreEntry adds the entry to .gitignore at repoRoot if not

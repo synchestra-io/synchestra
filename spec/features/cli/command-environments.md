@@ -94,7 +94,7 @@ One-time or infrequent commands that establish the working environment. Run by h
 | `synchestra config show` | Display effective config with defaults | read | [config/show](config/show/README.md) |
 | `synchestra config set` | Set config values in ~/.synchestra.yaml | mutation | [config/set](config/set/README.md) |
 | `synchestra config clear` | Clear config value back to default | mutation | [config/clear](config/clear/README.md) |
-| `synchestra project new` | Create a new project, clone repos, commit+push | mutation | [project/new](project/new/README.md) |
+| `synchestra init` | Bootstrap a Synchestra-managed project (creates synchestra.yaml + state) | mutation | [init](init/README.md) |
 | `synchestra project info` | Display project configuration | read | [project/info](project/info/README.md) |
 | `synchestra project set` | Update project settings | mutation | [project/set](project/set/README.md) |
 | `synchestra project code add` | Add a code repo to the project | mutation | [project/code/add](project/code/add/README.md) |
@@ -138,7 +138,7 @@ The core workflow commands for task lifecycle management. These are what agents 
 - Write access to the state store (for mutations)
 - Network access when the state store backend requires it (e.g., git remote, database server)
 
-**Config-less operation:** Coordination commands support [config-less mode](../embedded-state/README.md#config-less-mode). When no `synchestra-spec-repo.yaml` or `synchestra-state-repo.yaml` exists, the CLI falls back to detecting the `.synchestra/` worktree at the git repo root. This means task commands work immediately after `synchestra project init` — no config file required on the main branch.
+**Config-less operation:** Coordination commands support [config-less mode](../embedded-state/README.md#config-less-mode). When no `synchestra.yaml` exists yet (e.g., the user has not run `synchestra init`), the CLI falls back to detecting the `.synchestra/` worktree at the git repo root. This means task commands work immediately after `synchestra init` — no config file required on the main branch.
 
 **Typical caller:** AI agent (via CLI or MCP), human developer, orchestration script.
 
@@ -181,8 +181,8 @@ Quick-reference table of every CLI command.
 | `config show` | 🔧 Setup | read | `~/.synchestra.yaml` |
 | `config set` | 🔧 Setup | mutation | `~/.synchestra.yaml` |
 | `config clear` | 🔧 Setup | mutation | `~/.synchestra.yaml` |
-| `project new` | 🔧 Setup | mutation | git (spec + code repos) |
-| `project info` | 🔧 Setup | read | `synchestra-spec-repo.yaml` or `.synchestra/` worktree |
+| `init` | 🔧 Setup | mutation | git (current repo) |
+| `project info` | 🔧 Setup | read | `synchestra.yaml` or `.synchestra/` worktree |
 | `project set` | 🔧 Setup | mutation | git (spec repo) |
 | `project code add` | 🔧 Setup | mutation | git (spec repo) |
 | `project code remove` | 🔧 Setup | mutation | git (spec repo) |

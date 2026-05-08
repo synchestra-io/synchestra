@@ -12,7 +12,6 @@ import (
 	"testing"
 
 	"github.com/synchestra-io/specscore/pkg/exitcode"
-	"github.com/synchestra-io/synchestra/pkg/cli/project"
 )
 
 // initBareTestRepo creates a bare remote at $TMPDIR/<name>.git and returns
@@ -127,7 +126,7 @@ func TestInit_Greenfield(t *testing.T) {
 	}
 
 	// synchestra-state.yaml exists on the orphan branch (read via worktree).
-	stateCfg, err := project.ReadEmbeddedStateConfig(wtPath)
+	stateCfg, err := ReadEmbeddedStateConfig(wtPath)
 	if err != nil {
 		t.Fatalf("reading state config: %v", err)
 	}
@@ -357,6 +356,49 @@ func TestInit_RejectsNonExistentProject(t *testing.T) {
 	if ec.ExitCode() != exitcode.InvalidArgs {
 		t.Errorf("exit code = %d, want %d (InvalidArgs)", ec.ExitCode(), exitcode.InvalidArgs)
 	}
+}
+
+// TestInit_EmptyOrphanBranch is a regression for the empty-tracked-files
+// edge case. When the source branch has zero tracked files (e.g., the
+// initial commit was --allow-empty), the orphan branch's `git rm -rf .`
+// would fail with `pathspec '.' did not match any files`. The fix in
+// gitops.CreateOrphanBranch probes `git ls-files -z` first and skips the
+// rm when the index is empty.
+func TestInit_EmptyOrphanBranch(t *testing.T) {
+	dir := t.TempDir()
+	run := func(args ...string) {
+		c := exec.Command("git", args...)
+		c.Dir = dir
+		if out, err := c.CombinedOutput(); err != nil {
+			t.Fatalf("git %v: %v\n%s", args, err, out)
+		}
+	}
+	run("init")
+	gitCfg(t, dir)
+	run("commit", "--allow-empty", "-m", "empty")
+
+	if _, stderr, err := runInitCmd(t, dir, "--no-push"); err != nil {
+		t.Fatalf("init in empty-tracked-files repo: %v\nstderr: %s", err, stderr)
+	}
+
+	// Confirm orphan branch + worktree were created.
+	wtPath := filepath.Join(dir, ".synchestra")
+	if info, err := os.Stat(wtPath); err != nil || !info.IsDir() {
+		t.Fatalf(".synchestra not created on empty-orphan path: %v", err)
+	}
+	if !strings.Contains(readFileTrim(t, filepath.Join(dir, SynchestraConfigFile)), "mode: embedded") {
+		t.Errorf("synchestra.yaml not written on empty-orphan path")
+	}
+}
+
+// readFileTrim is a tiny helper used by TestInit_EmptyOrphanBranch.
+func readFileTrim(t *testing.T, path string) string {
+	t.Helper()
+	b, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(b)
 }
 
 // TestInit_TopLevelHelp exercises AC: top-level-registered (parent-level

@@ -1,9 +1,9 @@
 # Idea: Unified Project Definition
 
-**Status:** Approved
+**Status:** Implementing
 **Date:** 2026-05-08
 **Owner:** alexander.trakhimenok
-**Promotes To:** —
+**Promotes To:** repo-config, state-repo-config
 **Supersedes:** —
 **Related Ideas:** —
 
