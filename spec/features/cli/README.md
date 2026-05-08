@@ -157,6 +157,14 @@ Arguments used by several (but not all) subcommands still go at the group level 
 
 All CLI command READMEs and skill READMEs link to the canonical `_args` document when mentioning an argument. This ensures a single source of truth per argument.
 
+## Top-Level Commands (Bootstrap Exception)
+
+The CLI carries a single deliberate exception to the noun-verb rule: the bootstrap entry-point lives at the top level, matching the muscle-memory established by `git init`, `npm init`, and `cargo init`. This is the only command in v1 that is a bare verb.
+
+| Entry | Description |
+|---|---|
+| [init](init/README.md) | Bootstrap a Synchestra-managed project — creates `synchestra.yaml` at the repo root and sets up state per the chosen mode (embedded by default). Top-level placement is intentional. |
+
 ## Command Groups
 
 For an overview of which commands run in which environments (host, agent container, CI), see [Command Environments](command-environments.md).
@@ -241,3 +249,6 @@ Commands for inspecting and controlling the runtime sessions created by `runner 
 ## Outstanding Questions
 
 - Should the CLI support `--dry-run` for mutation commands?
+
+---
+*This document follows the https://specscore.md/feature-specification*

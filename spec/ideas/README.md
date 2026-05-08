@@ -8,7 +8,7 @@ Pre-spec one-pagers for Synchestra. Each Idea is a lint-clean problem-direction-
 
 | Idea | Status | Date | Owner | Promotes To |
 |------|--------|------|-------|-------------|
-| [unified-project-definition](unified-project-definition.md) | Approved | 2026-05-08 | alexander.trakhimenok | — |
+| [unified-project-definition](unified-project-definition.md) | Implementing | 2026-05-08 | alexander.trakhimenok | repo-config, state-repo-config |
 
 ## Outstanding Questions
 
