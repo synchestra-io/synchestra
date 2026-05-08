@@ -15,6 +15,7 @@ import (
 	"github.com/synchestra-io/synchestra/pkg/cli/project"
 	"github.com/synchestra-io/synchestra/pkg/cli/spec"
 	statecmd "github.com/synchestra-io/synchestra/pkg/cli/state"
+	"github.com/synchestra-io/synchestra/pkg/cli/synchinit"
 	taskcmd "github.com/synchestra-io/synchestra/pkg/cli/task"
 	testcmd "github.com/synchestra-io/synchestra/pkg/cli/test"
 )
@@ -55,6 +56,7 @@ func Run(
 		commands.Watch(),
 		commands.Find(),
 		commands.Migrate(),
+		synchinit.Command(),
 		project.Command(),
 		testcmd.Command(),
 		feature.Command(),
