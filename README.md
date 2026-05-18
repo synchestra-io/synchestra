@@ -402,13 +402,27 @@ See [feature specifications](spec/features/README.md) for detailed specs and dep
 
 ## Installation
 
-Install the latest CLI binary:
+### macOS / Linux — curl
 
 ```bash
-curl -fsSL https://synchestra.io/get-cli | sh
+curl -fsSL https://synchestra.io/install/get-cli | sh
 ```
 
-Or download directly from [synchestra-releases](https://github.com/synchestra-io/synchestra-releases/releases).
+(Legacy `https://synchestra.io/get-cli` 301-redirects to the canonical path.)
+
+Environment overrides: `SYNCHESTRA_VERSION` (default: latest `cli-v*` tag), `SYNCHESTRA_INSTALL_DIR` (default: `/usr/local/bin` or `~/.local/bin`).
+
+### Windows — PowerShell
+
+```powershell
+powershell -c "irm https://synchestra.io/install/get-cli.ps1 | iex"
+```
+
+Environment overrides: `SYNCHESTRA_VERSION`, `SYNCHESTRA_INSTALL_DIR` (default: `%LOCALAPPDATA%\Programs\synchestra\bin`).
+
+### Direct download
+
+Binaries are published to [`synchestra-releases`](https://github.com/synchestra-io/synchestra-releases/releases) under `cli-v*` tags. Pick the archive for your platform from the latest `cli-*` release.
 
 ## Getting Started
 
