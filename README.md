@@ -18,6 +18,19 @@ Specs first. Then agents.
 Open this
 in [Synchestra Hub](https://hub.synchestra.io/add-project#state-repo=github.com/synchestra-io/synchestra-state)
 
+<!-- dev-approach:v1 -->
+## Our approach to development
+
+We build with our own tooling:
+
+- **[SpecScore](https://specscore.md)** — specify requirements as `SpecScore.md` artifacts
+- **[SpecStudio](https://specscore.studio)** — author & manage specs across their lifecycle
+- **[inGitDB](https://ingitdb.com)** — store structured data in Git where applicable
+- **[DALgo](https://dalgo.io)** — data access layer for Go
+- **[cover100.dev](https://cover100.dev)** — drive toward 100% test coverage
+- **[DataTug](https://datatug.io)** — query & explore data
+<!-- /dev-approach -->
+
 ## Built on SpecScore
 
 Synchestra is built on **[SpecScore](https://github.com/synchestra-io/specscore)** — an open-source specification framework that defines how to structure, write, and validate specifications for AI-driven development.
