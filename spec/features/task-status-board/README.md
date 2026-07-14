@@ -60,7 +60,7 @@ planning → queued → in_progress → complete
 
 Note: `queued` tasks with unfulfilled `depends_on` cannot be claimed — they are implicitly waiting, but their status remains `queued` (not `blocked`). `blocked` is reserved for tasks that were in progress and got stuck for reasons beyond task dependencies.
 
-The task methodology — statuses, lifecycle, dependency references, and board format — is defined in the [SpecScore task feature](https://github.com/synchestra-io/specscore/blob/main/spec/features/task/README.md). Synchestra implements and extends that methodology with operational tooling: claiming, optimistic locking, CLI commands, and board rendering.
+The task methodology — statuses, lifecycle, dependency references, and board format — is defined in the [SpecScore task feature](https://github.com/specscore/specscore/blob/main/spec/features/task/README.md). Synchestra implements and extends that methodology with operational tooling: claiming, optimistic locking, CLI commands, and board rendering.
 
 ## Example
 
@@ -123,21 +123,21 @@ The [`synchestra task` commands](../cli/task/README.md) handle board updates ato
 
 | Board transition | CLI command | Skill |
 |---|---|---|
-| → `planning` | [`task new`](../cli/task/new/README.md) | [synchestra-task-new](../../../skills/synchestra-task-new/README.md) |
-| `planning` → `queued` | [`task enqueue`](../cli/task/enqueue/README.md) (or `task new --enqueue`) | [synchestra-task-enqueue](../../../skills/synchestra-task-enqueue/README.md) |
-| `queued` → `in_progress` | [`task claim`](../cli/task/claim/README.md) + [`task start`](../cli/task/start/README.md) | [synchestra-claim-task](../../../skills/synchestra-claim-task/README.md), [synchestra-task-start](../../../skills/synchestra-task-start/README.md) |
-| `in_progress` → `complete` | [`task complete`](../cli/task/complete/README.md) | [synchestra-task-complete](../../../skills/synchestra-task-complete/README.md) |
-| `in_progress` → `failed` | [`task fail`](../cli/task/fail/README.md) | [synchestra-task-fail](../../../skills/synchestra-task-fail/README.md) |
-| `in_progress` → `blocked` | [`task block`](../cli/task/block/README.md) | [synchestra-task-block](../../../skills/synchestra-task-block/README.md) |
-| `blocked` → `in_progress` | [`task unblock`](../cli/task/unblock/README.md) | [synchestra-task-unblock](../../../skills/synchestra-task-unblock/README.md) |
-| → `aborted` | [`task aborted`](../cli/task/aborted/README.md) | [synchestra-task-aborted](../../../skills/synchestra-task-aborted/README.md) |
-| (query) | [`task status`](../cli/task/status/README.md), [`task list`](../cli/task/list/README.md) | [synchestra-task-status](../../../skills/synchestra-task-status/README.md), [synchestra-task-list](../../../skills/synchestra-task-list/README.md) |
+| → `planning` | [`task new`](../cli/task/new/README.md) | [task: new](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/new.md) |
+| `planning` → `queued` | [`task enqueue`](../cli/task/enqueue/README.md) (or `task new --enqueue`) | [task: enqueue](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/enqueue.md) |
+| `queued` → `in_progress` | [`task claim`](../cli/task/claim/README.md) + [`task start`](../cli/task/start/README.md) | [task: claim](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/claim.md), [task: start](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/start.md) |
+| `in_progress` → `complete` | [`task complete`](../cli/task/complete/README.md) | [task: complete](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/complete.md) |
+| `in_progress` → `failed` | [`task fail`](../cli/task/fail/README.md) | [task: fail](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/fail.md) |
+| `in_progress` → `blocked` | [`task block`](../cli/task/block/README.md) | [task: block](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/block.md) |
+| `blocked` → `in_progress` | [`task unblock`](../cli/task/unblock/README.md) | [task: unblock](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/unblock.md) |
+| → `aborted` | [`task aborted`](../cli/task/aborted/README.md) | [task: aborted](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/aborted.md) |
+| (query) | [`task status`](../cli/task/status/README.md), [`task list`](../cli/task/list/README.md) | [task: status](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/status.md), [task: list](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/list.md) |
 
 The board in the parent README is the **source of truth**. A task may duplicate its own status in its own README for convenience, but on conflict the parent board wins.
 
 ## Claiming a Task (Optimistic Locking)
 
-The board doubles as the claim mechanism — no separate lock protocol needed. Agents use the [`synchestra-claim-task`](../../../skills/synchestra-claim-task/README.md) skill (which wraps [`task claim`](../cli/task/claim/README.md)) to handle this flow automatically. The underlying protocol:
+The board doubles as the claim mechanism — no separate lock protocol needed. Agents use the [`task` skill's claim reference](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/claim.md) (which wraps [`task claim`](../cli/task/claim/README.md)) to handle this flow automatically. The underlying protocol:
 
 1. Agent pulls latest main, scans the board for `queued` tasks with fulfilled `depends_on`.
 2. Agent creates a new branch.
@@ -211,7 +211,7 @@ If both are set, `limit` takes precedence. When a task exceeds the retention win
 
 See [Spec-to-Execution Pipeline](../../architecture/spec-to-execution.md) for the full architectural view of how features, plans, and tasks connect across repository boundaries.
 
-Tasks generated from a [plan](https://github.com/synchestra-io/specscore/blob/main/spec/features/plan/README.md) appear on the board like any other task. Each task's README carries a back-reference to its plan and plan task, but the board itself is unaware of plans — it tracks task status regardless of how tasks were created.
+Tasks generated from a [plan](https://github.com/specscore/specscore/blob/main/spec/features/plan/README.md) appear on the board like any other task. Each task's README carries a back-reference to its plan and plan task, but the board itself is unaware of plans — it tracks task status regardless of how tasks were created.
 
 The plan feature provides a derived status view (`synchestra plan status`) that reads plan task references from tasks and aggregates board status into a plan-oriented progress report.
 

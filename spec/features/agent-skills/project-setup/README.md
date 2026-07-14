@@ -101,9 +101,9 @@ The skill activates when:
 ## Dependencies
 
 - [embedded-state](../../embedded-state/README.md) — config-less mode and `project init` behavior
-- [cli/project/init](../../cli/project/init/README.md) — the `project init` command spec
+- [cli/init](../../cli/init/README.md) — the `init` command spec
 - [cli/project/new](../../cli/project/new/README.md) — the `project new` command spec
-- [project-definition](https://github.com/synchestra-io/specscore/blob/main/spec/features/project-definition/README.md) — repository types and layout conventions
+- [repo-config](https://github.com/specscore/specscore/blob/main/spec/features/repo-config/README.md) — repository identity, linked repositories, and layout conventions
 - [agent-skills](../README.md) — skill format and distribution
 
 ## Outstanding Questions

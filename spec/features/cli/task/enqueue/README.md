@@ -2,7 +2,7 @@
 
 **Parent:** [task](../README.md)
 
-**Skill:** [synchestra-task-enqueue](../../../../../skills/synchestra-task-enqueue/README.md)
+**Skill:** [task: enqueue](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/enqueue.md)
 
 ## Synopsis
 

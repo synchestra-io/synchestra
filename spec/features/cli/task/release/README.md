@@ -1,7 +1,7 @@
 # Command: `synchestra task release`
 
 **Parent:** [task](../README.md)
-**Skill:** [synchestra-task-release](../../../../../skills/synchestra-task-release/README.md)
+**Skill:** [task: release](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/release.md)
 
 ## Synopsis
 

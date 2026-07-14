@@ -1,7 +1,7 @@
 # Command: `synchestra task info`
 
 **Parent:** [task](../README.md)
-**Skill:** [synchestra-task-info](../../../../../skills/synchestra-task-info/README.md)
+**Skill:** [task: info](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/info.md)
 
 ## Synopsis
 

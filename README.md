@@ -33,11 +33,11 @@ We build with our own tooling:
 
 ## Built on SpecScore
 
-Synchestra is built on **[SpecScore](https://github.com/synchestra-io/specscore)** — an open-source specification framework that defines how to structure, write, and validate specifications for AI-driven development.
+Synchestra is built on **[SpecScore](https://github.com/specscore/specscore)** — an open-source specification framework that defines how to structure, write, and validate specifications for AI-driven development.
 
 SpecScore defines the **spec format** (features, plans, architecture). Synchestra adds **orchestration** (tasks, agents, coordination, platform). You can use SpecScore specs standalone with any tool — Synchestra is optimized for them but never required.
 
-Learn more: [specscore.org](https://specscore.org) | [SpecScore on GitHub](https://github.com/synchestra-io/specscore)
+Learn more: [specscore.md](https://specscore.md) | [SpecScore on GitHub](https://github.com/specscore/specscore)
 
 ## Why Synchestra Exists
 
@@ -64,7 +64,7 @@ Synchestra is that coordination layer.
 ## What Synchestra Is
 
 Synchestra is a **set of tools and a platform** that turns a git repository into a coordination
-protocol for AI agents. The mental framework and spec format are defined by [SpecScore](https://github.com/synchestra-io/specscore) — Synchestra provides the tooling and platform layer on top.
+protocol for AI agents. The mental framework and spec format are defined by [SpecScore](https://github.com/specscore/specscore) — Synchestra provides the tooling and platform layer on top.
 
 At its core, Synchestra is a chain of small, automatable steps and background checks that anyone *could* do manually —
 but nobody has time to do consistently. Think of it as a disciplined workflow engine tuned to one mission: envisioning,
@@ -127,7 +127,7 @@ high-frequency machine commits (task claims, status updates) would pollute the p
 
 ### Spec repository structure
 
-The `spec/` directory follows [SpecScore](https://github.com/synchestra-io/specscore) conventions. See SpecScore for the specification format.
+The `spec/` directory follows [SpecScore](https://github.com/specscore/specscore) conventions. See SpecScore for the specification format.
 
 A spec repository (or combined spec+code repo) follows this structure:
 
@@ -153,7 +153,7 @@ repo/
 ```
 
 `spec/` and `docs/` live at the repository root — they are the product's specification and documentation. The locations
-of `spec/` and `docs/` are configurable per project via `synchestra-spec-repo.yaml` (see [SpecScore project definition](https://github.com/synchestra-io/specscore)).
+of `spec/` and `docs/` are configurable per project via `synchestra-spec-repo.yaml` (see [SpecScore](https://github.com/specscore/specscore)).
 
 ### State repository structure
 
@@ -238,7 +238,7 @@ Synchestra's philosophy is **commit often**. When an agent starts work, it must:
 
 If the push fails due to a merge conflict, another agent already claimed the task. The agent moves on to the next
 available task or exits. This is standard distributed locking — implemented through git, requiring zero additional
-infrastructure. The [synchestra-claim-task](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-claim-task/README.md) skill handles this entire
+infrastructure. The [`task` skill's claim reference](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/claim.md) handles this entire
 flow for agents automatically.
 See [Task Status Board: Claiming a Task](spec/features/task-status-board/README.md#claiming-a-task-optimistic-locking)
 for the full protocol.
@@ -275,34 +275,34 @@ gains structured task management and spec navigation, even if the rest of your w
 
 ### Available skills
 
-**Task Management (14 skills):**
+**Task Management (one resource skill with 14 action references):**
 
 | Skill                                                                           | What it does                             |
 |---------------------------------------------------------------------------------|------------------------------------------|
-| [synchestra-task-new](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-task-new/README.md)           | Create a new task                        |
-| [synchestra-task-enqueue](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-task-enqueue/README.md)   | Move a task from planning to queued      |
-| [synchestra-claim-task](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-claim-task/README.md)       | Claim a task before starting work        |
-| [synchestra-task-start](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-task-start/README.md)       | Begin work on a claimed task             |
-| [synchestra-task-status](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-task-status/README.md)     | Query or update task status              |
-| [synchestra-task-complete](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-task-complete/README.md) | Mark a task as completed                 |
-| [synchestra-task-fail](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-task-fail/README.md)         | Mark a task as failed                    |
-| [synchestra-task-block](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-task-block/README.md)       | Mark a task as blocked                   |
-| [synchestra-task-unblock](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-task-unblock/README.md)   | Resume a blocked task                    |
-| [synchestra-task-release](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-task-release/README.md)   | Release a claimed task back to the queue |
-| [synchestra-task-abort](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-task-abort/README.md)       | Request abortion of a task               |
-| [synchestra-task-aborted](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-task-aborted/README.md)   | Report a task has been aborted           |
-| [synchestra-task-list](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-task-list/README.md)         | List tasks with filtering                |
-| [synchestra-task-info](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-task-info/README.md)         | Show full task details and context       |
+| [task: new](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/new.md)           | Create a new task                        |
+| [task: enqueue](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/enqueue.md)   | Move a task from planning to queued      |
+| [task: claim](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/claim.md)       | Claim a task before starting work        |
+| [task: start](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/start.md)       | Begin work on a claimed task             |
+| [task: status](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/status.md)     | Query or update task status              |
+| [task: complete](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/complete.md) | Mark a task as completed                 |
+| [task: fail](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/fail.md)         | Mark a task as failed                    |
+| [task: block](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/block.md)       | Mark a task as blocked                   |
+| [task: unblock](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/unblock.md)   | Resume a blocked task                    |
+| [task: release](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/release.md)   | Release a claimed task back to the queue |
+| [task: abort](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/abort.md)       | Request abortion of a task               |
+| [task: aborted](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/aborted.md)   | Report a task has been aborted           |
+| [task: list](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/list.md)         | List tasks with filtering                |
+| [task: info](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/info.md)         | Show full task details and context       |
 
-**Feature Navigation (5 skills):**
+**Feature Navigation (one resource skill with 5 action references):**
 
 | Skill                                                                         | What it does                                                  |
 |-------------------------------------------------------------------------------|---------------------------------------------------------------|
-| [synchestra-feature-info](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-feature-info/README.md) | Show feature metadata, section TOC, and children              |
-| [synchestra-feature-list](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-feature-list/README.md) | List all features with optional metadata fields               |
-| [synchestra-feature-tree](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-feature-tree/README.md) | Display feature hierarchy with focus/direction support        |
-| [synchestra-feature-deps](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-feature-deps/README.md) | Show dependencies with optional transitive resolution         |
-| [synchestra-feature-refs](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-feature-refs/README.md) | Show reverse dependencies with optional transitive resolution |
+| [feature: info](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/feature/references/info.md) | Show feature metadata, section TOC, and children              |
+| [feature: list](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/feature/references/list.md) | List all features with optional metadata fields               |
+| [feature: tree](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/feature/references/tree.md) | Display feature hierarchy with focus/direction support        |
+| [feature: deps](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/feature/references/deps.md) | Show dependencies with optional transitive resolution         |
+| [feature: refs](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/feature/references/refs.md) | Show reverse dependencies with optional transitive resolution |
 
 See the [agent-skills feature spec](spec/features/agent-skills/README.md) for design principles and
 the [agent skills roadmap](spec/plans/agent-skills-roadmap/README.md) for what's coming next.
@@ -409,7 +409,7 @@ Core features driving Synchestra's development:
 | [Agent skills](spec/features/agent-skills/README.md)                   | In Progress | Focused skills that teach AI agents to use Synchestra                                            |
 | [CLI](spec/features/cli/README.md)                                     | In Progress | The `synchestra` command-line interface                                                          |
 
-Specification format features (feature structure, plans, acceptance criteria, source references, project definition) are defined by [SpecScore](https://github.com/synchestra-io/specscore).
+Specification format features (feature structure, plans, acceptance criteria, source references, project definition) are defined by [SpecScore](https://github.com/specscore/specscore).
 
 See [feature specifications](spec/features/README.md) for detailed specs and dependency graph.
 
@@ -525,9 +525,9 @@ Active [plans](spec/plans/README.md) and their current state:
 | [e2e-testing-framework](spec/plans/e2e-testing-framework/) | draft | testing-framework | — | — |
 | [agent-skills-roadmap](spec/plans/agent-skills-roadmap/) | draft | agent-skills, cli/feature | — | — |
 | [hero-scene](spec/plans/hero-scene/) | draft | landing | — | — |
-| [superpowers-integration](spec/plans/superpowers-integration/) | draft | embedded-state, cli/project/init | — | — |
+| [superpowers-integration](spec/plans/superpowers-integration/) | draft | embedded-state, cli/init | — | — |
 
-Plans nest recursively — a plan is a composite task whose children may themselves be plans. Optional ROI metadata enables prioritization. A generated What's Next report can be enabled to surface recommended next targets after plan or task completion. See [SpecScore plan specification](https://github.com/synchestra-io/specscore/blob/main/spec/features/plan/README.md) for the plan format.
+Plans nest recursively — a plan is a composite task whose children may themselves be plans. Optional ROI metadata enables prioritization. A generated What's Next report can be enabled to surface recommended next targets after plan or task completion. See [SpecScore plan specification](https://github.com/specscore/specscore/blob/main/spec/features/plan/README.md) for the plan format.
 
 ## Outstanding Questions
 
@@ -560,8 +560,8 @@ Apache License 2.0. See [LICENSE](LICENSE) for details.
 - [Vision](docs/vision.md)
 - [Roadmap](docs/roadmap.md)
 - [Features](spec/features/README.md)
-- [Skills](skills/README.md)
+- [Skills](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/README.md)
 - [CLI Spec](spec/features/cli/README.md)
 - [Self-Hosting](docs/self-hosting.md)
-- [SpecScore](https://github.com/synchestra-io/specscore)
+- [SpecScore](https://github.com/specscore/specscore)
 - [inGitDB](https://ingitdb.com)

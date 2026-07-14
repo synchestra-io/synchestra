@@ -3,7 +3,7 @@
 **Status:** draft
 **Features:**
   - [embedded-state](../../features/embedded-state/README.md)
-  - [cli/project/init](../../features/cli/project/init/README.md)
+  - [cli/init](../../features/cli/init/README.md)
   - [agent-skills](../../features/agent-skills/README.md)
 **Source type:** strategy
 **Source:** [Superpowers repo](https://github.com/obra/superpowers), [synchestra-superpowers fork](https://github.com/synchestra-io/synchestra-superpowers)

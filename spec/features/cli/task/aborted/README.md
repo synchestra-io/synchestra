@@ -1,7 +1,7 @@
 # Command: `synchestra task aborted`
 
 **Parent:** [task](../README.md)
-**Skill:** [synchestra-task-aborted](../../../../../skills/synchestra-task-aborted/README.md)
+**Skill:** [task: aborted](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/aborted.md)
 
 ## Synopsis
 

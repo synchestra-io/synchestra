@@ -92,7 +92,7 @@ Exit codes `80`–`89` are reserved for the CLI Runner feature; `101`–`109` fo
 - [cli/session](../../session/README.md) — every successful dispatch produces a session observable via this feature
 - [cli/auth](../../auth/README.md) — unauthenticated dispatch fails with `101`
 - [runner](../../../runner/README.md) — product-level runner lifecycle and registration
-- [plan](https://github.com/synchestra-io/specscore/blob/main/spec/features/plan/README.md) — SpecScore plan format; plans are one valid target
+- [plan](https://github.com/specscore/specscore/blob/main/spec/features/plan/README.md) — SpecScore plan format; plans are one valid target
 - [task](../../task/README.md) — tasks are the other valid target; dispatching a task triggers a claim
 
 ## Acceptance Criteria

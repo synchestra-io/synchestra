@@ -1,7 +1,7 @@
 # Command: `synchestra task claim`
 
 **Parent:** [task](../README.md)
-**Skill:** [synchestra-claim-task](../../../../../skills/synchestra-claim-task/README.md)
+**Skill:** [task: claim](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/claim.md)
 
 ## Synopsis
 

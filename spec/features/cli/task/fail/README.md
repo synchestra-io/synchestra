@@ -1,7 +1,7 @@
 # Command: `synchestra task fail`
 
 **Parent:** [task](../README.md)
-**Skill:** [synchestra-task-fail](../../../../../skills/synchestra-task-fail/README.md)
+**Skill:** [task: fail](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/fail.md)
 
 ## Synopsis
 

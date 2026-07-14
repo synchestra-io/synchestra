@@ -1,7 +1,7 @@
 # Command: `synchestra feature deps`
 
 **Parent:** [feature](../README.md)
-**Skill:** [synchestra-feature-deps](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-feature-deps/README.md)
+**Skill:** [feature: deps](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/feature/references/deps.md)
 
 ## Synopsis
 
@@ -13,7 +13,7 @@ synchestra feature deps <feature_id> [--project <project_id>] [--fields <fields>
 
 Shows the features that a given feature depends on. Dependencies are read from the `## Dependencies` section in the feature's `README.md`. Each dependency is output as a feature ID, one per line.
 
-This is the spec → spec counterpart to [`synchestra code deps`](../../code/deps/README.md), which shows code → spec dependencies via [source references](https://github.com/synchestra-io/specscore/blob/main/spec/features/source-references/README.md).
+This is the spec → spec counterpart to [`synchestra code deps`](../../code/deps/README.md), which shows code → spec dependencies via [source references](https://github.com/specscore/specscore/blob/main/spec/features/source-references/README.md).
 
 This is a read-only command. It pulls the latest state from the spec repository but does not mutate anything.
 

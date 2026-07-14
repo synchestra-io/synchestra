@@ -38,11 +38,11 @@ The `deps` command reads this section from the target feature. The `refs` comman
 
 | Command | Description | Skill |
 |---|---|---|
-| [info](info/README.md) | Show feature metadata and section TOC with line ranges | [synchestra-feature-info](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-feature-info/README.md) |
-| [list](list/README.md) | Flat list of all feature IDs — grep/pipe-friendly, full paths | [synchestra-feature-list](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-feature-list/README.md) |
-| [tree](tree/README.md) | Indented hierarchy showing parent-child nesting; supports focus on a single feature with direction | [synchestra-feature-tree](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-feature-tree/README.md) |
-| [deps](deps/README.md) | Show features that a given feature depends on | [synchestra-feature-deps](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-feature-deps/README.md) |
-| [refs](refs/README.md) | Show features that reference a given feature | [synchestra-feature-refs](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-feature-refs/README.md) |
+| [info](info/README.md) | Show feature metadata and section TOC with line ranges | [feature: info](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/feature/references/info.md) |
+| [list](list/README.md) | Flat list of all feature IDs — grep/pipe-friendly, full paths | [feature: list](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/feature/references/list.md) |
+| [tree](tree/README.md) | Indented hierarchy showing parent-child nesting; supports focus on a single feature with direction | [feature: tree](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/feature/references/tree.md) |
+| [deps](deps/README.md) | Show features that a given feature depends on | [feature: deps](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/feature/references/deps.md) |
+| [refs](refs/README.md) | Show features that reference a given feature | [feature: refs](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/feature/references/refs.md) |
 
 ### Mutation
 

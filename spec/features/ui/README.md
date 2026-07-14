@@ -52,7 +52,7 @@ This is the MVP navigation surface. Additional entries (e.g., Settings, Agents, 
 
 ### Home screen
 
-Shows the list of [projects](https://github.com/synchestra-io/specscore/blob/main/spec/features/project-definition/README.md) the current user is working with. Each project entry is derived from a `synchestra-spec-repo.yaml` file the user has access to.
+Shows the list of [projects](https://github.com/specscore/specscore/blob/main/spec/features/repo-config/README.md) the current user is working with. Each project entry is derived from a `synchestra-spec-repo.yaml` file the user has access to.
 
 Selecting a project opens the project menu.
 
@@ -93,8 +93,8 @@ For MVP, the tasks screen supports:
 | Action | Underlying operation |
 |---|---|
 | View root tasks | Read the task board from `tasks/README.md` |
-| Create a task | [`synchestra task new`](../cli/task/new/README.md) / [synchestra-task-new skill](../../../skills/synchestra-task-new/README.md) |
-| Enqueue a task | [`synchestra task enqueue`](../cli/task/enqueue/README.md) / [synchestra-task-enqueue skill](../../../skills/synchestra-task-enqueue/README.md) |
+| Create a task | [`synchestra task new`](../cli/task/new/README.md) / [task: new](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/new.md) |
+| Enqueue a task | [`synchestra task enqueue`](../cli/task/enqueue/README.md) / [task: enqueue](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/enqueue.md) |
 
 The UI does not redefine task state or transitions. It must respect the existing [task lifecycle](../task-status-board/README.md#status-lifecycle) and mutation rules defined by the [CLI task commands](../cli/task/README.md).
 
@@ -123,7 +123,7 @@ The UI feature presents and triggers workflows defined elsewhere — it does not
 | [CLI](../cli/README.md) | TUI delivery surface; task mutation semantics; command contract |
 | [Task Status Board](../task-status-board/README.md) | Board format, status lifecycle, claiming protocol |
 | [Agent Skills](../agent-skills/README.md) | Skills that back the task actions (create, enqueue) |
-| [Project Definition](https://github.com/synchestra-io/specscore/blob/main/spec/features/project-definition/README.md) | `synchestra-spec-repo.yaml` — source of the project list |
+| [Repo Config](https://github.com/specscore/specscore/blob/main/spec/features/repo-config/README.md) | `synchestra-spec-repo.yaml` — source of the project list |
 | [HTTP API](../../../docs/api/README.md) | Backend for the Hub surface |
 
 ## Outstanding Questions

@@ -27,7 +27,7 @@ Skills and the Claude Code plugin that wraps the CLI live in a separate reposito
 Key specification files:
 
 - `README.md` explains Synchestra as a git-backed coordination layer for multi-platform AI agents. It also defines the key ideas: hierarchical task trees, naming conventions as API, git as the database, token-efficient context loading, and claim-and-push concurrency.
-- `spec/features/project-definition/README.md` defines the three repository types (state, spec, code), the two supported layouts for spec repositories (dedicated or multi-project), and the `synchestra-spec-repo.yaml` contract. The state repository (`{project}-synchestra`) is always separate and holds only tasks and coordination state.
+- `spec/features/repo-config/README.md` defines the `synchestra.yaml` orchestration config and its composition with SpecScore's `specscore.yaml`; `spec/features/state-repo-config/README.md` defines the `synchestra-state.yaml` identifier used by state locations.
 - `spec/features/cli/README.md` defines the canonical CLI contract. The `synchestra` CLI is the shared interface for both agents and humans, and mutation commands are expected to perform atomic commit-and-push operations.
 - `spec/features/agent-skills/README.md` defines how skills are structured and distributed. Skills do not replace the CLI; they standardize when to call it, which parameters to pass, and how to interpret exit codes.
 - `spec/features/task-status-board/README.md` defines the markdown table claiming mechanism for optimistic locking, including the conflict resolution protocol for concurrent claims.
@@ -87,20 +87,20 @@ When adding or updating diagrams in specs, convert ASCII art to mermaid or creat
 
 ## Plans location and format
 
-All plans must be created in `spec/plans/` and follow the structure defined in [Plan specification](https://github.com/synchestra-io/specscore/blob/main/spec/features/plan/README.md).
+All plans must be created in `spec/plans/` and follow the structure defined in [Plan specification](https://github.com/specscore/specscore/blob/main/spec/features/plan/README.md).
 
 - Plans start in `draft` status and follow the approval workflow: `draft` → `in_review` → `approved`
 - Plans are mutable; snapshots (git hash + action + comment) capture reference points for review and retrospective
 - Plans live nowhere else — not in `docs/superpowers/`, not in project directories, not in temporary locations
 - Use `synchestra plan create` to scaffold a new plan; use `synchestra plan submit` and `synchestra plan approve` for workflow progression
 
-See the [Plan specification](https://github.com/synchestra-io/specscore/blob/main/spec/features/plan/README.md#behavior) for complete structure, field requirements, and task generation rules.
+See the [Plan specification](https://github.com/specscore/specscore/blob/main/spec/features/plan/README.md#behavior) for complete structure, field requirements, and task generation rules.
 
 ## Key conventions
 
 When working in this repo, treat specs as normative and docs as explanatory. If a skill README and a feature spec disagree, reconcile the change against the CLI or feature spec instead of editing one file in isolation.
 
-Skill directories follow a fixed pattern: one skill per CLI action, stored at `skills/{skill-name}/README.md`. When editing or adding a skill, preserve the established structure: when to use it, command, parameters, exit codes, examples, and notes.
+Skills live in the separate [`ai-plugin-synchestra`](https://github.com/synchestra-io/ai-plugin-synchestra) repository. Each resource-level skill uses `skills/{resource}/SKILL.md`, with action-specific instructions in `skills/{resource}/references/{action}.md`.
 
 The CLI contract is consistent across commands. Exit codes have shared meanings (`0` success, `1` conflict, `2` invalid arguments, `3` not found, `4` invalid state transition, `10+` unexpected error), and mutation commands are described as atomic commit-and-push operations while read commands pull first for freshness.
 
