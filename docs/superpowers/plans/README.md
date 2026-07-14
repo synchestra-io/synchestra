@@ -2,7 +2,7 @@
 
 **Moved to `spec/plans/`**
 
-All implementation plans are now created as formal plans in the `spec/plans/` directory and follow the [Plan specification](https://github.com/synchestra-io/specscore/blob/main/spec/features/plan/README.md).
+All implementation plans are now created as formal plans in the `spec/plans/` directory and follow the [Plan specification](https://github.com/specscore/specscore/blob/main/spec/features/plan/README.md).
 
 Plans:
 - Start in `draft` status and progress through review to `approved`
@@ -11,7 +11,7 @@ Plans:
 - Generate executable tasks in the state store
 
 To create or manage plans, see:
-- [Plan specification](https://github.com/synchestra-io/specscore/blob/main/spec/features/plan/README.md#behavior) — structure and format
+- [Plan specification](https://github.com/specscore/specscore/blob/main/spec/features/plan/README.md#behavior) — structure and format
 - [CLI commands](../cli/plan.md) — `synchestra plan create`, `submit`, `approve`, etc.
 
 ## Outstanding Questions

@@ -10,7 +10,7 @@ Read-only and lifecycle-management commands for an existing Synchestra-managed p
 
 A Synchestra-managed project is defined by two files at the repository root:
 
-- [`specscore.yaml`](https://github.com/synchestra-io/specscore/blob/main/spec/features/repo-config/README.md) — project identity (`title`, `host`, `org`, `repo`, role-tagged `repositories`).
+- [`specscore.yaml`](https://github.com/specscore/specscore/blob/main/spec/features/repo-config/README.md) — project identity (`title`, `host`, `org`, `repo`, role-tagged `repositories`).
 - [`synchestra.yaml`](../../repo-config/README.md) — orchestration metadata (`state` block with mode + sync, optional `hub` registration).
 
 State locations carry a single self-identifier file ([`synchestra-state.yaml`](../../state-repo-config/README.md)) — embedded mode places it on the orphan branch worktree; separate-repo mode places it at the state repo root.
@@ -33,7 +33,7 @@ Updates project configuration — identity fields land in `specscore.yaml`, orch
 
 ### `code`
 
-Sub-group for managing code repositories — operates on `specscore.yaml#project.repositories` (role-tagged entries per the SpecScore [Repo Config](https://github.com/synchestra-io/specscore/blob/main/spec/features/repo-config/README.md) Feature). Contains `add` and `remove` subcommands. See [code/README.md](code/README.md).
+Sub-group for managing code repositories — operates on `specscore.yaml#project.repositories` (role-tagged entries per the SpecScore [Repo Config](https://github.com/specscore/specscore/blob/main/spec/features/repo-config/README.md) Feature). Contains `add` and `remove` subcommands. See [code/README.md](code/README.md).
 
 ## Outstanding Questions
 

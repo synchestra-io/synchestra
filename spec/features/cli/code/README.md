@@ -4,7 +4,7 @@
 
 Commands for querying source code relationships to Synchestra resources. Where `synchestra feature` operates on the specification graph (feature → feature dependencies), `synchestra code` operates on the code → specification graph (source files → features, plans, docs they reference).
 
-The primary data source is [source references](https://github.com/synchestra-io/specscore/blob/main/spec/features/source-references/README.md) — `synchestra:` annotations and their expanded `https://synchestra.io/` URLs embedded in source file comments. All `code` commands scan source files for these references using the [comment-prefix detection rule](https://github.com/synchestra-io/specscore/blob/main/spec/features/source-references/README.md#detection-strategy).
+The primary data source is [source references](https://github.com/specscore/specscore/blob/main/spec/features/source-references/README.md) — `synchestra:` annotations and their expanded `https://synchestra.io/` URLs embedded in source file comments. All `code` commands scan source files for these references using the [comment-prefix detection rule](https://github.com/specscore/specscore/blob/main/spec/features/source-references/README.md#detection-strategy).
 
 All `code` commands are **read-only** — they scan the working tree and optionally pull the spec repository for validation, but do not mutate anything.
 
@@ -26,7 +26,7 @@ The `code` and `feature` command groups are complementary views of the same depe
 
 | Command | Description | Skill |
 |---|---|---|
-| [deps](deps/README.md) | Show Synchestra resources that source files depend on | [synchestra-code-deps](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/synchestra-code-deps/README.md) |
+| [deps](deps/README.md) | Show Synchestra resources that source files depend on | [code: deps](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/code/references/deps.md) |
 
 ## Outstanding Questions
 

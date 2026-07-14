@@ -120,8 +120,8 @@ steps:
 | [Chat](../../README.md) | This workflow runs on the chat layer. Each "Create a Proposal" action starts a new chat. |
 | [Workflow](../README.md) | This is one of the built-in workflows. Its structure and steps follow the workflow schema. |
 | [Proposals](../../../proposals/README.md) | The primary artifact produced is a proposal document, committed to the feature's `proposals/` directory. |
-| [Plan](https://github.com/synchestra-io/specscore/blob/main/spec/features/plan/README.md) | Fast-path produces a plan-as-report. Standard-path proposals later trigger plan creation through the normal pipeline. |
-| [Feature](https://github.com/synchestra-io/specscore/blob/main/spec/features/feature/README.md) | The workflow anchors to features and produces proposals that attach to them. |
+| [Plan](https://github.com/specscore/specscore/blob/main/spec/features/plan/README.md) | Fast-path produces a plan-as-report. Standard-path proposals later trigger plan creation through the normal pipeline. |
+| [Feature](https://github.com/specscore/specscore/blob/main/spec/features/feature/README.md) | The workflow anchors to features and produces proposals that attach to them. |
 
 ## Outstanding Questions
 

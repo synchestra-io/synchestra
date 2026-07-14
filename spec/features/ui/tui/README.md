@@ -48,8 +48,8 @@ commands:
 
 | Action          | CLI command                                                                   | Skill                                                                           |
 |-----------------|-------------------------------------------------------------------------------|---------------------------------------------------------------------------------|
-| Create task     | [`synchestra task new`](../../cli/task/new/README.md)                         | [synchestra-task-new](../../../../skills/synchestra-task-new/README.md)         |
-| Enqueue task    | [`synchestra task enqueue`](../../cli/task/enqueue/README.md)                 | [synchestra-task-enqueue](../../../../skills/synchestra-task-enqueue/README.md) |
+| Create task     | [`synchestra task new`](../../cli/task/new/README.md)                         | [task: new](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/new.md)         |
+| Enqueue task    | [`synchestra task enqueue`](../../cli/task/enqueue/README.md)                 | [task: enqueue](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/enqueue.md) |
 | Create proposal | Via [Proposals UI behavior](../../proposals/README.md#synchestra-ui-behavior) | —                                                                               |
 
 This ensures all mutations go through the same atomic commit-and-push flow defined in the CLI spec, preserving the

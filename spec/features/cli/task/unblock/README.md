@@ -1,7 +1,7 @@
 # Command: `synchestra task unblock`
 
 **Parent:** [task](../README.md)
-**Skill:** [synchestra-task-unblock](../../../../../skills/synchestra-task-unblock/README.md)
+**Skill:** [task: unblock](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/unblock.md)
 
 ## Synopsis
 

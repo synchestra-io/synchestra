@@ -1,7 +1,7 @@
 # Command: `synchestra task start`
 
 **Parent:** [task](../README.md)
-**Skill:** [synchestra-task-start](../../../../../skills/synchestra-task-start/README.md)
+**Skill:** [task: start](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/start.md)
 
 ## Synopsis
 

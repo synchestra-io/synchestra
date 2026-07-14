@@ -1,7 +1,7 @@
 # Command: `synchestra task complete`
 
 **Parent:** [task](../README.md)
-**Skill:** [synchestra-task-complete](../../../../../skills/synchestra-task-complete/README.md)
+**Skill:** [task: complete](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/complete.md)
 
 ## Synopsis
 

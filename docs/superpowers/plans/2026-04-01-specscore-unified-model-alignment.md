@@ -4,7 +4,7 @@
 
 **Goal:** Align Synchestra's specs, architecture docs, AGENTS.md, and skills with the SpecScore unified plan/task model — rename "development plan" to "plan," update URLs from `development-plan/` to `plan/`, remove references to immutability/superseded, add references to SpecScore's new `task` feature, and update the spec-to-execution architecture doc to reflect the new model.
 
-**Spec:** [SpecScore Unified Plan/Task Model Design](https://github.com/synchestra-io/specscore/blob/main/docs/superpowers/specs/2026-04-01-unified-plan-task-model-design.md)
+**Spec:** [SpecScore Unified Plan/Task Model Design](https://github.com/specscore/specscore/blob/main/docs/superpowers/specs/2026-04-01-unified-plan-task-model-design.md)
 
 **Scope:** Synchestra repository only. SpecScore changes are already merged.
 
@@ -67,12 +67,12 @@ This is the central file that lists SpecScore features and their dependency grap
 
   In the "Specification Format" section, change:
   ```markdown
-  - [Development Plan](https://github.com/synchestra-io/specscore/blob/main/spec/features/development-plan/README.md) — Planning document format
+  - [Development Plan](https://github.com/specscore/specscore/blob/3b98ac680153c1d768afcd6a7573a0098a4cb937/spec/features/development-plan/README.md) — Planning document format
   ```
   To:
   ```markdown
-  - [Plan](https://github.com/synchestra-io/specscore/blob/main/spec/features/plan/README.md) — Planning document format
-  - [Task](https://github.com/synchestra-io/specscore/blob/main/spec/features/task/README.md) — Discrete units of work within a plan
+  - [Plan](https://github.com/specscore/specscore/blob/main/spec/features/plan/README.md) — Planning document format
+  - [Task](https://github.com/specscore/specscore/blob/main/spec/features/task/README.md) — Discrete units of work within a plan
   ```
 
 - [ ] **Step 2: Update the dependency graph comment block**
@@ -87,11 +87,11 @@ This is the central file that lists SpecScore features and their dependency grap
 
   Change:
   ```markdown
-  [SpecScore `development-plan`](https://github.com/synchestra-io/specscore/blob/main/spec/features/development-plan/README.md) bridges the spec-to-execution gap — proposals and feature specs flow through it to become tasks.
+  [SpecScore `development-plan`](https://github.com/specscore/specscore/blob/3b98ac680153c1d768afcd6a7573a0098a4cb937/spec/features/development-plan/README.md) bridges the spec-to-execution gap — proposals and feature specs flow through it to become tasks.
   ```
   To:
   ```markdown
-  [SpecScore `plan`](https://github.com/synchestra-io/specscore/blob/main/spec/features/plan/README.md) bridges the spec-to-execution gap — proposals and feature specs flow through plans to become tasks. The [task](https://github.com/synchestra-io/specscore/blob/main/spec/features/task/README.md) feature defines the methodology-level task concept that Synchestra implements.
+  [SpecScore `plan`](https://github.com/specscore/specscore/blob/main/spec/features/plan/README.md) bridges the spec-to-execution gap — proposals and feature specs flow through plans to become tasks. The [task](https://github.com/specscore/specscore/blob/main/spec/features/task/README.md) feature defines the methodology-level task concept that Synchestra implements.
   ```
 
 - [ ] **Step 4: Commit**
@@ -121,7 +121,7 @@ These are the core task execution specs that reference SpecScore's development-p
 
   See [Spec-to-Execution Pipeline](../../architecture/spec-to-execution.md) for the full architectural view of how features, plans, and tasks connect across repository boundaries.
 
-  Tasks generated from a [plan](https://github.com/synchestra-io/specscore/blob/main/spec/features/plan/README.md) appear on the board like any other task. Each task's README carries a back-reference to its plan and plan task, but the board itself is unaware of plans — it tracks task status regardless of how tasks were created.
+  Tasks generated from a [plan](https://github.com/specscore/specscore/blob/main/spec/features/plan/README.md) appear on the board like any other task. Each task's README carries a back-reference to its plan and plan task, but the board itself is unaware of plans — it tracks task status regardless of how tasks were created.
 
   The plan feature provides a derived status view (`synchestra plan status`) that reads plan task references from tasks and aggregates board status into a plan-oriented progress report.
   ```
@@ -133,14 +133,14 @@ These are the core task execution specs that reference SpecScore's development-p
   In the task-status-board README, the statuses, lifecycle, dependency references, and board format now have a canonical definition in SpecScore's task feature. Add a note near the top of the Behavior section or after the status lifecycle:
 
   ```markdown
-  The task methodology — statuses, lifecycle, dependency references, and board format — is defined in the [SpecScore task feature](https://github.com/synchestra-io/specscore/blob/main/spec/features/task/README.md). Synchestra implements and extends that methodology with operational tooling: claiming, optimistic locking, CLI commands, and board rendering.
+  The task methodology — statuses, lifecycle, dependency references, and board format — is defined in the [SpecScore task feature](https://github.com/specscore/specscore/blob/main/spec/features/task/README.md). Synchestra implements and extends that methodology with operational tooling: claiming, optimistic locking, CLI commands, and board rendering.
   ```
 
 - [ ] **Step 3: Update state-store/task-store artifact reference**
 
   Change the artifact reference URL:
   ```markdown
-  See [Plan](https://github.com/synchestra-io/specscore/blob/main/spec/features/plan/README.md) for how artifacts are declared in plans and consumed by downstream tasks.
+  See [Plan](https://github.com/specscore/specscore/blob/main/spec/features/plan/README.md) for how artifacts are declared in plans and consumed by downstream tasks.
   ```
 
 - [ ] **Step 4: Commit**
@@ -166,7 +166,7 @@ All of these reference "development plan" in prose and URLs.
 - [ ] **Step 1: Update proposals/README.md**
 
   - Rename section `## Interaction with Development Plans` → `## Interaction with Plans`
-  - Change `[development plan](https://github.com/synchestra-io/specscore/blob/main/spec/features/development-plan/README.md)` → `[plan](https://github.com/synchestra-io/specscore/blob/main/spec/features/plan/README.md)`
+  - Change `[development plan](https://github.com/specscore/specscore/blob/3b98ac680153c1d768afcd6a7573a0098a4cb937/spec/features/development-plan/README.md)` → `[plan](https://github.com/specscore/specscore/blob/main/spec/features/plan/README.md)`
   - Change "development plan creation" → "plan creation"
 
 - [ ] **Step 2: Update chat/README.md**
@@ -361,14 +361,14 @@ The spec-to-execution document is the most impactful change — it describes pla
   ```markdown
   ## Plans location and format
 
-  All plans must be created in `spec/plans/` and follow the structure defined in [Plan specification](https://github.com/synchestra-io/specscore/blob/main/spec/features/plan/README.md).
+  All plans must be created in `spec/plans/` and follow the structure defined in [Plan specification](https://github.com/specscore/specscore/blob/main/spec/features/plan/README.md).
 
   - Plans start in `draft` status and follow the approval workflow: `draft` → `in_review` → `approved`
   - Plans are mutable; snapshots (git hash + action + comment) capture reference points for review and retrospective
   - Plans live nowhere else — not in `docs/superpowers/`, not in project directories, not in temporary locations
   - Use `synchestra plan create` to scaffold a new plan; use `synchestra plan submit` and `synchestra plan approve` for workflow progression
 
-  See the [Plan specification](https://github.com/synchestra-io/specscore/blob/main/spec/features/plan/README.md#behavior) for complete structure, field requirements, and task generation rules.
+  See the [Plan specification](https://github.com/specscore/specscore/blob/main/spec/features/plan/README.md#behavior) for complete structure, field requirements, and task generation rules.
   ```
 
 - [ ] **Step 2: Update README.md**
@@ -387,7 +387,7 @@ The spec-to-execution document is the most impactful change — it describes pla
 
   - Replace "development plans" with "plans"
   - Update link paths from `development-plan/` to `plan/`
-  - Note: The `docs/superpowers/plans/README.md` link to `../../features/development-plan/README.md` is a local path that no longer exists. Since the feature spec now lives in SpecScore, update to the GitHub URL: `https://github.com/synchestra-io/specscore/blob/main/spec/features/plan/README.md`
+  - Note: The `docs/superpowers/plans/README.md` link to `../../features/development-plan/README.md` is a local path that no longer exists. Since the feature spec now lives in SpecScore, update to the GitHub URL: `https://github.com/specscore/specscore/blob/main/spec/features/plan/README.md`
 
 - [ ] **Step 5: Update spec/plans/README.md**
 
@@ -401,7 +401,7 @@ The spec-to-execution document is the most impactful change — it describes pla
   ```
   To:
   ```markdown
-  **CLI reference:** [plan feature spec](https://github.com/synchestra-io/specscore/blob/main/spec/features/plan/README.md)
+  **CLI reference:** [plan feature spec](https://github.com/specscore/specscore/blob/main/spec/features/plan/README.md)
   ```
 
 - [ ] **Step 7: Commit**

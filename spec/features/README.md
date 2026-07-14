@@ -4,14 +4,14 @@ Feature specifications for the Synchestra project, managed by Synchestra.
 
 ## Specification Format
 
-Synchestra is built on **[SpecScore](https://github.com/synchestra-io/specscore)** — an open-source specification framework. The following specification-format features are defined in SpecScore:
+Synchestra is built on **[SpecScore](https://github.com/specscore/specscore)** — an open-source specification framework. The following specification-format features are defined in SpecScore:
 
-- [Feature](https://github.com/synchestra-io/specscore/blob/main/spec/features/feature/README.md) — Feature structure, metadata, lifecycle, conventions
-- [Acceptance Criteria](https://github.com/synchestra-io/specscore/blob/main/spec/features/acceptance-criteria/README.md) — AC format and conventions
-- [Source References](https://github.com/synchestra-io/specscore/blob/main/spec/features/source-references/README.md) — Code-to-spec traceability
-- [Plan](https://github.com/synchestra-io/specscore/blob/main/spec/features/plan/README.md) — Planning document format
-- [Task](https://github.com/synchestra-io/specscore/blob/main/spec/features/task/README.md) — Discrete units of work within a plan
-- [Project Definition](https://github.com/synchestra-io/specscore/blob/main/spec/features/project-definition/README.md) — Project configuration
+- [Feature](https://github.com/specscore/specscore/blob/main/spec/features/feature/README.md) — Feature structure, metadata, lifecycle, conventions
+- [Acceptance Criteria](https://github.com/specscore/specscore/blob/main/spec/features/acceptance-criteria/README.md) — AC format and conventions
+- [Source References](https://github.com/specscore/specscore/blob/main/spec/features/source-references/README.md) — Code-to-spec traceability
+- [Plan](https://github.com/specscore/specscore/blob/main/spec/features/plan/README.md) — Planning document format
+- [Task](https://github.com/specscore/specscore/blob/main/spec/features/task/README.md) — Discrete units of work within a plan
+- [Repo Config](https://github.com/specscore/specscore/blob/main/spec/features/repo-config/README.md) — Project configuration
 
 The features below are Synchestra-specific — they define orchestration, coordination, and platform capabilities built on top of SpecScore.
 
@@ -161,8 +161,8 @@ Cross-platform scheduled and triggered agent workflows. A routine binds four dec
 Plugin SPI for Synchestra and SpecScore — **intentionally deferred** for 2026. Until plugin authors are knocking, extensibility ships into GitHub Spec Kit's existing extension system (via three first-party extensions: `speckit-specscore`, `speckit-synchestra`, `speckit-rehearse`) rather than a parallel one. The intended shape when revisited is V7: plugins contribute namespaced commands; the project composes them into either workflow-event hooks (Spec Kit-style) or [micro-task](micro-tasks/README.md) chain steps (Synchestra-style). One plugin shape, two event surfaces. Trigger conditions and the full rationale live in [`synchestra-marketing/decisions/2026-05-01-plugin-system-strategy.md`](https://github.com/synchestra-io/synchestra-marketing/blob/main/decisions/2026-05-01-plugin-system-strategy.md).
 
 ```
-# SpecScore features (external): feature, acceptance-criteria, source-references, plan, task, project-definition
-# See https://github.com/synchestra-io/specscore
+# SpecScore features (external): feature, acceptance-criteria, source-references, plan, task, repo-config
+# See https://github.com/specscore/specscore
 
 task-status-board ← conflict-resolution
        ↑                ↑
@@ -178,7 +178,7 @@ ui → proposals, cli, task-status-board, agent-skills, [specscore:plan], chat
 api → cli (api mirrors cli contract)
 global-config ← cli (cli reads ~/.synchestra.yaml for repo resolution)
 github-app → api (callback endpoint)
-onboarding → github-app, [specscore:project-definition], ui, cli, api (orchestrates first-time setup)
+onboarding → github-app, [specscore:repo-config], ui, cli, api (orchestrates first-time setup)
 sandbox → cli, api (containers execute commands, host routes via API)
 bots → sandbox, chat, api, state-store (SynchestraBot relays prompts to containers, routes complex workflows through chat, uses API for operations)
 lsp → cli/feature, [specscore:feature] (LSP server reuses CLI feature packages for IDE integration)
@@ -186,7 +186,7 @@ state-store → task-status-board (board interface and claim atomicity), chat (c
 state-store ← cli, api, agent-skills (all consumers of state go through state store)
 [specscore:acceptance-criteria] → [specscore:feature] (mandatory AC section), [specscore:plan] (plan ACs can reference feature ACs)
 testing-framework → [specscore:acceptance-criteria] (composes ACs into test flows), cli (new test command group), [specscore:feature] (_tests/ directory)
-[specscore:source-references] → [specscore:feature], cli, [specscore:project-definition] (annotations link code to spec resources, validated by linter)
+[specscore:source-references] → [specscore:feature], cli, [specscore:repo-config] (annotations link code to spec resources, validated by linter)
 stakeholder → task-status-board (decisions are tasks), [specscore:plan] (gates trigger on plan transitions), [specscore:feature] (_config.yaml for role overrides), cli (decision/stakeholder commands), agent-skills (decision-request skill), state-store (DecisionStore)
 stakeholder ← chat (workflows create decisions), ui (renders decision options), bots (delivers notifications, accepts responses)
 host-auth → runner (prerequisite for runner registration), channels (authenticated host-hub messaging), api (token endpoints, public key endpoint)
@@ -194,13 +194,13 @@ channels → runner (host compute layer), sandbox (agent gRPC extensions, contai
 channels ← ui/hub (browser surface), bots (Telegram surface), chat (sessions may trigger workflows)
 ```
 
-[SpecScore `feature`](https://github.com/synchestra-io/specscore/blob/main/spec/features/feature/README.md) is the foundational spec-layer concept — proposals, plans, and outstanding questions all attach to features.
+[SpecScore `feature`](https://github.com/specscore/specscore/blob/main/spec/features/feature/README.md) is the foundational spec-layer concept — proposals, plans, and outstanding questions all attach to features.
 
 ## Diagram Conventions
 
 All diagrams in feature specifications should use **mermaid syntax** instead of ASCII art. Mermaid provides better clarity, GitHub rendering support, and maintainability.
 `task-status-board` is foundational for execution — it provides the claiming mechanism (optimistic locking) and status visibility.
-[SpecScore `plan`](https://github.com/synchestra-io/specscore/blob/main/spec/features/plan/README.md) bridges the spec-to-execution gap — proposals and feature specs flow through plans to become tasks. The [task](https://github.com/synchestra-io/specscore/blob/main/spec/features/task/README.md) feature defines the methodology-level task concept that Synchestra implements.
+[SpecScore `plan`](https://github.com/specscore/specscore/blob/main/spec/features/plan/README.md) bridges the spec-to-execution gap — proposals and feature specs flow through plans to become tasks. The [task](https://github.com/specscore/specscore/blob/main/spec/features/task/README.md) feature defines the methodology-level task concept that Synchestra implements.
 
 ## Outstanding Questions
 

@@ -1,7 +1,7 @@
 # Command: `synchestra task block`
 
 **Parent:** [task](../README.md)
-**Skill:** [synchestra-task-block](../../../../../skills/synchestra-task-block/README.md)
+**Skill:** [task: block](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/block.md)
 
 ## Synopsis
 
