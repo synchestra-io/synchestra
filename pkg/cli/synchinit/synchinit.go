@@ -121,7 +121,7 @@ func runInit(cmd *cobra.Command, _ []string) error {
 			)
 		}
 		// Same-mode rerun: report no-op, then idempotently ensure state setup.
-		fmt.Fprintf(cmd.OutOrStdout(), "Project already initialized at %s (state.mode=%s)\n", repoRoot, stateMode)
+		_, _ = fmt.Fprintf(cmd.OutOrStdout(), "Project already initialized at %s (state.mode=%s)\n", repoRoot, stateMode)
 		if stateMode == stateModeEmbedded {
 			if err := ensureEmbeddedStateOnRerun(repoRoot, branch, cmd.OutOrStdout(), cmd.ErrOrStderr()); err != nil {
 				return err
@@ -151,12 +151,12 @@ func runInit(cmd *cobra.Command, _ []string) error {
 
 	// 8. Success summary (per cli/init#req:success-output).
 	worktreePath := filepath.Join(repoRoot, worktreeDir)
-	fmt.Fprintf(cmd.OutOrStdout(), "Synchestra project initialized\n")
-	fmt.Fprintf(cmd.OutOrStdout(), "  Config:   %s (state.mode=%s)\n", configPath, stateMode)
+	_, _ = fmt.Fprintf(cmd.OutOrStdout(), "Synchestra project initialized\n")
+	_, _ = fmt.Fprintf(cmd.OutOrStdout(), "  Config:   %s (state.mode=%s)\n", configPath, stateMode)
 	if stateMode == stateModeEmbedded {
-		fmt.Fprintf(cmd.OutOrStdout(), "  Worktree: %s\n  Branch:   %s\n", worktreePath, branch)
+		_, _ = fmt.Fprintf(cmd.OutOrStdout(), "  Worktree: %s\n  Branch:   %s\n", worktreePath, branch)
 	}
-	fmt.Fprintf(cmd.OutOrStdout(), "Next: `synchestra task new` to create your first task.\n")
+	_, _ = fmt.Fprintf(cmd.OutOrStdout(), "Next: `synchestra task new` to create your first task.\n")
 	return nil
 }
 
@@ -283,7 +283,7 @@ func provisionEmbeddedState(repoRoot, branch string, noPush bool, stdout, stderr
 
 	// Branch already exists on remote? Fetch + worktree.
 	if gitops.RemoteBranchExists(repoRoot, "origin", branch) {
-		fmt.Fprintf(stderr, "Found existing state branch on remote, fetching...\n")
+		_, _ = fmt.Fprintf(stderr, "Found existing state branch on remote, fetching...\n")
 		if err := gitops.FetchBranch(repoRoot, "origin", branch); err != nil {
 			return exitcode.UnexpectedErrorf("fetching remote branch: %v", err)
 		}
@@ -308,7 +308,7 @@ func provisionEmbeddedState(repoRoot, branch string, noPush bool, stdout, stderr
 
 	// Greenfield orphan-branch creation.
 	title := filepath.Base(repoRoot)
-	fmt.Fprintf(stderr, "Creating state branch %q...\n", branch)
+	_, _ = fmt.Fprintf(stderr, "Creating state branch %q...\n", branch)
 
 	if err := gitops.CreateOrphanBranch(repoRoot, branch); err != nil {
 		return exitcode.UnexpectedErrorf("creating orphan branch: %v", err)
@@ -362,8 +362,8 @@ func provisionEmbeddedState(repoRoot, branch string, noPush bool, stdout, stderr
 
 	if !noPush {
 		if err := gitops.PushNewBranch(repoRoot, "origin", branch); err != nil {
-			fmt.Fprintf(stderr, "Warning: could not push state branch to remote: %v\n", err)
-			fmt.Fprintf(stderr, "Run `git push -u origin %s` later to sync.\n", branch)
+			_, _ = fmt.Fprintf(stderr, "Warning: could not push state branch to remote: %v\n", err)
+			_, _ = fmt.Fprintf(stderr, "Run `git push -u origin %s` later to sync.\n", branch)
 		}
 	}
 	_ = stdout // success summary printed by the caller
@@ -380,13 +380,13 @@ func ensureEmbeddedStateOnRerun(repoRoot, branch string, stdout, stderr io.Write
 	}
 	_ = gitops.WorktreePrune(repoRoot)
 	if !gitops.BranchExists(repoRoot, branch) {
-		fmt.Fprintf(stderr, "Worktree missing AND state branch %q does not exist; run `synchestra init` from a clean state. (cli/init#req:idempotent-rerun)\n", branch)
+		_, _ = fmt.Fprintf(stderr, "Worktree missing AND state branch %q does not exist; run `synchestra init` from a clean state. (cli/init#req:idempotent-rerun)\n", branch)
 		return exitcode.UnexpectedErrorf("state branch %s missing on rerun", branch)
 	}
 	if err := gitops.WorktreeAdd(repoRoot, worktreePath, branch); err != nil {
 		return exitcode.UnexpectedErrorf("recreating worktree: %v", err)
 	}
-	fmt.Fprintf(stdout, "  Recreated missing worktree at %s\n", worktreePath)
+	_, _ = fmt.Fprintf(stdout, "  Recreated missing worktree at %s\n", worktreePath)
 	return nil
 }
 
