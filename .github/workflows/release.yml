@@ -1,41 +1,69 @@
 name: Release
 
+# Continuous delivery: every merge to `main` runs the shared strongo/cicd
+# release workflow, which bumps the version from conventional commits and
+# releases it in one run (GoReleaser against this repo's .goreleaser.yml).
+# Pushing an explicit `vX.Y.Z` tag also works and releases that exact version.
+# A docs/chore-only merge cuts no tag and publishes nothing.
+#
+# synchestra is pre-1.0: allow_major_version_bump stays false, so a stray
+# `feat!:` is capped to a minor bump instead of jumping to v1.0.0. Cut v1.0.0
+# deliberately by pushing that tag.
+#
+# .goreleaser.yml has `release.disable: true` (no GitHub release in THIS repo);
+# the CLI binaries are published to the shared synchestra-io/synchestra-releases
+# repo under a `cli-` tag prefix (its install scripts download from there,
+# alongside `servers-*` releases). GoReleaser cannot own that cross-repo,
+# prefixed release, so the `publish-releases` job below reproduces the dist
+# artifacts at the cut tag and uploads them there. It is gated on a tag actually
+# being cut, so a docs-only merge publishes nothing.
+
 on:
   push:
     branches:
       - main
     tags:
       - 'v*'
-    paths:
-      - '.github/workflows/release.yml'
-      - '**/*.go'
-      - 'go.mod'
-      - 'go.sum'
   workflow_dispatch:
-    inputs:
-      tag:
-        description: 'Tag to release (e.g. v0.9.0) — leave empty to build snapshot of current ref'
-        required: false
-        type: string
+
+# One release at a time; a second push queues instead of racing the first.
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 permissions:
   contents: write
 
-concurrency:
-  group: release-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
-  goreleaser:
-    name: ${{ (startsWith(github.ref, 'refs/tags/') || inputs.tag != '') && 'Publish release' || 'Validate snapshot build' }}
-    runs-on: ubuntu-latest
+  release:
+    uses: strongo/cicd/.github/workflows/release.yml@v1
+    permissions:
+      contents: write
+    with:
+      # Pre-1.0: cap an accidental major (feat!:) to a minor bump.
+      allow_major_version_bump: false
+    # No GORELEASER_GITHUB_TOKEN: .goreleaser.yml references no `{{ .Env.*_TOKEN }}`
+    # and does not publish a release itself (release.disable: true). The cross-repo
+    # publish is handled by the publish-releases job with RELEASES_REPO_TOKEN.
 
+  publish-releases:
+    name: Publish CLI binaries to synchestra-releases
+    needs: release
+    # Run only when a tag was actually cut: on a CD merge the shared workflow
+    # exposes the new tag as needs.release.outputs.tag; on an explicit tag push
+    # github.ref_type is 'tag'. A docs/chore-only merge cuts no tag -> skipped.
+    if: ${{ needs.release.outputs.tag != '' || github.ref_type == 'tag' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      TAG: ${{ needs.release.outputs.tag || github.ref_name }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
-          ref: ${{ inputs.tag || github.ref }}
+          ref: ${{ needs.release.outputs.tag || github.ref_name }}
 
       - name: Set up Go
         uses: actions/setup-go@v6
@@ -46,33 +74,26 @@ jobs:
       - name: Install zip
         run: sudo apt-get install -y zip
 
-      - name: Run GoReleaser (snapshot — validate only)
-        if: ${{ !startsWith(github.ref, 'refs/tags/') && inputs.tag == '' }}
+      # Rebuild the release archives at the cut tag. GoReleaser derives the
+      # version from the checked-out tag; release.disable + --skip=publish mean
+      # nothing is published here, this only produces dist/.
+      - name: Build release archives
         uses: goreleaser/goreleaser-action@v7
         with:
           version: ~> v2
-          args: release --snapshot --clean --skip=publish
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Run GoReleaser (full release)
-        if: ${{ startsWith(github.ref, 'refs/tags/') || inputs.tag != '' }}
-        uses: goreleaser/goreleaser-action@v7
-        with:
-          version: ~> v2
-          args: release --clean
+          args: release --clean --skip=publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publish to synchestra-releases
-        if: ${{ startsWith(github.ref, 'refs/tags/') || inputs.tag != '' }}
         env:
           GH_TOKEN: ${{ secrets.RELEASES_REPO_TOKEN }}
         run: |
-          TAG="${{ inputs.tag || github.ref_name }}"
+          set -euo pipefail
           RELEASE_TAG="cli-${TAG}"
 
           # Generate release notes from merged PRs since previous tag.
+          NOTES=""
           PREV_TAG="$(git tag --sort=-v:refname | grep '^v' | head -1)"
           if [ -n "$PREV_TAG" ] && [ "$PREV_TAG" != "$TAG" ]; then
             NOTES="$(gh api repos/${{ github.repository }}/releases/generate-notes \
@@ -91,14 +112,3 @@ jobs:
           gh release upload "${RELEASE_TAG}" \
             --repo synchestra-io/synchestra-releases \
             dist/*.tar.gz dist/*.zip dist/synchestra_*_checksums.txt
-
-      - name: Upload snapshot artifacts
-        if: ${{ !startsWith(github.ref, 'refs/tags/') && inputs.tag == '' }}
-        uses: actions/upload-artifact@v7
-        with:
-          name: snapshot-binaries
-          path: |
-            dist/*.tar.gz
-            dist/*.zip
-            dist/*_checksums.txt
-          retention-days: 7
