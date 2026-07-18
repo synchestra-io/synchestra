@@ -19,7 +19,13 @@ import (
 func initBareTestRepo(t *testing.T, name string) string {
 	t.Helper()
 	bareDir := filepath.Join(t.TempDir(), name+".git")
-	if out, err := exec.Command("git", "init", "--bare", bareDir).CombinedOutput(); err != nil {
+	// --initial-branch=main pins the bare repo's default branch. Without it the
+	// bare's HEAD follows the ambient init.defaultBranch (main on dev machines,
+	// but master on stock CI), while the seed always pushes to `main` — so the
+	// clone would check out an unborn `master` and CurrentBranch fails with git
+	// exit 128. Pinning main keeps the bare, the seed push, and the clone aligned
+	// regardless of the runner's default-branch config.
+	if out, err := exec.Command("git", "init", "--bare", "--initial-branch=main", bareDir).CombinedOutput(); err != nil {
 		t.Fatalf("git init --bare: %v\n%s", err, out)
 	}
 	return bareDir
