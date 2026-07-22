@@ -219,6 +219,9 @@ func (r BranchResult) Validate() error {
 	if len(r.Validation) == 0 {
 		return fmt.Errorf("branch result requires validation evidence")
 	}
+	if r.PublishedAt.IsZero() {
+		return fmt.Errorf("branch result requires a publication timestamp")
+	}
 	for _, evidence := range r.Validation {
 		if evidence.Name == "" {
 			return fmt.Errorf("validation evidence name is required")
