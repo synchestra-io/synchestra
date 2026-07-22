@@ -42,6 +42,7 @@ The features below are Synchestra-specific — they define orchestration, coordi
 | [bots](bots/README.md) | Conceptual | Messenger bots for conversational access to Synchestra — project management, container control, prompt relay, and notifications |
 | [stakeholder](stakeholder/README.md) | Conceptual | Humans and AI agents that participate in workflow decisions — identity model, role-based routing, structured decisions, gates, and audit logging |
 | [runner](runner/README.md) | Conceptual | Remote hosts and cloud environments where AI agents execute sessions and claim tasks |
+| [dispatch](dispatch/README.md) | Approved | Durable queued work leased to registered workers and returned as reviewable Git branch results |
 | [host-auth](host-auth/README.md) | Conceptual | Mutual authentication between runner hosts and the Synchestra Hub --- registration tokens, short-lived access tokens, and Hub request signing |
 | [user-authentication](user-authentication/README.md) | Draft | End-user authentication to hosts via OIDC — hub as default issuer plus operator-configurable additional providers (Google, Microsoft, Okta, self-hosted IdPs). Pending reconciliation with the canonical project / host ACL model after fix-auth ships. |
 | [project](project/README.md) | Draft | Project identity (repo reference), two-phase lifecycle (pre-repo Firestore / post-repo yaml), favorites-vs-ACL distinction, runner/host scoping. Membership primitive is a sub-feature at [project/members](project/members/README.md). |
@@ -144,6 +145,10 @@ Humans and AI agents that participate in workflow decisions. Stakeholders are id
 
 Remote hosts, VMs, and cloud environments where AI agents execute sessions and claim tasks. A runner is a registered compute endpoint — users interact with agents on runners through sessions, ephemeral chat-like conversations surfaced in the web UI. Runners provide persistent availability, multi-environment support, and centralized visibility across all registered compute endpoints.
 
+### [Remote Task Dispatch](dispatch/README.md)
+
+Connects Synchestra's existing task and remote-session foundations into a durable task-to-result workflow. An ad-hoc prompt or SpecScore target becomes a queued Dispatch, a registered host claims an expiring lease through an outbound connection, and the worker executes in an isolated repository worktree before returning a pushed branch, commit, validation evidence, logs, and terminal status. The first proof uses the existing personal VM; the scheduler and worker contracts remain general.
+
 ### [Host-Hub Authentication](host-auth/README.md)
 
 Mutual authentication between runner hosts and the Synchestra Hub. Hosts prove identity using a two-tier token model: a permanent registration token (stored on disk) is exchanged for short-lived access tokens (held in memory) with server-dictated TTL. The Hub authenticates to hosts by signing requests with an Ed25519 private key; hosts verify using a public key published at a well-known URL. Registration happens through `synchestra-host hub connect` (interactive device flow) or `synchestra-host hub connect --token {token}` (pre-provisioned). Hosts are managed by one or more users (managers) and are independent of projects.
@@ -190,6 +195,7 @@ testing-framework → [specscore:acceptance-criteria] (composes ACs into test fl
 stakeholder → task-status-board (decisions are tasks), [specscore:plan] (gates trigger on plan transitions), [specscore:feature] (_config.yaml for role overrides), cli (decision/stakeholder commands), agent-skills (decision-request skill), state-store (DecisionStore)
 stakeholder ← chat (workflows create decisions), ui (renders decision options), bots (delivers notifications, accepts responses)
 host-auth → runner (prerequisite for runner registration), channels (authenticated host-hub messaging), api (token endpoints, public key endpoint)
+dispatch → runner, host-auth, model-selection, channels, state-store, cli, agent-skills (durable queue and remote task-to-result workflow)
 channels → runner (host compute layer), sandbox (agent gRPC extensions, container image), api (cloud endpoints), state-store (Firestore persistence)
 channels ← ui/hub (browser surface), bots (Telegram surface), chat (sessions may trigger workflows)
 ```

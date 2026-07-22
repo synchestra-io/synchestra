@@ -14,7 +14,7 @@ Over hundreds of micro-tasks per day, this adds up to significant unnecessary co
 
 ## Proposed Behavior
 
-Model selection operates at three levels, in order of precedence:
+The stable user-facing profiles are `fast`, `balanced`, and `large`. Existing internal `small`, `medium`, and `large` values map respectively to those profiles during migration. Model selection operates at three levels, in order of precedence:
 
 ### 1. User override (highest priority)
 
@@ -39,16 +39,16 @@ Model classes map to platform-specific models:
 | Class | Claude | OpenAI | Description |
 |---|---|---|---|
 | `none` | — | — | No LLM needed; pure CLI/script execution |
-| `small` | Haiku 4.5 | GPT-4o-mini | Fast, cheap. Formatting, classification, simple edits. |
-| `medium` | Sonnet 4.5 | GPT-4o | Balanced. Most implementation tasks. |
-| `large` | Opus 4 | o1/o3 | Maximum capability. Architecture, complex reasoning. |
+| `fast` (`small`) | Configured fast Claude model | Configured fast OpenAI model | Fast, cheap. Formatting, classification, simple edits. |
+| `balanced` (`medium`) | Configured balanced Claude model | Configured balanced OpenAI model | Balanced. Most implementation tasks. |
+| `large` | Configured large Claude model | Configured large OpenAI model | Maximum capability. Architecture, complex reasoning. |
 
 ### 3. Dynamic assessment (lowest priority)
 
 When no explicit model is configured, Synchestra can use a small model to assess the task's complexity before routing:
 
-1. Feed the task description and minimal context to a small model
-2. Ask it to classify the task complexity (`small` / `medium` / `large`)
+1. Feed the task description and minimal context to a fast model
+2. Ask it to classify the task complexity (`fast` / `balanced` / `large`)
 3. Route to the appropriate model
 
 This adds one cheap LLM call per task but can save significantly on tasks that would otherwise default to the largest model.
@@ -63,10 +63,10 @@ Synchestra is not always the direct caller of the LLM. When an agent runs inside
 
 ## Outstanding Questions
 
-- Should model selection be logged as part of the task audit trail? (Useful for cost analysis.)
+- How should older `small` / `medium` values be removed after all runtime and UI contracts use `fast` / `balanced`?
 - How does dynamic assessment handle tasks where the description is vague? (Default to `medium`? Ask for clarification?)
 - Should there be a cost budget feature that constrains model selection? (e.g., "this project has a $50/day budget, optimize accordingly")
-- How does model_class mapping stay current as new models are released?
+- How does the versioned model-profile mapping stay current as new models are released?
 
 ---
 *This document follows the https://specscore.md/feature-specification*

@@ -4,7 +4,7 @@
 
 ## Summary
 
-Dispatches a plan or task to a named runner for remote execution. One dispatch creates exactly one [session](../../session/README.md); the runner executes the dispatched unit within that session and reports status back through the existing state sync.
+Dispatches an ad-hoc prompt, plan, or task for remote execution. The Hub records a durable [Dispatch](../../../dispatch/README.md), a matching worker leases an attempt, and each attempt creates one [session](../../session/README.md). The command returns immediately with a dispatch ID; session details appear when a worker starts the attempt.
 
 ## Problem
 
@@ -12,10 +12,10 @@ Users need a single, one-shot command to offload work from their local machine t
 
 The command must:
 
-1. Accept whatever the user has on hand — a plan file path, a plan name, a task ID, or a task name.
+1. Accept whatever the user has on hand — an ad-hoc prompt, a plan file path/name, or a task ID/name.
 2. Resolve that input unambiguously against the active project's state repository.
-3. Tell a specific runner (by name) to execute it.
-4. Return enough identifiers (session ID, task ID) for the caller to monitor progress.
+3. Submit durable work to a named runner or a general worker selector.
+4. Return a dispatch ID immediately and enough resolved context for the caller to monitor progress.
 5. Return quickly; not block on the session.
 
 ## Behavior
@@ -23,27 +23,30 @@ The command must:
 ### Synopsis
 
 ```
-synchestra runner dispatch <target> --runner <name> [--agent <agent>] [--format text|json]
+synchestra runner dispatch [<target>] [--prompt <text>] [--runner <name>] [--profile fast|balanced|large] [--agent <agent>] [--model <selector>] [--format text|json]
 ```
 
 ### Parameters
 
 | Parameter | Required | Description |
 |---|---|---|
-| `<target>` (positional) | Yes | What to dispatch — resolved per [Target resolution](#target-resolution). |
-| `--runner` | Yes | Registered runner name. |
-| `--agent` | No | Override the runner's default agent. Accepted only when the runner advertises support for multiple agents; otherwise fails with invalid-arguments. |
+| [`<target>`](./_args/target.md) (positional) | Conditional | Plan/task target. Omit when `--prompt` is supplied. |
+| [`--prompt`](./_args/prompt.md) | Conditional | Ad-hoc work description. Required when no target is supplied. |
+| [`--runner`](./_args/runner.md) | No | Preferred registered runner name. When omitted, the scheduler matches any authorized eligible worker. |
+| [`--profile`](./_args/profile.md) | No | Provider-neutral execution profile; defaults through routing rules to `balanced`. |
+| [`--agent`](./_args/agent.md) | No | Override the runner's default agent. Accepted only when the runner advertises support for multiple agents; otherwise fails with invalid-arguments. |
+| [`--model`](./_args/model.md) | No | Exact or adapter-specific model selector such as `sonnet`; overrides profile mapping without changing the recorded requested profile. |
 | [`--format`](../../_args/format.md) | No | Output format — `text` (default) or `json`. |
 
 ### Target resolution
 
-The positional `<target>` argument is resolved in this order:
+When supplied, the positional `<target>` argument is resolved in this order:
 
 1. **Path on disk** — if `<target>` is a path to an existing plan file (e.g., `plans/migrate.md`), the file is dispatched as a plan.
 2. **Explicit ID** — if `<target>` matches the ID format of a plan or task in the current project's state repository, it is dispatched as that resource.
 3. **Fuzzy name match** — otherwise, the CLI queries the project's active plans and tasks and attempts a name match. Exactly one match dispatches it; multiple matches list candidates and fail; zero matches fails.
 
-In non-interactive contexts (agent-driven, piped stdin, `--format json`), ambiguity always fails fast — the CLI never prompts.
+When `--prompt` is supplied, repository identity and immutable base revision are resolved from the current Git checkout. A prompt and target are mutually exclusive in the MVP. In non-interactive contexts (agent-driven, piped stdin, `--format json`), ambiguity always fails fast — the CLI never prompts.
 
 ### Output order
 
@@ -55,19 +58,19 @@ Resolved:
   runner:  hetzner-vm1
   agent:   claude-code  (default for this runner)
 
-Session:
-  session-id:  sess_01HXYZ…
+Dispatch:
+  dispatch-id: dsp_01HXYZ…
+  status:      queued
   task-id:     TASK-1024
-  started-at:  2026-04-18T10:22:14Z
 ```
 
 Resolution is printed unconditionally — even when the target is hard-specified by ID — so the caller can verify what was understood before acting on the result. On dispatch failure after resolution, the session block is replaced by an error block; resolution stays visible.
 
-With `--format json`, the same fields are emitted as a single JSON object: `{resolved: {...}, session: {...}}` on success, `{resolved: {...}, error: {...}}` on failure.
+With `--format json`, the same fields are emitted as a single JSON object: `{resolved: {...}, dispatch: {...}}` on success, `{resolved: {...}, error: {...}}` on failure.
 
 ### Session lifetime
 
-One dispatch creates one session. If the dispatched unit is a plan with subtasks, the remote agent handles those subtasks within the same session — the decomposition is opaque to the CLI. Fan-out across multiple runners requires multiple dispatch calls.
+One dispatch may have multiple attempts over retries. Each attempt creates at most one session. If the dispatched unit is a plan with subtasks, the remote agent handles those subtasks within one attempt unless a future fan-out feature explicitly decomposes it.
 
 ### Exit codes
 
@@ -75,13 +78,13 @@ Standard CLI exit codes apply (see [CLI exit code contract](../../README.md#exit
 
 | Exit code | Meaning |
 |---|---|
-| `0` | Dispatched successfully; session started |
+| `0` | Dispatch accepted and queued or leased |
 | `1` | Conflict — targeted task was claimed by another agent before the runner could take it |
 | `2` | Invalid arguments, ambiguous fuzzy match, or unsupported `--agent` override |
 | `3` | Target not found |
 | `4` | Target is in a non-dispatchable state (already terminal) |
 | `80` | Runner not found or not registered to this user |
-| `81` | Runner rejected the dispatch (capacity, incompatible agent, or Hub-side error) |
+| `81` | No eligible runner can satisfy the explicit runner/agent/model constraints |
 | `101` | Unauthenticated — run `synchestra auth login` first |
 
 Exit codes `80`–`89` are reserved for the CLI Runner feature; `101`–`109` for CLI Auth. These ranges are registered in the [CLI](../../README.md#command-group-reserved-ranges) parent feature.
@@ -97,18 +100,18 @@ Exit codes `80`–`89` are reserved for the CLI Runner feature; `101`–`109` fo
 
 ## Acceptance Criteria
 
-1. Dispatching with an existing plan file path creates a session and prints both a resolution block and a session block before exiting 0.
+1. Dispatching with an existing plan file path creates a durable dispatch and prints both a resolution block and a dispatch block before exiting 0.
 2. Dispatching with a task ID that is currently `queued` transitions the task to `claimed` via the normal task lifecycle; a conflict with another agent returns exit code 1.
 3. Dispatching with a name that matches multiple plans or tasks lists the candidates on stderr and exits with code 2 without creating a session.
-4. Dispatching to a runner name the caller has not registered exits with code 80.
+4. Dispatching to a runner name the caller has not registered exits with code 80; omitting `--runner` permits general scheduler matching.
 5. Dispatching without valid user credentials exits with code 101 and prints no session details.
-6. With `--format json`, output is a single JSON object with `resolved` always present and either `session` or `error` present — never both.
+6. With `--format json`, output is a single JSON object with `resolved` always present and either `dispatch` or `error` present — never both.
+7. Dispatching with `--prompt` and no target resolves the current Git repository/base revision and creates an ad-hoc dispatch without creating a Task.
 
 ## Outstanding Questions
 
-1. Should `--watch` be added for synchronous UX, or is `session logs --follow` sufficient composition?
-2. Should the Hub queue dispatches when the runner is at capacity, or reject them (current spec: reject with 81)?
-3. When the runner's default agent is already correct but the user passes `--agent` with the same value, is that a no-op or an error? Leaning no-op.
+1. Should `--watch` compose `dispatch status` and session logs, or remain outside the MVP?
+2. When the runner's default agent is already correct but the user passes `--agent` with the same value, is that a no-op or an error? Leaning no-op.
 
 ---
 *This document follows the https://specscore.md/feature-specification*
