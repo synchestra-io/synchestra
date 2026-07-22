@@ -36,7 +36,7 @@ type clientConfig struct {
 	Actor   string
 }
 
-func loadClientConfig(deps Dependencies, projectRoot string) (clientConfig, error) {
+func loadClientConfig(deps Dependencies, _ string) (clientConfig, error) {
 	homeDir, err := deps.UserHomeDir()
 	if err != nil {
 		return clientConfig{}, unexpected("resolve user home directory", err)
@@ -46,17 +46,9 @@ func loadClientConfig(deps Dependencies, projectRoot string) (clientConfig, erro
 	if err != nil {
 		return clientConfig{}, err
 	}
-	var projectConfig dispatchFileConfig
-	if projectRoot != "" {
-		projectConfig, err = readDispatchConfig(filepath.Join(projectRoot, "synchestra.yaml"), false)
-		if err != nil {
-			return clientConfig{}, unexpected("read project Hub configuration", err)
-		}
-	}
 
 	baseURL := firstNonEmpty(
 		lookupEnv(deps, "SYNCHESTRA_URL"),
-		hubEndpoint(projectConfig),
 		hubEndpoint(globalConfig),
 		globalConfig.URL,
 		defaultHubURL,

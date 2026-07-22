@@ -132,7 +132,7 @@ func TestNormalizeRemotePreservesSCPTransportWithoutCredentialsInIdentity(t *tes
 	}
 }
 
-func TestClientConfigPrecedence(t *testing.T) {
+func TestClientConfigPrecedenceDoesNotTrustRepositoryEndpoint(t *testing.T) {
 	home := t.TempDir()
 	project := t.TempDir()
 	global := "hub:\n  endpoint: https://global.example.test\n  token: global-token\n  actor: global-actor\n"
@@ -155,7 +155,7 @@ func TestClientConfigPrecedence(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if config.BaseURL != "https://project.example.test" || config.Token != "env-token" || config.Actor != "env-actor" {
+	if config.BaseURL != "https://global.example.test" || config.Token != "env-token" || config.Actor != "env-actor" {
 		t.Fatalf("config = %+v", config)
 	}
 	environment["SYNCHESTRA_URL"] = "https://env.example.test"
