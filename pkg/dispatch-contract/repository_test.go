@@ -90,6 +90,15 @@ func TestRepositorySnapshotRejectsUnsupportedCloneIdentities(t *testing.T) {
 		{cloneURL: "git:///group/repo.git", want: "host"},
 		{cloneURL: "host.example.test:group/repo.git", want: "unsupported"},
 		{cloneURL: "git @host.example.test:group/repo.git", want: "invalid"},
+		{cloneURL: "https://git.example.test", want: "repository path"},
+		{cloneURL: "https://git.example.test/", want: "repository path"},
+		{cloneURL: "ssh://git@git.example.test", want: "repository path"},
+		{cloneURL: "git://git.example.test/", want: "repository path"},
+		{cloneURL: "git@git.example.test:/", want: "repository path"},
+		{cloneURL: "https://git.example.test/group/repo.git?access_token=secret", want: "query or fragment"},
+		{cloneURL: "https://git.example.test/group/repo.git#credentials", want: "query or fragment"},
+		{cloneURL: "git@git.example.test:group/repo.git?access_token=secret", want: "query or fragment"},
+		{cloneURL: "git@git.example.test:group/repo.git#credentials", want: "query or fragment"},
 	}
 	for _, test := range tests {
 		test := test

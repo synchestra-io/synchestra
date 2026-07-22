@@ -13,7 +13,7 @@ import (
 
 var fullGitRevision = regexp.MustCompile(`^(?:[0-9a-fA-F]{40}|[0-9a-fA-F]{64})$`)
 
-var scpCloneIdentity = regexp.MustCompile(`^[^\s@/:]+@(?:\[[^\]\s]+\]|[^\s@/:]+):\S+$`)
+var scpCloneIdentity = regexp.MustCompile(`^[^\s@/:]+@(?:\[[^\]\s]+\]|[^\s@/:]+):([^\s?#]+)$`)
 
 func validProfile(profile ExecutionProfile) bool {
 	switch profile {
@@ -94,7 +94,13 @@ func validateCloneURL(cloneURL string) error {
 	// their credential-free user@host:path form explicitly and reject the
 	// user:password@host:path lookalike before parsing it as an opaque URL.
 	if !strings.Contains(cloneURL, "://") {
-		if scpCloneIdentity.MatchString(cloneURL) {
+		if strings.ContainsAny(cloneURL, "?#") {
+			return fmt.Errorf("repository clone_url must not contain query or fragment data")
+		}
+		if scpMatch := scpCloneIdentity.FindStringSubmatch(cloneURL); scpMatch != nil {
+			if strings.Trim(scpMatch[1], "/") == "" {
+				return fmt.Errorf("repository clone_url requires a non-root repository path")
+			}
 			return nil
 		}
 		at := strings.IndexByte(cloneURL, '@')
@@ -115,6 +121,12 @@ func validateCloneURL(cloneURL string) error {
 	}
 	if parsed.Host == "" {
 		return fmt.Errorf("repository clone_url requires a non-empty host")
+	}
+	if parsed.RawQuery != "" || parsed.Fragment != "" {
+		return fmt.Errorf("repository clone_url must not contain query or fragment data")
+	}
+	if strings.Trim(parsed.Path, "/") == "" {
+		return fmt.Errorf("repository clone_url requires a non-root repository path")
 	}
 	if parsed.User == nil {
 		return nil

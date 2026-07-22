@@ -158,6 +158,9 @@ func normalizeRemote(raw string) (canonicalID string, cloneURL string, err error
 	if raw == "" {
 		return "", "", fmt.Errorf("git remote 'origin' is empty")
 	}
+	if strings.ContainsAny(raw, "?#") {
+		return "", "", fmt.Errorf("git origin must not contain query or fragment data")
+	}
 
 	if !strings.Contains(raw, "://") {
 		at := strings.IndexByte(raw, '@')

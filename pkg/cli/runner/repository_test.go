@@ -77,6 +77,10 @@ func TestNormalizeRemoteRejectsInlineCredentials(t *testing.T) {
 		"https://user:password@github.com/acme/repo.git",
 		"ssh://git:password@github.com/acme/repo.git",
 		"git:password@github.com:acme/repo.git",
+		"https://github.com/acme/repo.git?access_token=secret",
+		"https://github.com/acme/repo.git#credentials",
+		"git@github.com:acme/repo.git?access_token=secret",
+		"git@github.com:acme/repo.git#credentials",
 	}
 	for _, remote := range tests {
 		t.Run(remote, func(t *testing.T) {
