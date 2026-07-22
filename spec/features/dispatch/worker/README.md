@@ -108,5 +108,7 @@ For the personal proof, the existing XDG-installed host runs as an `ai` user ser
 
 Integration checkpoint `84a8e6de275713baeabdb9d3c5b0eb76e17da923` passes the real local Hub -> two worker processes -> default executor/fake Claude -> Git branch flow, including heartbeat, cancellation, SIGKILL/lease recovery, retry history, durable logs, exact model arguments, and caller-checkout immutability. User-service restart on the registered personal VM is not yet certified because the required external control machine is unavailable in the current environment.
 
+Operational hardening through `e98e9276321be3cc69ed21042136e18e0888ecc7` adds fixed-cardinality health diagnostics and lifecycle signals, claim-transport and shutdown-timeout failure injection, complete per-attempt diagnostic cleanup, atomic per-user upgrade/rollback guidance, and explicit cache/worktree retention behavior. The primary final-head vertical rerun passes in 29.32 seconds. No live service was changed.
+
 ---
 *This document follows the https://specscore.md/feature-specification*

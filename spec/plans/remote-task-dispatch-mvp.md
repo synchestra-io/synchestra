@@ -265,18 +265,18 @@ None. Every acceptance criterion of the source Feature is covered by at least on
 | Task | Status | Published evidence |
 |---|---|---|
 | 1. Freeze contracts/harness | Complete | Canonical public contract `a14007dc3bfdf18957bc178feb8a5adc57a7ada0`; original mocked harness checkpoints `71cab37` and `b62e8b0` remain in server history. |
-| 2. Hub scheduler | Complete | Cloud PR #1 through `96b7b7e65c70ab1bde982635a4a867264f190da5`; Firestore concurrency and lifecycle tests pass. |
+| 2. Hub scheduler | Complete | Cloud PR #1 through hardening checkpoint `1acc52f896f453f42bcdfe44967f01d3ab3346d8`; Firestore concurrency, lifecycle, restart, observability, and persistence-failure tests pass. |
 | 3. Deterministic CLI | Complete | Synchestra PR #9 through `08283992b6e5b77c1da8ffabdc90c6039de927e7`. |
-| 4. VM worker lifecycle | Complete locally | VM PR #5 through `fa325acc9161eeee5e469b9a116d03775dcee299`; live service activation awaits the control machine. |
-| 5. Repository execution/publication | Complete | Servers PR #6 through `cf7ae4a0ee43577f1d2ffb016a5fae50fb883bdd`. |
-| 6. AI plugin command | Complete | Plugin PR #2 at `4cb5ef4c3bb773ca4180fbed54f815961816488e`. |
+| 4. VM worker lifecycle | Complete locally | VM PR #5 through operational hardening and cleanup checkpoint `e98e9276321be3cc69ed21042136e18e0888ecc7`; live service activation awaits the control machine. |
+| 5. Repository execution/publication | Complete | Servers PR #6 through failure-injection and operations checkpoint `73558336fcd0afdf63a493d02cef243dfacabd70`. |
+| 6. AI plugin command | Complete | Plugin PR #2 through failure-presentation checkpoint `42febf9ac51057020284419cbedd471cfaece5a1`. |
 | 7. Contract reconciliation | Complete | All Go consumers pin canonical `a14007d...`; focused cross-repository compatibility tests pass and no private dispatch-contract import remains. |
-| 8. Local vertical E2E | Complete | Cloud helper `ba9c4bc2eed0f4d031c1da258e128fc85405d344`; VM integration `84a8e6de275713baeabdb9d3c5b0eb76e17da923`; primary rerun passed all twelve requirements in 29.02 seconds. |
+| 8. Local vertical E2E | Complete | Cloud helper `ba9c4bc2eed0f4d031c1da258e128fc85405d344`; VM integration `84a8e6de275713baeabdb9d3c5b0eb76e17da923`; primary final-head rerun at `e98e9276321be3cc69ed21042136e18e0888ecc7` passed all twelve requirements in 29.32 seconds. |
 | 9. Activate personal VM | Blocked by topology | Current execution is already the Linux `ai` host `ubuntu-8gb-nbg1-1`; `/Users/alex` and the control-machine `vm` SSH alias/key are unavailable. Self-SSH or local mutation is prohibited as proof. |
 | 10. Live `dal-go` proof | Blocked by Task 9 | `dal-go` has intentionally not been synchronized or touched because the required independent control machine is absent. |
-| 11. Hardening/handoff | In progress | Draft PRs are open; metrics, retention/runbook, failure-injection, and final evidence checkpoints are being completed without deployment. |
+| 11. Hardening/handoff | Independent work complete; live evidence blocked | Bounded Hub and worker diagnostics, failure injection, explicit retention defaults, common diagnosis, upgrade/rollback guidance, thin-plugin error handling, full local validation, pushed checkpoints, and draft PR updates are complete. The final live dispatch evidence and VM-specific rollback target remain blocked by Tasks 9–10. |
 
-Local validation includes full repository tests/build/vet/lint, Firestore emulator concurrency/restart, plugin validation, temporary Git publication, and the complete public CLI -> durable Hub -> outbound worker -> isolated executor -> review branch flow. Local race tests remain unavailable because the current toolchain has CGO disabled and no C compiler. No PR is merged and no application is deployed.
+Local validation includes full repository tests/build/vet/lint, Firestore emulator concurrency/restart, plugin validation, temporary Git publication, injected persistence/transport/executor/shutdown failures, and the complete public CLI -> durable Hub -> outbound worker -> isolated executor -> review branch flow. Local race tests remain unavailable because the current toolchain has CGO disabled and no C compiler. No PR is merged, no live worker is changed, and no application is deployed.
 
 ---
 *This document follows the https://specscore.md/plan-specification*

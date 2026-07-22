@@ -200,12 +200,12 @@ The worker MUST NOT merge, deploy, or mutate the caller's working tree.
 As of 2026-07-22, the versioned MVP contract and local execution path are implemented on dedicated draft-PR branches:
 
 - Canonical `synchestra.dispatch.v1` contract and CLI: [`synchestra` PR #9](https://github.com/synchestra-io/synchestra/pull/9), contract commit `a14007dc3bfdf18957bc178feb8a5adc57a7ada0`.
-- Durable scheduler and loopback E2E Hub: [`synchestra-cloud` PR #1](https://github.com/synchestra-io/synchestra-cloud/pull/1), commit `ba9c4bc2eed0f4d031c1da258e128fc85405d344`.
-- Outbound worker and complete local vertical proof: [`synchestra-vm` PR #5](https://github.com/synchestra-io/synchestra-vm/pull/5), commit `84a8e6de275713baeabdb9d3c5b0eb76e17da923`.
-- Isolated repository execution/publication: [`synchestra-servers` PR #6](https://github.com/synchestra-io/synchestra-servers/pull/6), commit `cf7ae4a0ee43577f1d2ffb016a5fae50fb883bdd`.
-- Human-visible command: [`ai-plugin-synchestra` PR #2](https://github.com/synchestra-io/ai-plugin-synchestra/pull/2), commit `4cb5ef4c3bb773ca4180fbed54f815961816488e`.
+- Durable scheduler, loopback E2E Hub, bounded operational observations, failure injection, and retention guidance: [`synchestra-cloud` PR #1](https://github.com/synchestra-io/synchestra-cloud/pull/1), commit `1acc52f896f453f42bcdfe44967f01d3ab3346d8`.
+- Outbound worker, complete local vertical proof, fixed-cardinality diagnostics, and upgrade/rollback guidance: [`synchestra-vm` PR #5](https://github.com/synchestra-io/synchestra-vm/pull/5), commit `e98e9276321be3cc69ed21042136e18e0888ecc7`.
+- Isolated repository execution/publication, failure injection, and retained-artifact diagnosis: [`synchestra-servers` PR #6](https://github.com/synchestra-io/synchestra-servers/pull/6), commit `73558336fcd0afdf63a493d02cef243dfacabd70`.
+- Human-visible command and lossless structured-failure presentation: [`ai-plugin-synchestra` PR #2](https://github.com/synchestra-io/ai-plugin-synchestra/pull/2), commit `42febf9ac51057020284419cbedd471cfaece5a1`.
 
-The independent local suite passes all twelve scheduler/worker/executor behaviors and leaves a dirty caller checkout byte-for-byte unchanged. The personal-VM and `dal-go` live proof remain unverified because the current execution environment is the Linux `ai` worker host itself and does not contain the required control-machine `vm` SSH alias or `/Users/alex` checkout. This environment must not certify itself through localhost or direct execution.
+The independent local suite passes all twelve scheduler/worker/executor behaviors and leaves a dirty caller checkout byte-for-byte unchanged. Full hardening validation also covers persistence, transport, executor-stage, and shutdown failures. The personal-VM and `dal-go` live proof remain unverified because the current execution environment is the Linux `ai` worker host itself and does not contain the required control-machine `vm` SSH alias or `/Users/alex` checkout. This environment must not certify itself through localhost or direct execution.
 
 ---
 *This document follows the https://specscore.md/feature-specification*
