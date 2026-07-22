@@ -87,6 +87,12 @@ func TestNormalizeRemoteRejectsInlineCredentials(t *testing.T) {
 	}
 }
 
+func TestNormalizeRemoteRejectsAmbiguousSCPOriginWithoutTransportUser(t *testing.T) {
+	if _, _, err := normalizeRemote("github.com:acme/repo.git"); err == nil {
+		t.Fatal("ambiguous SCP origin without a transport user was accepted")
+	}
+}
+
 func TestNormalizedSSHRemotePassesCanonicalContractWithoutPassword(t *testing.T) {
 	canonical, cloneURL, err := normalizeRemote("ssh://git@git.example.test:2222/group/repo.git")
 	if err != nil {

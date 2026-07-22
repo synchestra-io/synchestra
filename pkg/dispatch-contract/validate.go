@@ -13,7 +13,7 @@ import (
 
 var fullGitRevision = regexp.MustCompile(`^(?:[0-9a-fA-F]{40}|[0-9a-fA-F]{64})$`)
 
-var scpCloneIdentity = regexp.MustCompile(`^[^@/:]+@(?:\[[^\]]+\]|[^/:]+):.+$`)
+var scpCloneIdentity = regexp.MustCompile(`^[^\s@/:]+@(?:\[[^\]\s]+\]|[^\s@/:]+):\S+$`)
 
 func validProfile(profile ExecutionProfile) bool {
 	switch profile {
@@ -107,10 +107,19 @@ func validateCloneURL(cloneURL string) error {
 	if err != nil {
 		return fmt.Errorf("repository clone_url is invalid: %w", err)
 	}
+	scheme := strings.ToLower(parsed.Scheme)
+	switch scheme {
+	case "http", "https", "ssh", "git":
+	default:
+		return fmt.Errorf("repository clone_url scheme %q is unsupported", parsed.Scheme)
+	}
+	if parsed.Host == "" {
+		return fmt.Errorf("repository clone_url requires a non-empty host")
+	}
 	if parsed.User == nil {
 		return nil
 	}
-	if !strings.EqualFold(parsed.Scheme, "ssh") {
+	if scheme != "ssh" {
 		return fmt.Errorf("repository clone_url must not contain HTTP(S) or other inline userinfo")
 	}
 	if _, hasPassword := parsed.User.Password(); hasPassword {

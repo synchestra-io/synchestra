@@ -71,3 +71,42 @@ func TestRepositorySnapshotRejectsInlineCloneCredentials(t *testing.T) {
 		})
 	}
 }
+
+func TestRepositorySnapshotRejectsUnsupportedCloneIdentities(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		cloneURL string
+		want     string
+	}{
+		{cloneURL: "/tmp/repo.git", want: "scheme"},
+		{cloneURL: "../repo.git", want: "scheme"},
+		{cloneURL: "github.com/example/repo.git", want: "scheme"},
+		{cloneURL: "github.com:example/repo.git", want: "scheme"},
+		{cloneURL: "file:///tmp/repo.git", want: "unsupported"},
+		{cloneURL: "ftp://git.example.test/group/repo.git", want: "unsupported"},
+		{cloneURL: "https:///group/repo.git", want: "host"},
+		{cloneURL: "ssh:///group/repo.git", want: "host"},
+		{cloneURL: "git:///group/repo.git", want: "host"},
+		{cloneURL: "host.example.test:group/repo.git", want: "unsupported"},
+		{cloneURL: "git @host.example.test:group/repo.git", want: "invalid"},
+	}
+	for _, test := range tests {
+		test := test
+		t.Run(test.cloneURL, func(t *testing.T) {
+			t.Parallel()
+			repository := dispatchcontract.RepositorySnapshot{
+				CanonicalID:  "git.example.test/group/repo",
+				CloneURL:     test.cloneURL,
+				BaseRevision: baseRevision,
+			}
+			err := repository.Validate()
+			if err == nil {
+				t.Fatal("unsupported clone identity accepted")
+			}
+			if !strings.Contains(err.Error(), test.want) {
+				t.Fatalf("error = %q, want substring %q", err, test.want)
+			}
+		})
+	}
+}

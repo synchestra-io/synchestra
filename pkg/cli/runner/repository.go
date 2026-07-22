@@ -16,7 +16,7 @@ import (
 	dispatchcontract "github.com/synchestra-io/synchestra/pkg/dispatch-contract"
 )
 
-var scpRemotePattern = regexp.MustCompile(`^((?:[^@/:]+)@)?([^/:]+):(.+)$`)
+var scpRemotePattern = regexp.MustCompile(`^([^\s@/:]+)@([^\s/:]+):(.+)$`)
 
 type repositoryContext struct {
 	Snapshot     dispatchcontract.RepositorySnapshot
@@ -167,7 +167,7 @@ func normalizeRemote(raw string) (canonicalID string, cloneURL string, err error
 	}
 
 	if matches := scpRemotePattern.FindStringSubmatch(raw); matches != nil && !strings.Contains(raw, "://") {
-		transportUser := matches[1]
+		transportUser := matches[1] + "@"
 		host := strings.ToLower(matches[2])
 		repoPath := cleanRepositoryPath(matches[3])
 		if host == "" || repoPath == "" {
