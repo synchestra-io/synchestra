@@ -97,3 +97,94 @@ Attempts:
 		t.Fatal("multiline log message destabilized record framing")
 	}
 }
+
+func TestStatusTextTerminalDetailsGolden(t *testing.T) {
+	dispatch := queuedDispatch("dsp_terminal", dispatchcontract.DispatchIntent{})
+	dispatch.Status = dispatchcontract.DispatchStatusFailed
+	success := dispatchcontract.Attempt{
+		ProtocolVersion: dispatchcontract.ProtocolVersionV1,
+		ID:              "att_success",
+		DispatchID:      dispatch.ID,
+		Number:          1,
+		Status:          dispatchcontract.AttemptStatusCompleted,
+		Resolved: &dispatchcontract.ResolvedExecution{
+			Profile:        dispatchcontract.ProfileBalanced,
+			Agent:          "claude-code",
+			Model:          "claude-sonnet-4-5",
+			Effort:         "high",
+			MappingVersion: "routing-2026-07",
+			RoutingReason:  "balanced profile for repository policy",
+		},
+		Result: &dispatchcontract.BranchResult{
+			Branch:  "synchestra/dsp_terminal",
+			Commit:  "2222222222222222222222222222222222222222",
+			Summary: "Implemented change",
+			Validation: []dispatchcontract.ValidationEvidence{
+				{Name: "go-test", Command: "go test ./...", Status: dispatchcontract.ValidationPassed, ExitCode: 0, Summary: "all packages passed", ArtifactRef: "artifact://validation/1"},
+			},
+		},
+	}
+	failure := dispatchcontract.Attempt{
+		ProtocolVersion: dispatchcontract.ProtocolVersionV1,
+		ID:              "att_failure",
+		DispatchID:      dispatch.ID,
+		Number:          2,
+		Status:          dispatchcontract.AttemptStatusFailed,
+		Failure: &dispatchcontract.TerminalFailure{
+			Stage:     "validation",
+			Code:      "TEST_FAILED",
+			Message:   "go test failed\ninspect the log",
+			Retryable: true,
+			Logs: &dispatchcontract.LogReference{
+				SessionID:    "sess_2",
+				StreamID:     "log_2",
+				Href:         "https://hub.example.test/v1/dispatches/dsp_terminal/logs",
+				LastSequence: 42,
+			},
+		},
+	}
+
+	var output bytes.Buffer
+	if err := writeStatusText(&output, dispatchcontract.GetDispatchResponse{Dispatch: dispatch, Attempts: []dispatchcontract.Attempt{success, failure}}); err != nil {
+		t.Fatal(err)
+	}
+	want := `Dispatch:
+  dispatch-id: dsp_terminal
+  status:      failed
+  updated-at:  2026-07-22T12:34:56Z
+  attempt-id:  -
+
+Attempts:
+  1  att_success  completed
+    Resolved execution:
+      profile:         balanced
+      agent:           claude-code
+      model:           claude-sonnet-4-5
+      effort:          high
+      mapping-version: routing-2026-07
+      mapping-reason:  balanced profile for repository policy
+    Result:
+      branch:          synchestra/dsp_terminal
+      commit:          2222222222222222222222222222222222222222
+      summary:         Implemented change
+      validation:
+        - go-test: passed (exit 0)
+          command:  go test ./...
+          summary:  all packages passed
+          artifact: artifact://validation/1
+  2  att_failure  failed
+    Failure:
+      stage:           validation
+      code:            TEST_FAILED
+      message:         go test failed\ninspect the log
+      retryable:       true
+      logs:
+        href:          https://hub.example.test/v1/dispatches/dsp_terminal/logs
+        stream-id:     log_2
+        session-id:    sess_2
+        last-sequence: 42
+`
+	if output.String() != want {
+		t.Fatalf("status output:\n%s\nwant:\n%s", output.String(), want)
+	}
+}

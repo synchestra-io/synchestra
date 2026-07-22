@@ -13,11 +13,15 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	dispatchcontract "github.com/synchestra-io/synchestra-servers/pkg/dispatch-contract"
 )
 
-const maxHubResponseBytes = 8 << 20
+const (
+	maxHubResponseBytes = 8 << 20
+	defaultHubTimeout   = 30 * time.Second
+)
 
 type httpDoer interface {
 	Do(*http.Request) (*http.Response, error)
@@ -41,7 +45,7 @@ func newDispatchClient(baseURL, token string, doer httpDoer) (*dispatchClient, e
 		return nil, invalidArgs("Hub URL must not contain inline credentials")
 	}
 	if doer == nil {
-		doer = http.DefaultClient
+		doer = &http.Client{Timeout: defaultHubTimeout}
 	}
 	return &dispatchClient{baseURL: parsed, token: token, http: doer}, nil
 }

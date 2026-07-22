@@ -12,7 +12,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/spf13/cobra"
 	dispatchcontract "github.com/synchestra-io/synchestra-servers/pkg/dispatch-contract"
@@ -437,7 +436,7 @@ func defaultDependencies() Dependencies {
 		Getwd:       os.Getwd,
 		UserHomeDir: os.UserHomeDir,
 		LookupEnv:   os.LookupEnv,
-		HTTPClient:  &http.Client{Timeout: 30 * time.Second},
+		HTTPClient:  &http.Client{Timeout: defaultHubTimeout},
 		NewID:       randomID,
 	}
 }

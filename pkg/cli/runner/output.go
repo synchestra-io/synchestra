@@ -154,8 +154,117 @@ func writeStatusText(writer io.Writer, response dispatchcontract.GetDispatchResp
 		if _, err := fmt.Fprintf(buffered, "  %d  %s  %s\n", attempt.Number, displayValue(attempt.ID), displayValue(string(attempt.Status))); err != nil {
 			return err
 		}
+		if err := writeAttemptDetails(buffered, attempt); err != nil {
+			return err
+		}
 	}
 	return buffered.Flush()
+}
+
+func writeAttemptDetails(writer io.Writer, attempt dispatchcontract.Attempt) error {
+	if attempt.Resolved != nil {
+		resolved := attempt.Resolved
+		if _, err := fmt.Fprintln(writer, "    Resolved execution:"); err != nil {
+			return err
+		}
+		fields := []struct{ label, value string }{
+			{"profile", string(resolved.Profile)},
+			{"agent", resolved.Agent},
+			{"model", resolved.Model},
+			{"effort", resolved.Effort},
+			{"mapping-version", resolved.MappingVersion},
+			{"mapping-reason", resolved.RoutingReason},
+		}
+		for _, field := range fields {
+			if _, err := fmt.Fprintf(writer, "      %-16s %s\n", field.label+":", displayLine(field.value)); err != nil {
+				return err
+			}
+		}
+	}
+	if attempt.Result != nil {
+		result := attempt.Result
+		if _, err := fmt.Fprintln(writer, "    Result:"); err != nil {
+			return err
+		}
+		if _, err := fmt.Fprintf(writer, "      branch:          %s\n", displayLine(result.Branch)); err != nil {
+			return err
+		}
+		if _, err := fmt.Fprintf(writer, "      commit:          %s\n", displayLine(result.Commit)); err != nil {
+			return err
+		}
+		if _, err := fmt.Fprintf(writer, "      summary:         %s\n", displayLine(result.Summary)); err != nil {
+			return err
+		}
+		if _, err := fmt.Fprintln(writer, "      validation:"); err != nil {
+			return err
+		}
+		if len(result.Validation) == 0 {
+			if _, err := fmt.Fprintln(writer, "        none"); err != nil {
+				return err
+			}
+		}
+		for _, evidence := range result.Validation {
+			if _, err := fmt.Fprintf(writer, "        - %s: %s (exit %d)\n", displayLine(evidence.Name), displayLine(string(evidence.Status)), evidence.ExitCode); err != nil {
+				return err
+			}
+			if evidence.Command != "" {
+				if _, err := fmt.Fprintf(writer, "          command:  %s\n", displayLine(evidence.Command)); err != nil {
+					return err
+				}
+			}
+			if evidence.Summary != "" {
+				if _, err := fmt.Fprintf(writer, "          summary:  %s\n", displayLine(evidence.Summary)); err != nil {
+					return err
+				}
+			}
+			if evidence.ArtifactRef != "" {
+				if _, err := fmt.Fprintf(writer, "          artifact: %s\n", displayLine(evidence.ArtifactRef)); err != nil {
+					return err
+				}
+			}
+		}
+	}
+	if attempt.Failure != nil {
+		failure := attempt.Failure
+		if _, err := fmt.Fprintln(writer, "    Failure:"); err != nil {
+			return err
+		}
+		if _, err := fmt.Fprintf(writer, "      stage:           %s\n", displayLine(failure.Stage)); err != nil {
+			return err
+		}
+		if _, err := fmt.Fprintf(writer, "      code:            %s\n", displayLine(failure.Code)); err != nil {
+			return err
+		}
+		if _, err := fmt.Fprintf(writer, "      message:         %s\n", displayLine(failure.Message)); err != nil {
+			return err
+		}
+		if _, err := fmt.Fprintf(writer, "      retryable:       %t\n", failure.Retryable); err != nil {
+			return err
+		}
+		if failure.Logs == nil {
+			if _, err := fmt.Fprintln(writer, "      logs:            -"); err != nil {
+				return err
+			}
+		} else {
+			logs := failure.Logs
+			if _, err := fmt.Fprintln(writer, "      logs:"); err != nil {
+				return err
+			}
+			if _, err := fmt.Fprintf(writer, "        href:          %s\n", displayLine(logs.Href)); err != nil {
+				return err
+			}
+			if _, err := fmt.Fprintf(writer, "        stream-id:     %s\n", displayLine(logs.StreamID)); err != nil {
+				return err
+			}
+			if _, err := fmt.Fprintf(writer, "        session-id:    %s\n", displayLine(logs.SessionID)); err != nil {
+				return err
+			}
+			if _, err := fmt.Fprintf(writer, "        last-sequence: %d\n", logs.LastSequence); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func writeDispatchText(writer io.Writer, dispatch dispatchcontract.Dispatch) error {
@@ -249,6 +358,11 @@ func displayValue(value string) string {
 		return "-"
 	}
 	return value
+}
+
+func displayLine(value string) string {
+	value = strings.NewReplacer("\r", "\\r", "\n", "\\n", "\t", "\\t").Replace(value)
+	return displayValue(value)
 }
 
 func displayRunner(value string) string {

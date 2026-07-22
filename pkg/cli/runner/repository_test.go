@@ -27,13 +27,29 @@ func TestResolveRepositoryIncludesProjectSubdirectoryAndHubID(t *testing.T) {
 	}
 }
 
-func TestNormalizeRemoteProducesCredentialFreeHTTPURL(t *testing.T) {
+func TestResolveRepositoryPreservesSCPStyleSSHCloneURL(t *testing.T) {
+	repoPath := newTestRepository(t, map[string]string{"README.md": "# Repository\n"})
+	runTestCommand(t, repoPath, "git", "remote", "set-url", "origin", "git@code.example.test:platform/service.git")
+
+	repository, err := resolveRepository(context.Background(), repoPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if repository.Snapshot.CanonicalID != "code.example.test/platform/service" {
+		t.Fatalf("canonical ID = %q", repository.Snapshot.CanonicalID)
+	}
+	if repository.Snapshot.CloneURL != "git@code.example.test:platform/service.git" {
+		t.Fatalf("clone URL = %q", repository.Snapshot.CloneURL)
+	}
+}
+
+func TestNormalizeRemoteProducesCredentialFreeCloneURL(t *testing.T) {
 	tests := []struct {
 		input         string
 		wantCanonical string
 		wantClone     string
 	}{
-		{input: "git@github.com:acme/repo.git", wantCanonical: "github.com/acme/repo", wantClone: "https://github.com/acme/repo.git"},
+		{input: "git@github.com:acme/repo.git", wantCanonical: "github.com/acme/repo", wantClone: "git@github.com:acme/repo.git"},
 		{input: "ssh://git@gitlab.example.com/group/sub/repo.git", wantCanonical: "gitlab.example.com/group/sub/repo", wantClone: "https://gitlab.example.com/group/sub/repo.git"},
 		{input: "https://token@github.com/acme/repo.git", wantCanonical: "github.com/acme/repo", wantClone: "https://github.com/acme/repo.git"},
 		{input: "http://localhost:8080/acme/repo", wantCanonical: "localhost:8080/acme/repo", wantClone: "http://localhost:8080/acme/repo.git"},
@@ -48,6 +64,22 @@ func TestNormalizeRemoteProducesCredentialFreeHTTPURL(t *testing.T) {
 				t.Fatalf("normalizeRemote(%q) = %q, %q", test.input, canonical, cloneURL)
 			}
 		})
+	}
+}
+
+func TestNormalizeRemotePreservesSCPTransportWithoutCredentialsInIdentity(t *testing.T) {
+	canonical, cloneURL, err := normalizeRemote("git@code.example.test:platform/service.git")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if canonical != "code.example.test/platform/service" {
+		t.Fatalf("canonical ID = %q", canonical)
+	}
+	if cloneURL != "git@code.example.test:platform/service.git" {
+		t.Fatalf("clone URL = %q", cloneURL)
+	}
+	if canonical == cloneURL || canonical == "git@code.example.test/platform/service" {
+		t.Fatalf("canonical ID contains transport identity: %q", canonical)
 	}
 }
 

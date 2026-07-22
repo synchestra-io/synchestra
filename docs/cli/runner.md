@@ -19,7 +19,9 @@ synchestra runner dispatch cancel dsp_01HXYZ --reason "superseded"
 
 Set `SYNCHESTRA_TOKEN` for Bearer authentication and optionally `SYNCHESTRA_URL` for a non-default Hub. `SYNCHESTRA_ACTOR` changes client provenance only; Hub authorization always derives from the Bearer identity.
 
-Creation resolves the credential-free origin, full immutable `HEAD` revision, branch audit ref, project ID, and subdirectory without changing the checkout. Dirty/staged/untracked files remain untouched and are not included in the immutable remote snapshot. Ad-hoc prompts do not create Tasks.
+Creation resolves the credential-free origin, full immutable `HEAD` revision, branch audit ref, project ID, and subdirectory without changing the checkout. SCP-style SSH origins such as `git@host:org/repo.git` remain SSH clone URLs so remote workers can use their authorized Git transport, while canonical repository IDs omit the transport user. No SSH command fallback runs in the CLI. Dirty/staged/untracked files remain untouched and are not included in the immutable remote snapshot. Ad-hoc prompts do not create Tasks.
+
+Text status output includes the scheduler-resolved agent, model, effort, and routing reason. Completed attempts show the published branch, commit, and validation evidence; failed attempts show the failure stage, stable code, message, and log reference.
 
 Use `--format json` for a single JSON object. Success contains `resolved` plus the operation payload; failure contains `resolved` plus `error`.
 

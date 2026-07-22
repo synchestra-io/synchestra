@@ -16,7 +16,7 @@ import (
 	dispatchcontract "github.com/synchestra-io/synchestra-servers/pkg/dispatch-contract"
 )
 
-var scpRemotePattern = regexp.MustCompile(`^(?:[^@]+@)?([^:]+):(.+)$`)
+var scpRemotePattern = regexp.MustCompile(`^((?:[^@/:]+)@)?([^/:]+):(.+)$`)
 
 type repositoryContext struct {
 	Snapshot     dispatchcontract.RepositorySnapshot
@@ -160,12 +160,13 @@ func normalizeRemote(raw string) (canonicalID string, cloneURL string, err error
 	}
 
 	if matches := scpRemotePattern.FindStringSubmatch(raw); matches != nil && !strings.Contains(raw, "://") {
-		host := strings.ToLower(matches[1])
-		repoPath := cleanRepositoryPath(matches[2])
+		transportUser := matches[1]
+		host := strings.ToLower(matches[2])
+		repoPath := cleanRepositoryPath(matches[3])
 		if host == "" || repoPath == "" {
 			return "", "", fmt.Errorf("unsupported Git origin URL")
 		}
-		return host + "/" + repoPath, "https://" + host + "/" + repoPath + ".git", nil
+		return host + "/" + repoPath, transportUser + host + ":" + repoPath + ".git", nil
 	}
 
 	parsed, parseErr := url.Parse(raw)
