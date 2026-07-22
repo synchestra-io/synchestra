@@ -14,7 +14,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	dispatchcontract "github.com/synchestra-io/synchestra-servers/pkg/dispatch-contract"
+	dispatchcontract "github.com/synchestra-io/synchestra/pkg/dispatch-contract"
 )
 
 var dispatchIDPattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$`)

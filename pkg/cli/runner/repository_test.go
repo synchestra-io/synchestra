@@ -7,6 +7,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	dispatchcontract "github.com/synchestra-io/synchestra/pkg/dispatch-contract"
 )
 
 func TestResolveRepositoryIncludesProjectSubdirectoryAndHubID(t *testing.T) {
@@ -50,9 +52,11 @@ func TestNormalizeRemoteProducesCredentialFreeCloneURL(t *testing.T) {
 		wantClone     string
 	}{
 		{input: "git@github.com:acme/repo.git", wantCanonical: "github.com/acme/repo", wantClone: "git@github.com:acme/repo.git"},
-		{input: "ssh://git@gitlab.example.com/group/sub/repo.git", wantCanonical: "gitlab.example.com/group/sub/repo", wantClone: "https://gitlab.example.com/group/sub/repo.git"},
-		{input: "https://token@github.com/acme/repo.git", wantCanonical: "github.com/acme/repo", wantClone: "https://github.com/acme/repo.git"},
+		{input: "ssh://git@gitlab.example.com/group/sub/repo.git", wantCanonical: "gitlab.example.com/group/sub/repo", wantClone: "ssh://git@gitlab.example.com/group/sub/repo.git"},
+		{input: "ssh://deploy@gitlab.example.com:2222/group/sub/repo", wantCanonical: "gitlab.example.com:2222/group/sub/repo", wantClone: "ssh://deploy@gitlab.example.com:2222/group/sub/repo.git"},
+		{input: "https://github.com/acme/repo.git", wantCanonical: "github.com/acme/repo", wantClone: "https://github.com/acme/repo.git"},
 		{input: "http://localhost:8080/acme/repo", wantCanonical: "localhost:8080/acme/repo", wantClone: "http://localhost:8080/acme/repo.git"},
+		{input: "git://localhost:9418/acme/repo", wantCanonical: "localhost:9418/acme/repo", wantClone: "git://localhost:9418/acme/repo.git"},
 	}
 	for _, test := range tests {
 		t.Run(test.input, func(t *testing.T) {
@@ -64,6 +68,41 @@ func TestNormalizeRemoteProducesCredentialFreeCloneURL(t *testing.T) {
 				t.Fatalf("normalizeRemote(%q) = %q, %q", test.input, canonical, cloneURL)
 			}
 		})
+	}
+}
+
+func TestNormalizeRemoteRejectsInlineCredentials(t *testing.T) {
+	tests := []string{
+		"https://token@github.com/acme/repo.git",
+		"https://user:password@github.com/acme/repo.git",
+		"ssh://git:password@github.com/acme/repo.git",
+		"git:password@github.com:acme/repo.git",
+	}
+	for _, remote := range tests {
+		t.Run(remote, func(t *testing.T) {
+			if _, _, err := normalizeRemote(remote); err == nil {
+				t.Fatal("credential-bearing Git origin accepted")
+			}
+		})
+	}
+}
+
+func TestNormalizedSSHRemotePassesCanonicalContractWithoutPassword(t *testing.T) {
+	canonical, cloneURL, err := normalizeRemote("ssh://git@git.example.test:2222/group/repo.git")
+	if err != nil {
+		t.Fatal(err)
+	}
+	repository := dispatchcontract.RepositorySnapshot{
+		CanonicalID:  canonical,
+		CloneURL:     cloneURL,
+		BaseRevision: "1111111111111111111111111111111111111111",
+	}
+	if err := repository.Validate(); err != nil {
+		t.Fatalf("credential-free SSH snapshot rejected: %v", err)
+	}
+	repository.CloneURL = "ssh://git:password@git.example.test:2222/group/repo.git"
+	if err := repository.Validate(); err == nil {
+		t.Fatal("contract accepted an inline SSH password")
 	}
 }
 

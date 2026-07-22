@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	dispatchcontract "github.com/synchestra-io/synchestra-servers/pkg/dispatch-contract"
+	dispatchcontract "github.com/synchestra-io/synchestra/pkg/dispatch-contract"
 )
 
 func TestCreateTextOutputGolden(t *testing.T) {

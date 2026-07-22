@@ -13,7 +13,7 @@ import (
 	"regexp"
 	"strings"
 
-	dispatchcontract "github.com/synchestra-io/synchestra-servers/pkg/dispatch-contract"
+	dispatchcontract "github.com/synchestra-io/synchestra/pkg/dispatch-contract"
 )
 
 var scpRemotePattern = regexp.MustCompile(`^((?:[^@/:]+)@)?([^/:]+):(.+)$`)
@@ -159,6 +159,13 @@ func normalizeRemote(raw string) (canonicalID string, cloneURL string, err error
 		return "", "", fmt.Errorf("git remote 'origin' is empty")
 	}
 
+	if !strings.Contains(raw, "://") {
+		at := strings.IndexByte(raw, '@')
+		if at > 0 && strings.Contains(raw[:at], ":") && strings.Contains(raw[at+1:], ":") {
+			return "", "", fmt.Errorf("git SSH origin must not contain an inline password")
+		}
+	}
+
 	if matches := scpRemotePattern.FindStringSubmatch(raw); matches != nil && !strings.Contains(raw, "://") {
 		transportUser := matches[1]
 		host := strings.ToLower(matches[2])
@@ -184,11 +191,32 @@ func normalizeRemote(raw string) (canonicalID string, cloneURL string, err error
 	if host == "" || repoPath == "" || !strings.Contains(repoPath, "/") {
 		return "", "", fmt.Errorf("unsupported Git origin URL")
 	}
-	scheme := parsed.Scheme
-	if scheme == "ssh" || scheme == "git" {
-		scheme = "https"
+	scheme := strings.ToLower(parsed.Scheme)
+	switch scheme {
+	case "http", "https":
+		if parsed.User != nil {
+			return "", "", fmt.Errorf("git HTTP(S) origin must not contain inline userinfo")
+		}
+		cloneURL = scheme + "://" + host + "/" + repoPath + ".git"
+	case "ssh":
+		transportUser := ""
+		if parsed.User != nil {
+			if _, hasPassword := parsed.User.Password(); hasPassword {
+				return "", "", fmt.Errorf("git SSH origin must not contain an inline password")
+			}
+			if parsed.User.Username() == "" {
+				return "", "", fmt.Errorf("git SSH origin username must not be empty")
+			}
+			transportUser = url.User(parsed.User.Username()).String() + "@"
+		}
+		cloneURL = "ssh://" + transportUser + host + "/" + repoPath + ".git"
+	case "git":
+		if parsed.User != nil {
+			return "", "", fmt.Errorf("git origin must not contain inline userinfo")
+		}
+		cloneURL = "git://" + host + "/" + repoPath + ".git"
 	}
-	return host + "/" + repoPath, scheme + "://" + host + "/" + repoPath + ".git", nil
+	return host + "/" + repoPath, cloneURL, nil
 }
 
 func cleanRepositoryPath(value string) string {

@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	dispatchcontract "github.com/synchestra-io/synchestra-servers/pkg/dispatch-contract"
+	dispatchcontract "github.com/synchestra-io/synchestra/pkg/dispatch-contract"
 )
 
 var fixedTime = time.Date(2026, 7, 22, 12, 34, 56, 0, time.UTC)
@@ -33,7 +33,7 @@ func newTestRepository(t *testing.T, files map[string]string) string {
 	runTestCommand(t, dir, "git", "init", "-b", "main")
 	runTestCommand(t, dir, "git", "config", "user.name", "Dispatch Test")
 	runTestCommand(t, dir, "git", "config", "user.email", "dispatch@example.com")
-	runTestCommand(t, dir, "git", "remote", "add", "origin", "https://user:placeholder-credential@github.com/acme/example.git")
+	runTestCommand(t, dir, "git", "remote", "add", "origin", "https://github.com/acme/example.git")
 	for name, content := range files {
 		path := filepath.Join(dir, filepath.FromSlash(name))
 		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {

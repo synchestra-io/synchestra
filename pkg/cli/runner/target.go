@@ -13,7 +13,7 @@ import (
 	"strings"
 	"unicode"
 
-	dispatchcontract "github.com/synchestra-io/synchestra-servers/pkg/dispatch-contract"
+	dispatchcontract "github.com/synchestra-io/synchestra/pkg/dispatch-contract"
 	"gopkg.in/yaml.v3"
 )
 
