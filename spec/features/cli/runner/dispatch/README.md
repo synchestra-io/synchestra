@@ -4,111 +4,103 @@
 
 ## Summary
 
-Dispatches a plan or task to a named runner for remote execution. One dispatch creates exactly one [session](../../session/README.md); the runner executes the dispatched unit within that session and reports status back through the existing state sync.
+Creates and observes durable remote work through the frozen `synchestra.dispatch.v1` contract. Creation accepts an ad-hoc prompt or a SpecScore Plan/Task target, returns a durable dispatch ID immediately, and never waits for a worker session.
 
-## Problem
+## Synopsis
 
-Users need a single, one-shot command to offload work from their local machine to a registered runner. Without it, remote execution requires manual coordination — copying plans, SSHing, managing credentials, babysitting progress — which defeats the purpose of having runners at all.
+```text
+synchestra runner dispatch [<target>] [--prompt <text> | --plan <target> | --task <target>]
+  [--runner <id>] [--profile fast|balanced|large] [--agent <adapter>]
+  [--model <selector>] [--effort <value>] [--format text|json]
 
-The command must:
-
-1. Accept whatever the user has on hand — a plan file path, a plan name, a task ID, or a task name.
-2. Resolve that input unambiguously against the active project's state repository.
-3. Tell a specific runner (by name) to execute it.
-4. Return enough identifiers (session ID, task ID) for the caller to monitor progress.
-5. Return quickly; not block on the session.
-
-## Behavior
-
-### Synopsis
-
-```
-synchestra runner dispatch <target> --runner <name> [--agent <agent>] [--format text|json]
+synchestra runner dispatch status <dispatch-id> [--format text|json]
+synchestra runner dispatch logs <dispatch-id> [--cursor <n>] [--format text|json]
+synchestra runner dispatch retry <dispatch-id> [--reason <text>] [--format text|json]
+synchestra runner dispatch cancel <dispatch-id> [--reason <text>] [--format text|json]
 ```
 
-### Parameters
+Exactly one creation source is required. The positional target searches both kinds; `--plan` and `--task` constrain resolution to one SpecScore kind. All source forms are mutually exclusive.
 
-| Parameter | Required | Description |
-|---|---|---|
-| `<target>` (positional) | Yes | What to dispatch — resolved per [Target resolution](#target-resolution). |
-| `--runner` | Yes | Registered runner name. |
-| `--agent` | No | Override the runner's default agent. Accepted only when the runner advertises support for multiple agents; otherwise fails with invalid-arguments. |
-| [`--format`](../../_args/format.md) | No | Output format — `text` (default) or `json`. |
+Arguments are documented in [_args/](./_args/README.md). Creation and observation use the global [`--format`](../../_args/format.md) semantics.
 
-### Target resolution
+## Deterministic repository resolution
 
-The positional `<target>` argument is resolved in this order:
+Creation resolves the containing Git root, credential-free `origin` URL, canonical repository ID, current full `HEAD^{commit}` object ID, symbolic current branch as audit-only `base_ref`, nearest project root, optional Hub project ID, and repository-relative project subdirectory. Hosted SSH-style origins are normalized to credential-free HTTP(S) clone URLs; the CLI does not perform an SSH fallback.
 
-1. **Path on disk** — if `<target>` is a path to an existing plan file (e.g., `plans/migrate.md`), the file is dispatched as a plan.
-2. **Explicit ID** — if `<target>` matches the ID format of a plan or task in the current project's state repository, it is dispatched as that resource.
-3. **Fuzzy name match** — otherwise, the CLI queries the project's active plans and tasks and attempts a name match. Exactly one match dispatches it; multiple matches list candidates and fail; zero matches fails.
+Only read-only Git commands are used. The branch, `HEAD`, refs, index, tracked worktree, staged content, and untracked files remain unchanged, including in a dirty checkout. The immutable base revision—not `base_ref`—is execution authority.
 
-In non-interactive contexts (agent-driven, piped stdin, `--format json`), ambiguity always fails fast — the CLI never prompts.
+## Source resolution
 
-### Output order
+An ad-hoc source records the prompt directly and does not create a Synchestra Task.
 
-Output is printed in two blocks, **resolution first**, then session details:
+SpecScore candidates are read from committed `HEAD`, not dirty working-tree bytes. Resolution proceeds deterministically:
 
-```
-Resolved:
-  target:  plan plans/migrate-to-typescript.md  (plan-id: PLAN-42)
-  runner:  hetzner-vm1
-  agent:   claude-code  (default for this runner)
+1. committed path;
+2. exact resource ID or canonical alias;
+3. normalized exact name;
+4. normalized substring name.
 
-Session:
-  session-id:  sess_01HXYZ…
-  task-id:     TASK-1024
-  started-at:  2026-04-18T10:22:14Z
-```
+Zero matches return not-found. Multiple matches return invalid-arguments with sorted candidates. The CLI never prompts. A resolved target records kind, canonical ID, repository-relative path, the immutable target revision, and a SHA-256 content snapshot hash. Numbered Task sections inside Plan documents are addressable as `{plan-id}#task-{number}`.
 
-Resolution is printed unconditionally — even when the target is hard-specified by ID — so the caller can verify what was understood before acting on the result. On dispatch failure after resolution, the session block is replaced by an error block; resolution stays visible.
+## Execution selectors
 
-With `--format json`, the same fields are emitted as a single JSON object: `{resolved: {...}, session: {...}}` on success, `{resolved: {...}, error: {...}}` on failure.
+The provider-neutral profiles are `fast`, `balanced`, and `large`; the default requested profile is `balanced`. `--agent`, `--model`, and `--effort` are passed unchanged. Model values may be exact names or adapter selectors such as `sonnet`. The CLI does not map models or encode fallback instructions in prompt prose. It records the v1 exact-selector default, `fallback.mode: reject`; routing and mappings belong to the Hub scheduler.
 
-### Session lifetime
+`--runner` sets the hard `worker_constraints.runner_id`. Omitting it permits any authorized eligible worker.
 
-One dispatch creates one session. If the dispatched unit is a plan with subtasks, the remote agent handles those subtasks within the same session — the decomposition is opaque to the CLI. Fan-out across multiple runners requires multiple dispatch calls.
+## Hub transport and authentication
 
-### Exit codes
+The CLI sends Bearer-authenticated requests to these public caller endpoints:
 
-Standard CLI exit codes apply (see [CLI exit code contract](../../README.md#exit-code-contract)). This command uses:
-
-| Exit code | Meaning |
+| Operation | Method and route |
 |---|---|
-| `0` | Dispatched successfully; session started |
-| `1` | Conflict — targeted task was claimed by another agent before the runner could take it |
-| `2` | Invalid arguments, ambiguous fuzzy match, or unsupported `--agent` override |
-| `3` | Target not found |
-| `4` | Target is in a non-dispatchable state (already terminal) |
-| `80` | Runner not found or not registered to this user |
-| `81` | Runner rejected the dispatch (capacity, incompatible agent, or Hub-side error) |
-| `101` | Unauthenticated — run `synchestra auth login` first |
+| create | `POST /v1/dispatches` |
+| status | `GET /v1/dispatches/{id}` |
+| logs | `GET /v1/dispatches/{id}/logs?cursor={n}` |
+| retry | `POST /v1/dispatches/{id}/retry` |
+| cancel | `POST /v1/dispatches/{id}/cancel` |
 
-Exit codes `80`–`89` are reserved for the CLI Runner feature; `101`–`109` for CLI Auth. These ranges are registered in the [CLI](../../README.md#command-group-reserved-ranges) parent feature.
+It never calls scheduler/worker claim or attempt-owner endpoints. Each mutation carries a generated idempotency/operation ID. `created_by` and `requested_by` record configurable client provenance (`synchestra-cli` by default); Bearer authentication remains authoritative.
 
-## Dependencies
+Configuration follows existing CLI precedence. `SYNCHESTRA_URL`, `SYNCHESTRA_TOKEN`, and `SYNCHESTRA_ACTOR` override project/global configuration. A project's `synchestra.yaml` `hub.endpoint` overrides the global endpoint. Global values are read from `SYNCHESTRA_CONFIG`, `~/.synchestra.yaml`, or the compatibility path `~/.synchestra/config.yaml`. Tokens are never printed.
 
-- [cli/runner](../README.md) — parent feature; defines runner identity and sync behaviour
-- [cli/session](../../session/README.md) — every successful dispatch produces a session observable via this feature
-- [cli/auth](../../auth/README.md) — unauthenticated dispatch fails with `101`
-- [runner](../../../runner/README.md) — product-level runner lifecycle and registration
-- [plan](https://github.com/specscore/specscore/blob/main/spec/features/plan/README.md) — SpecScore plan format; plans are one valid target
-- [task](../../task/README.md) — tasks are the other valid target; dispatching a task triggers a claim
+Every response must carry exactly `synchestra.dispatch.v1`, including returned Dispatch and Attempt records. A mismatch exits `82` with an upgrade-the-older-component diagnostic; the CLI never guesses or downgrades.
+
+## Output
+
+Text creation output has stable `Resolved` and `Dispatch` blocks. It includes source identity, repository/revision, requested selectors, runner constraint, durable dispatch ID, status, and creation time. It does not echo the prompt.
+
+JSON output is one object. Success contains `resolved` and the operation payload (`dispatch`, `attempts`, or `logs`); failure contains `resolved` and `error`. A success object never contains `error`, and a failure object never contains `dispatch`.
+
+## Exit codes
+
+| Code | Meaning |
+|---:|---|
+| `0` | Success |
+| `1` | Conflict |
+| `2` | Invalid/unsupported arguments, selector, or ambiguous target |
+| `3` | Dispatch or target not found |
+| `4` | Invalid dispatch lifecycle state |
+| `10` | Unexpected response/runtime failure |
+| `80` | Explicit runner not found |
+| `81` | No eligible worker satisfies the constraints |
+| `82` | Incompatible dispatch protocol |
+| `101` | Unauthenticated |
+| `102` | Hub unreachable |
 
 ## Acceptance Criteria
 
-1. Dispatching with an existing plan file path creates a session and prints both a resolution block and a session block before exiting 0.
-2. Dispatching with a task ID that is currently `queued` transitions the task to `claimed` via the normal task lifecycle; a conflict with another agent returns exit code 1.
-3. Dispatching with a name that matches multiple plans or tasks lists the candidates on stderr and exits with code 2 without creating a session.
-4. Dispatching to a runner name the caller has not registered exits with code 80.
-5. Dispatching without valid user credentials exits with code 101 and prints no session details.
-6. With `--format json`, output is a single JSON object with `resolved` always present and either `session` or `error` present — never both.
+1. Ad-hoc creation emits the v1 request shape and does not create a Task.
+2. Plan and Task path/ID/name resolution records an immutable revision and content hash; ambiguity fails before any Hub request.
+3. Creation leaves branch, `HEAD`, refs, index, staged/unstaged content, and untracked files unchanged in a dirty checkout.
+4. Optional runner/profile/agent/model/effort fields are passed as requested without CLI routing or prompt fallback prose.
+5. Create returns a durable dispatch ID immediately; status/logs/retry/cancel route only to the public caller endpoints above.
+6. Text output is stable and JSON is exactly one object with `resolved` plus a success payload or error.
+7. Invalid arguments, authentication, runner matching, lifecycle errors, transport failure, and protocol mismatch use the documented stable exit codes.
 
 ## Outstanding Questions
 
-1. Should `--watch` be added for synchronous UX, or is `session logs --follow` sufficient composition?
-2. Should the Hub queue dispatches when the runner is at capacity, or reject them (current spec: reject with 81)?
-3. When the runner's default agent is already correct but the user passes `--agent` with the same value, is that a no-op or an error? Leaning no-op.
+None at this time.
 
 ---
 *This document follows the https://specscore.md/feature-specification*

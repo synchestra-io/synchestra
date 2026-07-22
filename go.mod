@@ -8,6 +8,7 @@ require (
 	github.com/spf13/cobra v1.10.2
 	github.com/synchestra-io/rehearse v0.2.0
 	github.com/synchestra-io/specscore v0.3.7
+	github.com/synchestra-io/synchestra-servers v0.25.1-0.20260722072746-b62e8b0b3537
 	gopkg.in/yaml.v3 v3.0.1
 )
 
