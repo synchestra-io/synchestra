@@ -13,6 +13,7 @@ import (
 	"github.com/synchestra-io/synchestra/pkg/cli/code"
 	"github.com/synchestra-io/synchestra/pkg/cli/feature"
 	"github.com/synchestra-io/synchestra/pkg/cli/project"
+	"github.com/synchestra-io/synchestra/pkg/cli/runner"
 	"github.com/synchestra-io/synchestra/pkg/cli/spec"
 	statecmd "github.com/synchestra-io/synchestra/pkg/cli/state"
 	"github.com/synchestra-io/synchestra/pkg/cli/synchinit"
@@ -33,8 +34,6 @@ func Run(
 	fatal func(error),
 	logf func(...any),
 ) {
-	_ = osUserHomeDir
-	_ = osGetwd
 	_ = logf
 	rootCmd := &cobra.Command{
 		Use:           "synchestra",
@@ -62,6 +61,7 @@ func Run(
 		feature.Command(),
 		code.Command(),
 		spec.Command(),
+		runner.Command(runner.Dependencies{Getwd: osGetwd, UserHomeDir: osUserHomeDir}),
 		statecmd.Command(),
 		taskcmd.Command(),
 	)
