@@ -68,9 +68,5 @@ Synchestra is not always the direct caller of the LLM. When an agent runs inside
 - Should there be a cost budget feature that constrains model selection? (e.g., "this project has a $50/day budget, optimize accordingly")
 - How does the versioned model-profile mapping stay current as new models are released?
 
-## MVP Implementation Evidence
-
-The Remote Task Dispatch slice is implemented without claiming completion of the broader conceptual routing feature. The scheduler persists requested and resolved profile, agent, model, effort, mapping version, and routing reason. Mapping version `ordered-capabilities-v1` ranks `fast`, `balanced`, and `large` across each worker's ordered advertised models/efforts, caps to the last advertised value, treats adapter aliases such as `sonnet` as opaque exact selectors, rejects unsupported exact selectors by default, and permits substitution only through an explicit allow-list/reason. Scheduler tests cover ordered mapping, exact aliases/effort, configured fallback, unsupported selectors, and incompatible protocol behavior; the local vertical E2E confirms the real Claude adapter receives exact `--model sonnet --effort high` arguments.
-
 ---
 *This document follows the https://specscore.md/feature-specification*

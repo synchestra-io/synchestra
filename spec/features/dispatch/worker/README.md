@@ -102,13 +102,5 @@ For the personal proof, the existing XDG-installed host runs as an `ai` user ser
 
 1. Repository cache retention and disk limits should be measured on the personal VM before choosing automatic garbage collection defaults.
 
-## Implementation Evidence
-
-[`synchestra-vm` PR #5](https://github.com/synchestra-io/synchestra-vm/pull/5) implements the outbound claim loop, bounded backoff, capability advertisement, concurrency, heartbeat/cancellation/ownership-loss handling, graceful shutdown, token refresh, and the repository-executor adapter. Environment checkpoint `f307c149d6ea45db36b5964df99bc3a3d7a6cf20` prevents worker registration and arbitrary host state from crossing into child processes. Contract reconciliation `fa325acc9161eeee5e469b9a116d03775dcee299` pins Synchestra `a14007d...` and executor `cf7ae4a...`.
-
-Integration checkpoint `84a8e6de275713baeabdb9d3c5b0eb76e17da923` passes the real local Hub -> two worker processes -> default executor/fake Claude -> Git branch flow, including heartbeat, cancellation, SIGKILL/lease recovery, retry history, durable logs, exact model arguments, and caller-checkout immutability. User-service restart on the registered personal VM is not yet certified because the required external control machine is unavailable in the current environment.
-
-Operational hardening through `e98e9276321be3cc69ed21042136e18e0888ecc7` adds fixed-cardinality health diagnostics and lifecycle signals, claim-transport and shutdown-timeout failure injection, complete per-attempt diagnostic cleanup, atomic per-user upgrade/rollback guidance, and explicit cache/worktree retention behavior. The primary final-head vertical rerun passes in 29.32 seconds. No live service was changed.
-
 ---
 *This document follows the https://specscore.md/feature-specification*

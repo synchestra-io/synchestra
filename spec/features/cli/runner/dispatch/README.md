@@ -113,9 +113,5 @@ Exit codes `80`–`89` are reserved for the CLI Runner feature; `101`–`109` fo
 1. Should `--watch` compose `dispatch status` and session logs, or remain outside the MVP?
 2. When the runner's default agent is already correct but the user passes `--agent` with the same value, is that a no-op or an error? Leaning no-op.
 
-## Implementation Evidence
-
-[`synchestra` PR #9](https://github.com/synchestra-io/synchestra/pull/9) implements ad-hoc and SpecScore Plan/Task submission, immutable repository/base resolution, optional runner constraints, provider-neutral profiles, exact selectors, status/logs/retry/cancel, stable text/JSON output, and documented exit codes. Commit `08283992b6e5b77c1da8ffabdc90c6039de927e7` also prevents repository-owned configuration from redirecting the user's Hub bearer credential. Unit tests and the published local vertical E2E prove the CLI leaves staged, unstaged, and untracked caller state unchanged.
-
 ---
 *This document follows the https://specscore.md/feature-specification*

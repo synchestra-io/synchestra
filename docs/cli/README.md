@@ -55,8 +55,6 @@ export SYNCHESTRA_TOKEN=tok_your_token_here
 | `synchestra auth token create` | Create an API token | [auth.md](auth.md) |
 | `synchestra auth token list` | List API tokens | [auth.md](auth.md#list) |
 | `synchestra auth token revoke <id>` | Revoke a token | [auth.md](auth.md#revoke) |
-| `synchestra runner dispatch` | Create durable remote work | [runner.md](runner.md) |
-| `synchestra runner dispatch status|logs|retry|cancel` | Observe or control remote work | [runner.md](runner.md) |
 
 ---
 

@@ -11,6 +11,7 @@ Implementation plans for `synchestra`.
 
 | Plan | Status | Progress | Features | Effort | Impact | Author | Approved |
 |---|---|---|---|---|---|---|---|
+| [remote-task-dispatch-mvp](remote-task-dispatch-mvp.md) | Approved | 0% | dispatch, dispatch/scheduler, dispatch/worker, agent-skills/dispatch, cli/runner/dispatch | XL | critical | @alex | 2026-07-22 |
 | [e2e-testing-framework](e2e-testing-framework/) | draft | - | acceptance-criteria, testing-framework, testing-framework/test-scenario, testing-framework/test-runner, feature | - | - | @alex | - |
 | [chat-feature](chat-feature/) | draft | - | chat, chat/workflow | - | - | @alex | - |
 | &ensp;[chat-infrastructure](chat-feature/chat-infrastructure/) | draft | - | chat | L | high | @alex | - |

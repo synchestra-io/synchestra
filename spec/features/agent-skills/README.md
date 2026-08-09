@@ -87,6 +87,21 @@ Claude Code skills load in three tiers. Synchestra skills exploit all three to k
 
 Only tier 1 is always in the agent's context. Tier 2 loads on skill invocation. Tier 3 loads only when the agent explicitly reads the file after picking the right verb from the index. This is how a plugin with 34 CLI verbs fits comfortably under 10 slash-menu entries without sacrificing per-verb detail.
 
+## Contents
+
+| Directory | Description |
+|---|---|
+| [dispatch](dispatch/README.md) | Human-visible remote-dispatch command that delegates to the deterministic runner dispatch CLI |
+| [project-setup](project-setup/README.md) | Conversational setup flow for selecting a project topology and invoking the project CLI |
+
+### Dispatch
+
+Defines the `/dispatch` command surface without changing the resource-level skill rule. The visible command delegates to the runner skill's dispatch reference and leaves queueing and execution to Synchestra.
+
+### Project Setup
+
+Guides a user through project topology choices, translates the answers into deterministic `synchestra project` commands, and verifies the resulting configuration.
+
 ## Skill File Format
 
 Skills live in the dedicated [`ai-plugin-synchestra`](https://github.com/synchestra-io/ai-plugin-synchestra) repository, published as the `synchestra-cli` plugin via the `synchestra-io` Claude Code marketplace. Each resource-level skill is a directory containing `SKILL.md` and a `references/` subdirectory with per-verb files.

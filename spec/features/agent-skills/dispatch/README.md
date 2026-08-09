@@ -86,9 +86,5 @@ The plugin recognizes provider-neutral `@fast`, `@balanced`, and `@large`, plus 
 
 1. Whether `/dispatch` is a universal unnamespaced alias on every supported agent platform depends on each platform's collision rules; the namespaced command is always valid.
 
-## Implementation Evidence
-
-[`ai-plugin-synchestra` PR #2](https://github.com/synchestra-io/ai-plugin-synchestra/pull/2), through commit `42febf9ac51057020284419cbedd471cfaece5a1`, adds the namespaced `/synchestra:dispatch` command and thin runner reference. It parses `@fast`, `@balanced`, `@large`, `@haiku`, `@sonnet`, and `@opus`, and routes create/status/logs/retry/cancel to the deterministic CLI without embedding scheduler, repository, SSH, retry, or model-mapping logic in prompt prose. Structured CLI failures are preserved without silent retry, selector substitution, protocol fallback, credential inspection, or SSH bypass. Claude plugin manifest validation and semantic command tests pass. An unnamespaced alias remains platform/collision dependent as specified.
-
 ---
 *This document follows the https://specscore.md/feature-specification*
