@@ -437,6 +437,20 @@ Environment overrides: `SYNCHESTRA_VERSION`, `SYNCHESTRA_INSTALL_DIR` (default: 
 
 Binaries are published to [`synchestra-releases`](https://github.com/synchestra-io/synchestra-releases/releases) under `cli-v*` tags. Pick the archive for your platform from the latest `cli-*` release.
 
+### Self-update
+
+Once installed, `synchestra self-update` (alias `synchestra update`) updates the binary in place:
+
+```bash
+synchestra self-update --check     # report whether a newer release is available, without applying it
+synchestra self-update             # update to the latest cli-v* release (prompts for confirmation)
+synchestra self-update --yes       # skip the confirmation prompt (scripts, CI, agents)
+synchestra self-update --version 0.15.1   # install a specific release instead of the latest
+synchestra self-update --dry-run   # report the exact asset URL that would be fetched, without downloading anything
+```
+
+Self-update is built on the shared [`github.com/strongo/selfupdate`](https://github.com/strongo/selfupdate) module, which owns install-method detection, release resolution, checksum verification, and atomic replacement. It resolves releases from the public [`synchestra-io/synchestra-releases`](https://github.com/synchestra-io/synchestra-releases) mirror under the `cli-v*` tag prefix — the same mirror `synchestra-releases` publishes for every Synchestra product, disambiguated by tag prefix. See [spec/features/cli/self-update/README.md](spec/features/cli/self-update/README.md) for this CLI's own configuration and exit-code mapping.
+
 ## Getting Started
 
 **Start with specs and CLI (open source):**

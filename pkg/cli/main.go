@@ -14,6 +14,7 @@ import (
 	"github.com/synchestra-io/synchestra/pkg/cli/feature"
 	"github.com/synchestra-io/synchestra/pkg/cli/project"
 	"github.com/synchestra-io/synchestra/pkg/cli/runner"
+	selfupdatecmd "github.com/synchestra-io/synchestra/pkg/cli/selfupdate"
 	"github.com/synchestra-io/synchestra/pkg/cli/spec"
 	statecmd "github.com/synchestra-io/synchestra/pkg/cli/state"
 	"github.com/synchestra-io/synchestra/pkg/cli/synchinit"
@@ -27,14 +28,14 @@ var (
 	date    = "unknown"
 )
 
-func Run(
-	args []string,
+// newRootCmd builds the synchestra root command and its full subcommand
+// tree. Split out from Run purely so tests can walk the resulting command
+// tree (e.g. resolving "self-update" and its "update" alias) without going
+// through fang.Execute or touching os.Args.
+func newRootCmd(
 	osUserHomeDir func() (string, error),
 	osGetwd func() (string, error),
-	fatal func(error),
-	logf func(...any),
-) {
-	_ = logf
+) *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use:           "synchestra",
 		Short:         "Synchestra CLI",
@@ -64,7 +65,21 @@ func Run(
 		runner.Command(runner.Dependencies{Getwd: osGetwd, UserHomeDir: osUserHomeDir}),
 		statecmd.Command(),
 		taskcmd.Command(),
+		selfupdatecmd.Command(version),
 	)
+
+	return rootCmd
+}
+
+func Run(
+	args []string,
+	osUserHomeDir func() (string, error),
+	osGetwd func() (string, error),
+	fatal func(error),
+	logf func(...any),
+) {
+	_ = logf
+	rootCmd := newRootCmd(osUserHomeDir, osGetwd)
 
 	rootCmd.SetArgs(args[1:])
 	if err := fang.Execute(context.Background(), rootCmd, fang.WithVersion(version), fang.WithCommit(commit)); err != nil {
