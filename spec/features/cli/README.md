@@ -30,7 +30,7 @@ synchestra server project list
 synchestra server project add
 ```
 
-Bootstrap is the one documented exception to this pattern: the top-level [`synchestra init`](init/README.md) is a bare verb (matching `git init`, `npm init`, `cargo init`).
+Bootstrap and self-update are the documented exceptions to this pattern: the top-level [`synchestra init`](init/README.md) is a bare verb (matching `git init`, `npm init`, `cargo init`), and the top-level [`synchestra self-update`](self-update/README.md) (alias `update`) is a bare verb-phrase (matching `gh` and other CLIs that ship their own updater as a top-level command rather than a `<resource> <verb>` pair).
 
 **Singular nouns** — resource names are always singular (`task`, `skill`, `project`), never plural. This matches the convention used by `gh` (`gh repo list`, `gh issue new`), `kubectl` (`kubectl pod list`), and most modern CLIs. The resource name identifies the *type*, not a collection.
 
@@ -158,13 +158,14 @@ Arguments used by several (but not all) subcommands still go at the group level 
 
 All CLI command READMEs and skill READMEs link to the canonical `_args` document when mentioning an argument. This ensures a single source of truth per argument.
 
-## Top-Level Commands (Bootstrap Exception)
+## Top-Level Commands (Bootstrap and Self-Update Exceptions)
 
-The CLI carries a single deliberate exception to the noun-verb rule: the bootstrap entry-point lives at the top level, matching the muscle-memory established by `git init`, `npm init`, and `cargo init`. This is the only command in v1 that is a bare verb.
+The CLI carries two deliberate exceptions to the noun-verb rule. The bootstrap entry-point lives at the top level, matching the muscle-memory established by `git init`, `npm init`, and `cargo init`. The updater is likewise a top-level bare verb-phrase, not a `<resource> <verb>` pair — there is no "resource" self-update acts on other than the CLI itself, matching how `gh` and most self-updating CLIs surface this command.
 
 | Entry | Description |
 |---|---|
 | [init](init/README.md) | Bootstrap a Synchestra-managed project — creates `synchestra.yaml` at the repo root and sets up state per the chosen mode (embedded by default). Top-level placement is intentional. |
+| [self-update](self-update/README.md) | Update the installed `synchestra` binary in place (alias `update`). Binds the shared `github.com/strongo/selfupdate` module; this repo's Feature covers only synchestra's own release identity, command surface, and exit-code mapping. |
 
 ## Command Groups
 
