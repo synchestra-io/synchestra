@@ -64,8 +64,9 @@ func resolveRepository(ctx context.Context, cwd string) (repositoryContext, erro
 	if err != nil {
 		return repositoryContext{}, unexpected("resolve current directory", err)
 	}
-	projectRoot := findProjectRoot(absCWD, root)
-	subdirectory, err := filepath.Rel(root, projectRoot)
+	relationRoot, relationCWD := resolvePhysicalPaths(root, absCWD)
+	physicalProjectRoot := findProjectRoot(relationCWD, relationRoot)
+	subdirectory, err := filepath.Rel(relationRoot, physicalProjectRoot)
 	if err != nil {
 		return repositoryContext{}, unexpected("resolve project subdirectory", err)
 	}
@@ -73,6 +74,11 @@ func resolveRepository(ctx context.Context, cwd string) (repositoryContext, erro
 		subdirectory = ""
 	}
 	subdirectory = filepath.ToSlash(subdirectory)
+	root = lexicalRepositoryRoot(absCWD, relationRoot, relationCWD, root)
+	projectRoot := root
+	if subdirectory != "" {
+		projectRoot = filepath.Join(root, filepath.FromSlash(subdirectory))
+	}
 
 	revisionOutput, err := reader.run(ctx, root, "rev-parse", "--verify", "HEAD^{commit}")
 	if err != nil {
@@ -80,7 +86,7 @@ func resolveRepository(ctx context.Context, cwd string) (repositoryContext, erro
 	}
 	revision := strings.TrimSpace(string(revisionOutput))
 
-	remoteOutput, err := reader.run(ctx, root, "remote", "get-url", "origin")
+	remoteOutput, err := reader.run(ctx, root, "config", "--get", "remote.origin.url")
 	if err != nil {
 		return repositoryContext{}, notFound("Git remote 'origin' is required for remote dispatch")
 	}
@@ -113,6 +119,31 @@ func resolveRepository(ctx context.Context, cwd string) (repositoryContext, erro
 	return repositoryContext{
 		Snapshot: snapshot, Root: root, ProjectRoot: projectRoot, Subdirectory: subdirectory,
 	}, nil
+}
+
+func lexicalRepositoryRoot(cwd, physicalRoot, physicalCWD, fallback string) string {
+	relativeCWD, err := filepath.Rel(physicalRoot, physicalCWD)
+	if err != nil || relativeCWD == "." || strings.HasPrefix(relativeCWD, ".."+string(filepath.Separator)) || relativeCWD == ".." {
+		return fallback
+	}
+	lexicalRoot := cwd
+	for range strings.Split(relativeCWD, string(filepath.Separator)) {
+		lexicalRoot = filepath.Dir(lexicalRoot)
+	}
+	return lexicalRoot
+}
+
+// resolvePhysicalPaths aligns Git's physical top-level path with the caller's
+// path before computing a subdirectory. macOS commonly exposes /var through a
+// /private/var symlink; mixing those spellings would otherwise manufacture a
+// parent-traversing relative path for a project that is inside its repository.
+func resolvePhysicalPaths(root, cwd string) (string, string) {
+	physicalRoot, rootErr := filepath.EvalSymlinks(root)
+	physicalCWD, cwdErr := filepath.EvalSymlinks(cwd)
+	if rootErr != nil || cwdErr != nil {
+		return root, cwd
+	}
+	return physicalRoot, physicalCWD
 }
 
 func findProjectRoot(start, gitRoot string) string {
