@@ -19,7 +19,7 @@ func lintCommand() *cobra.Command {
 		Use:   "lint [PATH]",
 		Short: "Validate spec tree for structural convention violations",
 		Long: `Scans the specification tree and reports violations of structural
-conventions (README.md files, Outstanding Questions sections, heading
+conventions (README.md files, Open Questions sections, heading
 levels, feature references, internal links, index entries).
 
 Violations are categorized by severity: error (must fix), warning (should

@@ -78,7 +78,7 @@ synchestra server status --path /opt/synchestra
 synchestra mcp --path ~/projects/my-project
 ```
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 ```
@@ -241,7 +241,7 @@ Exit codes `1` (Conflict) and `4` (Invalid state transition) do not apply — `s
 8. Run in foreground, stream logs to stdout/stderr
 9. On SIGINT (Ctrl+C) or SIGTERM: clean shutdown (drain connections, exit 0)
 
-## Outstanding Questions
+## Open Questions
 
 - Should `serve` support hot-reload when spec/state files change (file watching)?
 - Should there be a `--log-level` argument?
@@ -286,7 +286,7 @@ Path to the TLS certificate file. Required when `--https` is used. See [tls-cert
 
 Path to the TLS private key file. Required when `--https` is used. See [tls-key.md](tls-key.md).
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 ```
@@ -334,7 +334,7 @@ synchestra serve --http 0.0.0.0:3000
 synchestra serve --http --mcp
 ```
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 ```
@@ -379,7 +379,7 @@ synchestra serve --https --tls-cert cert.pem --tls-key key.pem
 synchestra serve --http --https 0.0.0.0:443 --tls-cert cert.pem --tls-key key.pem
 ```
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 ```
@@ -431,7 +431,7 @@ synchestra serve --http --mcp sse://localhost:3001
 synchestra serve --mcp sse://localhost:3001
 ```
 
-## Outstanding Questions
+## Open Questions
 
 - Should `--mcp` without a value and without `--http`/`--https` be an error, or should it implicitly start an HTTP listener?
 ```
@@ -467,7 +467,7 @@ The corresponding field in [`synchestra-server.yaml`](../../server/synchestra-se
 synchestra serve --https --tls-cert /etc/ssl/certs/synchestra.pem --tls-key /etc/ssl/private/synchestra.key
 ```
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 ```
@@ -503,7 +503,7 @@ The corresponding field in [`synchestra-server.yaml`](../../server/synchestra-se
 synchestra serve --https --tls-cert cert.pem --tls-key key.pem
 ```
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 ```
@@ -574,7 +574,7 @@ Reports whether the daemon is running, its PID, uptime, and listening addresses.
 
 Lists and manages projects in the server config. Does not require the server to be running — reads directly from `synchestra-server.yaml`. See [projects/README.md](projects/README.md).
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 ```
@@ -639,7 +639,7 @@ log_file: "./synchestra.log"        # default: relative to config dir
 - `spec` and `state` paths must point to valid directories containing the expected marker files.
 - Relative paths are resolved relative to the directory containing `synchestra-server.yaml`.
 
-## Outstanding Questions
+## Open Questions
 
 - Should the config support environment variable interpolation (e.g., `${TLS_CERT_PATH}`)?
 - Should there be an `auth` section for configuring API authentication?
@@ -706,7 +706,7 @@ The daemon writes its PID to the configured `pid_file` and redirects output to t
 6. Start configured listeners
 7. Parent process exits `0`
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 ```
@@ -752,7 +752,7 @@ Stops a running Synchestra daemon by reading the PID file and sending SIGTERM. I
 6. Remove PID file
 7. Exit `0`
 
-## Outstanding Questions
+## Open Questions
 
 - What is the timeout for waiting for the process to exit before sending SIGKILL?
 ```
@@ -795,7 +795,7 @@ Restarts the Synchestra daemon by stopping then starting it. If the daemon is no
 2. Execute `synchestra server start --path <dir>` logic
 3. Report the exit code from `start` (stop is idempotent)
 
-## Outstanding Questions
+## Open Questions
 
 - Should restart support graceful connection draining before stopping?
 ```
@@ -840,7 +840,7 @@ Reports whether the Synchestra daemon is running, its PID, uptime, and listening
 4. Check if process is alive
 5. Output status: running/stopped, PID, uptime, configured listeners, project count
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 ```
@@ -911,7 +911,7 @@ Adds a new project (spec + state repo pair) to `synchestra-server.yaml`. See [ad
 2. Find and parse `synchestra-server.yaml`; exit `3` if not found
 3. Output the list of configured projects
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 ```
@@ -963,7 +963,7 @@ Cross-linked with the API endpoint [`POST /api/v1/projects`](../../../../../api/
 6. Append the new project entry to `synchestra-server.yaml`
 7. Exit `0`
 
-## Outstanding Questions
+## Open Questions
 
 - Should this command validate that the spec and state repos cross-reference each other?
 ```
@@ -992,7 +992,7 @@ Path to the project's spec repository. See [spec.md](spec.md).
 
 Path to the project's state repository. See [state.md](state.md).
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 ```
@@ -1033,7 +1033,7 @@ synchestra server projects add --spec /home/user/projects/my-project --state /ho
 synchestra server projects add --spec ../specs/my-project --state ../state/my-project
 ```
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 ```
@@ -1071,7 +1071,7 @@ The corresponding field in [`synchestra-server.yaml`](../../../synchestra-server
 synchestra server projects add --spec /home/user/projects/my-project --state /home/user/state/my-project
 ```
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 ```
@@ -1152,7 +1152,7 @@ MCP client configuration (e.g., Claude Code `settings.json`):
 }
 ```
 
-## Outstanding Questions
+## Open Questions
 
 - Should `synchestra mcp` support multi-project if run in a server dir, or always single-project?
 - What MCP tools and resources should be exposed? (Presumably mirrors CLI commands as MCP tools.)
@@ -1214,7 +1214,7 @@ All endpoints are under `/api/v1/projects/`.
 | `409 Conflict` | 1 | `conflict` | Project already exists |
 | `500 Internal Server Error` | 10+ | `internal_error` | Unexpected failure |
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 ```

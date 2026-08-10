@@ -45,6 +45,6 @@ The package intentionally contains no scheduler, HTTP routing, Firestore, reposi
 - Claim is idempotent per worker `request_id`; all other mutations are idempotent per `operation_id`.
 - Route spelling and authentication middleware are implementation-owned. The JSON bodies and lifecycle invariants are not.
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

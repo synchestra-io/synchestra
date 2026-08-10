@@ -81,7 +81,7 @@ config, err := store.Project().Config(ctx)
 
 See `spec/features/state-store/` for the full feature specification.
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 ```
@@ -482,7 +482,7 @@ Stub implementation. All methods return `errNotImplemented`. The full implementa
 
 See `spec/features/state-store/backends/git/` for the method-to-git-operation mapping.
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 ```

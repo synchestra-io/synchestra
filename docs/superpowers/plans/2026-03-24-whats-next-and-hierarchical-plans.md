@@ -172,7 +172,7 @@ The report is opt-in, controlled by the `planning.whats_next` setting (see [Proj
 
 AI explanation of prioritization.
 
-## Outstanding Questions
+## Open Questions
 
 (ambiguities surfaced during analysis)
 \```
@@ -951,7 +951,7 @@ Write `spec/plans/WHATS-NEXT.md` with this structure:
 
 2-5 sentences explaining the prioritization: dependency unlocks, ROI, momentum, competing priorities.
 
-## Outstanding Questions
+## Open Questions
 
 (any ambiguities surfaced during analysis)
 \```
@@ -994,7 +994,7 @@ Generates or updates the `WHATS-NEXT.md` prioritization report.
 
 See [SKILL.md](SKILL.md) for full instructions.
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 ```

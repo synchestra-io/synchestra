@@ -288,6 +288,6 @@ go build ./...
 go vet ./...
 ```
 
-## Outstanding Questions
+## Open Questions
 
 - None at this time.

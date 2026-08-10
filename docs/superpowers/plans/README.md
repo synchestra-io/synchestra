@@ -14,6 +14,6 @@ To create or manage plans, see:
 - [Plan specification](https://github.com/specscore/specscore/blob/main/spec/features/plan/README.md#behavior) — structure and format
 - [CLI commands](../cli/plan.md) — `synchestra plan create`, `submit`, `approve`, etc.
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

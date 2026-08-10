@@ -47,6 +47,6 @@ type checker interface {
 | `forward-refs` | [checkers_extended.go](checkers_extended.go) | warning |
 | `code-annotations` | [checkers_extended.go](checkers_extended.go) | warning |
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

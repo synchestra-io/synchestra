@@ -27,6 +27,6 @@ Implements the `synchestra project` command group. Currently contains the `new` 
 
 Parses repository references in any of three formats (HTTPS URL, SSH URL, short `hosting/org/repo` path), resolves them to local disk paths under `repos_dir`, and provides canonical HTTPS origin URLs.
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

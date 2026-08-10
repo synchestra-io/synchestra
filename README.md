@@ -543,7 +543,7 @@ Active [plans](spec/plans/README.md) and their current state:
 
 Plans nest recursively — a plan is a composite task whose children may themselves be plans. Optional ROI metadata enables prioritization. A generated What's Next report can be enabled to surface recommended next targets after plan or task completion. See [SpecScore plan specification](https://github.com/specscore/specscore/blob/main/spec/features/plan/README.md) for the plan format.
 
-## Outstanding Questions
+## Open Questions
 
 - What is the full lifecycle of a cross-repo task — from branch reservation through integration testing to merge? (Early
   vision exists; dedicated specification pending. See [Cross-Repo Sync](spec/features/cross-repo-sync/README.md).)

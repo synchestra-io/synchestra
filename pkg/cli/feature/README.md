@@ -25,6 +25,6 @@ Implements the `synchestra feature` command group — querying and scaffolding f
 - `slug.go` — Slug generation and validation algorithms
 - `template.go` — README template generation and status validation
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

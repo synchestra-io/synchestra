@@ -4,6 +4,6 @@ Implements the `synchestra project` command group. Currently contains the `new` 
 
 Includes config file types and read/write helpers for `synchestra-spec-repo.yaml`, `synchestra-state-repo.yaml`, and `synchestra-code-repo.yaml`, as well as project title derivation logic.
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

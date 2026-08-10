@@ -375,7 +375,7 @@ CLI commands for manual state repository synchronization.
 - `synchestra state push` — push local state to origin
 - `synchestra state sync` — full bidirectional sync
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 ```

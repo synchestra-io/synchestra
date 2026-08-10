@@ -189,7 +189,7 @@ Two optional fields added to the plan document header:
 Brief AI explanation of prioritization — dependency unlocks, ROI ratio,
 momentum, competing priorities.
 
-## Outstanding Questions
+## Open Questions
 
 (ambiguities the AI surfaced during analysis)
 ```
@@ -224,7 +224,7 @@ The explicit command `synchestra plans whats-next` works regardless of config se
 4. Feature status — features closer to "stable" get a boost
 5. AI inference from plan complexity when ROI metadata is absent
 
-## Outstanding Questions
+## Open Questions
 
 - Should `synchestra plans whats-next` support a `--dry-run` flag that prints the report without committing?
 - Should the report include a "Blocked" section for plans that are blocked on external dependencies?

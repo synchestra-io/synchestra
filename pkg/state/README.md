@@ -21,6 +21,6 @@ config, err := store.Project().Config(ctx)
 
 See `spec/features/state-store/` for the full feature specification.
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

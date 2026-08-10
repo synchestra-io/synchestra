@@ -292,7 +292,7 @@ spec/api/
 6. **`--path` is shared across `serve`, `server`, and `mcp`** — same traversal logic. Placed at the global `_args/` level since it may apply to future commands; the `Supported by` section in the arg doc limits its scope.
 7. **`server projects` reads config directly** — does not require the server to be running.
 
-## Outstanding Questions
+## Open Questions
 
 - Should `synchestra serve` support hot-reload when spec/state files change (file watching)?
 - Should `server projects add` validate that spec and state repos cross-reference each other before adding?

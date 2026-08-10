@@ -4,6 +4,6 @@ Thin wrapper around git CLI operations used by commands that mutate repositories
 
 All functions shell out to the `git` binary via `os/exec`.
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
