@@ -18,6 +18,7 @@ Tracks efforts, agent runs, worktree claims, audited messages, active/recent vie
 | Child | Description |
 |---|---|
 | [repository-change-notifications](repository-change-notifications/README.md) | Normalizes agent, Workbench, Git-provider, and reconciliation signals into verified ref-update notifications for affected active agents. |
+| [cross-harness-conformance](cross-harness-conformance/README.md) | Proves that independently launched agent harnesses can negotiate, deliver, recover, and clean up through the same audited protocol. |
 
 ## Problem
 

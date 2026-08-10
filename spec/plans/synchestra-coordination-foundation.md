@@ -67,6 +67,7 @@ performance before increasing scale.
 | Authoritative-store topology and offline fallback design | `f4b2fd5` | Exactly one active endpoint, Git-required replica, journal/outbox, barriers, fence epochs, Git fallback, reconciliation, and two-direction validation defined. |
 | SpecScore initialization and deterministic standard lint fixes | `1463c23` | Synchestra is initialized for SpecScore; `Outstanding Questions` was mechanically migrated to `Open Questions` wherever the current linter could fix it. Legacy lint debt remains visible. |
 | SQLite, agent coordination, and repository-update contracts | this plan's accompanying specification changes | Defined records, one-writer/handoff tradeoffs, active/recent views, refresh policy, verified signals, and implementation acceptance criteria. |
+| Cross-harness conformance scenario selected | `agent-coordination/cross-harness-conformance` | Defined the Fair Split Relay, typed negotiation sequence, deterministic grader, CLI-first adapter order, outage variant, and zero-backlog terminal proof. |
 
 These are approved design/preparatory artifacts, not a claim that the runtime
 is implemented or delivered.
@@ -174,6 +175,21 @@ run the full independent E2E journey: two overlapping agents, targeted
 coordination, a ref advance, server outage/fallback, restart reconciliation,
 dead-run takeover, landed/aborted branches, and cleanup eligibility. This task
 owns the mechanism-level E2E evidence and operator runbook.
+
+### Task 9: Run cross-harness Fair Split conformance
+
+**Id:** task-9
+**Verifies:** agent-coordination/cross-harness-conformance#ac:two-cli-harnesses-negotiate-bidirectionally, agent-coordination/cross-harness-conformance#ac:accepted-contract-produces-exact-split, agent-coordination/cross-harness-conformance#ac:coordination-evidence-is-auditable-not-prose-graded, agent-coordination/cross-harness-conformance#ac:server-outage-reconciles-the-same-negotiation, agent-coordination/cross-harness-conformance#ac:conformance-leaves-no-cleanup-backlog, agent-coordination/cross-harness-conformance#ac:adapter-matrix-reuses-one-scenario
+**Depends-On:** 3, 5, 7, 8
+**Status:** planning
+
+Build the reusable Fair Split fixture, typed negotiation grader, and harness
+adapter contract. Pass Codex CLI ↔ Claude Code CLI in normal and server-outage
+modes first; add GitHub Copilot CLI pairwise coverage next. Attach Claude
+Desktop and the Codex desktop app through the same protocol once stable launch
+or attachment mechanisms are selected. A pass includes exact behavioral output,
+bidirectional audited coordination, store convergence, task→feature→main
+landing, and zero orphaned branches/worktrees.
 
 ## Open Questions
 
