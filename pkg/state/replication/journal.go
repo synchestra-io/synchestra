@@ -6,7 +6,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 	"sync"
 	"time"
 )
@@ -16,6 +15,8 @@ var (
 	ErrSequenceGap   = errors.New("replication: sequence gap")
 	ErrChecksumChain = errors.New("replication: checksum chain mismatch")
 	ErrFallbackWrite = errors.New("replication: Git fallback accepts communication events only")
+	ErrReplicaAhead  = errors.New("replication: replica is ahead of source")
+	ErrDiverged      = errors.New("replication: source and replica diverged")
 )
 
 // Journal is the one persistence seam shared by Git/inGitDB and
@@ -38,54 +39,55 @@ type ReplicaHealth struct {
 	LastError  string
 }
 
-// AppendGitFallback appends a communication envelope while the server-backed
-// active endpoint is unavailable. The caller must pass the configured Git
-// journal; this narrow API refuses task and claim mutations so an offline
-// fallback cannot silently create a second authority.
-func AppendGitFallback(ctx context.Context, git Journal, event Event) error {
-	if !isFallbackCommunication(event.Kind) {
-		return fmt.Errorf("%w: %q", ErrFallbackWrite, event.Kind)
-	}
-	return git.Append(ctx, event)
-}
-
-func isFallbackCommunication(kind string) bool {
-	return strings.HasPrefix(kind, "message.") || kind == "decision.accepted"
-}
-
 // Replicate copies all contiguous events after the replica cursor. The source
 // stays authoritative; partial delivery remains observable on the replica and
 // can resume safely because Append is idempotent.
 func Replicate(ctx context.Context, source, replica Journal, endpointID string) (ReplicaHealth, error) {
-	head, _, err := source.Head(ctx)
+	head, sourceHash, err := source.Head(ctx)
 	if err != nil {
 		return ReplicaHealth{EndpointID: endpointID, LastError: err.Error()}, err
 	}
-	cursor, _, err := replica.Head(ctx)
+	cursor, replicaHash, err := replica.Head(ctx)
 	if err != nil {
 		return ReplicaHealth{EndpointID: endpointID, LastError: err.Error()}, err
+	}
+	if compareCursor(cursor, head) > 0 {
+		err := fmt.Errorf("%w: replica %v source %v", ErrReplicaAhead, cursor, head)
+		return ReplicaHealth{EndpointID: endpointID, Cursor: cursor, LastError: err.Error()}, err
+	}
+	if cursor == head && !cursor.IsZero() && replicaHash != sourceHash {
+		err := fmt.Errorf("%w at cursor %v", ErrDiverged, cursor)
+		return ReplicaHealth{EndpointID: endpointID, Cursor: cursor, LastError: err.Error()}, err
 	}
 	events, err := source.After(ctx, cursor)
 	if err != nil {
 		return ReplicaHealth{EndpointID: endpointID, Cursor: cursor, LastError: err.Error()}, err
 	}
+	pending := int64(len(events))
 	for _, event := range events {
 		if err := replica.Append(ctx, event); err != nil {
-			return ReplicaHealth{EndpointID: endpointID, Cursor: cursor, EventLag: lag(head, cursor), LastError: err.Error()}, err
+			return ReplicaHealth{EndpointID: endpointID, Cursor: cursor, EventLag: pending, LastError: err.Error()}, err
 		}
 		cursor = event.Cursor
+		pending--
 	}
-	return ReplicaHealth{EndpointID: endpointID, Cursor: cursor, EventLag: lag(head, cursor), LastOK: time.Now().UTC()}, nil
+	return ReplicaHealth{EndpointID: endpointID, Cursor: cursor, EventLag: pending, LastOK: time.Now().UTC()}, nil
 }
 
-func lag(head, cursor Cursor) int64 {
-	if head.Epoch != cursor.Epoch {
-		return head.Sequence
+func compareCursor(a, b Cursor) int {
+	if a.Epoch != b.Epoch {
+		if a.Epoch < b.Epoch {
+			return -1
+		}
+		return 1
 	}
-	if head.Sequence < cursor.Sequence {
-		return 0
+	if a.Sequence < b.Sequence {
+		return -1
 	}
-	return head.Sequence - cursor.Sequence
+	if a.Sequence > b.Sequence {
+		return 1
+	}
+	return 0
 }
 
 // MemoryJournal is a strict conformance harness implementation. It is not a
@@ -95,11 +97,14 @@ type MemoryJournal struct {
 	mu       sync.Mutex
 	events   []Event
 	byID     map[string]Event
+	byKey    map[string]string
 	head     Cursor
 	headHash string
 }
 
-func NewMemoryJournal() *MemoryJournal { return &MemoryJournal{byID: make(map[string]Event)} }
+func NewMemoryJournal() *MemoryJournal {
+	return &MemoryJournal{byID: make(map[string]Event), byKey: make(map[string]string)}
+}
 
 func (j *MemoryJournal) Append(_ context.Context, event Event) error {
 	if err := event.Verify(); err != nil {
@@ -113,6 +118,9 @@ func (j *MemoryJournal) Append(_ context.Context, event Event) error {
 		}
 		return nil
 	}
+	if existingID, exists := j.byKey[event.IdempotencyKey]; exists {
+		return fmt.Errorf("replication: idempotency key %q already belongs to event %q", event.IdempotencyKey, existingID)
+	}
 	if j.head.IsZero() {
 		if event.Cursor.Epoch != 1 || event.Cursor.Sequence != 1 || event.PreviousHash != "" {
 			return fmt.Errorf("%w: first event must be 1/1 with no previous hash", ErrSequenceGap)
@@ -124,7 +132,7 @@ func (j *MemoryJournal) Append(_ context.Context, event Event) error {
 		if event.Cursor.Epoch == j.head.Epoch && event.Cursor.Sequence != j.head.Sequence+1 {
 			return fmt.Errorf("%w: got %d, want %d", ErrSequenceGap, event.Cursor.Sequence, j.head.Sequence+1)
 		}
-		if event.Cursor.Epoch > j.head.Epoch && event.Cursor.Sequence != 1 {
+		if event.Cursor.Epoch > j.head.Epoch && (event.Cursor.Epoch != j.head.Epoch+1 || event.Cursor.Sequence != 1) {
 			return fmt.Errorf("%w: new epoch %d must start at sequence 1", ErrSequenceGap, event.Cursor.Epoch)
 		}
 		if event.PreviousHash != j.headHash {
@@ -133,6 +141,7 @@ func (j *MemoryJournal) Append(_ context.Context, event Event) error {
 	}
 	j.events = append(j.events, event)
 	j.byID[event.EventID] = event
+	j.byKey[event.IdempotencyKey] = event.EventID
 	j.head, j.headHash = event.Cursor, event.Checksum
 	return nil
 }

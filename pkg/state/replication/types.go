@@ -3,10 +3,12 @@ package replication
 // Features implemented: state-store/topology, state-store/topology/offline-fallback, agent-coordination
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"sort"
 	"strings"
 	"time"
@@ -133,29 +135,13 @@ func NewEvent(event Event) (Event, error) {
 	if event.Schema == "" {
 		event.Schema = EventSchemaV1
 	}
-	if event.Schema != EventSchemaV1 || strings.TrimSpace(event.ProjectID) == "" ||
-		strings.TrimSpace(event.EventID) == "" || strings.TrimSpace(event.ActorID) == "" ||
-		strings.TrimSpace(event.CommandID) == "" || strings.TrimSpace(event.IdempotencyKey) == "" ||
-		strings.TrimSpace(event.Kind) == "" || event.Cursor.Epoch < 1 || event.Cursor.Sequence < 1 {
-		return Event{}, fmt.Errorf("replication: incomplete event")
-	}
-	if len(event.Payload) == 0 || !json.Valid(event.Payload) {
-		return Event{}, fmt.Errorf("replication: event %q has invalid payload JSON", event.EventID)
-	}
-	var payload any
-	if err := json.Unmarshal(event.Payload, &payload); err != nil {
-		return Event{}, fmt.Errorf("replication: decode payload: %w", err)
-	}
-	if _, ok := payload.(map[string]any); !ok {
-		return Event{}, fmt.Errorf("replication: event %q payload must be an object", event.EventID)
-	}
-	canonical, err := json.Marshal(payload)
+	canonical, err := canonicalPayload(event.Payload)
 	if err != nil {
-		return Event{}, fmt.Errorf("replication: canonicalize payload: %w", err)
+		return Event{}, err
 	}
 	event.Payload = canonical
-	if event.OccurredAt.IsZero() {
-		return Event{}, fmt.Errorf("replication: event %q occurred_at is required", event.EventID)
+	if err := validateEventFields(event); err != nil {
+		return Event{}, err
 	}
 	event.OccurredAt = event.OccurredAt.UTC()
 	hash, err := eventHash(event)
@@ -167,6 +153,16 @@ func NewEvent(event Event) (Event, error) {
 }
 
 func (e Event) Verify() error {
+	if err := validateEventFields(e); err != nil {
+		return err
+	}
+	canonical, err := canonicalPayload(e.Payload)
+	if err != nil {
+		return err
+	}
+	if !bytes.Equal(canonical, e.Payload) {
+		return fmt.Errorf("replication: event %q payload is not canonical JSON", e.EventID)
+	}
 	if e.Checksum == "" {
 		return fmt.Errorf("replication: event %q checksum is required", e.EventID)
 	}
@@ -176,6 +172,53 @@ func (e Event) Verify() error {
 	}
 	if actual != e.Checksum {
 		return fmt.Errorf("replication: event %q checksum mismatch", e.EventID)
+	}
+	return nil
+}
+
+func validateEventFields(event Event) error {
+	if event.Schema != EventSchemaV1 || strings.TrimSpace(event.ProjectID) == "" ||
+		strings.TrimSpace(event.EventID) == "" || strings.TrimSpace(event.ActorID) == "" ||
+		strings.TrimSpace(event.CommandID) == "" || strings.TrimSpace(event.IdempotencyKey) == "" ||
+		strings.TrimSpace(event.Kind) == "" || event.Cursor.Epoch < 1 || event.Cursor.Sequence < 1 {
+		return fmt.Errorf("replication: incomplete event")
+	}
+	if event.OccurredAt.IsZero() || event.OccurredAt.Location() != time.UTC {
+		return fmt.Errorf("replication: event %q occurred_at must be UTC", event.EventID)
+	}
+	return nil
+}
+
+// canonicalPayload accepts a JSON object and preserves numeric lexemes via
+// json.Number; decoding through float64 would silently corrupt large integer
+// identifiers before they become part of the signed checksum.
+func canonicalPayload(payload json.RawMessage) ([]byte, error) {
+	decoder := json.NewDecoder(bytes.NewReader(payload))
+	decoder.UseNumber()
+	var value any
+	if err := decoder.Decode(&value); err != nil {
+		return nil, fmt.Errorf("replication: decode payload: %w", err)
+	}
+	if err := ensureEOF(decoder); err != nil {
+		return nil, err
+	}
+	if _, ok := value.(map[string]any); !ok {
+		return nil, fmt.Errorf("replication: payload must be an object")
+	}
+	canonical, err := json.Marshal(value)
+	if err != nil {
+		return nil, fmt.Errorf("replication: canonicalize payload: %w", err)
+	}
+	return canonical, nil
+}
+
+func ensureEOF(decoder *json.Decoder) error {
+	var extra any
+	if err := decoder.Decode(&extra); err != io.EOF {
+		if err == nil {
+			return fmt.Errorf("replication: payload has trailing JSON value")
+		}
+		return fmt.Errorf("replication: decode trailing payload: %w", err)
 	}
 	return nil
 }

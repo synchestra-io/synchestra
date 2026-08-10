@@ -18,16 +18,16 @@
 |---|---|
 | Start | An effort, runs, and exclusive worktree claims exist in the active store and Git mirror, with current epoch/fence evidence. |
 | Coordinate | The durable thread contains `message.requested`, `message.proposed`, `message.counterexample`, and `decision.accepted` with one correlation ID; both runs see acknowledgements. |
-| Replicate/fallback | Either Git or SQLite may be active; the other reaches the same ordered checksum cursor. With the server unavailable, Git accepts immutable communication envelopes and later reconciles them exactly once. |
+| Replicate/fallback | Either Git or SQLite may be active; the other reaches the same ordered checksum cursor. With the server unavailable, Git remotely stores an immutable communication envelope in a separate inbox; reconciliation into authority is Planned. |
 | Finish | The library task reaches the feature branch, the feature reaches `main`, and each claim records removal or explicit recycle before it is completed. |
 
-## Completed Foundation
+## Validated locally, not merged
 
 | Item | Evidence | Verifies |
 |---|---|---|
 | Backend-neutral topology and ordered journal contract | `pkg/state/replication`, commit `bdf27b1` | one active, Git-required, epoch/sequence/checksum/idempotency rules |
-| Physical Git/inGitDB ↔ SQLite/DALgo replication | `dal_journal_physical_test.go` | both active→mirror directions, restart persistence, outbox/lag, no synchronous dual write |
-| Git adapter rollback-safe multi-record transaction | `github.com/ingitdb/dalgo2ingitdb` commit `5ec4017` | failed domain+journal+outbox write leaves no changed state |
+| Physical Git/inGitDB ↔ SQLite/DALgo replication | `dal_journal_physical_test.go` | both active→mirror directions, restart persistence, exact lag/divergence fencing, Git remote receipt and fresh-clone parity |
+| Git adapter rollback-safe multi-record transaction | `github.com/ingitdb/dalgo2ingitdb` commits `b093a18`, `27d3f4d` | failed domain+journal+outbox write leaves no changed state; caller index and readers remain isolated |
 
 ## Remaining Tasks
 
@@ -65,8 +65,10 @@ and its error without changing the active result.
 ### 2. Implement claims, threads, and Git fallback over the journal
 
 Add Effort, Run, Worktree Claim, lease/fence, message acknowledgement, and
-fallback-envelope domain records. Git fallback may append communication only;
-task/claim mutation still needs explicit epoch-fenced promotion.
+fallback-envelope import records. The physical Git fallback inbox accepts only
+the v1 communication allowlist and has remote receipt/fresh-clone proof; its
+reconciliation into the active authority remains Planned. Task/claim mutation
+still needs explicit epoch-fenced promotion.
 
 **Verifies:** A stale run cannot mutate a claim, and a server-down message is
 auditable in Git then imported once after reconciliation.

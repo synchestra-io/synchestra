@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -27,8 +28,8 @@ func TestDALJournal_PhysicalGitActiveReplicatesToSQLiteAndRestarts(t *testing.T)
 
 	events := relayEvents(t)
 	appendAll(t, gitJournal, events)
-	if got := gitCommand(t, gitRoot, "rev-list", "--count", "HEAD"); got != "4" {
-		t.Fatalf("Git active commit count = %s, want one durable commit per event", got)
+	if got := gitCommand(t, gitRoot, "rev-list", "--count", "HEAD"); got != "5" {
+		t.Fatalf("Git active commit count = %s, want schema base plus one durable commit per event", got)
 	}
 	if head, _, err := sqliteJournal.Head(ctx); err != nil || !head.IsZero() {
 		t.Fatalf("SQLite mirror changed before replicate: head=%+v err=%v", head, err)
@@ -92,46 +93,39 @@ func TestDALJournal_PhysicalSQLiteActiveReplicatesToGitAndDoesNotDualWrite(t *te
 		t.Fatalf("SQLite -> Git lag = %d, want 0", health.EventLag)
 	}
 	assertPhysicalParity(t, sqliteActive, gitMirror)
-	if got := gitCommand(t, gitRoot, "rev-list", "--count", "HEAD"); got != "4" {
-		t.Fatalf("Git mirror commit count = %s, want 4", got)
+	if got := gitCommand(t, gitRoot, "rev-list", "--count", "HEAD"); got != "5" {
+		t.Fatalf("Git mirror commit count = %s, want schema base plus 4", got)
 	}
 }
 
-func TestDALJournal_GitFallbackAppendsCommunicationThenReconciles(t *testing.T) {
+func TestDALFallbackInbox_GitStoresOnlyAllowedCommunicationEnvelopes(t *testing.T) {
 	ctx := context.Background()
-	_, gitFallback := newGitJournal(t, []string{"sqlite-mirror"})
-	_, sqliteMirror := newSQLiteJournal(t, nil)
-	events := relayEvents(t)
-	for _, event := range events {
-		if err := AppendGitFallback(ctx, gitFallback, event); err != nil {
-			t.Fatalf("append fallback communication %s: %v", event.EventID, err)
-		}
-	}
-	claimPayload := json.RawMessage(`{"claim_id":"worktree-1"}`)
-	claim, err := NewEvent(Event{ProjectID: "github.com/fair-split/relay", EventID: "claim", Cursor: Cursor{Epoch: 1, Sequence: 5},
-		OccurredAt: time.Date(2026, 8, 10, 13, 0, 0, 0, time.UTC), ActorID: "agent:codex", CommandID: "claim", IdempotencyKey: "claim", Kind: "claim.acquired", CorrelationID: "fair-split-thread", Payload: claimPayload, PreviousHash: events[len(events)-1].Checksum})
+	_, gitJournal := newGitJournal(t, nil)
+	inbox, err := NewDALFallbackInbox(gitJournal.db, "github.com/fair-split/relay", "synchestra fallback")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := AppendGitFallback(ctx, gitFallback, claim); !errors.Is(err, ErrFallbackWrite) {
-		t.Fatalf("fallback claim append error = %v, want %v", err, ErrFallbackWrite)
-	}
-
-	health, err := Replicate(ctx, gitFallback, sqliteMirror, "sqlite-mirror")
+	allowed, err := NewFallbackEnvelope(FallbackEnvelope{ProjectID: "github.com/fair-split/relay", EnvelopeID: "offline-message", OccurredAt: time.Date(2026, 8, 10, 13, 0, 0, 0, time.UTC), ActorID: "agent:codex", CommandID: "send", IdempotencyKey: "offline-message", Kind: "message.sent", Payload: json.RawMessage(`{"body":"server is down"}`)})
 	if err != nil {
-		t.Fatalf("reconcile Git fallback to SQLite: %v", err)
+		t.Fatal(err)
 	}
-	if health.EventLag != 0 {
-		t.Fatalf("fallback reconcile lag = %d, want 0", health.EventLag)
+	if err := inbox.AppendFallback(ctx, allowed); err != nil {
+		t.Fatal(err)
 	}
-	assertPhysicalParity(t, gitFallback, sqliteMirror)
+	if got, err := inbox.FallbackEnvelopes(ctx); err != nil || len(got) != 1 || got[0].EnvelopeID != allowed.EnvelopeID {
+		t.Fatalf("fallback inbox = %#v, %v", got, err)
+	}
+	claim, err := NewFallbackEnvelope(FallbackEnvelope{ProjectID: "github.com/fair-split/relay", EnvelopeID: "claim", OccurredAt: time.Date(2026, 8, 10, 13, 1, 0, 0, time.UTC), ActorID: "agent:codex", CommandID: "claim", IdempotencyKey: "claim", Kind: "claim.acquired", Payload: json.RawMessage(`{"claim_id":"worktree-1"}`)})
+	if err == nil {
+		t.Fatalf("claim fallback envelope unexpectedly accepted: %#v", claim)
+	}
 }
 
 func TestDALJournal_SQLiteRollsBackDomainJournalAndOutboxTogether(t *testing.T) {
 	ctx := context.Background()
 	_, sqliteJournal := newSQLiteJournal(t, []string{"git-mirror"})
 	failing := failAfterSet{DB: sqliteJournal.db, failOn: 2}
-	journal, err := NewDALJournal(&failing, DALJournalOptions{ReplicaIDs: []string{"git-mirror"}})
+	journal, err := NewDALJournal(&failing, DALJournalOptions{ProjectID: "github.com/fair-split/relay", ReplicaIDs: []string{"git-mirror"}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -147,6 +141,83 @@ func TestDALJournal_SQLiteRollsBackDomainJournalAndOutboxTogether(t *testing.T) 
 		if len(records) != 0 {
 			t.Fatalf("%s has %d records after rollback, want 0", collection, len(records))
 		}
+	}
+}
+
+func TestGitPushJournal_BareOriginReceiptAndFreshCloneParity(t *testing.T) {
+	ctx := context.Background()
+	bare := filepath.Join(t.TempDir(), "origin.git")
+	gitCommand(t, t.TempDir(), "init", "--bare", "--initial-branch=main", bare)
+	root := filepath.Join(t.TempDir(), "writer")
+	if out, err := exec.Command("git", "clone", bare, root).CombinedOutput(); err != nil {
+		t.Fatalf("clone writer: %v: %s", err, out)
+	}
+	gitCommand(t, root, "config", "user.email", "test@example.com")
+	gitCommand(t, root, "config", "user.name", "Test")
+	database, err := dalgo2ingitdb.NewDatabase(root, validator.NewCollectionsReader())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := EnsureDALJournalSchema(ctx, database); err != nil {
+		t.Fatal(err)
+	}
+	gitCommand(t, root, "add", "-A")
+	gitCommand(t, root, "commit", "-m", "journal schema")
+	gitCommand(t, root, "push", "origin", "HEAD:refs/heads/main")
+	local, err := NewDALJournal(database, DALJournalOptions{ProjectID: "github.com/fair-split/relay", CommitMessage: "synchestra state"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	pushed, err := NewGitPushJournal(local, root, "origin", "main")
+	if err != nil {
+		t.Fatal(err)
+	}
+	event := relayEvents(t)[0]
+	receipt, err := pushed.AppendAndPush(ctx, event)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if receipt.AwaitingPush || receipt.CommitSHA == "" || receipt.RemoteRef != "refs/heads/main" {
+		t.Fatalf("receipt = %+v, want remote durability evidence", receipt)
+	}
+	if got := gitCommand(t, root, "ls-remote", "origin", "refs/heads/main"); !strings.HasPrefix(got, receipt.CommitSHA) {
+		t.Fatalf("remote ref = %s, want %s", got, receipt.CommitSHA)
+	}
+	inbox, err := NewDALFallbackInbox(database, "github.com/fair-split/relay", "synchestra fallback")
+	if err != nil {
+		t.Fatal(err)
+	}
+	fallback, err := NewGitFallbackInboxPush(inbox, pushed.remote)
+	if err != nil {
+		t.Fatal(err)
+	}
+	envelope, err := NewFallbackEnvelope(FallbackEnvelope{ProjectID: "github.com/fair-split/relay", EnvelopeID: "offline-message", OccurredAt: time.Date(2026, 8, 10, 13, 0, 0, 0, time.UTC), ActorID: "agent:codex", CommandID: "send", IdempotencyKey: "offline-message", Kind: "message.sent", Payload: json.RawMessage(`{"body":"server unavailable"}`)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	fallbackReceipt, err := fallback.AppendFallbackAndPush(ctx, envelope)
+	if err != nil || fallbackReceipt.AwaitingPush {
+		t.Fatalf("fallback remote receipt = %+v, %v", fallbackReceipt, err)
+	}
+	fresh := filepath.Join(t.TempDir(), "fresh")
+	if out, err := exec.Command("git", "clone", bare, fresh).CombinedOutput(); err != nil {
+		t.Fatalf("fresh clone: %v: %s", err, out)
+	}
+	freshDB, err := dalgo2ingitdb.NewDatabase(fresh, validator.NewCollectionsReader())
+	if err != nil {
+		t.Fatal(err)
+	}
+	freshJournal, err := NewDALJournal(freshDB, DALJournalOptions{ProjectID: "github.com/fair-split/relay"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertPhysicalParity(t, local, freshJournal)
+	freshInbox, err := NewDALFallbackInbox(freshDB, "github.com/fair-split/relay", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, err := freshInbox.FallbackEnvelopes(ctx); err != nil || len(got) != 1 || got[0].Checksum != envelope.Checksum {
+		t.Fatalf("fresh clone fallback inbox = %#v, %v", got, err)
 	}
 }
 
@@ -188,6 +259,7 @@ func (tx *failAfterSetTx) Set(ctx context.Context, record dalrecord.Record) erro
 func newGitJournal(t *testing.T, replicaIDs []string) (string, *DALJournal) {
 	t.Helper()
 	root := t.TempDir()
+	gitInit(t, root)
 	database, err := dalgo2ingitdb.NewDatabase(root, validator.NewCollectionsReader())
 	if err != nil {
 		t.Fatal(err)
@@ -195,8 +267,9 @@ func newGitJournal(t *testing.T, replicaIDs []string) (string, *DALJournal) {
 	if err := EnsureDALJournalSchema(context.Background(), database); err != nil {
 		t.Fatal(err)
 	}
-	gitInit(t, root)
-	journal, err := NewDALJournal(database, DALJournalOptions{ReplicaIDs: replicaIDs, CommitMessage: "synchestra state"})
+	gitCommand(t, root, "add", "-A")
+	gitCommand(t, root, "commit", "-m", "journal schema")
+	journal, err := NewDALJournal(database, DALJournalOptions{ProjectID: "github.com/fair-split/relay", ReplicaIDs: replicaIDs, CommitMessage: "synchestra state"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -221,7 +294,7 @@ func newSQLiteJournalAt(t *testing.T, path string, replicaIDs []string) (string,
 	if err := EnsureDALJournalSchema(context.Background(), database); err != nil {
 		t.Fatal(err)
 	}
-	journal, err := NewDALJournal(database, DALJournalOptions{ReplicaIDs: replicaIDs})
+	journal, err := NewDALJournal(database, DALJournalOptions{ProjectID: "github.com/fair-split/relay", ReplicaIDs: replicaIDs})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -296,5 +369,5 @@ func gitCommand(t *testing.T, dir string, args ...string) string {
 	if err != nil {
 		t.Fatalf("git %v: %v: %s", args, err, out)
 	}
-	return string(out[:len(out)-1])
+	return strings.TrimSpace(string(out))
 }

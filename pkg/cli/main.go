@@ -21,7 +21,6 @@ import (
 	"github.com/synchestra-io/synchestra/pkg/cli/runner"
 	selfupdatecmd "github.com/synchestra-io/synchestra/pkg/cli/selfupdate"
 	"github.com/synchestra-io/synchestra/pkg/cli/spec"
-	statecmd "github.com/synchestra-io/synchestra/pkg/cli/state"
 	"github.com/synchestra-io/synchestra/pkg/cli/synchinit"
 	taskcmd "github.com/synchestra-io/synchestra/pkg/cli/task"
 	testcmd "github.com/synchestra-io/synchestra/pkg/cli/test"
@@ -84,7 +83,6 @@ func newRootCmd(
 		code.Command(),
 		spec.Command(),
 		runner.Command(runner.Dependencies{Getwd: osGetwd, UserHomeDir: osUserHomeDir}),
-		statecmd.Command(),
 		taskcmd.Command(),
 		selfupdatecmd.Command(version),
 	)

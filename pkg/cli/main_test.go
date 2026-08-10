@@ -4,6 +4,13 @@ package cli
 
 import "testing"
 
+func TestRootCmdDoesNotAdvertiseWithdrawnStateStubs(t *testing.T) {
+	root := newRootCmd(nil, nil)
+	if found, _, err := root.Find([]string{"state"}); err == nil && found.Name() == "state" {
+		t.Fatal("withdrawn state stubs must not be registered or advertised")
+	}
+}
+
 // TestRootCmdRegistersSelfUpdate pins that "self-update" is actually wired
 // into the root command tree, and that both its canonical name and its
 // "update" alias resolve there — the alias resolution `synchestra update`
