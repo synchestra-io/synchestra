@@ -73,10 +73,16 @@ mirror, or backup. Those surfaces retain only its digest and private-archive
 receipt/reference.
 
 A **Run** is one execution attempt within an effort. It records the agent
-family (`codex`, `claude`, `human`, or registered implementation), model,
-role (`primary` or `subagent`), parent run, start/end timestamps, terminal
-reason, bounded token/usage counters, and delivery state. A subagent is a run,
-not an invisible annotation, so communication and cost can be audited.
+family (`codex`, `claude`, `human`, or registered implementation), nullable
+model identity, role (`primary` or `subagent`), parent run, start/end
+timestamps, terminal reason, bounded token/usage counters, and delivery state.
+A model value is never guessed: when present it records provenance as
+`runtime_observed` or `caller_declared`; when the runtime exposes no identity it
+remains null/unknown. A correction appends an audited event naming the
+superseded field/value and replacement; it never rewrites the immutable source
+event. A subagent is a run, not an invisible annotation, so communication and
+cost can be audited. Model-provenance and correction ingestion remain Planned
+until the storage/API/CLI paths and recovery tests land.
 
 A **Worktree Claim** binds exactly one concurrent writer run to one canonical
 repository identity, local worktree location, local branch, target/base ref,
@@ -260,6 +266,15 @@ independent rationale before it becomes active.
 **Then** the Hybrid Work Log plus Synchestra/Git records identify the original
 effort, agent/model/parent, branch/base/tip, checkpoint, remaining work, and
 whether the old lease is still live; unsafe takeover is rejected.
+
+### AC: optional-model-provenance-is-correctable
+
+**Given** a runtime exposes no model ID, or a caller later proves a declared
+model value was wrong
+**When** Synchestra creates or corrects the Run record
+**Then** it stores null/unknown rather than guessing, labels every non-null
+value `runtime_observed` or `caller_declared`, and appends a correction linked
+to the superseded event without rewriting audit history.
 
 ### AC: completed-and-aborted-are-distinguishable
 

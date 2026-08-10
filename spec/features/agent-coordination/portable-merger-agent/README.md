@@ -44,7 +44,7 @@ which bypasses the Work Log exactly when lifecycle evidence is most important.
 
 | Stage | Observable good result |
 |---|---|
-| Assign | Synchestra creates one `merger` run with the target, immutable source heads, expected base, landing authority, and linked source runs; every participant sees who now owns integration. |
+| Assign | Synchestra enqueues immutable source heads into the one fenced merger lane for the repository/target, then creates or resumes its `merger` run with the expected base, landing authority, Work Log, and linked source runs; every participant sees who now owns integration. |
 | Inventory | WB and Synchestra agree on source branches/worktrees, merge targets, dependency order, overlapping files, readiness, Work Log durability, and any existing cleanup backlog. Unknown or changing heads block the plan rather than being guessed. |
 | Prepare | WB creates or reuses one explicitly claimed integration worktree, fetches the remote, and fast-forwards to the current target before applying any source. No canonical checkout is modified. |
 | Integrate | Compatible sources join one batch in dependency order. After each source, the repository's fast validation identifies which addition caused any regression; behavioural conflicts become audited messages to the owners. |
@@ -76,12 +76,36 @@ Copilot skills may differ in invocation syntax, but their normative stages,
 stop conditions, output schema, and WB/Synchestra commands are identical. A
 capability-delivery matrix must show runtime, `--help`, AI-skill, and test
 coverage for every merger command before an adapter claims Full support.
+Manifest/schema validation is only preflight: each packaged adapter must be
+loaded through the real supported harness and assert the exact discovered
+component IDs and cardinality (including unique skill and agent counts), so
+auto-discovery plus explicit manifest paths cannot silently duplicate or hide
+components.
 
 The default dispatcher sends mechanical integration to this role once two or
 more compatible branches are ready, or whenever the coordinator requests it.
 The primary agent remains responsible for architecture and product decisions;
 it does not duplicate the merger's local Git/CI loop while a merger run owns
 the batch.
+
+### One logical lane per repository target
+
+Merger authority is keyed by canonical `(repository, target ref)`, not by a
+particular agent process. Exactly one logical lane for that key may be active.
+Primary sessions publish immutable `ready_for_integration` heads to its durable
+audited queue and then observe/escalate; they do not start a competing local
+integration loop. A different target in the same repository is a different
+lane, subject to the ordinary overlap rules.
+
+The lane has a stable identity, current fence, queue cursor, integration
+worktree claim, and Work Log reference. If its process, harness, or runtime
+stops, an authorized takeover invalidates the old fence and resumes that same
+logical lane and Work Log from durable evidence. It must not create a second
+lane or replay already-receipted mutations. The founder MVP may let one merger
+agent service several distinct lanes; at scale independent lane keys may run
+concurrently. The durable queue, fencing, and takeover workflow are Planned
+capabilities until Synchestra and WB ship their storage, commands, help,
+adapters, and crash/recovery tests.
 
 ### Deterministic Workbench workflow
 
@@ -147,9 +171,13 @@ a local merge whose push failed is explicitly `awaiting_push`. Neither state is
 eligible for cleanup.
 
 CI is observed to terminal state by the merger run. A mechanical failure is
-fixed forward on a new audited attempt. A target with red required checks never
-starts the next batch. Queued checks are distinguished from running or failed
-checks, and a bounded timeout returns resumable state rather than success.
+fixed forward on a new audited attempt. Existing red target health is baseline
+evidence, not a prerequisite: a candidate may repair it. The gates are exact
+target freshness, exact-candidate (or merge-queue result) checks, drift refusal,
+and post-merge checks. A red exact landed result keeps that same lane active for
+fix-forward and prevents terminalization. Queued checks are distinguished from
+running or failed checks, and a bounded timeout returns resumable state rather
+than success.
 
 After verified landing, WB processes assets in delivery order. Task sources are
 merged to and removed after their feature target; the feature integration asset
@@ -178,6 +206,23 @@ target
 **Then** it refreshes the target first, runs the fast profile after each source,
 runs the full profile against the committed combined tree, and creates one
 landing/CI batch rather than three serialized batches.
+
+### AC: one-active-lane-per-repository-target
+
+**Given** two primary sessions enqueue ready heads for the same canonical
+repository and target while an integration attempt is active
+**When** both try to obtain merger authority
+**Then** both heads enter one durable ordered lane, exactly one fenced merger
+run may mutate its integration worktree, and neither primary session opens a
+parallel merge loop.
+
+### AC: takeover-resumes-the-same-lane
+
+**Given** a merger process stops after recording some plan/apply/push receipts
+**When** another supported runtime takes over
+**Then** it invalidates the prior fence, resumes the same lane identity, queue
+cursor and Work Log, replays no receipted mutation, and continues or escalates
+without creating a second integration claim.
 
 ### AC: drift-invalidates-the-plan
 

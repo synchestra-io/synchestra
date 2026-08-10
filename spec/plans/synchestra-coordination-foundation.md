@@ -102,14 +102,17 @@ direct Git active/recent queries with conflict-retry semantics.
 ### Task 3: Implement fenced effort/run/worktree claims and audited messaging
 
 **Id:** task-3
-**Verifies:** agent-coordination#ac:one-writer-claim-is-fenced, agent-coordination#ac:messages-survive-transport-switch, agent-coordination#ac:abandoned-run-is-resumable
+**Verifies:** agent-coordination#ac:one-writer-claim-is-fenced, agent-coordination#ac:messages-survive-transport-switch, agent-coordination#ac:abandoned-run-is-resumable, agent-coordination#ac:optional-model-provenance-is-correctable
 **Depends-On:** 1, 2
 **Status:** planning
 
 Implement lifecycle transitions, lease/fence enforcement, explicit handoff,
 scope declarations, message threads, acknowledgements, and recovery records.
 Integrate the Workbench Hybrid Work Log through stable IDs/references rather
-than duplicating private prompt content in the Git state repository.
+than duplicating private prompt content in the Git state repository. Preserve
+nullable model identity plus `runtime_observed`/`caller_declared` provenance,
+and append correction events that supersede bad metadata without rewriting
+history. This provenance/correction slice remains Planned.
 
 ### Task 4: Implement DALgo SQLite active endpoint, journal, and outbox
 
@@ -196,13 +199,19 @@ landing, and zero orphaned branches/worktrees.
 ### Task 10: Deliver the portable merger role and deterministic WB merge workflow
 
 **Id:** task-10
-**Verifies:** agent-coordination/portable-merger-agent#ac:adapter-contract-is-harness-neutral, agent-coordination/portable-merger-agent#ac:compatible-branches-land-as-one-batch, agent-coordination/portable-merger-agent#ac:drift-invalidates-the-plan, agent-coordination/portable-merger-agent#ac:behavioral-conflict-is-audited-not-guessed, agent-coordination/portable-merger-agent#ac:tested-tree-is-the-landed-tree, agent-coordination/portable-merger-agent#ac:every-target-merge-is-pushed-immediately, agent-coordination/portable-merger-agent#ac:success-requires-zero-related-assets, agent-coordination/portable-merger-agent#ac:wb-outage-cannot-be-bypassed, agent-coordination/cross-harness-conformance#ac:portable-merger-drains-the-fixture
+**Verifies:** agent-coordination/portable-merger-agent#ac:adapter-contract-is-harness-neutral, agent-coordination/portable-merger-agent#ac:compatible-branches-land-as-one-batch, agent-coordination/portable-merger-agent#ac:one-active-lane-per-repository-target, agent-coordination/portable-merger-agent#ac:takeover-resumes-the-same-lane, agent-coordination/portable-merger-agent#ac:drift-invalidates-the-plan, agent-coordination/portable-merger-agent#ac:behavioral-conflict-is-audited-not-guessed, agent-coordination/portable-merger-agent#ac:tested-tree-is-the-landed-tree, agent-coordination/portable-merger-agent#ac:every-target-merge-is-pushed-immediately, agent-coordination/portable-merger-agent#ac:success-requires-zero-related-assets, agent-coordination/portable-merger-agent#ac:wb-outage-cannot-be-bypassed, agent-coordination/cross-harness-conformance#ac:portable-merger-drains-the-fixture
 **Depends-On:** 3, 7, 8
 **Status:** planning
 
 Implement the hashed, resumable WB plan/apply/status workflow and provider-
 neutral landing/CI receipts. Version one canonical merger role and publish thin
 Claude Code, Codex, and Copilot adapters plus capability-delivery manifests.
+Implement one durable fenced queue/lane per canonical `(repository, target
+ref)`: primary sessions enqueue only, runtime takeover resumes the same lane
+identity/Work Log and invalidates the old fence, one founder-MVP agent may
+service multiple distinct lanes, and independent keys may run concurrently at
+scale. Do not advertise this lane/queue contract before its crash, duplicate-
+consumer, takeover, and receipt-replay tests pass.
 Replace the Claude adapter's raw `git worktree` fallback with WB's audited
 Git/Work Log fallback, support task→feature as well as feature→`main`, and make
 sealed Work Logs plus zero related claims/backlog a terminal success condition.
