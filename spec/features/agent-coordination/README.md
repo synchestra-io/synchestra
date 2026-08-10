@@ -297,7 +297,11 @@ same thread, and no message is mistaken for an authoritative task transition.
 
 ## Open Questions
 
-None at this time.
+- What finite default retention should apply to sealed private Work Logs once
+  automatic garbage collection ships? The MVP retains them indefinitely and
+  exposes configurable retention rather than risking automatic evidence loss;
+  metadata/hash and any required remote archive receipt may outlive private
+  prompt content under a later policy.
 
 ---
 *This document follows the https://specscore.md/feature-specification*
