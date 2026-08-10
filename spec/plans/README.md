@@ -18,12 +18,13 @@ Implementation plans for `synchestra`.
 | [agent-skills-roadmap](agent-skills-roadmap/) | draft | - | agent-skills, cli/feature | - | - | @alex | - |
 | [hero-scene](hero-scene/) | draft | - | landing | - | - | @alex | - |
 | [superpowers-integration](superpowers-integration/) | draft | - | embedded-state, cli/init, agent-skills | - | - | @alex | - |
+| [state-store-physical-mvp](state-store-physical-mvp/) | draft | - | state-store, agent-coordination | - | - | - | - |
 
 ## Recently Closed
 
 None at this time.
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 

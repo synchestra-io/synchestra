@@ -5,10 +5,15 @@ package cli
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 
 	"charm.land/fang/v2"
+	"github.com/charmbracelet/x/term"
 	"github.com/ingitdb/ingitdb-cli/cmd/ingitdb/commands"
+	"github.com/ingitdb/ingitdb-cli/cmd/ingitdb/tui"
+	"github.com/ingitdb/ingitdb-go/ingitdb/materializer"
+	"github.com/ingitdb/ingitdb-go/ingitdb/validator"
 	"github.com/spf13/cobra"
 	"github.com/synchestra-io/synchestra/pkg/cli/code"
 	"github.com/synchestra-io/synchestra/pkg/cli/feature"
@@ -36,6 +41,25 @@ func newRootCmd(
 	osUserHomeDir func() (string, error),
 	osGetwd func() (string, error),
 ) *cobra.Command {
+	logf := func(args ...any) {
+		_, _ = fmt.Fprintln(os.Stderr, args...)
+	}
+	viewBuilderLogf := func(format string, args ...any) {
+		message := fmt.Sprintf(format, args...)
+		logf(message)
+	}
+	viewBuilder := materializer.NewViewBuilder(materializer.NewFileRecordsReader(), viewBuilderLogf)
+	isTerminal := func() bool {
+		return term.IsTerminal(os.Stdout.Fd())
+	}
+	runConflictsTUI := func(ctx context.Context, files []string) error {
+		width, height, sizeErr := term.GetSize(os.Stdout.Fd())
+		if sizeErr != nil || width == 0 {
+			width, height = 120, 40
+		}
+		return tui.RunConflicts(ctx, files, width, height)
+	}
+
 	rootCmd := &cobra.Command{
 		Use:           "synchestra",
 		Short:         "Synchestra CLI",
@@ -50,12 +74,9 @@ func newRootCmd(
 
 	rootCmd.AddCommand(
 		commands.Version(version, commit, date),
-		commands.Pull(),
+		commands.Pull(osUserHomeDir, osGetwd, validator.ReadDefinition, viewBuilder, logf, isTerminal, runConflictsTUI),
 		commands.Setup(),
-		commands.Resolve(),
-		commands.Watch(),
-		commands.Find(),
-		commands.Migrate(),
+		commands.Resolve(osUserHomeDir, osGetwd, validator.ReadDefinition, logf, isTerminal, runConflictsTUI),
 		synchinit.Command(),
 		project.Command(),
 		testcmd.Command(),

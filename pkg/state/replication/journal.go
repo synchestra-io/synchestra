@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 )
@@ -14,6 +15,7 @@ var (
 	ErrEpochFenced   = errors.New("replication: authority epoch is fenced")
 	ErrSequenceGap   = errors.New("replication: sequence gap")
 	ErrChecksumChain = errors.New("replication: checksum chain mismatch")
+	ErrFallbackWrite = errors.New("replication: Git fallback accepts communication events only")
 )
 
 // Journal is the one persistence seam shared by Git/inGitDB and
@@ -34,6 +36,21 @@ type ReplicaHealth struct {
 	EventLag   int64
 	LastOK     time.Time
 	LastError  string
+}
+
+// AppendGitFallback appends a communication envelope while the server-backed
+// active endpoint is unavailable. The caller must pass the configured Git
+// journal; this narrow API refuses task and claim mutations so an offline
+// fallback cannot silently create a second authority.
+func AppendGitFallback(ctx context.Context, git Journal, event Event) error {
+	if !isFallbackCommunication(event.Kind) {
+		return fmt.Errorf("%w: %q", ErrFallbackWrite, event.Kind)
+	}
+	return git.Append(ctx, event)
+}
+
+func isFallbackCommunication(kind string) bool {
+	return strings.HasPrefix(kind, "message.") || kind == "decision.accepted"
 }
 
 // Replicate copies all contiguous events after the replica cursor. The source

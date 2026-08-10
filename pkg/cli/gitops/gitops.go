@@ -17,7 +17,10 @@ func IsGitRepo(dir string) bool {
 
 // GetOriginURL returns the URL of the "origin" remote.
 func GetOriginURL(dir string) (string, error) {
-	cmd := exec.Command("git", "-C", dir, "remote", "get-url", "origin")
+	// Read the configured URL rather than `remote get-url`: the latter applies
+	// a user's url.<base>.insteadOf rewrite and makes the persisted identity
+	// depend on unrelated global Git configuration.
+	cmd := exec.Command("git", "-C", dir, "config", "--get", "remote.origin.url")
 	out, err := cmd.Output()
 	if err != nil {
 		return "", fmt.Errorf("getting origin URL for %s: %w", dir, err)
