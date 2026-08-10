@@ -68,6 +68,7 @@ performance before increasing scale.
 | SpecScore initialization and deterministic standard lint fixes | `1463c23` | Synchestra is initialized for SpecScore; `Outstanding Questions` was mechanically migrated to `Open Questions` wherever the current linter could fix it. Legacy lint debt remains visible. |
 | SQLite, agent coordination, and repository-update contracts | this plan's accompanying specification changes | Defined records, one-writer/handoff tradeoffs, active/recent views, refresh policy, verified signals, and implementation acceptance criteria. |
 | Cross-harness conformance scenario selected | `agent-coordination/cross-harness-conformance` | Defined the Fair Split Relay, typed negotiation sequence, deterministic grader, CLI-first adapter order, outage variant, and zero-backlog terminal proof. |
+| Existing Claude Code merger role reviewed | `agent-coordination/portable-merger-agent` | Preserved its refresh, batching, staged validation, tested-tree, conflict, and CI strengths; identified main-only, harness-specific, raw-worktree-fallback, and missing audited-cleanup gaps. |
 
 These are approved design/preparatory artifacts, not a claim that the runtime
 is implemented or delivered.
@@ -156,8 +157,9 @@ checkout safety. Update serve/server/API and repository configuration contracts.
 Make WB create all managed worktrees under canonical owner/repository paths,
 write/update local Work Log projections, renew/release claims, apply the
 60-minute/pre-critical-operation refresh policy, surface overlap, and call
-Synchestra before cleanup. Completion requires merge to the declared task or
-feature target plus removal/recycle of every claimed asset. Default cleanup
+Synchestra before cleanup. Completion requires merge and immediate verified
+push to the declared remote task or feature target plus removal/recycle of
+every claimed asset. A local target merge is `awaiting_push` and blocks cleanup. Default cleanup
 removes. Optional recycle seals to a mandatory local archive, queues optional
 remote archival, then resets/rebinds a new Work Log, claim, and base while
 retaining only configured caches. Landing verification must accept forge PR
@@ -190,6 +192,42 @@ Desktop and the Codex desktop app through the same protocol once stable launch
 or attachment mechanisms are selected. A pass includes exact behavioral output,
 bidirectional audited coordination, store convergence, task→feature→main
 landing, and zero orphaned branches/worktrees.
+
+### Task 10: Deliver the portable merger role and deterministic WB merge workflow
+
+**Id:** task-10
+**Verifies:** agent-coordination/portable-merger-agent#ac:adapter-contract-is-harness-neutral, agent-coordination/portable-merger-agent#ac:compatible-branches-land-as-one-batch, agent-coordination/portable-merger-agent#ac:drift-invalidates-the-plan, agent-coordination/portable-merger-agent#ac:behavioral-conflict-is-audited-not-guessed, agent-coordination/portable-merger-agent#ac:tested-tree-is-the-landed-tree, agent-coordination/portable-merger-agent#ac:every-target-merge-is-pushed-immediately, agent-coordination/portable-merger-agent#ac:success-requires-zero-related-assets, agent-coordination/portable-merger-agent#ac:wb-outage-cannot-be-bypassed, agent-coordination/cross-harness-conformance#ac:portable-merger-drains-the-fixture
+**Depends-On:** 3, 7, 8
+**Status:** planning
+
+Implement the hashed, resumable WB plan/apply/status workflow and provider-
+neutral landing/CI receipts. Version one canonical merger role and publish thin
+Claude Code, Codex, and Copilot adapters plus capability-delivery manifests.
+Replace the Claude adapter's raw `git worktree` fallback with WB's audited
+Git/Work Log fallback, support task→feature as well as feature→`main`, and make
+sealed Work Logs plus zero related claims/backlog a terminal success condition.
+Extend the Fair Split scenario so a separately launched merger drains the two
+writer branches without the primary session duplicating mechanical work.
+
+### Task 11: Detect and resolve plan overlap before approval
+
+**Id:** task-11
+**Verifies:** agent-coordination/plan-overlap-coordination#ac:same-repository-plans-require-explicit-evaluation, agent-coordination/plan-overlap-coordination#ac:one-provider-replaces-duplicate-implementation, agent-coordination/plan-overlap-coordination#ac:semantic-suggestions-are-advisory-and-cited, agent-coordination/plan-overlap-coordination#ac:independent-work-remains-parallel, agent-coordination/plan-overlap-coordination#ac:consumer-waits-only-at-real-dependency, agent-coordination/plan-overlap-coordination#ac:approval-check-is-revision-bound-and-fail-closed, agent-coordination/plan-overlap-coordination#ac:migration-mode-covers-every-consumer-or-is-approved, agent-coordination/plan-overlap-coordination#ac:event-hooks-remain-decoupled-from-policy-results, agent-coordination/plan-overlap-coordination#ac:fair-split-plans-produce-one-allocator
+**Depends-On:** 3, 8, 10
+**Status:** planning
+
+Define generic SpecScore task-intent metadata and a synchronous, structured
+policy-check extension upstream; keep the existing one-way event/outbox for
+notifications. Implement Synchestra revision-bound Plan Intents, incremental
+repository/capability/structure/dependency matching, advisory cited semantic
+matching, typed owner resolutions, approval/claim guards, dependency-aware
+scheduling, and project/repository graph views. Treat migration verbs as a
+full-cutover default with a deterministic consumer inventory and require an
+owner-approved staged/pilot contract before any legacy consumer may remain.
+Extend Fair Split so two independent master-agent plans initially duplicate the
+allocator, resolve to one provider before workers start, and land with one
+implementation and zero cleanup backlog; also prove independent same-repo work
+is not unnecessarily serialized.
 
 ## Open Questions
 

@@ -3,6 +3,7 @@
 | Child | Description |
 |---|---|
 | [search](search/README.md) | TODO: Add description. |
+| [lint](lint/README.md) | TODO: Add description. |
 
 # Command Group: `synchestra spec`
 

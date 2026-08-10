@@ -42,7 +42,7 @@ whether natural-language conversation “looked collaborative.”
 | Discover | Both runs see the shared `fair-split-contract` overlap before integration and open one correlated coordination thread. |
 | Negotiate | The CLI/test owner requests stable output; the library owner proposes a representation/remainder rule; the other run supplies a concrete counterexample; an accepted decision records evidence and is visible in both Work Logs. Messages flow in both directions. |
 | Implement | The library and CLI/test changes compile independently against the accepted contract, without either writer modifying the other's worktree. |
-| Integrate | Each task branch merges to the feature branch, its claim is removed/recycled, then the feature branch merges to `main`; the executable returns the exact expected split. |
+| Integrate | A third, harness-portable merger run takes the frozen task heads, uses WB to merge and push both tasks to the remote feature branch and the feature to `origin/main`, and the executable returns the exact expected split. |
 | Finish | Both runs are recent/terminal with message and landing evidence, while active claims and cleanup backlog for the fixture are empty. |
 
 **Divergent epilogues.** The normal journey uses the server/SQLite active store
@@ -110,7 +110,8 @@ as failure according to release policy.
 ### Isolation and lifecycle
 
 Each writer owns one WB-managed worktree/branch claim. A feature integration run
-owns the feature branch. Task completion requires merge to that feature branch
+with role `merger` owns the feature branch and consumes immutable
+`ready_for_integration` heads through the Portable Merger Agent contract. Task completion requires merge to that feature branch
 and removal or explicit audited recycle of task branches/worktrees. Feature
 completion requires merge to `main` and the same disposition for all remaining
 assets. The grader compares Git/WB inventory to Synchestra claims and fails on
@@ -164,7 +165,8 @@ run writes through a second authority.
 **Given** both task changes and the feature change have passed
 **When** the journey reports success
 **Then** task branches are merged to the feature branch, the feature branch is
-merged to `main`, every associated worktree/branch is removed or explicitly
+merged and pushed to `origin/main`, the remote feature target carries each task
+landing, every associated worktree/branch is removed or explicitly
 recycled with a reset Work Log, active claim count is zero, and cleanup backlog
 count is zero.
 
@@ -174,6 +176,14 @@ count is zero.
 **When** the same Fair Split fixture and grader execute
 **Then** only launch/attachment mechanics differ; coordination records,
 behavioral result, store checks and lifecycle assertions are unchanged.
+
+### AC: portable-merger-drains-the-fixture
+
+**Given** the two task agents have published immutable ready heads
+**When** a Claude Code, Codex, or Copilot merger adapter receives the batch
+**Then** it uses the same hashed WB merge plan to land task→feature→`main`,
+records validation and landing receipts, and closes every source and integration
+claim without the coordinating session performing duplicate Git mechanics.
 
 ## Open Questions
 

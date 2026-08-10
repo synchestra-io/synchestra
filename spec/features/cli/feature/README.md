@@ -3,6 +3,11 @@
 | Child | Description |
 |---|---|
 | [new](new/README.md) | TODO: Add description. |
+| [deps](deps/README.md) | TODO: Add description. |
+| [info](info/README.md) | TODO: Add description. |
+| [list](list/README.md) | TODO: Add description. |
+| [refs](refs/README.md) | TODO: Add description. |
+| [tree](tree/README.md) | TODO: Add description. |
 
 # Command Group: `synchestra feature`
 

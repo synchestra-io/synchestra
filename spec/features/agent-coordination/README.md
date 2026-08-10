@@ -19,6 +19,8 @@ Tracks efforts, agent runs, worktree claims, audited messages, active/recent vie
 |---|---|
 | [repository-change-notifications](repository-change-notifications/README.md) | Normalizes agent, Workbench, Git-provider, and reconciliation signals into verified ref-update notifications for affected active agents. |
 | [cross-harness-conformance](cross-harness-conformance/README.md) | Proves that independently launched agent harnesses can negotiate, deliver, recover, and clean up through the same audited protocol. |
+| [portable-merger-agent](portable-merger-agent/README.md) | Defines a harness-neutral, WB-managed integration role that batches compatible branches, validates the combined target tree, lands work, observes CI, and closes every branch/worktree claim. |
+| [plan-overlap-coordination](plan-overlap-coordination/README.md) | Detects shared capabilities and conflicting scope across reviewable plans before implementation, assigns one audited provider, and turns every consumer into an explicit reuse dependency. |
 
 ## Problem
 
@@ -126,7 +128,7 @@ more collaborative.
 ### State machine, merge target, and cleanup
 
 Effort and run lifecycle states are `planning`, `active`, `handoff_pending`,
-`awaiting_merge`, `awaiting_cleanup`, `completed`, `aborted`, `failed`,
+`awaiting_merge`, `awaiting_push`, `awaiting_cleanup`, `completed`, `aborted`, `failed`,
 `superseded`, and `archived`. A green test, pushed branch, or opened PR keeps a
 run **active**; it is evidence, not completion. A terminal state is not
 synonymous with delivered work. Completed runs record one of:
@@ -137,11 +139,14 @@ synonymous with delivered work. Completed runs record one of:
 - `discarded`: explicit authorized abandonment.
 
 Every effort declares its delivery level: a **feature effort** is delivered only
-when its change is merged to `main` and every related branch/worktree has been
-removed or recycled; a **task effort** is delivered only when its change is
-merged to its owning feature branch and every related branch/worktree has been
-removed or recycled. A run cannot transition to `completed` before this target
-and all its claimed assets are verified. An aborted/failed effort likewise has
+when its change is merged and the exact integrated SHA is pushed to
+`origin/main`, and every related branch/worktree has been removed or recycled;
+a **task effort** is delivered only when its change is merged and pushed to its
+remote owning feature branch, and every related branch/worktree has been removed
+or recycled. A local target merge is `awaiting_push`, not landing evidence; no
+source or integration claim is cleaned until the remote target ref is verified.
+A run cannot transition to `completed` before this remote target and all its
+claimed assets are verified. An aborted/failed effort likewise has
 a terminal audit disposition only after its assets are explicitly handed off,
 removed, or recycled; otherwise it remains `awaiting_cleanup` and contributes
 to the cleanup backlog.
@@ -264,10 +269,19 @@ record can become cleanup-eligible without an explicit discard/hand-off.
 **Given** a feature effort with green tests and a pushed review branch, plus a
 task effort merged to its feature branch with an unremoved worktree
 **When** either run attempts `complete`
-**Then** both remain active/`awaiting_merge` or `awaiting_cleanup` with their
-missing condition; only the feature merged to `main` and task merged to its
-feature branch can complete after every claimed branch/worktree is removed or
-explicitly recycled.
+**Then** both remain active/`awaiting_merge`, `awaiting_push`, or
+`awaiting_cleanup` with their missing condition; only the feature merged and
+pushed to `origin/main` and task merged and pushed to its remote feature branch
+can complete after every claimed branch/worktree is removed or explicitly
+recycled.
+
+### AC: local-target-merge-is-not-delivered
+
+**Given** a task or feature change merged into its local target branch
+**When** the target SHA is absent from or differs from `origin/<target>`
+**Then** the effort is `awaiting_push`, the local target merge is visible as
+durability backlog, every related claim/Work Log remains active, and cleanup or
+completion is rejected until the exact remote ref is verified.
 
 ### AC: recycle-is-explicit-and-isolated
 
