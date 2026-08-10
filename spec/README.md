@@ -28,7 +28,7 @@ OpenAPI 3.1 specifications for the Synchestra REST API, organized one file per r
 
 All diagrams in specifications should use **mermaid syntax** instead of ASCII art. Mermaid provides better clarity, GitHub rendering support, and maintainability.
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 

@@ -4,6 +4,6 @@ Reads the global Synchestra configuration from `~/.synchestra.yaml` and resolves
 
 Returns a zero-value config (no error) when the file does not exist, so callers always get usable defaults.
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

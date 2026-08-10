@@ -5,6 +5,7 @@ status: Approved
 
 # Feature: Dispatch Scheduler
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/dispatch/scheduler?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/dispatch/scheduler?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/dispatch/scheduler?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/dispatch/scheduler?op=request-change) |
 **Status:** Approved
 **Source Ideas:** [Remote Dispatch](https://github.com/synchestra-io/synchestra-marketing/blob/main/ideas/remote-dispatch.md)
 
@@ -103,7 +104,7 @@ Lease assignment uses a Firestore transaction or equivalent compare-and-set. Cla
 - [host-auth](../../host-auth/README.md) — authenticated worker mutations
 - [channels](../../channels/README.md) — session/message logs
 
-## Outstanding Questions
+## Open Questions
 
 1. Whether logs are embedded under attempts or referenced exclusively through Sessions should be settled during contract implementation; no log text should be duplicated in two stores.
 

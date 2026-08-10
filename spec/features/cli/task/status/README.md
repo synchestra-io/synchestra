@@ -1,5 +1,6 @@
 # Command: `synchestra task status`
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/status?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/status?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/status?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/status?op=request-change) |
 **Parent:** [task](../README.md)
 **Skill:** [task: status](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/status.md)
 
@@ -77,7 +78,7 @@ When `abort_requested` is `true`, agents should wrap up current work and transit
 6. Commit and push
 7. On push conflict: pull, re-check `--current` guard, retry or fail
 
-## Outstanding Questions
+## Open Questions
 
 - Should query output be YAML, JSON, or a simple key-value format? Should there be a `--format` flag?
 - Should `--reason` be strictly required for `failed`/`blocked`, or just strongly encouraged?

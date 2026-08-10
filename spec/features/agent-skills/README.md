@@ -1,10 +1,19 @@
 # Feature: Agent Skills
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/agent-skills?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/agent-skills?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/agent-skills?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/agent-skills?op=request-change) |
 **Status:** In Progress
+**Source Ideas:** —
 
 ## Summary
 
 A set of resource-level skills that AI agents use to interact with Synchestra — one skill per CLI resource group (`task`, `feature`, `runner`, `session`, …) with per-verb instructions loaded on demand via Claude Code's progressive-disclosure mechanism. Skills expose *when* to call the CLI, *what* to run, and *how* to interpret results, while keeping the slash-menu surface scannable.
+
+## Contents
+
+| Child | Description |
+|---|---|
+| [dispatch](dispatch/README.md) | TODO: Add description. |
+| [project-setup](project-setup/README.md) | TODO: Add description. |
 
 ## Problem
 
@@ -174,7 +183,7 @@ See the [skills README](https://github.com/synchestra-io/ai-plugin-synchestra/bl
 - [ADR-0004](../../decisions/0004-layered-plugin-architecture.md) — layered plugin architecture (CLI wrappers + methodology plugins)
 - [ADR-0005](../../decisions/0005-user-invocable-visibility.md) — per-resource `user-invocable` visibility
 
-## Outstanding Questions
+## Open Questions
 
 - Should skills include platform-specific instructions (e.g., "in Claude Code, add this to your CLAUDE.md")?
 - How are skills versioned? Does the CLI version imply the skill version, or are they independent?

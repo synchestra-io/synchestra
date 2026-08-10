@@ -1,5 +1,6 @@
 # Proposal: Merge user-authentication with host-auth
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/user-authentication/proposals/merge-with-host-auth?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/user-authentication/proposals/merge-with-host-auth?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/user-authentication/proposals/merge-with-host-auth?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/user-authentication/proposals/merge-with-host-auth?op=request-change) |
 **Status:** draft
 **Target feature:** [user-authentication](../../README.md)
 **Related feature:** [host-auth](../../../host-auth/README.md)
@@ -90,7 +91,7 @@ No recommendation is made yet. The right answer depends on:
 
 Before either feature graduates from `Draft` to `Stable`. A feature marked `Stable` with unresolved structural ambiguity about its own home invites confusion. Prefer to resolve this question at the `Stable` transition.
 
-## Outstanding Questions
+## Open Questions
 
 - If Option A is chosen, should the parent `authentication/` feature own cross-cutting concepts like "shared key identity" (the `host_id` used as an audience across both directions), or should that live in the individual sub-features?
 - If Option C is chosen, where do cross-cutting proposals live? Under one feature by convention, with a cross-link from the other? Under an `ecosystem/`-style top-level proposals folder?

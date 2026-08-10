@@ -1,6 +1,8 @@
 # Feature: CLI Auth
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/auth?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/auth?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/auth?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/auth?op=request-change) |
 **Status:** In Progress
+**Source Ideas:** —
 
 ## Summary
 
@@ -91,7 +93,7 @@ Exit codes `100`–`109` are reserved for the CLI Auth feature. This range is re
 5. `auth login --hub <url>` persists the hub URL so that follow-up `whoami` and other commands target the same Hub.
 6. A non-default `--hub` URL that is unreachable fails with exit code 102 and does not persist a partial credential record.
 
-## Outstanding Questions
+## Open Questions
 
 1. Where exactly are credentials stored — a YAML file under `~/.synchestra/`, the OS keychain, or both with keychain preferred? Defer to implementation, but the feature contract must specify visibility semantics (e.g., multi-user workstation expectations).
 2. Should `auth login` support `--token <value>` for non-interactive flows (CI, headless servers)? Out of MVP scope, but the subfeature spec should explicitly state deferral so it is easy to add later.

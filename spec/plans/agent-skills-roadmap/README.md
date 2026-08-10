@@ -419,7 +419,7 @@ These decisions were made during feature specification and should not be revisit
 - **Skill discoverability at scale.** 36+ skills may overwhelm agent tool selectors. May need skill grouping, priority tiers, or a meta-skill that recommends which skill to use.
 - **Spec format evolution.** If feature README format changes (new required sections, renamed headings), all parsing commands break. `spec lint` partially mitigates this by catching drift early.
 
-## Outstanding Questions
+## Open Questions
 
 - Should skills include platform-specific instructions (e.g., "in Claude Code, add this to your CLAUDE.md")?
 - ~~Should `spec search` be keyword-based, semantic/embedding-based, or both with a flag?~~ Resolved: keyword-first with spec-aware enrichment (`--section`, `--status`, `--type`, `--refs`). Semantic search deferred to a future iteration. See [spec search spec](../../features/cli/spec/search/README.md).

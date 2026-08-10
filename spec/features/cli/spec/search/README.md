@@ -1,5 +1,6 @@
 # Command: `synchestra spec search`
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/spec/search?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/spec/search?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/spec/search?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/spec/search?op=request-change) |
 **Parent:** [spec](../README.md)
 
 ## Synopsis
@@ -271,7 +272,7 @@ Unquoted multi-word queries use AND semantics (all terms must appear in the same
 - [ ] Feature path validation returns exit code 3 for non-existent paths
 - [ ] Performance: completes in under 2 seconds on the Synchestra spec repo
 
-## Outstanding Questions
+## Open Questions
 
 - Should `spec search` support regular expressions in addition to literal strings (e.g., `--regex` flag)?
 - Should results be deduplicated when the same line matches multiple terms?

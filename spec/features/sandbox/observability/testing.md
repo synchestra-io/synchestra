@@ -359,7 +359,7 @@ Security-specific tests are included in the relevant test files but are also enu
 
 ---
 
-## Outstanding Questions
+## Open Questions
 
 1. Should there be a chaos testing framework for simulating Docker daemon failures (e.g., random pause/kill of the Docker socket during test runs)?
 2. Should performance benchmarks be included as part of CI (e.g., max concurrent sessions, resume latency P99, provision time P95)?

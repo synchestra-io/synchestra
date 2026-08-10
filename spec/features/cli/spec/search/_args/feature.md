@@ -36,6 +36,6 @@ synchestra spec search "skill" --feature agent-skills
 synchestra spec search "version" --feature cli --section "Outstanding Questions"
 ```
 
-## Outstanding Questions
+## Open Questions
 
 - Should `--feature` accept glob patterns (e.g., `cli/*`) for multi-subtree search?

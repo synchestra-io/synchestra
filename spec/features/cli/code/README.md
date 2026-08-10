@@ -1,5 +1,6 @@
 # Command Group: `synchestra code`
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/code?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/code?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/code?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/code?op=request-change) |
 **Parent:** [CLI](../README.md)
 
 Commands for querying source code relationships to Synchestra resources. Where `synchestra feature` operates on the specification graph (feature → feature dependencies), `synchestra code` operates on the code → specification graph (source files → features, plans, docs they reference).
@@ -28,7 +29,7 @@ The `code` and `feature` command groups are complementary views of the same depe
 |---|---|---|
 | [deps](deps/README.md) | Show Synchestra resources that source files depend on | [code: deps](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/code/references/deps.md) |
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 

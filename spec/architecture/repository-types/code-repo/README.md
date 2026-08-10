@@ -45,6 +45,6 @@ The following rules are mandatory for every code repository managed by Synchestr
 
 3. **No structural requirements** — Synchestra does not dictate internal structure beyond the config file and branch convention. Existing CI/CD, branch protections, and review workflows remain unchanged.
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

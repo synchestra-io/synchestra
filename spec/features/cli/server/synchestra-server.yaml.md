@@ -55,7 +55,7 @@ log_file: "./synchestra.log"        # default: relative to config dir
 - `spec` and `state` paths must point to valid directories containing the expected marker files.
 - Relative paths are resolved relative to the directory containing `synchestra-server.yaml`.
 
-## Outstanding Questions
+## Open Questions
 
 - Should the config support environment variable interpolation (e.g., `${TLS_CERT_PATH}`)?
 - Should there be an `auth` section for configuring API authentication?

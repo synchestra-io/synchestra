@@ -1,6 +1,8 @@
 # Feature: Channels
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/channels?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/channels?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/channels?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/channels?op=request-change) |
 **Status:** Conceptual
+**Source Ideas:** —
 
 ## Summary
 
@@ -519,7 +521,7 @@ Cloud receives the outbound message from the runner host, writes to Firestore, a
 
 Not defined yet.
 
-## Outstanding Questions
+## Open Questions
 
 1. What is the session ID format --- slug-only (e.g., `fix-auth`), prefixed (e.g., `ses-fix-auth`), or UUID-based? Slugs are user-friendly but risk collisions across users.
 2. Should the cloud attempt to deliver queued messages to the host in a single batch on reconnection, or one at a time?

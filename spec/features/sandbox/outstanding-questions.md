@@ -620,6 +620,6 @@ Terraform/gcloud commands.
 
 ---
 
-## Outstanding Questions
+## Open Questions
 
 None at this time — this document *is* the consolidated questions list.

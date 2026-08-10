@@ -5,6 +5,7 @@ status: Approved
 
 # Feature: Remote Task Dispatch
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/dispatch?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/dispatch?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/dispatch?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/dispatch?op=request-change) |
 **Status:** Approved
 **Source Ideas:** [Remote Dispatch](https://github.com/synchestra-io/synchestra-marketing/blob/main/ideas/remote-dispatch.md)
 
@@ -190,7 +191,7 @@ The worker MUST NOT merge, deploy, or mutate the caller's working tree.
 - Cloud Run, AWS, Azure, or Kubernetes workers before the VM protocol is proven.
 - A mandatory SpecStudio dependency.
 
-## Outstanding Questions
+## Open Questions
 
 1. Should retry be a mutation of one dispatch or a new child dispatch? The MVP uses a new attempt under the same dispatch.
 2. How long should completed dispatch logs be retained after the personal proof?

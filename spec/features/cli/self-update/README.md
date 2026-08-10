@@ -5,6 +5,7 @@ status: Draft
 
 # Feature: `synchestra self-update`
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/self-update?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/self-update?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/self-update?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/self-update?op=request-change) |
 **Status:** Draft
 
 **Parent:** [CLI](../README.md)
@@ -101,7 +102,7 @@ The command lives at `pkg/cli/selfupdate/selfupdate.go` (a new top-level command
 **When** `synchestra self-update` (or `--check`) produces that outcome
 **Then** the process exits with the mapped code, and none of the `20–109` command-group-reserved ranges are ever used.
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 

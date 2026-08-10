@@ -1,5 +1,6 @@
 # Command Group: `synchestra server`
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/server?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/server?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/server?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/server?op=request-change) |
 **Parent:** [CLI](../README.md)
 
 Background daemon management for the Synchestra server. All configuration comes from `synchestra-server.yaml` — no protocol, port, or TLS arguments are accepted on the command line. Only [`--path`](../_args/path.md) is accepted to locate the config directory.
@@ -44,7 +45,7 @@ Reports whether the daemon is running, its PID, uptime, and listening addresses.
 
 Manages projects in the server config. Does not require the server to be running — reads directly from `synchestra-server.yaml`. See [project/README.md](project/README.md).
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 

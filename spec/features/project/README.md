@@ -1,6 +1,8 @@
 # Feature: Project
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/project?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/project?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/project?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/project?op=request-change) |
 **Status:** Draft
+**Source Ideas:** —
 
 ## Summary
 
@@ -134,7 +136,7 @@ Projects have pre-repo (Firestore-authoritative) and post-repo (yaml-authoritati
 
 The runner/host `project_ids` matcher accepts literal IDs and the `"*"` wildcard today.
 
-## Outstanding Questions
+## Open Questions
 
 - Is the pre-repo → post-repo transition automatic (synchestra writes the initial yaml on state-repo creation) or operator-triggered? Current position: automatic; needs explicit documentation of which action triggers it.
 - Should projects optionally be private (invite-only, current implicit default) vs. discoverable (any user with the ID can request access)? No discovery model exists today.

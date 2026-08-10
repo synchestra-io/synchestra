@@ -1,5 +1,6 @@
 # Command: `synchestra config set`
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/config/set?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/config/set?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/config/set?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/config/set?op=request-change) |
 **Parent:** [config](../README.md)
 
 ## Synopsis
@@ -37,7 +38,7 @@ At least one parameter must be provided.
 5. Write `~/.synchestra.yaml`
 6. Exit `0`
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 

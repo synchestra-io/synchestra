@@ -81,7 +81,7 @@ GET /api/v1/task/list?project=my-project&limit=20&cursor=abc123
 
 All diagrams in API specifications should use **mermaid syntax** instead of ASCII art. Mermaid provides better clarity, GitHub rendering support, and maintainability.
 
-## Outstanding Questions
+## Open Questions
 
 - Should common schemas (error response, pagination) be extracted into a shared `_common/` directory?
 - Should we provide a combined `openapi.yaml` that merges all resource specs for tooling that expects a single file?

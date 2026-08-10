@@ -73,7 +73,7 @@ configurable spec root path and resolves AC references from the filesystem.
 
 See `docs/superpowers/specs/2026-03-16-e2e-testing-and-acceptance-criteria-design.md`
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 ```
@@ -1494,7 +1494,7 @@ CLI commands for running test scenarios.
 | `synchestra test run` | Run test scenarios |
 | `synchestra test list` | List available test scenarios |
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 ```
@@ -1914,7 +1914,7 @@ Reusable sub-flow scenario files for cross-feature E2E tests.
 
 (No flows defined yet.)
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 ```

@@ -44,6 +44,6 @@ synchestra spec search "claiming" --refs
 synchestra spec search "timeout" --feature cli/task --refs --format yaml
 ```
 
-## Outstanding Questions
+## Open Questions
 
 - Should `--refs` support `--transitive` to include transitive (not just direct) dependencies and references?

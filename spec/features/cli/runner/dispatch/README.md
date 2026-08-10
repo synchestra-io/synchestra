@@ -1,6 +1,8 @@
 # Feature: CLI Runner Dispatch
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/runner/dispatch?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/runner/dispatch?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/runner/dispatch?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/runner/dispatch?op=request-change) |
 **Status:** In Progress
+**Source Ideas:** —
 
 ## Summary
 
@@ -108,7 +110,7 @@ Exit codes `80`–`89` are reserved for the CLI Runner feature; `101`–`109` fo
 6. With `--format json`, output is a single JSON object with `resolved` always present and either `dispatch` or `error` present — never both.
 7. Dispatching with `--prompt` and no target resolves the current Git repository/base revision and creates an ad-hoc dispatch without creating a Task.
 
-## Outstanding Questions
+## Open Questions
 
 1. Should `--watch` compose `dispatch status` and session logs, or remain outside the MVP?
 2. When the runner's default agent is already correct but the user passes `--agent` with the same value, is that a no-op or an error? Leaning no-op.

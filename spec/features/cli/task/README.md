@@ -1,5 +1,6 @@
 # Command Group: `synchestra task`
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task?op=request-change) |
 **Parent:** [CLI](../README.md)
 
 Commands for managing tasks — claiming, querying status, updating progress, and more.
@@ -38,7 +39,7 @@ To override the policy for a single invocation, use the global [`--sync`](../_ar
 
 See [`synchestra state pull/push/sync`](../state/README.md) for manual bulk sync.
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 

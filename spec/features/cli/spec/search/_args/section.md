@@ -45,6 +45,6 @@ synchestra spec search "atomic" --section "Acceptance Criteria"
 synchestra spec search "timeout" --feature cli/task --section behavior
 ```
 
-## Outstanding Questions
+## Open Questions
 
 - Should `--section` accept multiple names (comma-separated or repeated flag) to search across several sections at once?

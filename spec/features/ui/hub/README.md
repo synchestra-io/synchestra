@@ -1,6 +1,8 @@
 # Feature: UI / Hub
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/ui/hub?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/ui/hub?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/ui/hub?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/ui/hub?op=request-change) |
 **Status:** Conceptual
+**Source Ideas:** —
 
 ## Summary
 
@@ -106,7 +108,7 @@ The choice affects offline behavior and rendering fidelity. This is an open ques
 - Task creation uses a form that maps to the fields accepted by [`synchestra task create`](../../cli/task/create/README.md).
 - The proposals list on the feature screen must visually distinguish proposals from the feature's normative specification content.
 
-## Outstanding Questions
+## Open Questions
 
 - Should the Hub render Markdown client-side or receive pre-rendered HTML from the API?
 - What is the offline mutation strategy — optimistic local writes with background sync, or explicit "you are offline" gating?

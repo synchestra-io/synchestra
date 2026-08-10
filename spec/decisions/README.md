@@ -61,6 +61,9 @@ Decisions that affect only the marketing/positioning narrative belong in [`synch
 | [0004](0004-layered-plugin-architecture.md) | Layered plugin architecture — CLI wrappers and methodology plugins | Accepted |
 | [0005](0005-user-invocable-visibility.md) | Per-resource `user-invocable` visibility | Accepted |
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
+
+---
+*This document follows the https://specscore.md/decisions-index-specification*

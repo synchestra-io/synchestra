@@ -42,6 +42,6 @@ synchestra serve --http --mcp sse://localhost:3001
 synchestra serve --mcp sse://localhost:3001
 ```
 
-## Outstanding Questions
+## Open Questions
 
 - Should `--mcp` without a value and without `--http`/`--https` be an error, or should it implicitly start an HTTP listener?

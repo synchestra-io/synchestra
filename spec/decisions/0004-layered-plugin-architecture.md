@@ -1,6 +1,6 @@
 # ADR-0004: Layered plugin architecture — CLI wrappers and methodology plugins
 
-**Status:** Accepted
+**Status:** Approved
 **Date:** 2026-04-19
 
 ## Context
@@ -91,3 +91,6 @@ Installing `/plugin install spec-driven-development@synchestra-io` auto-installs
 - **Adopt the `{plugin-name}--v{version}` tagging convention** for all three plugins. Document it in each repo's release checklist.
 - **Document minimum Claude Code version** (v2.1.110) in each plugin's README.
 - **Separately: decide whether the methodology plugin name `spec-driven-development` should be shortened** (e.g., to `sdd`) for more ergonomic slash-menu invocation. Out of scope for this ADR; record as a question in `ai-plugin-sdd`'s own backlog.
+
+---
+*This document follows the https://specscore.md/decision-specification*

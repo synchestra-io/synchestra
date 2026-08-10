@@ -226,7 +226,7 @@ Steps 2, 3, and 4 can run in parallel after Step 1. Steps 5 and 6 can run in par
 - **Conversation compaction.** The "compacted summary of the middle" requires invoking an AI model to summarize. This is an additional AI call per chat turn for long conversations, adding latency and cost. Consider caching summaries and only regenerating when the middle segment changes.
 - **Concurrent chat access.** If the same user opens the same chat in multiple browser tabs, the message store needs to handle concurrent writes. The current design assumes single-writer per chat.
 
-## Outstanding Questions
+## Open Questions
 
 - What is the technology choice for the server-side message store — in-memory with periodic flush, embedded database (SQLite/bbolt), or external store (Redis)?
 - Should the conversation compaction (summary generation) be synchronous (blocking the chat turn) or asynchronous (using a slightly stale summary)?

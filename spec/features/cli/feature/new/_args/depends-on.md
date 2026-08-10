@@ -36,6 +36,6 @@ Generates:
 - state-store
 ```
 
-## Outstanding Questions
+## Open Questions
 
 - Should the command validate that the listed feature IDs actually exist?

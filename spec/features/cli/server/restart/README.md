@@ -1,5 +1,6 @@
 # Command: `synchestra server restart`
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/server/restart?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/server/restart?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/server/restart?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/server/restart?op=request-change) |
 **Parent:** [server](../README.md)
 
 ## Synopsis
@@ -33,7 +34,7 @@ Restarts the Synchestra daemon by stopping then starting it. If the daemon is no
 2. Execute `synchestra server start --path <dir>` logic
 3. Report the exit code from `start` (stop is idempotent)
 
-## Outstanding Questions
+## Open Questions
 
 - Should restart support graceful connection draining before stopping?
 

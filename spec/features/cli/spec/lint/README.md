@@ -1,5 +1,6 @@
 # Command: `synchestra spec lint`
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/spec/lint?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/spec/lint?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/spec/lint?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/spec/lint?op=request-change) |
 **Parent:** [spec](../README.md)
 
 Validates a Synchestra specification repository for structural convention violations. Checks that all directories have README.md files, required sections (Outstanding Questions) are present, heading levels are consistent, feature references are valid, internal links resolve, and specification indices are up-to-date.
@@ -133,7 +134,7 @@ $ synchestra spec lint /path/to/custom/spec
 - [ ] Integration test passes
 - [ ] Wrapped as `synchestra-spec-lint` agent skill
 
-## Outstanding Questions
+## Open Questions
 
 - Should certain directories (e.g., `spec/proposals/`, `spec/archived/`) be excluded or have relaxed rules?
 - Should `spec lint` validate that feature README files have specific required sections beyond OQ (e.g., "Summary", "Design Principles")?

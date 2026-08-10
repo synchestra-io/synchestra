@@ -1,5 +1,6 @@
 # Compute Backends
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/sandbox/compute-backends?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/sandbox/compute-backends?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/sandbox/compute-backends?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/sandbox/compute-backends?op=request-change) |
 ## Overview
 
 Synchestra supports multiple compute backends for running sandbox containers. A project's configuration specifies which backend to use. The orchestrator delegates container lifecycle operations to the selected backend through a unified interface.
@@ -334,7 +335,7 @@ Adopting the `ComputeBackend` interface requires the following changes to existi
 
 ---
 
-## Outstanding Questions
+## Open Questions
 
 1. For cloud serverless mode, should Synchestra pre-warm containers (keep min-instances=1) or accept cold-start latency?
 2. Should the `external` backend (user-provided endpoint) support any lifecycle operations beyond `Connect()`?

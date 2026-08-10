@@ -55,6 +55,6 @@ synchestra task list --project acme --sync local
 synchestra task complete --project acme --task fix-bug --sync remote
 ```
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

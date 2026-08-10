@@ -1,6 +1,8 @@
 # Feature: Workflow — Create Feature
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/chat/workflow/create-feature?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/chat/workflow/create-feature?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/chat/workflow/create-feature?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/chat/workflow/create-feature?op=request-change) |
 **Status:** Conceptual
+**Source Ideas:** —
 
 ## Summary
 
@@ -115,7 +117,7 @@ steps:
 | [Feature](https://github.com/specscore/specscore/blob/main/spec/features/feature/README.md) | The primary artifact produced is a feature spec document following the feature conventions. |
 | [Proposals](../../../proposals/README.md) | A newly created feature may later receive proposals through the "Create Proposal" workflow. |
 
-## Outstanding Questions
+## Open Questions
 
 - When creating a sub-feature, should the parent feature's README be automatically updated with the new Contents entry, or should that be a separate step?
 - Should the system suggest related existing features during the Understand step to avoid duplicates?

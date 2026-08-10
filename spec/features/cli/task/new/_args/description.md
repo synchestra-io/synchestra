@@ -26,6 +26,6 @@ synchestra task new --project my-service --task fix-auth-bug \
   --description "Users can bypass auth by sending an empty token header. Fix the middleware to reject empty tokens."
 ```
 
-## Outstanding Questions
+## Open Questions
 
 - Should the description be read from stdin if not provided as a flag?

@@ -438,6 +438,6 @@ All tasks are parallel-eligible — they touch different files.
 - **Broken internal links** — Some files use relative paths like `../../features/development-plan/README.md` which pointed to a local directory that was already removed during SpecScore decoupling. These should be updated to GitHub URLs pointing to SpecScore.
 - **Partial updates** — With 27+ files to update, it's easy to miss one. After all tasks complete, run a grep for `development-plan` and `development plan` to verify completeness.
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

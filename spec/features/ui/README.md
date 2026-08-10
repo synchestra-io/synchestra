@@ -1,6 +1,8 @@
 # Feature: UI
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/ui?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/ui?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/ui?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/ui?op=request-change) |
 **Status:** Conceptual
+**Source Ideas:** —
 
 ## Summary
 
@@ -126,7 +128,7 @@ The UI feature presents and triggers workflows defined elsewhere — it does not
 | [Repo Config](https://github.com/specscore/specscore/blob/main/spec/features/repo-config/README.md) | `synchestra-spec-repo.yaml` — source of the project list |
 | [HTTP API](../../../docs/api/README.md) | Backend for the Hub surface |
 
-## Outstanding Questions
+## Open Questions
 
 - Should the workers screen be deferred entirely until a `workers` feature spec is defined, or is UI-level visibility enough for an MVP?
 - How should the home screen discover projects — scan local filesystem for `synchestra-spec-repo.yaml` files, query the API for a user's project list, or both depending on the surface?

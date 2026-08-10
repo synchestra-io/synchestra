@@ -33,6 +33,6 @@ synchestra config set --repos-dir /data/synchestra/repos
 synchestra config clear --repos-dir
 ```
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

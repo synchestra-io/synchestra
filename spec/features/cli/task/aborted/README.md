@@ -1,5 +1,6 @@
 # Command: `synchestra task aborted`
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/aborted?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/aborted?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/aborted?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/aborted?op=request-change) |
 **Parent:** [task](../README.md)
 **Skill:** [task: aborted](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/aborted.md)
 
@@ -49,7 +50,7 @@ The command implicitly guards that the current status is `claimed` or `in_progre
 5. Commit and push
 6. On push conflict: pull, re-check status guard, retry or fail
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 

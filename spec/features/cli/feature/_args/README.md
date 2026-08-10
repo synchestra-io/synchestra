@@ -11,6 +11,6 @@ Arguments shared across `synchestra feature` subcommands.
 | [`--fields`](fields.md) | Comma-separated string | No | Inline selected metadata next to each feature in the output |
 | [`--transitive`](transitive.md) | Boolean | No | Follow dependency/reference chains to their full depth |
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

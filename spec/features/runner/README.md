@@ -1,6 +1,8 @@
 # Feature: Runner
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/runner?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/runner?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/runner?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/runner?op=request-change) |
 **Status:** Conceptual
+**Source Ideas:** —
 
 ## Summary
 
@@ -64,7 +66,7 @@ stateDiagram-v2
 
 <!-- To be defined -->
 
-## Outstanding Questions
+## Open Questions
 
 1. Should runners be project-scoped or organization-scoped? An org-scoped runner could serve multiple projects.
 2. ~~What authentication model for runner-to-server communication — API keys, mTLS, or short-lived tokens?~~ **Resolved:** See [host-auth](../host-auth/README.md) --- two-tier token model (permanent registration token + short-lived access tokens) with Hub request signing.

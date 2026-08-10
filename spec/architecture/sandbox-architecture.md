@@ -396,7 +396,7 @@ DELETE /api/v1/sandbox/{project_id}
 - **Performance**: Decryption happens locally, no network calls per command
 - **Isolation**: Each container has independent credential set; cannot be shared across projects
 
-## Outstanding Questions
+## Open Questions
 
 1. **External vault integration**: Should we support HashiCorp Vault or AWS Secrets Manager as credential backend? Timeline?
 2. **Horizontal scaling**: How should credentials be synchronized if container moves to different host?

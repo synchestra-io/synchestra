@@ -25,6 +25,6 @@ synchestra feature new --title "Task Status Board" \
   --description "A markdown table that tracks task assignments and status, using git commits as an optimistic locking mechanism."
 ```
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

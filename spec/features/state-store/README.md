@@ -1,12 +1,24 @@
 # Feature: State Store
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/state-store?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/state-store?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/state-store?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/state-store?op=request-change) |
 **Status:** Conceptual
+**Source Ideas:** —
 
 ## Summary
 
 The state store is the abstraction layer for all Synchestra project coordination state. It defines a composable, hierarchical Go interface (`state.Store`) that formally specifies every operation the system can perform on project state — tasks, artifacts, chat, and project configuration.
 
 The default implementation is a git-backed store (`gitstore`) that maps directly to the current [state repository](../../architecture/repository-types/state-repo/README.md) design. Future implementations (SQLite, PostgreSQL, cloud databases) can be added by satisfying the same interface.
+
+## Contents
+
+| Child | Description |
+|---|---|
+| [backends](backends/README.md) | TODO: Add description. |
+| [chat-store](chat-store/README.md) | TODO: Add description. |
+| [project-store](project-store/README.md) | TODO: Add description. |
+| [task-store](task-store/README.md) | TODO: Add description. |
+| [topology](topology/README.md) | TODO: Add description. |
 
 ## Problem
 
@@ -143,7 +155,7 @@ type StoreOptions struct {
 
 Each backend provides a `StoreFactory`. The CLI selects the backend based on project configuration and constructs the store at startup.
 
-## Outstanding Questions
+## Open Questions
 
 - Should there be a read-only `StoreReader` interface for consumers that only need to query state (e.g., dashboard views, derived plan status)?
 - How should the store handle migrations when the state schema evolves (e.g., new fields on tasks)?

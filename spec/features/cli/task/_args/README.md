@@ -24,6 +24,6 @@ Records why a transition is happening. Required for `fail` and `block`, optional
 
 Controls the output format of read commands. Supported formats vary by command. See [format.md](../../_args/format.md).
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

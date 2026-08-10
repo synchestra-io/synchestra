@@ -38,6 +38,6 @@ synchestra serve --http 0.0.0.0:3000
 synchestra serve --http --mcp
 ```
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

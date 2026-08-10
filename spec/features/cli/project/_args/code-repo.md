@@ -42,6 +42,6 @@ synchestra project code add --code-repo github.com/acme/acme-infra
 synchestra project code remove --code-repo github.com/acme/acme-web
 ```
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

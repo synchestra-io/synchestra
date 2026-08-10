@@ -1,5 +1,6 @@
 # Command: `synchestra task block`
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/block?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/block?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/block?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/block?op=request-change) |
 **Parent:** [task](../README.md)
 **Skill:** [task: block](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/block.md)
 
@@ -43,7 +44,7 @@ The transition is atomic: the CLI commits the status change and pushes to the st
 4. Commit and push
 5. On push conflict: pull, re-check, retry or fail
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 

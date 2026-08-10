@@ -1,5 +1,6 @@
 # Sub-Feature: Chat Store
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/state-store/chat-store?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/state-store/chat-store?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/state-store/chat-store?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/state-store/chat-store?op=request-change) |
 **Parent:** [State Store](../)
 
 **Status:** Conceptual
@@ -101,7 +102,7 @@ type ChatMessage struct {
 }
 ```
 
-## Outstanding Questions
+## Open Questions
 
 - Should `Messages` support pagination or cursor-based access for long chat histories?
 - Should there be a `Checkpoint` method that flushes messages to durable storage without finalizing the chat?

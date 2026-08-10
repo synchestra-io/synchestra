@@ -490,7 +490,7 @@ docker image prune
 docker system prune --all
 ```
 
-## Outstanding Questions
+## Open Questions
 
 1. Should container images be automatically scanned and re-built on alpine/go updates?
 2. ~~Should we support container image registry signing (Notary/DCT)?~~ **Resolved**: The requirement for signed Docker images is configurable per host.

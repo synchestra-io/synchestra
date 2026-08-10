@@ -35,6 +35,6 @@ synchestra serve --https --tls-cert cert.pem --tls-key key.pem
 synchestra serve --http --https 0.0.0.0:443 --tls-cert cert.pem --tls-key key.pem
 ```
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

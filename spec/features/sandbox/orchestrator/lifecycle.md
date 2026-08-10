@@ -622,7 +622,7 @@ State transitions emit structured events for monitoring, alerting, and audit log
 
 ---
 
-## Outstanding Questions
+## Open Questions
 
 1. Should there be a "maintenance" state where the container is running but not accepting new commands (for updates/migrations)?
 2. Should auto-pause be disabled for specific high-priority projects?

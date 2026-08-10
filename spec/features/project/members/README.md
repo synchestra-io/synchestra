@@ -1,6 +1,8 @@
 # Feature: Project Members
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/project/members?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/project/members?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/project/members?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/project/members?op=request-change) |
 **Status:** Draft
+**Source Ideas:** —
 
 ## Summary
 
@@ -197,7 +199,7 @@ Firestore `projects/{id}` is a cache; yaml is the authority. Disagreement resolv
 
 Yaml is fetched via HTTPS single-file GET with provider-specific URL templates. Private repos use bearer tokens. Cloud reconciler is webhook-triggered; host cache is lazy + TTL-refreshed (default 5 min) with no external invalidation API in v1.
 
-## Outstanding Questions
+## Open Questions
 
 - Should `role` expand to `admin` and `viewer` as first-class v2 enum values? The flat `owner | member` split is sufficient for initial collaboration but may not carry the semantics needed for team deployments.
 - What is the default behavior when a project's yaml cannot be fetched (state repo down, 404, network error)? Current position: deny the request. Alternatives: allow previously-cached entries past TTL as a grace period, or fall back to the Firestore cache for bypass-auth hosts that have network to cloud.

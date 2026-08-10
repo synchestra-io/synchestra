@@ -1,5 +1,6 @@
 # Command: `synchestra feature refs`
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/feature/refs?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/feature/refs?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/feature/refs?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/feature/refs?op=request-change) |
 **Parent:** [feature](../README.md)
 **Skill:** [feature: refs](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/feature/references/refs.md)
 
@@ -102,7 +103,7 @@ synchestra feature refs micro-tasks --project synchestra
 # (no output — exit code 0)
 ```
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 

@@ -504,7 +504,7 @@ jobs:
 ```markdown
 # GitHub Workflows
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 ```

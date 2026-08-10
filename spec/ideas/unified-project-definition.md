@@ -1,9 +1,9 @@
 # Idea: Unified Project Definition
 
-**Status:** Implementing
+**Status:** Specified
 **Date:** 2026-05-08
 **Owner:** alexander.trakhimenok
-**Promotes To:** repo-config, state-repo-config
+**Promotes To:** cli/init, repo-config, state-repo-config
 **Supersedes:** —
 **Related Ideas:** —
 
@@ -83,7 +83,7 @@ Two timeboxed phases. **Phase 1 (≤2 weeks):** SpecScore schema enhancement lan
   - `specstudio:init` skill (already shipped) calls `synchestra init` in its Step 6; that consumer becomes real once Phase 2 lands and now writes `synchestra.yaml` rather than synchestra extension keys inside specscore.yaml.
   - The `unknown-fields-preserved` REQ in SpecScore stays as a cross-tool interop hint, not as the primary integration point — this Idea explicitly de-emphasises it.
 
-## Outstanding Questions
+## Open Questions
 
 - **Final `roles` enum.** Starting set is `code`, `state`, `specification`, `docs`, `runner`. May also need `sandbox`, `data`, `infrastructure`, `proposal`. Lock at Feature spec time.
 - **`synchestra.yaml` schema authority.** Where does the canonical `synchestra.yaml` schema live and at what URL? The line-1 schema-pointer comment must point somewhere — `https://synchestra.md/repo-config` or analogous. Decide at Feature spec time.

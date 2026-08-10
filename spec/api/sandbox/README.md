@@ -60,6 +60,6 @@ Admin endpoints use `/api/v1/admin/sandbox/...`.
 | `503 Service Unavailable` | `UNAVAILABLE` | `UNAVAILABLE` | Container temporarily unreachable |
 | `504 Gateway Timeout` | `DEADLINE_EXCEEDED` | `DEADLINE_EXCEEDED` | Command or provisioning timed out |
 
-## Outstanding Questions
+## Open Questions
 
 None at this time — see the [feature spec](../../features/sandbox/orchestrator/http-api.md) for open design questions.

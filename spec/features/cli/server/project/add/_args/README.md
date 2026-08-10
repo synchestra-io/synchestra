@@ -19,6 +19,6 @@ Path to the project's spec repository. See [spec.md](spec.md).
 
 Path to the project's state repository. See [state.md](state.md).
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

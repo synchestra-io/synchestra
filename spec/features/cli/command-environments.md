@@ -235,7 +235,7 @@ Valid values:
 
 This annotation makes each spec self-describing — tools and agents can read a command's environment from its own spec without consulting this document.
 
-## Outstanding Questions
+## Open Questions
 
 - Should the environment annotation proposed above be enforced by a linter or validation step?
 - Do any coordination commands need a "degraded mode" when the state store is unreachable (e.g., local-only queueing)?

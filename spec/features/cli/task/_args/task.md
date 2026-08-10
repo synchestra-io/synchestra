@@ -31,6 +31,6 @@ synchestra task start --project synchestra --task implement-cli/parse-arguments
 synchestra task info --project synchestra --task implement-cli/parse-arguments/validate-flags
 ```
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

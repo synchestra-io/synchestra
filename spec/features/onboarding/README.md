@@ -1,6 +1,8 @@
 # Feature: Onboarding
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/onboarding?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/onboarding?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/onboarding?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/onboarding?op=request-change) |
 **Status:** Conceptual
+**Source Ideas:** —
 
 ## Summary
 
@@ -147,7 +149,7 @@ Onboarding is complete when:
 - [CLI](../cli/README.md) — `synchestra init` command entry point
 - [API](../api/README.md) — backend endpoints for repo analysis, project creation, and GitHub App callback
 
-## Outstanding Questions
+## Open Questions
 
 - What AI providers and models should be supported at launch? Just OpenAI and Anthropic, or also Google, Mistral, etc.?
 - How deep should the initial repo analysis go — top-level structure only, or should it read code to infer domain features?

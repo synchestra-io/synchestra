@@ -437,7 +437,7 @@ K8s backend should come later, when:
 
 ---
 
-## Outstanding Questions
+## Open Questions
 
 1. For Submode A, what pricing model works best: per-minute execution, flat monthly fee, or tiered?
 2. For Submode B, should Synchestra support GCP Workload Identity Federation (keyless auth) as an alternative to service account keys?

@@ -1,0 +1,7 @@
+# SpecScore Repo Config Schema: https://specscore.md/repo-config
+
+project:
+    title: synchestra
+    host: github.com
+    org: synchestra-io
+    repo: synchestra

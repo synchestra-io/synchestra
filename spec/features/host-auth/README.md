@@ -1,6 +1,8 @@
 # Feature: Host-Hub Authentication
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/host-auth?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/host-auth?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/host-auth?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/host-auth?op=request-change) |
 **Status:** Conceptual
+**Source Ideas:** —
 
 ## Summary
 
@@ -200,7 +202,7 @@ Host-level authorization checks (is UID U permitted on host H?) are performed by
 11. Reconnecting a host (`hub connect` on an already-connected host) issues a new registration token and revokes the old one.
 12. If the Hub is unreachable, the host retries with exponential backoff and continues operating until the access token expires.
 
-## Outstanding Questions
+## Open Questions
 
 1. Should the Hub public key endpoint support multiple active keys (for overlap during rotation), or is the single-key-with-retry-on-failure approach sufficient?
 2. What is the maximum number of managers per host? Should there be a limit?

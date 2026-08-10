@@ -4,6 +4,6 @@ Parses repository references in any of three formats (HTTPS URL, SSH URL, short 
 
 The `Ref` type carries the parsed `Hosting`, `Org`, and `Repo` fields and exposes `OriginURL()`, `DiskPath(reposDir)`, and `Identifier()` methods.
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

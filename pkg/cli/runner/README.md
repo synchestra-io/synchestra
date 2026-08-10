@@ -4,6 +4,6 @@ Implements deterministic caller operations for the frozen `synchestra.dispatch.v
 
 The HTTP client is intentionally limited to caller endpoints. Scheduler claim, lease, heartbeat, and attempt-owner mutations are not part of this package.
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

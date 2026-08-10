@@ -1,6 +1,8 @@
 # Feature: Testing Framework
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/testing-framework?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/testing-framework?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/testing-framework?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/testing-framework?op=request-change) |
 **Status:** Conceptual
+**Source Ideas:** —
 
 ## Summary
 
@@ -59,7 +61,7 @@ See [`cli/test`](../cli/test/README.md) for the full `synchestra test` command r
 
 Not defined yet.
 
-## Outstanding Questions
+## Open Questions
 
 - Acceptance criteria not yet defined for this feature.
 - Should the framework support test fixtures or shared setup beyond sub-flows (e.g., a `spec/tests/fixtures/` directory for static test data)?

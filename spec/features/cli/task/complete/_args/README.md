@@ -16,6 +16,6 @@ Also uses [`--project`](../../../_args/project.md) and [`--task`](../../_args/ta
 
 Records what was accomplished when completing a task. See [summary.md](summary.md).
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

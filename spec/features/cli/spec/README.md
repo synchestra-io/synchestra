@@ -1,5 +1,13 @@
+## Contents
+
+| Child | Description |
+|---|---|
+| [search](search/README.md) | TODO: Add description. |
+| [lint](lint/README.md) | TODO: Add description. |
+
 # Command Group: `synchestra spec`
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/spec?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/spec?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/spec?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/spec?op=request-change) |
 **Parent:** [CLI](../README.md)
 
 Commands for validating and searching Synchestra specification repositories. The `spec` command group provides tools to ensure specification tree integrity, validate structural conventions, and query spec content.
@@ -24,7 +32,7 @@ Specification commands treat spec repositories as queryable data structures, not
 |---|---|---|
 | [search](search/README.md) | Keyword search across spec documents with metadata filtering and cross-reference context | [spec: search](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/spec/references/search.md) |
 
-## Outstanding Questions
+## Open Questions
 
 - Should `spec lint` support a `--fix` flag for auto-fixing certain violations (e.g., adding missing OQ sections)?
 - Should there be a `--watch` mode for continuous linting during spec editing?

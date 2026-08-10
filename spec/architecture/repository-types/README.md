@@ -135,6 +135,6 @@ See [Spec-to-Execution Pipeline](../spec-to-execution.md) for the full lifecycle
 4. Agent implements the feature, commits, and pushes.
 5. Agent marks the task complete in the **state repo** via `synchestra task complete`.
 
-## Outstanding Questions
+## Open Questions
 
 - How should the CLI resolve which project a code repo belongs to if the developer is working in the code repo and hasn't explicitly set `--project`? (The code repo's `synchestra-code-repo.yaml` lists spec repos, which in turn reference the state repo.)

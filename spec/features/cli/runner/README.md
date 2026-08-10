@@ -1,6 +1,8 @@
 # Feature: CLI Runner
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/runner?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/runner?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/runner?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/runner?op=request-change) |
 **Status:** In Progress
+**Source Ideas:** —
 
 ## Summary
 
@@ -81,7 +83,7 @@ These verbs are part of this feature's intended surface but do not yet have thei
 3. The CLI exposes no user-visible distinction between VM and Cloud Run runners beyond optional metadata.
 4. `dispatch` is the only verb in this group that writes to the state repository; all other verbs are Hub-only and ignore sync policy.
 
-## Outstanding Questions
+## Open Questions
 
 1. Should `runner list` include metadata fields in default output, or require a flag (`--long`, `--format json`) to surface them?
 2. Does `runner status <name>` need a dedicated subfeature spec, or can its behavior be fully captured in this group README?

@@ -5,6 +5,7 @@ status: Approved
 
 # Feature: Dispatch Worker
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/dispatch/worker?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/dispatch/worker?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/dispatch/worker?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/dispatch/worker?op=request-change) |
 **Status:** Approved
 **Source Ideas:** [Remote Dispatch](https://github.com/synchestra-io/synchestra-marketing/blob/main/ideas/remote-dispatch.md)
 
@@ -98,7 +99,7 @@ For the personal proof, the existing XDG-installed host runs as an `ai` user ser
 - [sandbox](../../sandbox/README.md) — container and session execution
 - [channels](../../channels/README.md) — logs and session transport
 
-## Outstanding Questions
+## Open Questions
 
 1. Repository cache retention and disk limits should be measured on the personal VM before choosing automatic garbage collection defaults.
 

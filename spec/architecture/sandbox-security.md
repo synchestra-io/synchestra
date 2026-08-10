@@ -426,7 +426,7 @@ Disk:      50 GB (default)
 - [ ] Penetration testing: Security testing checklist above
 - [ ] Vulnerability scanning: Container image scans (Trivy, Snyk)
 
-## Outstanding Questions
+## Open Questions
 
 1. **HSM integration**: Should we support external HSM for key storage? Which platforms (AWS CloudHSM, Azure Key Vault, etc.)?
 2. **Key rotation**: How often should decryption keys rotate? Should old keys be retained for decrypting old credentials?

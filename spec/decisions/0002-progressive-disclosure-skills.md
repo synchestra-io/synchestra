@@ -1,6 +1,6 @@
 # ADR-0002: Progressive-disclosure skill structure
 
-**Status:** Accepted
+**Status:** Approved
 **Date:** 2026-04-19
 
 ## Context
@@ -94,3 +94,6 @@ Skill names retain the `synchestra-` prefix (not `synchestra:`). The colon-names
 - Write the new runner/session/auth skills as resource-level skills from the start.
 - Define the canonical `SKILL.md` index-table format in the updated feature spec (header row, intent-column phrasing, link format).
 - Revisit the `synchestra-` vs `synchestra:` prefix question as a separate ADR once Claude Code's slash-menu namespace behavior is understood.
+
+---
+*This document follows the https://specscore.md/decision-specification*

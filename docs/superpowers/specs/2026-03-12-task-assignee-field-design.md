@@ -183,7 +183,7 @@ New `Assignee` column appears after `Status` and before `Run`.
 
 - `start`, `complete`, `fail`, `block`, `unblock`, `release`, `abort`, `aborted`, `enqueue`, `status`
 
-## Outstanding Questions
+## Open Questions
 
 - Should duplicate types (e.g., `ai-agent|ai-agent`) be rejected at parse time or silently deduplicated?
 - Should releasing a claimed task preserve or clear the assignee? (Current assumption: preserve)

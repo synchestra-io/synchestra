@@ -1,5 +1,6 @@
 # Command: `synchestra task enqueue`
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/enqueue?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/enqueue?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/enqueue?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/enqueue?op=request-change) |
 **Parent:** [task](../README.md)
 
 **Skill:** [task: enqueue](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/enqueue.md)
@@ -55,7 +56,7 @@ The `--current planning` guard is applied implicitly and cannot be overridden.
 
 If the state transition is rejected for any other reason, exit **4**.
 
-## Outstanding Questions
+## Open Questions
 
 - Should there be a bulk enqueue command for multiple tasks at once?
 

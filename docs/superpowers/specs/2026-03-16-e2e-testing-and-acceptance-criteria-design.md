@@ -84,7 +84,7 @@ Not defined yet.
 And a corresponding Outstanding Question must be raised:
 
 ```markdown
-## Outstanding Questions
+## Open Questions
 
 - Acceptance criteria not yet defined for this feature.
 ```
@@ -535,7 +535,7 @@ spec/tests/
 9. Write the project-lifecycle scenario
 10. Run it end-to-end
 
-## Outstanding Questions
+## Open Questions
 
 - Should AC verification scripts be bash-only, or should the format support other interpreters (e.g., `python`, `node`) via a shebang or language annotation on the code block?
 - Should the runner support a `--dry-run` mode that parses and validates scenarios without executing them?

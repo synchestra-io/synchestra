@@ -26,6 +26,6 @@ synchestra task new --project my-service --task fix-auth-bug \
   --title "Fix authentication bypass bug"
 ```
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

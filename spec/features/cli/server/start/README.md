@@ -1,5 +1,6 @@
 # Command: `synchestra server start`
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/server/start?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/server/start?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/server/start?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/server/start?op=request-change) |
 **Parent:** [server](../README.md)
 
 ## Synopsis
@@ -40,7 +41,7 @@ The daemon writes its PID to the configured `pid_file` and redirects output to t
 6. Start configured listeners
 7. Parent process exits `0`
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 

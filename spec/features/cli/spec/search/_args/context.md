@@ -35,6 +35,6 @@ synchestra spec search "claiming" --context 0
 synchestra spec search "conflict resolution" --context 5
 ```
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

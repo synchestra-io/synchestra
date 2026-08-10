@@ -49,6 +49,6 @@ synchestra task list --project synchestra --format md
 synchestra task info --project synchestra --task fix-bug --format yaml
 ```
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

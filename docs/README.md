@@ -66,6 +66,6 @@ Welcome to the Synchestra docs. Whether you're an AI agent looking for an endpoi
 
 ---
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

@@ -1,5 +1,6 @@
 # Command: `synchestra feature deps`
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/feature/deps?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/feature/deps?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/feature/deps?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/feature/deps?op=request-change) |
 **Parent:** [feature](../README.md)
 **Skill:** [feature: deps](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/feature/references/deps.md)
 
@@ -101,7 +102,7 @@ synchestra feature deps micro-tasks --project synchestra
 # (no output — exit code 0)
 ```
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 

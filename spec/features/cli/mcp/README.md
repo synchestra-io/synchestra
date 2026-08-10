@@ -1,5 +1,6 @@
 # Command: `synchestra mcp`
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/mcp?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/mcp?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/mcp?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/mcp?op=request-change) |
 **Parent:** [CLI](../README.md)
 
 ## Synopsis
@@ -55,7 +56,7 @@ MCP client configuration (e.g., Claude Code `settings.json`):
 }
 ```
 
-## Outstanding Questions
+## Open Questions
 
 - Should `synchestra mcp` support multi-project if run in a server dir, or always single-project?
 - What MCP tools and resources should be exposed? (Presumably mirrors CLI commands as MCP tools.)

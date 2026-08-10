@@ -799,7 +799,7 @@ internal/api/sandbox/
 └── handler_test.go      // Handler tests (mock orchestrator)
 ```
 
-## Outstanding Questions
+## Open Questions
 
 1. Should the execute endpoint support SSE (Server-Sent Events) as an alternative to WebSocket for simpler clients that cannot maintain a persistent WebSocket connection?
 2. ~~Should there be a `GET /api/v1/sandbox/{project_id}/credentials` endpoint that lists stored credential identifiers and metadata (not values) for UI display?~~ **Resolved**: Yes.

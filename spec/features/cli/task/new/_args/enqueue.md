@@ -28,6 +28,6 @@ synchestra task new --project synchestra --task fix-auth-bug \
   --enqueue
 ```
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

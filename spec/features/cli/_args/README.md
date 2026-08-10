@@ -29,6 +29,6 @@ Controls the output format of read commands. Supported formats vary by command. 
 
 Overrides the project's configured sync policy for a single invocation. Values: `remote` (force immediate pull/push), `local` (suppress all remote I/O). When omitted, the command follows the project's configured policy. See [sync.md](sync.md).
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

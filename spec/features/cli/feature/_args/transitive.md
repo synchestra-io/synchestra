@@ -64,7 +64,7 @@ feature-b
   feature-a (cycle)
 ```
 
-## Outstanding Questions
+## Open Questions
 
 - Should `--depth <n>` be supported to limit transitive resolution to N levels?
 - Should cycle detection output the full cycle path or just mark the node?

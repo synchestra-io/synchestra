@@ -41,6 +41,6 @@ synchestra spec search "exit code" --type feature
 synchestra spec search "alternative" --feature cli/task --type proposal
 ```
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

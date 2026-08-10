@@ -1,6 +1,6 @@
 # ADR-0005: Per-resource `user-invocable` visibility
 
-**Status:** Accepted
+**Status:** Approved
 **Date:** 2026-04-19
 
 ## Context
@@ -71,3 +71,6 @@ Future resource skills must be classified explicitly with the same lens.
 - Amend [`spec/features/agent-skills/README.md`](../features/agent-skills/README.md) with a brief `Selective menu visibility` section documenting the classification rule and linking here.
 - Apply the classification above during the `ai-plugin-synchestra` migration to the resource + references structure (part of the ADR-0002 / ADR-0003 migration work).
 - For every new resource skill (runner, session, auth at least), set `user-invocable` explicitly at authoring time.
+
+---
+*This document follows the https://specscore.md/decision-specification*

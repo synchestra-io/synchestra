@@ -1,5 +1,6 @@
 # Command: `synchestra task info`
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/info?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/info?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/info?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/info?op=request-change) |
 **Parent:** [task](../README.md)
 **Skill:** [task: info](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/info.md)
 
@@ -49,7 +50,7 @@ More detailed than `task status`, which only shows status fields. Use `task info
 4. Render the assembled context in the requested format
 5. Print to stdout and exit `0`
 
-## Outstanding Questions
+## Open Questions
 
 - Should `task info` include auto-generated minimal context (the parent chain, sibling awareness) or just the raw task README? Including assembled context is more useful for agents but adds coupling to the output format.
 - How deep should the parent chain go? All the way to the project root, or limited to a fixed depth (e.g., 3 levels)?

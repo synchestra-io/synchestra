@@ -27,6 +27,6 @@ Use `--format json` for a single JSON object. Success contains `resolved` plus t
 
 Exit codes specific to dispatch are `80` runner not found, `81` no eligible worker, `82` incompatible protocol, `101` unauthenticated, and `102` Hub unreachable. Standard CLI codes cover invalid arguments, conflicts, not-found, invalid state, and unexpected failures.
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

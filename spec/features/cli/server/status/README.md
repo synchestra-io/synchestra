@@ -1,5 +1,6 @@
 # Command: `synchestra server status`
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/server/status?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/server/status?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/server/status?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/server/status?op=request-change) |
 **Parent:** [server](../README.md)
 
 ## Synopsis
@@ -35,7 +36,7 @@ Reports whether the Synchestra daemon is running, its PID, uptime, and listening
 4. Check if process is alive
 5. Output status: running/stopped, PID, uptime, configured listeners, project count
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 

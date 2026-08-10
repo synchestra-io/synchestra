@@ -1,6 +1,8 @@
 # Feature: UI / TUI
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/ui/tui?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/ui/tui?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/ui/tui?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/ui/tui?op=request-change) |
 **Status:** Conceptual
+**Source Ideas:** —
 
 ## Summary
 
@@ -77,7 +79,7 @@ does not prescribe it.
 - **Proposal list** on the feature screen uses the same ascending-date order and configurable limit as defined in
   the [parent spec](../README.md#features-screen).
 
-## Outstanding Questions
+## Open Questions
 
 - What is the CLI entry point for the TUI — `synchestra ui`, `synchestra tui`, or something else? Should it also support
   `synchestra` with no arguments launching the TUI by default?

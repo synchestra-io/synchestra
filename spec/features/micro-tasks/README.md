@@ -1,6 +1,8 @@
 # Feature: Micro-Tasks
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/micro-tasks?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/micro-tasks?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/micro-tasks?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/micro-tasks?op=request-change) |
 **Status:** Conceptual
+**Source Ideas:** —
 
 ## Summary
 
@@ -121,7 +123,7 @@ micro-tasks:
 - Should there be a `finally` phase that runs regardless of main task success/failure?
 - Can micro-tasks spawn sub-tasks, or are they strictly leaf operations?
 
-## Outstanding Questions
+## Open Questions
 
 - What is the config file name and location? (e.g., `.synchestra/micro-tasks.yaml`, or inline in the project config?)
 - How are custom `cmd` values resolved — PATH lookup, relative to project root, or registered scripts?

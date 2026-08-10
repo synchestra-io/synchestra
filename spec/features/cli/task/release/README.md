@@ -1,5 +1,6 @@
 # Command: `synchestra task release`
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/release?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/release?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/release?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/release?op=request-change) |
 **Parent:** [task](../README.md)
 **Skill:** [task: release](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/release.md)
 
@@ -43,7 +44,7 @@ The command implicitly uses a `--current claimed` guard — it will fail with ex
 4. Commit and push
 5. On push conflict: pull, re-check `claimed` guard, retry or fail
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 

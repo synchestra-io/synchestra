@@ -236,6 +236,6 @@ graph TB
 
 Set up with `synchestra project init`. See [Embedded State](../features/embedded-state/README.md) for details.
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

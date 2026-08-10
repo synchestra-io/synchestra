@@ -1,6 +1,8 @@
 # Feature: Outstanding Questions
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/outstanding-questions?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/outstanding-questions?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/outstanding-questions?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/outstanding-questions?op=request-change) |
 **Status:** Conceptual
+**Source Ideas:** —
 
 ## Summary
 
@@ -63,7 +65,7 @@ When a linked task completes:
 - How many "recently resolved" questions should be kept? Configurable per-project?
 - Should the auto-resolution sub-agent use a specific model class, or inherit from the document's context?
 
-## Outstanding Questions
+## Open Questions
 
 - What is the schema for a question entry? (Fields: text, status, linked_task, resolved_at, resolution_summary?)
 - Can questions have priority or urgency levels?

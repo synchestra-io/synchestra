@@ -1,6 +1,8 @@
 # Feature: Routines
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/routines?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/routines?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/routines?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/routines?op=request-change) |
 **Status:** draft
+**Source Ideas:** —
 
 ## Summary
 
@@ -186,7 +188,7 @@ stateDiagram-v2
 11. `on_conflict: skip|queue|fail` and `on_failure: { quarantine_after, reset }` behave per spec under test.
 12. A routine spec validates via `synchestra spec lint`.
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 

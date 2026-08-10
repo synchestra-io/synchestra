@@ -21,6 +21,6 @@ Guards against stale state by asserting the expected current status. See [curren
 
 Specifies the target status for the transition. See [new.md](new.md).
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

@@ -315,7 +315,7 @@ The `state` commands only use the existing `--project` global arg. No command-sp
 - **Interval timer implementation:** How should `on_interval` be implemented? A background goroutine in the store? A separate process? The store holding a timer? This affects the store's lifecycle (`Open`/`Close`) and threading model.
 - **`on_session_end` trigger mechanism:** Should this be triggered by the store's `Close()` method, or does the CLI need to explicitly call `Push()` on shutdown? This affects the contract between the CLI and the store.
 
-## Outstanding Questions
+## Open Questions
 
 - Should `synchestra state` have an `info` subcommand to show current sync policy, last pull/push timestamps, and pending local commits?
 - Should there be a `synchestra state status` command that shows sync health (e.g., "3 local commits unpushed, last pull 2m ago")?

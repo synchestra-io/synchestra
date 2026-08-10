@@ -1,5 +1,6 @@
 # Command: `synchestra task new`
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/new?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/new?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/new?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/new?op=request-change) |
 **Parent:** [task](../README.md)
 **Skill:** [task: new](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/new.md)
 
@@ -52,7 +53,7 @@ Like all mutation commands, `task new` is atomic: the CLI commits the new task f
 8. Commit and push
 9. On push conflict: pull, re-check, retry or fail
 
-## Outstanding Questions
+## Open Questions
 
 - Should there be a `--assignee` / `--requester` parameter?
 - Should the description be read from stdin if not provided as a flag?

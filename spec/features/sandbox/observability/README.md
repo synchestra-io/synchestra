@@ -1,5 +1,6 @@
 # Monitoring, Logging, and Alerting
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/sandbox/observability?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/sandbox/observability?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/sandbox/observability?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/sandbox/observability?op=request-change) |
 ## Overview
 
 > **Related documents:** [orchestrator.md](../orchestrator/README.md) (event bus and health checks), [lifecycle.md](../orchestrator/lifecycle.md) (lifecycle events), [http-api.md](../orchestrator/http-api.md) (admin health endpoints), [outstanding-questions.md](../outstanding-questions.md) (open design questions).
@@ -355,7 +356,7 @@ internal/sandbox/observability/
 
 ---
 
-## Outstanding Questions
+## Open Questions
 
 1. Should container-side metrics be pushed (via event bus to the host) or pulled (via orchestrator proxy scraping the agent's gRPC `GetStatus`)? Push reduces scrape complexity; pull is more Prometheus-native.
 2. Should there be a dedicated log aggregation pipeline (ELK/Loki) or is stdout-based collection (e.g., Docker log driver → CloudWatch/GCP Logging) sufficient for MVP?

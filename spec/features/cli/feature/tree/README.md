@@ -1,5 +1,6 @@
 # Command: `synchestra feature tree`
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/feature/tree?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/feature/tree?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/feature/tree?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/feature/tree?op=request-change) |
 **Parent:** [feature](../README.md)
 **Skill:** [feature: tree](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/feature/references/tree.md)
 
@@ -163,7 +164,7 @@ synchestra feature tree cli/task --fields=status,oq
 
 The `focus: true` field marks the target feature in YAML output (equivalent to `*` in text).
 
-## Outstanding Questions
+## Open Questions
 
 - Should there be a `--depth` flag to limit tree depth?
 

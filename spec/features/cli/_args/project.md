@@ -35,6 +35,6 @@ synchestra task list
 synchestra task claim --task fix-bug --run 42 --model sonnet
 ```
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

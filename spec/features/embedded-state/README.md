@@ -1,6 +1,8 @@
 # Feature: Embedded State
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/embedded-state?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/embedded-state?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/embedded-state?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/embedded-state?op=request-change) |
 **Status:** Conceptual
+**Source Ideas:** —
 
 ## Summary
 
@@ -199,7 +201,7 @@ The reverse is not supported — collapsing a dedicated state repo into embedded
 - [cli](../cli/README.md) — New `synchestra project init` command
 - [task-status-board](../task-status-board/README.md) — Works unchanged (operates on files in the state directory)
 
-## Outstanding Questions
+## Open Questions
 
 - Should the orphan branch name be configurable, or always `synchestra-state`? Configurability adds complexity; a fixed name is simpler and discoverable.
 - Should `synchestra project init` also scaffold an initial `spec/features/` structure on the main branch, or only set up state? Scaffolding is an onboarding concern and may belong in a separate command.

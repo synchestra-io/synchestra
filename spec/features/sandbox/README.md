@@ -1,5 +1,6 @@
 # Sandbox Feature
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/sandbox?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/sandbox?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/sandbox?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/sandbox?op=request-change) |
 Safe, isolated execution environments for running user-initiated commands from the chat interface. Each Synchestra project gets its own persistent Docker container with encrypted credential storage and user-isolated sessions.
 
 ## Contents
@@ -36,7 +37,7 @@ Pluggable compute backend architecture defining the `ComputeBackend` Go interfac
 
 Observability strategy spanning both host-side (orchestrator, HTTP API) and container-side (gRPC agent). Covers Prometheus metrics catalog, structured JSON logging with sensitive data policy, OpenTelemetry distributed tracing, alerting rules (critical/warning/info), dashboard specifications, and health endpoints. Also includes the integration testing strategy: unit tests, integration tests (Docker lifecycle, gRPC communication, session reconnection), end-to-end tests, test infrastructure, and security test cases.
 
-## Outstanding Questions
+## Open Questions
 
 > **See [outstanding-questions.md](outstanding-questions.md) for the full consolidated list with context and recommendations.**
 

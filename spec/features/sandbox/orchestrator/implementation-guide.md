@@ -1755,6 +1755,6 @@ internal/sandbox/orchestrator/
 └── integration_test.go      // Integration tests (build tag: integration)
 ```
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

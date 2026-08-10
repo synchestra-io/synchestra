@@ -242,7 +242,7 @@ Steps 2, 3, 8, and 9 can start in parallel after Step 1. Step 4 depends on Step 
 - **Fast-path agent orchestration.** The fast path requires dispatching agents to implement code changes in real-time during a conversation. This couples the chat server to the task execution engine — a tight integration that may be fragile. Consider making the fast path asynchronous (chat finishes, tasks run independently) rather than synchronous (chat waits for implementation).
 - **Artifact format validation.** Each artifact type (proposal, feature, issue) has its own format conventions. Validating that AI-produced artifacts comply requires either schema-based validation or AI-based review. Schema validation is more reliable but less flexible.
 
-## Outstanding Questions
+## Open Questions
 
 - How should the step orchestrator communicate with the AI about transitions — structured JSON tool calls, special tokens in the response, or a separate classification call?
 - Should the check runner support parallel execution of independent checks, or always run checks sequentially?

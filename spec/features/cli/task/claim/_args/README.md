@@ -21,6 +21,6 @@ Identifies the agent run claiming the task. See [run.md](run.md).
 
 Records which model the agent is using. See [model.md](model.md).
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

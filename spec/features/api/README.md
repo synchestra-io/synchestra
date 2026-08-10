@@ -1,5 +1,6 @@
 # Feature: REST API
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/api?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/api?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/api?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/api?op=request-change) |
 The REST API exposes Synchestra's coordination capabilities over HTTP, mirroring the CLI contract with JSON request/response semantics. It is the primary interface for the web UI, external integrations, and agents that prefer HTTP over direct git access.
 
 ## Relationship to CLI
@@ -42,7 +43,7 @@ The normative API specification lives in [`spec/api/`](../../api/README.md) as O
 | 4 | Invalid state transition | `422 Unprocessable Entity` |
 | 10+ | Unexpected error | `500 Internal Server Error` |
 
-## Outstanding Questions
+## Open Questions
 
 - Should the API support WebSocket or SSE for real-time task status updates?
 - Should batch operations be supported (e.g., enqueue multiple tasks in one request)?
