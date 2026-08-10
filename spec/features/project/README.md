@@ -6,7 +6,7 @@
 
 ## Summary
 
-A Synchestra project is a named unit of work identified canonically by its primary repository reference (e.g., `github.com/synchestra-io/synchestra`). Projects have a two-phase lifecycle — pre-repo (Firestore-authoritative membership) and post-repo (yaml-authoritative membership) — that enables both cloud-mediated and bypass-auth session authorization. Membership semantics, authorization primitives, yaml schema, and caching are specified in the [members](members/README.md) sub-feature.
+A Synchestra project is a named unit of work identified canonically by its primary repository reference (e.g., `github.com/synchestra-io/synchestra`). Projects have a two-phase lifecycle — pre-repo (Firestore-authoritative membership) and post-repo (yaml-authoritative membership) — that enables both cloud-mediated and bypass-auth session authorization. Membership semantics, authorization primitives, yaml schema, and caching are specified in the [members](https://github.com/synchestra-io/synchestra/blob/main/spec/features/project/members/README.md) sub-feature.
 
 ## Contents
 

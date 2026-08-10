@@ -6,7 +6,7 @@
 
 ## Summary
 
-The UI feature defines Synchestra's shared information architecture for human-facing interfaces — the screens, navigation, and workflows that both the Hub and the terminal UI implement. This document is the single source of truth for what the UI shows and what actions it supports; the subfeature specs ([hub](hub/README.md), [tui](tui/README.md)) define how each surface delivers it.
+The UI feature defines Synchestra's shared information architecture for human-facing interfaces — the screens, navigation, and workflows that both the Hub and the terminal UI implement. This document is the single source of truth for what the UI shows and what actions it supports; the subfeature specs ([hub](https://github.com/synchestra-io/synchestra/blob/main/spec/features/ui/hub/README.md), [tui](https://github.com/synchestra-io/synchestra/blob/main/spec/features/ui/tui/README.md)) define how each surface delivers it.
 
 ## Contents
 

@@ -6,7 +6,7 @@
 
 ## Summary
 
-A chat is a server-managed, goal-oriented conversation between a human user and an AI agent. It is the implementation layer behind user-facing actions such as "Create a Proposal," "Raise an Issue," or "Tweak Document." Users never interact with chats directly — they interact with [workflows](workflow/README.md) that use chats under the hood.
+A chat is a server-managed, goal-oriented conversation between a human user and an AI agent. It is the implementation layer behind user-facing actions such as "Create a Proposal," "Raise an Issue," or "Tweak Document." Users never interact with chats directly — they interact with [workflows](https://github.com/synchestra-io/synchestra/blob/main/spec/features/chat/workflow/README.md) that use chats under the hood.
 
 Chats are the mechanism through which Synchestra turns a user's intent into concrete artifacts: proposals, issues, feature specs, code changes, and pull requests. A user anchors a chat to a document (or creates a new one), and the system guides them through a structured conversation that produces reviewable output.
 

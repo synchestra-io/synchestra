@@ -1,3 +1,8 @@
+---
+format: https://specscore.md/plan-specification
+status: draft
+---
+
 # Plan: Physical State Store MVP
 
 **Status:** draft
