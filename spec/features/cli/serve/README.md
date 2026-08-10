@@ -1,5 +1,6 @@
 # Command: `synchestra serve`
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/serve?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/serve?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/serve?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/serve?op=request-change) |
 **Parent:** [CLI](../README.md)
 
 ## Synopsis
@@ -53,7 +54,7 @@ Exit codes `1` (Conflict) and `4` (Invalid state transition) do not apply — `s
 8. Run in foreground, stream logs to stdout/stderr
 9. On SIGINT (Ctrl+C) or SIGTERM: clean shutdown (drain connections, exit 0)
 
-## Outstanding Questions
+## Open Questions
 
 - Should `serve` support hot-reload when spec/state files change (file watching)?
 - Should there be a `--log-level` argument?

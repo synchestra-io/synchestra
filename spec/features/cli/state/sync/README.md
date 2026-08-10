@@ -1,5 +1,6 @@
 # Command: `synchestra state sync`
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/state/sync?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/state/sync?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/state/sync?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/state/sync?op=request-change) |
 **Parent:** [state](../README.md)
 **Environment:** Coordination (Agent)
 
@@ -44,7 +45,7 @@ The CLI resolves the project's state repo path using the `state_repo` field in `
 
 **Safety:** This command never leaves the repo in a dirty state. On unresolvable conflict, all partial operations are rolled back and the repo is restored to its pre-sync state.
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 

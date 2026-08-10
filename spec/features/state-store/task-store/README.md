@@ -1,5 +1,6 @@
 # Sub-Feature: Task Store
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/state-store/task-store?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/state-store/task-store?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/state-store/task-store?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/state-store/task-store?op=request-change) |
 **Parent:** [State Store](../)
 
 **Status:** Conceptual
@@ -165,7 +166,7 @@ type ArtifactRef struct {
 }
 ```
 
-## Outstanding Questions
+## Open Questions
 
 - Should `TaskFilter` support filtering by requester, model, or time range?
 - Should `List` support pagination for projects with very large task trees?

@@ -1,5 +1,6 @@
 # Container Orchestrator
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/sandbox/orchestrator?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/sandbox/orchestrator?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/sandbox/orchestrator?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/sandbox/orchestrator?op=request-change) |
 ## Overview
 
 > **Related documents:** [lifecycle.md](lifecycle.md) (lifecycle phases and timing), [implementation-guide.md](implementation-guide.md) (Go implementation patterns), [http-api.md](http-api.md) (admin API endpoints), [monitoring.md](../observability/README.md) (health checks and metrics), [outstanding-questions.md](../outstanding-questions.md) (open design questions).
@@ -696,7 +697,7 @@ All metrics use the `synchestra_sandbox_` prefix. Labels follow Prometheus namin
 | `synchestra_sandbox_request_latency_seconds` | End-to-end request latency (excluding command execution) |
 | `synchestra_sandbox_health_check_duration_seconds` | Health check RPC latency |
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 

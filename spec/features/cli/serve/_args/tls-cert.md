@@ -26,6 +26,6 @@ The corresponding field in [`synchestra-server.yaml`](../../server/synchestra-se
 synchestra serve --https --tls-cert /etc/ssl/certs/synchestra.pem --tls-key /etc/ssl/private/synchestra.key
 ```
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

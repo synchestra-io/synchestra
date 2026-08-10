@@ -1,5 +1,6 @@
 # Command: `synchestra code deps`
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/code/deps?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/code/deps?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/code/deps?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/code/deps?op=request-change) |
 **Parent:** [code](../README.md)
 **Skill:** [code: deps](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/code/references/deps.md)
 
@@ -130,7 +131,7 @@ synchestra code deps pkg/util/strings.go
 # (no output — exit code 0)
 ```
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 

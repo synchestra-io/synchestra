@@ -1,6 +1,6 @@
 # Feature: Synchestra Repo Config
 
-> [View in SpecStudio](https://specstudio.synchestra.io/project/features?id=synchestra@synchestra-io@github.com&path=spec%2Ffeatures%2Frepo-config) — graph, discussions, approvals
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/repo-config?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/repo-config?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/repo-config?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/repo-config?op=request-change) |
 
 **Status:** Approved
 
@@ -203,7 +203,7 @@ The parser does NOT read `specscore.yaml`; consumers compose the two reads thems
 **When** tools load and re-write the file
 **Then** every unknown field round-trips byte-identical; no warning or error is emitted.
 
-## Outstanding Questions
+## Open Questions
 
 - The schema-pointer URL `https://synchestra.md/repo-config` mirrors SpecScore's URL convention. The synchestra.md domain may not yet host the schema page; the URL is a forward reference. Resolve when synchestra.md publishes its schema documentation.
 - Whether `sync:` policy values should be a tighter enum (e.g. add `never`) is deferred to the sync-policy Feature when it is specified.

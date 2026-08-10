@@ -1,6 +1,8 @@
 # Feature: Project Setup Skill
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/agent-skills/project-setup?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/agent-skills/project-setup?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/agent-skills/project-setup?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/agent-skills/project-setup?op=request-change) |
 **Status:** Draft
+**Source Ideas:** —
 
 ## Summary
 
@@ -106,7 +108,7 @@ The skill activates when:
 - [repo-config](https://github.com/specscore/specscore/blob/main/spec/features/repo-config/README.md) — repository identity, linked repositories, and layout conventions
 - [agent-skills](../README.md) — skill format and distribution
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 

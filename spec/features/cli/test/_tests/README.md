@@ -8,7 +8,7 @@ These scenarios are executed by the runner itself (dogfooding).
 |---|---|---|
 | [runner-core](runner-core.test.md) | Core runner behaviors: parsing, sequential/parallel execution, outputs, AC resolution, error handling | integration, runner, dogfood |
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 

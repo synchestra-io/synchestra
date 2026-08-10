@@ -31,6 +31,6 @@ synchestra server project add --spec /home/user/projects/my-project --state /hom
 synchestra server project add --spec ../specs/my-project --state ../state/my-project
 ```
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

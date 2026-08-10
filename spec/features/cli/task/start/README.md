@@ -1,5 +1,6 @@
 # Command: `synchestra task start`
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/start?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/start?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/start?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/start?op=request-change) |
 **Parent:** [task](../README.md)
 **Skill:** [task: start](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/start.md)
 
@@ -42,7 +43,7 @@ Like all mutation commands, `task start` is atomic: the CLI commits the status c
 4. Commit and push
 5. On push conflict: pull, re-check, retry or fail
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 

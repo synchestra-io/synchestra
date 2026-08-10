@@ -1,6 +1,8 @@
 # Feature: CLI Session
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/session?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/session?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/session?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/session?op=request-change) |
 **Status:** In Progress
+**Source Ideas:** —
 
 ## Summary
 
@@ -110,7 +112,7 @@ Exit codes `90`–`99` are reserved for the CLI Session feature. This range is r
 4. `session stop <id>` returns 0 on request acceptance; the session's actual termination is observable only via `session status` or `session logs --follow`.
 5. Every session verb exits with code 101 when the caller is unauthenticated.
 
-## Outstanding Questions
+## Open Questions
 
 1. What is the Hub's retention window for terminated sessions? Defer to the [Runner](../../runner/README.md) or Hub API feature.
 2. Should `session logs` support pagination for very long outputs (offset/limit), or is `--since` the only slicing primitive in MVP?

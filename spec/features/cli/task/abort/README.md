@@ -1,5 +1,6 @@
 # Command: `synchestra task abort`
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/abort?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/abort?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/abort?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/abort?op=request-change) |
 **Parent:** [task](../README.md)
 **Skill:** [task: abort](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/abort.md)
 
@@ -43,7 +44,7 @@ The `--reason` parameter is optional but recommended — it tells the working ag
 4. Commit and push
 5. On push conflict: pull, re-check status guard, retry or fail
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 

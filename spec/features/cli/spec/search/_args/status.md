@@ -35,6 +35,6 @@ synchestra spec search "scaling" --status Conceptual --section oq
 synchestra spec search "mutation" --status "In Progress" --type feature
 ```
 
-## Outstanding Questions
+## Open Questions
 
 - Should `--status` accept multiple values (comma-separated) to include features in any of the listed statuses?

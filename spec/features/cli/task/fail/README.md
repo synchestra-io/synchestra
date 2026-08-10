@@ -1,5 +1,6 @@
 # Command: `synchestra task fail`
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/fail?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/fail?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/fail?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/fail?op=request-change) |
 **Parent:** [task](../README.md)
 **Skill:** [task: fail](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/fail.md)
 
@@ -43,7 +44,7 @@ The command implicitly uses a `--current in_progress` guard — it will fail wit
 4. Commit and push
 5. On push conflict: pull, re-check `in_progress` guard, retry or fail
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 

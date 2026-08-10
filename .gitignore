@@ -16,3 +16,4 @@ ai-plugin.zip
 # to build ("git is in a dirty state"), so a release cut from main fails
 # before it can tag anything.
 git-cliff/
+specscore.local.yaml

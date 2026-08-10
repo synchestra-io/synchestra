@@ -1,6 +1,8 @@
 # Feature: Chat
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/chat?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/chat?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/chat?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/chat?op=request-change) |
 **Status:** Conceptual
+**Source Ideas:** —
 
 ## Summary
 
@@ -205,7 +207,7 @@ Workflow-specific configuration is documented in the [Workflow](workflow/README.
 | [UI](../ui/README.md) | The web UI renders workflow action buttons on documents and provides the chat interface. Button visibility depends on document type and user role. |
 | [Repo Config](https://github.com/specscore/specscore/blob/main/spec/features/repo-config/README.md) | Chat and workflow configuration lives in `synchestra-spec-repo.yaml`. |
 
-## Outstanding Questions
+## Open Questions
 
 - Should chats support multiple participants (e.g., a user invites a teammate into an active chat), or is it strictly 1:1 between a human and the system?
 - How should the context assembly strategy handle very long documents as anchors — should there be a size limit or automatic summarization of the anchor itself?

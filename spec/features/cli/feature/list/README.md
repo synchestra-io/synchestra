@@ -1,5 +1,6 @@
 # Command: `synchestra feature list`
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/feature/list?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/feature/list?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/feature/list?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/feature/list?op=request-change) |
 **Parent:** [feature](../README.md)
 **Skill:** [feature: list](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/feature/references/list.md)
 
@@ -91,7 +92,7 @@ synchestra feature list --fields=status,oq
   oq: 4
 ```
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 

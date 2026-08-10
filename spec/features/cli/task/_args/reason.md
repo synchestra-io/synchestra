@@ -42,6 +42,6 @@ synchestra task release --project synchestra --task refactor-logging \
   --reason "Higher-priority security fix appeared"
 ```
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

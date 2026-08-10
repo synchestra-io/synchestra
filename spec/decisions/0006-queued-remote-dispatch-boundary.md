@@ -1,6 +1,6 @@
 # ADR-0006: Synchestra owns queued remote dispatch
 
-**Status:** Accepted
+**Status:** Approved
 **Date:** 2026-07-22
 
 ## Context
@@ -52,3 +52,6 @@ The existing runtime also contains multiple execution paths. Adding an SSH-only 
 4. **Use sessions as queue records.** Rejected because one task can have retries and multiple attempts. A session is an execution instance, not a durable scheduling request.
 5. **Build a new worker daemon.** Rejected because `synchestra-host` already owns registration, heartbeat, provisioning, and agent coordination.
 6. **Start with Cloud Run or multiple providers.** Rejected because the registered long-lived VM is the shortest real proof and establishes the protocol other runtimes can later implement.
+
+---
+*This document follows the https://specscore.md/decision-specification*

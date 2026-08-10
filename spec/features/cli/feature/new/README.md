@@ -1,5 +1,6 @@
 # Command: `synchestra feature new`
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/feature/new?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/feature/new?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/feature/new?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/feature/new?op=request-change) |
 **Parent:** [feature](../README.md)
 
 ## Synopsis
@@ -114,6 +115,7 @@ Agents can then use the `lines` ranges to target specific sections for content p
 # Feature: {title}
 
 **Status:** {status}
+**Source Ideas:** —
 
 ## Summary
 
@@ -136,7 +138,7 @@ TODO: How does this feature work?
 
 TODO: Define acceptance criteria.
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 ```
@@ -157,7 +159,7 @@ The slug algorithm converts a human-readable title into a valid feature director
 
 The `--slug` flag overrides this entirely, but the provided slug is still validated against the same rules (lowercase, hyphen-separated, URL-safe, no underscores or special characters).
 
-## Outstanding Questions
+## Open Questions
 
 - Should `--dry-run` be supported to preview the scaffolded files without writing them?
 - Should the command validate that feature IDs in `--depends-on` actually exist, or accept any string?

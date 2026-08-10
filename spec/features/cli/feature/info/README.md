@@ -1,5 +1,6 @@
 # Command: `synchestra feature info`
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/feature/info?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/feature/info?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/feature/info?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/feature/info?op=request-change) |
 **Parent:** [feature](../README.md)
 **Skill:** [feature: info](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/feature/references/info.md)
 
@@ -94,7 +95,7 @@ The `children` field lists sub-feature directories discovered on disk with `in_r
 
 Metadata and sections are merged into one command because by the time an agent calls `info`, it has already identified the feature (via `list`/`tree`) and wants both the overview and the roadmap for selective reading.
 
-## Outstanding Questions
+## Open Questions
 
 - Should `feature info` support `--sections-only` (skip metadata) or `--meta-only` (skip sections) flags?
 - How deep should `sections` nesting go? Only `h2` + `h3`? Or all heading levels?

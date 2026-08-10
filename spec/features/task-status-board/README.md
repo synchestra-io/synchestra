@@ -1,6 +1,8 @@
 # Feature: Task Status Board
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/task-status-board?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/task-status-board?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/task-status-board?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/task-status-board?op=request-change) |
 **Status:** Conceptual
+**Source Ideas:** —
 
 ## Summary
 
@@ -215,7 +217,7 @@ Tasks generated from a [plan](https://github.com/specscore/specscore/blob/main/s
 
 The plan feature provides a derived status view (`synchestra plan status`) that reads plan task references from tasks and aggregates board status into a plan-oriented progress report.
 
-## Outstanding Questions
+## Open Questions
 
 - What is the exact task directory structure? (e.g., `tasks/{task-slug}/README.md` with YAML frontmatter for machine-readable status?)
 - Should the `Requester` field support teams/groups or only individual humans?

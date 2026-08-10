@@ -28,6 +28,6 @@ The corresponding field in [`synchestra-server.yaml`](../../../synchestra-server
 synchestra server project add --spec /home/user/projects/my-project --state /home/user/state/my-project
 ```
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

@@ -1,6 +1,8 @@
 # Feature: Workflow — Create Proposal
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/chat/workflow/create-proposal?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/chat/workflow/create-proposal?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/chat/workflow/create-proposal?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/chat/workflow/create-proposal?op=request-change) |
 **Status:** Conceptual
+**Source Ideas:** —
 
 ## Summary
 
@@ -123,7 +125,7 @@ steps:
 | [Plan](https://github.com/specscore/specscore/blob/main/spec/features/plan/README.md) | Fast-path produces a plan-as-report. Standard-path proposals later trigger plan creation through the normal pipeline. |
 | [Feature](https://github.com/specscore/specscore/blob/main/spec/features/feature/README.md) | The workflow anchors to features and produces proposals that attach to them. |
 
-## Outstanding Questions
+## Open Questions
 
 - Should the fast path be offered proactively by the AI, or should the user explicitly request it via a UI toggle?
 - When the fast path produces a PR, should the chat remain open until the PR is merged, or finalize once the PR is created?

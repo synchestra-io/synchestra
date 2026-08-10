@@ -31,6 +31,6 @@ synchestra task list --project synchestra --status in_progress
 synchestra task list --project synchestra --status blocked
 ```
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

@@ -1,5 +1,6 @@
 # Command: `synchestra project code remove`
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/project/code/remove?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/project/code/remove?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/project/code/remove?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/project/code/remove?op=request-change) |
 **Parent:** [code](../README.md)
 
 ## Synopsis
@@ -43,7 +44,7 @@ If a code repo is not in the project's `repos` list, it is skipped (not an error
 4. Commit and push changes to spec repo
 5. On push conflict: pull, re-check, retry or fail
 
-## Outstanding Questions
+## Open Questions
 
 - Should the command warn if removing the last code repo (leaving the project with none)?
 

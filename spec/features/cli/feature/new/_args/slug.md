@@ -33,6 +33,6 @@ synchestra feature new --title "Task Status Board" --slug "status-board"
 synchestra feature new --title "Claim" --slug "cli/task/claim"
 ```
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

@@ -1,5 +1,6 @@
 # Global Configuration
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/global-config?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/global-config?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/global-config?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/global-config?op=request-change) |
 **Status:** Conceptual
 
 ## Summary
@@ -62,7 +63,7 @@ Given a repo reference (full git URL or `{hosting}/{org}/{repo}` short form), th
 
 The [`synchestra config`](../cli/config/README.md) command group provides `show`, `set`, and `clear` subcommands to manage this file.
 
-## Outstanding Questions
+## Open Questions
 
 - Should the file support additional settings beyond `repos_dir` (e.g., default `--format`, default git remote name)?
 - Should `repos_dir` support environment variable interpolation (e.g., `$HOME/synchestra/repos`)?

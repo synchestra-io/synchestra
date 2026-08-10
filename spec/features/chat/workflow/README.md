@@ -1,6 +1,8 @@
 # Feature: Workflow
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/chat/workflow?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/chat/workflow?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/chat/workflow?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/chat/workflow?op=request-change) |
 **Status:** Conceptual
+**Source Ideas:** —
 
 ## Summary
 
@@ -220,7 +222,7 @@ workflows:
 | [Repo Config](https://github.com/specscore/specscore/blob/main/spec/features/repo-config/README.md) | Workflow customization lives in `synchestra-spec-repo.yaml`. |
 | [CLI](../../cli/README.md) | `synchestra workflow list` shows available workflows. Workflows are primarily a web UI concept. |
 
-## Outstanding Questions
+## Open Questions
 
 - Should custom workflows (user-defined YAML) be validated against a JSON Schema, and if so, where does that schema live?
 - How should workflow versioning work — when Synchestra ships an updated built-in workflow, how does it interact with project-level customizations?

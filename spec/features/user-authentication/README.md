@@ -1,6 +1,8 @@
 # Feature: User Authentication
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/user-authentication?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/user-authentication?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/user-authentication?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/user-authentication?op=request-change) |
 **Status:** Draft
+**Source Ideas:** —
 
 > **Reconciliation pending.** This spec predates the [2026-04-20-fix-auth plan](../../../../synchestra-cloud/spec/plans/2026-04-20-fix-auth/README.md) and the canonical [project feature](../project/README.md) / [project/members](../project/members/README.md) split. Once fix-auth ships, this spec MUST be reworked to:
 >
@@ -285,7 +287,7 @@ After the first OIDC-validated request, subsequent requests in the same browser 
 
 The host exposes no `/login`, `/oauth/authorize`, IdP picker, or equivalent endpoint. Clients requesting such paths receive `404 Not Found`.
 
-## Outstanding Questions
+## Open Questions
 
 - Should the host support per-issuer `served_projects` overrides, so different IdPs grant access to different project subsets on the same host? Current spec says no (one `served_projects` list applies to all non-hub issuers); revisit if a real use case appears.
 - Should a config validation step catch misconfigured `allowed_email_domains` (e.g., operator types a typo), or is runtime rejection of mismatched tokens sufficient?

@@ -1,6 +1,8 @@
 # Feature: Plugins
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/plugins?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/plugins?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/plugins?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/plugins?op=request-change) |
 **Status:** Deferred
+**Source Ideas:** —
 
 > A Synchestra-native plugin SPI is **intentionally not on the roadmap** for 2026. Until plugin authors are knocking, Synchestra and SpecScore extensibility ships *into* GitHub Spec Kit's existing extension system rather than a parallel one. This document records the intended shape (V7) for when the question returns. See [`synchestra-marketing/decisions/2026-05-01-plugin-system-strategy.md`](https://github.com/synchestra-io/synchestra-marketing/blob/main/decisions/2026-05-01-plugin-system-strategy.md) for the full rationale, trigger conditions, and assumptions.
 
@@ -53,7 +55,7 @@ Until then, prefer adding to [agent-skills](../agent-skills/README.md) for Synch
 - Whether plugins can contribute *new event surfaces* beyond `before_*`/`after_*` workflow events and `pre`/`post`/`background` chain phases, or whether the event vocabulary is fixed.
 - Manifest format: extend Spec Kit's `extension.yml` (one file, two readers) or ship a separate `synchestra-plugin.yaml` with a converter. Current intent: extend.
 
-## Outstanding Questions
+## Open Questions
 
 - What concrete signal should trip trigger condition #1 — a GitHub label that auto-counts, a survey, an explicit RFC-request issue template? Without an instrumented tripwire, "≥3 authors asking" silently becomes "we never noticed."
 - If [micro-tasks](../micro-tasks/README.md) ships with semantics V7 cannot express (chain-level shared state, transactional rollback across steps, DAG-not-linear ordering), does this feature graduate from *Deferred* to *Conceptual* with a redesign, or is the deferral extended further?

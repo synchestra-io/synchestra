@@ -1,5 +1,6 @@
 # Command: `synchestra server project add`
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/server/project/add?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/server/project/add?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/server/project/add?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/server/project/add?op=request-change) |
 **Parent:** [project](../README.md)
 
 ## Synopsis
@@ -42,7 +43,7 @@ Cross-linked with the API endpoint [`POST /api/v1/project/add`](../../../../../a
 6. Append the new project entry to `synchestra-server.yaml`
 7. Exit `0`
 
-## Outstanding Questions
+## Open Questions
 
 - Should this command validate that the spec and state repos cross-reference each other?
 

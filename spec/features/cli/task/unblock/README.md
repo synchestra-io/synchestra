@@ -1,5 +1,6 @@
 # Command: `synchestra task unblock`
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/unblock?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/unblock?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/unblock?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/unblock?op=request-change) |
 **Parent:** [task](../README.md)
 **Skill:** [task: unblock](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/unblock.md)
 
@@ -41,7 +42,7 @@ Implicitly uses `--current blocked` as a guard — fails if the task is not curr
 4. Commit and push
 5. On push conflict: pull, re-check, retry or fail
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 

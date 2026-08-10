@@ -1,5 +1,6 @@
 # Dockerfile for Synchestra Sandbox Agent
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/sandbox/container-image?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/sandbox/container-image?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/sandbox/container-image?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/sandbox/container-image?op=request-change) |
 ## Overview
 
 ## Contents
@@ -109,7 +110,7 @@ synchestra-sandbox-agent health \
 
 Returns exit code 0 if healthy, non-zero otherwise.
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 

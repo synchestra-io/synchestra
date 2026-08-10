@@ -51,6 +51,6 @@ synchestra spec lint --rules readme-exists,nonexistent-rule
 - `--ignore A,B,C` disables those rules, enables all others
 - If both are specified, exit code 2 with error message
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

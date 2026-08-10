@@ -11,7 +11,7 @@ Draft mermaid diagrams for the root README and other high-level documentation. E
 | [c4-system-context.md](c4-system-context.md) | C4 context diagram: actors, systems, and relationships |
 | [work-flowchart.md](work-flowchart.md) | Left-to-right flowchart: input → engine → agents → output |
 
-## Outstanding Questions
+## Open Questions
 
 - Which 1-2 diagrams should be embedded in the root README?
 - Should diagrams use custom styling/colors or stay with mermaid defaults for consistency?

@@ -33,6 +33,6 @@ Detailed security model and threat analysis for Sandbox. Covers: threat model wi
 
 All diagrams in architectural documents should use **mermaid syntax** instead of ASCII art. Mermaid provides better clarity, GitHub rendering support, and maintainability.
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

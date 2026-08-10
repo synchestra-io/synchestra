@@ -1,6 +1,8 @@
 # Feature: Cross-Repo Sync
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cross-repo-sync?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cross-repo-sync?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cross-repo-sync?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cross-repo-sync?op=request-change) |
 **Status:** Conceptual
+**Source Ideas:** —
 
 ## Summary
 
@@ -92,7 +94,7 @@ branch_prefix: synchestra/
 - Should the branch naming convention be configurable or strictly enforced?
 - How does this interact with repos that have branch protection rules?
 
-## Outstanding Questions
+## Open Questions
 
 - What does the full specification file format look like? (Needs dedicated design work.)
 - How does Synchestra handle repos with different branching models (e.g., one uses trunk-based, another uses gitflow)?

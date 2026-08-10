@@ -1,6 +1,8 @@
 # Feature: Stakeholder / Gate
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/stakeholder/gate?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/stakeholder/gate?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/stakeholder/gate?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/stakeholder/gate?op=request-change) |
 **Status:** Conceptual
+**Source Ideas:** —
 
 ## Summary
 
@@ -119,7 +121,7 @@ The `trigger` field is reserved but not implemented. Built-in gates use hardcode
 
 Not defined yet.
 
-## Outstanding Questions
+## Open Questions
 
 - Acceptance criteria are not yet defined for this feature.
 

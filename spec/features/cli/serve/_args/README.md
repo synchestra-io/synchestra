@@ -34,6 +34,6 @@ Path to the TLS certificate file. Required when `--https` is used. See [tls-cert
 
 Path to the TLS private key file. Required when `--https` is used. See [tls-key.md](tls-key.md).
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

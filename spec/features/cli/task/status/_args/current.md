@@ -33,6 +33,6 @@ synchestra task status --project synchestra --task impl-cli \
 # Exit 1: "Status mismatch: expected in_progress, actual is aborted"
 ```
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

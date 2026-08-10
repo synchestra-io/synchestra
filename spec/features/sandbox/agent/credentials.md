@@ -295,7 +295,7 @@ All credential operations are logged without revealing secret values:
 | `SYNCHESTRA_CREDENTIAL_MAX_COUNT` | `100` | Maximum number of credentials per project |
 | `SYNCHESTRA_CREDENTIAL_AUDIT_MAX_SIZE` | `10MB` | Audit log rotation threshold |
 
-## Outstanding Questions
+## Open Questions
 
 1. Should there be a `ListCredentials` RPC that returns identifiers (not values) for UI display? The `CredentialVault` interface in the implementation guide already defines `List(userID string) ([]CredentialMetadata, error)` but there is no corresponding RPC in [agent.proto](agent.proto).
 2. Should credential expiry trigger a notification/event via the event bus?

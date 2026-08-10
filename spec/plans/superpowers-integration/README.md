@@ -189,7 +189,7 @@ This creates a natural discovery moment — the agent suggests spec-driven devel
 - **Phase 2:** 50+ installs of synchestra-superpowers; positive feedback on cross-session continuity
 - **Phase 3:** PR submitted; productive discussion about state management in superpowers ecosystem
 
-## Outstanding Questions
+## Open Questions
 
 - What is the exact target directory for `synchestra skill install`? (`~/.claude/skills/`, project-local, configurable?)
 - Should feature detection in `writing-plans` be a separate sub-skill or an inline section?

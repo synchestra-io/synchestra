@@ -80,7 +80,7 @@ synchestra feature deps cli/task --fields=status --transitive
   status: "Conceptual"
 ```
 
-## Outstanding Questions
+## Open Questions
 
 - Should `--fields=all` be supported as a shorthand for all available fields?
 - Should custom/computed fields be supported in the future (e.g., `sync` to check if children are in sync with README)?

@@ -1,6 +1,8 @@
 # Feature: GitHub App
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/github-app?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/github-app?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/github-app?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/github-app?op=request-change) |
 **Status:** Conceptual
+**Source Ideas:** —
 
 ## Summary
 
@@ -87,7 +89,7 @@ When a user uninstalls the GitHub App from their org or removes repositories:
 - [API](../api/README.md) — callback endpoint for GitHub's OAuth redirect
 - [Repo Config](https://github.com/specscore/specscore/blob/main/spec/features/repo-config/README.md) — installation maps to project repo configuration
 
-## Outstanding Questions
+## Open Questions
 
 - Should the app be listed on the GitHub Marketplace, or installed only via direct URL during onboarding?
 - What additional permissions will be needed for future features (e.g., GitHub Actions integration, commit status checks)?

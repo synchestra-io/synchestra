@@ -35,6 +35,6 @@ synchestra feature new --title "Micro Tasks"
 synchestra feature new --title "Micro Tasks" --status "Not Started"
 ```
 
-## Outstanding Questions
+## Open Questions
 
 - Should the command enforce a fixed set of valid status values, or accept any string?

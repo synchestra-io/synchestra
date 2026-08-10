@@ -587,7 +587,7 @@ func TestPathTraversalDetection(t *testing.T) {
 }
 ```
 
-## Outstanding Questions
+## Open Questions
 
 1. ~~Should credential decryption cache temporarily decrypted values for repeated use in same session?~~ **Resolved**: Yes, temporarily cache decrypted values for repeated use within the same session.
 2. Should we support credential rotation (re-encrypt all with new key)?

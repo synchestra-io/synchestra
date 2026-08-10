@@ -61,6 +61,6 @@ synchestra spec lint --severity error
 synchestra spec lint --rules readme-exists,oq-section --severity warning
 ```
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

@@ -1,6 +1,6 @@
 # Feature: `synchestra init`
 
-> [View in SpecStudio](https://specstudio.synchestra.io/project/features?id=synchestra@synchestra-io@github.com&path=spec%2Ffeatures%2Fcli%2Finit) — graph, discussions, approvals
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/init?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/init?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/init?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/init?op=request-change) |
 
 **Status:** Approved
 
@@ -175,7 +175,7 @@ The command is registered on the root `cobra.Command` in `pkg/cli/main.go` along
 **When** the user runs `synchestra init --project /tmp/repo` from `/tmp/elsewhere`
 **Then** `synchestra.yaml` is created at `/tmp/repo/synchestra.yaml`, not at `/tmp/elsewhere/`; running with `--project /nonexistent` exits `2`.
 
-## Outstanding Questions
+## Open Questions
 
 - The `--force` flag for re-init (allowing mode change) is intentionally deferred to a follow-up Feature. The MVP's escape hatch is manual file editing.
 - ~~Deprecation warnings on `synchestra project init` and `synchestra project new`~~ — resolved: per the source Idea's "no users yet, no migration" stance, both legacy commands were deleted outright rather than aliased.

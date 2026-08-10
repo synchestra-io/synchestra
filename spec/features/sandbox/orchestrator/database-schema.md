@@ -233,7 +233,7 @@ The orchestrator creates the database and tables at startup if they don't exist 
 
 SQLite is sufficient for single-host deployments (hundreds of projects). If Synchestra grows to support multi-host orchestration, the access cache and container metadata would need to move to a shared store (PostgreSQL, CockroachDB). The `*sql.DB` interface makes this a driver swap, not a rewrite.
 
-## Outstanding Questions
+## Open Questions
 
 1. ~~Should we retain soft-deleted container metadata for audit/recovery purposes?~~ **Resolved**: Yes.
 2. What is the retention policy for access mapping history (audit trail of who had access when)?

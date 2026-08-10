@@ -31,6 +31,6 @@ synchestra task list --project synchestra --status queued \
   --fields path,title,depends_on --format csv
 ```
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

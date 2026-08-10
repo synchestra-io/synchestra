@@ -1,6 +1,6 @@
 # ADR-0003: Skill directory names must not repeat the plugin namespace
 
-**Status:** Accepted
+**Status:** Approved
 **Date:** 2026-04-19
 
 ## Context
@@ -66,3 +66,6 @@ This rule applies to any future Synchestra-authored plugin (see [ADR-0001](0001-
 - Update [`spec/features/agent-skills/README.md`](../features/agent-skills/README.md) to cite ADR-0002 and ADR-0003 and to use the new naming in all examples.
 - Flag the `ai-plugin-sdd` frontmatter-validity issue (`name: specscore:design`) to the plugin owner as a separate cleanup task. Not in scope for this repository.
 - Close the ADR-0002 follow-up line about the `synchestra-` vs `synchestra:` prefix question; this ADR resolves it.
+
+---
+*This document follows the https://specscore.md/decision-specification*

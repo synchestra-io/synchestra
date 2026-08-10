@@ -28,6 +28,6 @@ synchestra task claim --project my-service --task fix-bug \
   --run agent-session-abc123 --model opus
 ```
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

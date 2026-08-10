@@ -10,6 +10,6 @@ No command-specific arguments.
 
 Also uses [`--project`](../../../../_args/project.md) and [`--code-repo`](../../../_args/code-repo.md).
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

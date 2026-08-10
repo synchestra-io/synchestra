@@ -24,6 +24,6 @@ Reference to the project's state repository. Required for `new`, optional for `s
 
 Reference to a code repository. Repeatable for multiple code repos. Required for `new` and `code add/remove`. See [code-repo.md](code-repo.md).
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

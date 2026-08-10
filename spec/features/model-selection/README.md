@@ -1,6 +1,8 @@
 # Feature: Model Selection
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/model-selection?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/model-selection?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/model-selection?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/model-selection?op=request-change) |
 **Status:** Conceptual
+**Source Ideas:** —
 
 ## Summary
 
@@ -61,7 +63,7 @@ Synchestra is not always the direct caller of the LLM. When an agent runs inside
 - **Argument:** Passed as a CLI flag or API parameter that the platform respects (e.g., `claude --model haiku`)
 - **Enforcement:** For Synchestra-spawned headless agents, Synchestra controls the model directly
 
-## Outstanding Questions
+## Open Questions
 
 - How should older `small` / `medium` values be removed after all runtime and UI contracts use `fast` / `balanced`?
 - How does dynamic assessment handle tasks where the description is vague? (Default to `medium`? Ask for clarification?)

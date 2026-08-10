@@ -44,6 +44,6 @@ synchestra server status --path /opt/synchestra
 synchestra mcp --path ~/projects/my-project
 ```
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

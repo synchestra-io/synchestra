@@ -28,6 +28,6 @@ synchestra task complete --project my-service --task fix-auth-bug \
   --summary "Fixed empty token bypass in auth middleware; added regression test"
 ```
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

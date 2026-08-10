@@ -1,5 +1,6 @@
 # Command: `synchestra project set`
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/project/set?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/project/set?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/project/set?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/project/set?op=request-change) |
 **Parent:** [project](../README.md)
 
 ## Synopsis
@@ -55,7 +56,7 @@ Additional key-value settings (e.g., `--allow-proposals=true`) are written to `s
 7. Commit and push changes to all affected repos
 8. On push conflict: pull, re-check, retry or fail
 
-## Outstanding Questions
+## Open Questions
 
 - Should `set` support unsetting / removing config keys?
 - Should changing `--spec-repo` remove `synchestra-spec-repo.yaml` from the old spec repo?

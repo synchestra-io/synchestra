@@ -1,6 +1,8 @@
 # Feature: Stakeholder / Decision
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/stakeholder/decision?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/stakeholder/decision?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/stakeholder/decision?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/stakeholder/decision?op=request-change) |
 **Status:** Conceptual
+**Source Ideas:** —
 
 ## Summary
 
@@ -201,7 +203,7 @@ This is by design — not every decision fits neatly into predefined options, an
 
 Not defined yet.
 
-## Outstanding Questions
+## Open Questions
 
 - Acceptance criteria are not yet defined for this feature.
 

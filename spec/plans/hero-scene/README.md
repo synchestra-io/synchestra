@@ -589,7 +589,7 @@ git commit -m "feat(landing): add Sempé-inspired hero illustration"
 
 ---
 
-## Outstanding Questions
+## Open Questions
 
 - The animation overlay technique (Beats 2-3b: musician/architect opacity transitions) depends on the final illustration composition. The overlay approach in Task 4 uses full-element white overlays that fade out — this works as a simple reveal but doesn't achieve per-character opacity control. If per-character animation is needed, the illustration would need to be sliced into separate layers (architect layer, musicians layer, background layer) and composited with CSS. This is a scope decision to make after the illustration is generated.
 - Retina asset (`hero-scene-2x.webp`) is mentioned in the spec but may not be needed if the base image is high enough resolution. Decide after testing.

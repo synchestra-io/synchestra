@@ -15,6 +15,6 @@ Command-specific arguments for [`feature new`](../README.md).
 
 Global arguments ([`--project`](../../../_args/project.md)) also apply. See the [global args](../../../_args/README.md) for details.
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

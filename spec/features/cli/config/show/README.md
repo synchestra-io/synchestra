@@ -1,5 +1,6 @@
 # Command: `synchestra config show`
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/config/show?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/config/show?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/config/show?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/config/show?op=request-change) |
 **Parent:** [config](../README.md)
 
 ## Synopsis
@@ -34,7 +35,7 @@ None.
 3. Output the complete configuration as YAML to stdout
 4. Exit `0`
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 

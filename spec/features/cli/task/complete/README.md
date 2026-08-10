@@ -1,5 +1,6 @@
 # Command: `synchestra task complete`
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/complete?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/complete?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/complete?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/complete?op=request-change) |
 **Parent:** [task](../README.md)
 **Skill:** [task: complete](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/complete.md)
 
@@ -43,7 +44,7 @@ Completion is atomic: the CLI commits the status change and pushes to the state 
 4. Commit and push
 5. On push conflict: pull, re-check status, retry or fail
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 

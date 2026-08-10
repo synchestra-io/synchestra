@@ -1,5 +1,6 @@
 # Command Group: `synchestra config`
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/config?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/config?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/config?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/config?op=request-change) |
 **Parent:** [CLI](../README.md)
 
 Commands for managing the global user configuration stored in [`~/.synchestra.yaml`](../../global-config/README.md).
@@ -28,7 +29,7 @@ Sets one or more config values in `~/.synchestra.yaml`. Creates the file if it d
 
 Removes a config value from `~/.synchestra.yaml`, reverting it to its default. Only fields that support default values can be cleared. See [clear/README.md](clear/README.md).
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 

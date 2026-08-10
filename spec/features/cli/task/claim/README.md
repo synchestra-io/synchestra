@@ -1,5 +1,6 @@
 # Command: `synchestra task claim`
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/claim?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/claim?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/claim?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/claim?op=request-change) |
 **Parent:** [task](../README.md)
 **Skill:** [task: claim](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/claim.md)
 
@@ -42,7 +43,7 @@ Claiming is atomic: the CLI commits the status change and merges to local main. 
 4. Commit and push
 5. On push conflict: pull, re-check, retry or fail
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 

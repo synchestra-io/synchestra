@@ -1,5 +1,6 @@
 # Command: `synchestra config clear`
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/config/clear?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/config/clear?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/config/clear?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/config/clear?op=request-change) |
 **Parent:** [config](../README.md)
 
 ## Synopsis
@@ -41,7 +42,7 @@ At least one parameter must be provided.
 4. Write `~/.synchestra.yaml`
 5. Exit `0`
 
-## Outstanding Questions
+## Open Questions
 
 - Should `clear` succeed silently if the field is already absent, or exit with a specific code?
 

@@ -1,5 +1,6 @@
 # Command Group: `synchestra project`
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/project?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/project?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/project?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/project?op=request-change) |
 **Parent:** [CLI](../README.md)
 
 Read-only and lifecycle-management commands for an existing Synchestra-managed project — viewing configuration, updating settings, and managing the project's code repositories list.
@@ -35,7 +36,7 @@ Updates project configuration — identity fields land in `specscore.yaml`, orch
 
 Sub-group for managing code repositories — operates on `specscore.yaml#project.repositories` (role-tagged entries per the SpecScore [Repo Config](https://github.com/specscore/specscore/blob/main/spec/features/repo-config/README.md) Feature). Contains `add` and `remove` subcommands. See [code/README.md](code/README.md).
 
-## Outstanding Questions
+## Open Questions
 
 - The implementation of `info`, `set`, and `code` commands against the new two-file model is tracked separately; this Feature documents only the design.
 - Whether `set` should ever write to `specscore.yaml` (project identity) or limit itself to the `synchestra.yaml` orchestration fields — to be decided when `set` is specified.

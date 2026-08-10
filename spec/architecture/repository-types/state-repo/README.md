@@ -97,6 +97,6 @@ The following rules are mandatory for every state repository.
 
 4. **Task directories** — Tasks live in `tasks/` with hierarchical sub-task directories. Each task directory contains a `README.md` with task description, status, and assignment.
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

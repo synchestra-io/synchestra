@@ -31,6 +31,6 @@ Declares dependencies on other tasks. See [depends-on.md](depends-on.md).
 
 Skips the `planning` phase and creates the task directly in `queued`. See [enqueue.md](enqueue.md).
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

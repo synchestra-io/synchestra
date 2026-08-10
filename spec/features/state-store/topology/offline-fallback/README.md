@@ -5,7 +5,9 @@ status: Approved
 
 # Feature: Git Offline Fallback
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/state-store/topology/offline-fallback?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/state-store/topology/offline-fallback?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/state-store/topology/offline-fallback?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/state-store/topology/offline-fallback?op=request-change) |
 **Status:** Approved
+**Source Ideas:** —
 **Parent:** [Authoritative Store and Replicas](../)
 
 ## Summary

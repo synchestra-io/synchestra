@@ -1138,6 +1138,6 @@ orchestrator.Shutdown(ctx)
 
 ---
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

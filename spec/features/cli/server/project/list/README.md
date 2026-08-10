@@ -1,5 +1,6 @@
 # Command: `synchestra server project list`
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/server/project/list?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/server/project/list?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/server/project/list?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/server/project/list?op=request-change) |
 **Parent:** [project](../README.md)
 
 ## Synopsis
@@ -35,7 +36,7 @@ Cross-linked with the API endpoint [`GET /api/v1/project/list`](../../../../../a
 2. Find and parse `synchestra-server.yaml`; exit `3` if not found
 3. Output the list of configured projects
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 

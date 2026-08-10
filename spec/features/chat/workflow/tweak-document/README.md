@@ -1,6 +1,8 @@
 # Feature: Workflow — Tweak Document
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/chat/workflow/tweak-document?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/chat/workflow/tweak-document?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/chat/workflow/tweak-document?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/chat/workflow/tweak-document?op=request-change) |
 **Status:** Conceptual
+**Source Ideas:** —
 
 ## Summary
 
@@ -124,7 +126,7 @@ workflows:
 | [Feature](https://github.com/specscore/specscore/blob/main/spec/features/feature/README.md) | Can tweak feature spec documents. |
 | [Proposals](../../../proposals/README.md) | Can tweak proposal documents. May escalate to "Create Proposal" for larger changes. |
 
-## Outstanding Questions
+## Open Questions
 
 - Should maintainers be able to direct-commit code changes (bypassing PR), or should code always require a PR regardless of role?
 - Should there be a size/complexity heuristic that automatically suggests escalating to a proposal workflow if the "tweak" grows too large?

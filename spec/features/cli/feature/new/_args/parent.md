@@ -30,6 +30,6 @@ synchestra feature new --title "Claim" --parent "cli/task"
 synchestra feature new --title "Claim" --slug "cli/task/claim"
 ```
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

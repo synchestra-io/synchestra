@@ -23,7 +23,7 @@ Implementation plans for `synchestra`.
 
 None at this time.
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 

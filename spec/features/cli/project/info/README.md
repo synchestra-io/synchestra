@@ -1,5 +1,6 @@
 # Command: `synchestra project info`
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/project/info?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/project/info?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/project/info?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/project/info?op=request-change) |
 **Parent:** [project](../README.md)
 
 ## Synopsis
@@ -34,7 +35,7 @@ Displays the contents of the spec repo's `synchestra-spec-repo.yaml` for the spe
 3. Read and output `synchestra-spec-repo.yaml` contents
 4. Exit `0`
 
-## Outstanding Questions
+## Open Questions
 
 - Should `info` also show derived information (e.g., resolved local paths for each repo, clone status)?
 

@@ -26,6 +26,6 @@ synchestra feature new --title "Cross-Repo Sync"
 synchestra feature new --title "CLI" --parent "synchestra"
 ```
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

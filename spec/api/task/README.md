@@ -67,7 +67,7 @@ Invalid transitions return `422 Unprocessable Entity`.
 | `422 Unprocessable Entity` | 4 | `invalid_state_transition` | Status guard failed |
 | `500 Internal Server Error` | 10+ | `internal_error` | Unexpected failure |
 
-## Outstanding Questions
+## Open Questions
 
 - Should `GET /task/status` and `POST /task/status` be split into separate paths to avoid method overloading on the same path?
 - Should the API return the full task object in mutation responses, or just a status acknowledgment?

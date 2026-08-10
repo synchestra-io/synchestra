@@ -1,5 +1,6 @@
 # Sandbox gRPC Protocol
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/sandbox/agent?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/sandbox/agent?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/sandbox/agent?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/sandbox/agent?op=request-change) |
 ## Overview
 
 > **Related documents:** [agent.proto](agent.proto) (protobuf source for code generation), [http-api.md](../orchestrator/http-api.md) (REST API that proxies to these RPCs), [implementation-guide.md](implementation-guide.md) (Go server implementation), [outstanding-questions.md](../outstanding-questions.md) (open design questions).
@@ -509,7 +510,7 @@ If future changes require breaking changes:
 - Message size: Typical 1-10KB per chunk (stdout/stderr)
 - Large commands: Up to 4GB per message (protobuf default max)
 
-## Outstanding Questions
+## Open Questions
 
 1. ~~Should GetCredential require additional user confirmation or 2FA?~~ **Resolved**: Not for now. Retain as a future option/plan for enhanced security.
 2. ~~Should we add bulk operations (BulkStoreCredentials, BulkDeleteCredentials)?~~ **Resolved**: Yes — consider batch-only mode where single-credential operations are a batch of one item. See also http-api.md Q4.

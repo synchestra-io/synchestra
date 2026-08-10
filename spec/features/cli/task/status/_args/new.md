@@ -31,6 +31,6 @@ synchestra task status --project synchestra --task fix-bug \
   --reason "Dependency not available"
 ```
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

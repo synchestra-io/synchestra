@@ -1,5 +1,12 @@
+## Contents
+
+| Child | Description |
+|---|---|
+| [new](new/README.md) | TODO: Add description. |
+
 # Command Group: `synchestra feature`
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/feature?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/feature?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/feature?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/feature?op=request-change) |
 **Parent:** [CLI](../README.md)
 
 Commands for querying and managing features — listing, visualizing hierarchy, tracing dependency and reference relationships, and scaffolding new features. The query commands form an [LSP-like](https://microsoft.github.io/language-server-protocol/) semantic layer for specifications: `info` maps to document symbols, `deps`/`refs` map to go-to-definition/find-references, `tree` maps to type hierarchy, and `--fields`/`--transitive` enrich the output like inlay hints and call hierarchy. See the [skills README](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/README.md#an-lsp-for-specifications) for the full analogy.
@@ -59,7 +66,7 @@ Arguments available across multiple `feature` subcommands. See [`_args/`](_args/
 | [`--fields`](_args/fields.md) | list, tree, deps, refs | Inline selected metadata fields next to each feature |
 | [`--transitive`](_args/transitive.md) | deps, refs | Follow dependency/reference chains to full depth |
 
-## Outstanding Questions
+## Open Questions
 
 - Should features support metadata beyond the `## Dependencies` section (e.g., status, owner, tags) in a machine-readable format like YAML frontmatter? *(Partially addressed: `feature info` extracts metadata from README structure; YAML frontmatter is not yet required but remains an option.)*
 - Should Synchestra expose a proper LSP server for specification files, reusing the same Go packages that power these commands? This would give IDE users live diagnostics, hover info, autocomplete for feature IDs, and rename refactoring. See [LSP feature](../lsp/README.md) for the full proposal and [skills README](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/README.md#an-lsp-for-specifications) for the LSP analogy. *(Tracked: dedicated [LSP feature spec](../lsp/README.md) created.)*

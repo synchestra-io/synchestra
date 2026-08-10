@@ -32,6 +32,6 @@ All endpoints are under `/api/v1/project/`.
 | `409 Conflict` | 1 | `conflict` | Project already exists |
 | `500 Internal Server Error` | 10+ | `internal_error` | Unexpected failure |
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

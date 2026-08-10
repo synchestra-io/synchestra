@@ -1,5 +1,6 @@
 # Command: `synchestra server stop`
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/server/stop?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/server/stop?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/server/stop?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/server/stop?op=request-change) |
 **Parent:** [server](../README.md)
 
 ## Synopsis
@@ -36,7 +37,7 @@ Stops a running Synchestra daemon by reading the PID file and sending SIGTERM. I
 6. Remove PID file
 7. Exit `0`
 
-## Outstanding Questions
+## Open Questions
 
 - What is the timeout for waiting for the process to exit before sending SIGKILL?
 

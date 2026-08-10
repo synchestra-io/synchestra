@@ -1,6 +1,8 @@
 # Feature: Stakeholder
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/stakeholder?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/stakeholder?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/stakeholder?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/stakeholder?op=request-change) |
 **Status:** Conceptual
+**Source Ideas:** —
 
 ## Summary
 
@@ -115,7 +117,7 @@ How stakeholders learn about decisions and how responses flow back to requesting
 
 Not defined yet.
 
-## Outstanding Questions
+## Open Questions
 
 - Acceptance criteria are not yet defined for this feature.
 

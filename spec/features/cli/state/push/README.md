@@ -1,5 +1,6 @@
 # Command: `synchestra state push`
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/state/push?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/state/push?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/state/push?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/state/push?op=request-change) |
 **Parent:** [state](../README.md)
 **Environment:** Coordination (Agent)
 
@@ -41,7 +42,7 @@ The CLI resolves the project's state repo path using the `state_repo` field in `
 
 **Safety:** This command never leaves the repo in a dirty state. On push conflict, no local state is modified — the push simply fails and the user is informed.
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 

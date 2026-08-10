@@ -16,6 +16,6 @@ Acceptance criteria for the [`synchestra test`](../README.md) command.
 | [reports-pass-fail-exit-code](reports-pass-fail-exit-code.ac.md) | Exit 0 on all pass, non-zero on any failure | planned |
 | [detects-include-cycles](detects-include-cycles.ac.md) | Circular includes rejected at validation | planned |
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

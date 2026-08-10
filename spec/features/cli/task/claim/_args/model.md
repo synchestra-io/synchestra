@@ -28,6 +28,6 @@ synchestra task claim --project synchestra --task complex-refactor \
   --run 9933 --model opus
 ```
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

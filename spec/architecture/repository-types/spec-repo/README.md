@@ -57,6 +57,6 @@ The following rules are mandatory for every spec repository.
    // Features depended on:  state-sync/pull, project-definition/state-repo
    ```
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

@@ -35,6 +35,6 @@ synchestra project new --spec-repo github.com/acme/acme-spec \
 synchestra project set --state-repo github.com/acme/acme-synchestra-v2
 ```
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

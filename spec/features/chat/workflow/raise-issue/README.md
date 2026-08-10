@@ -1,6 +1,8 @@
 # Feature: Workflow — Raise Issue
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/chat/workflow/raise-issue?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/chat/workflow/raise-issue?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/chat/workflow/raise-issue?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/chat/workflow/raise-issue?op=request-change) |
 **Status:** Conceptual
+**Source Ideas:** —
 
 ## Summary
 
@@ -137,7 +139,7 @@ steps:
 | [Feature](https://github.com/specscore/specscore/blob/main/spec/features/feature/README.md) | Issues can anchor to features and link back to them. |
 | [Task Status Board](../../../task-status-board/README.md) | Optionally creates a linked task for tracking the issue within Synchestra. |
 
-## Outstanding Questions
+## Open Questions
 
 - Should the "propose a fix" step be able to escalate to the "Tweak Document" or "Create Proposal" workflow if the fix is straightforward enough?
 - For private repos where code quoting is disabled, should the AI still be able to reference file paths and line numbers without quoting content?

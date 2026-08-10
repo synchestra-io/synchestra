@@ -1,5 +1,6 @@
 # Command: `synchestra project code add`
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/project/code/add?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/project/code/add?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/project/code/add?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/project/code/add?op=request-change) |
 **Parent:** [code](../README.md)
 
 ## Synopsis
@@ -46,7 +47,7 @@ If a code repo is already in the project's `repos` list, it is skipped (not an e
 4. Commit and push changes to spec repo and each new code repo
 5. On push conflict: pull, re-check, retry or fail
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 

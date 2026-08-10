@@ -14,6 +14,6 @@ Arguments specific to `synchestra spec` command group.
 | `--format` | String | No | `spec lint`, `spec search` | Output format: `text` (default), `json`, `yaml` |
 | `PATH` (positional) | String | No | `spec lint`, `spec search` | Spec root directory to scan/search (default: `./spec`) |
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

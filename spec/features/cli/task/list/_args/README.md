@@ -21,6 +21,6 @@ Filters the task list to a specific status. See [status.md](status.md).
 
 Controls which fields appear in the output. See [fields.md](fields.md).
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

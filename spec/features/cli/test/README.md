@@ -1,6 +1,8 @@
 # Feature: CLI / test
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/test?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/test?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/test?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/test?op=request-change) |
 **Status:** Conceptual
+**Source Ideas:** —
 
 ## Summary
 
@@ -91,7 +93,7 @@ synchestra test run spec/tests/ --format json
 | [reports-pass-fail-exit-code](_acs/reports-pass-fail-exit-code.ac.md) | Exit 0 on all pass, non-zero on any failure | planned |
 | [detects-include-cycles](_acs/detects-include-cycles.ac.md) | Circular includes rejected at validation | planned |
 
-## Outstanding Questions
+## Open Questions
 
 - Should `synchestra test run` without arguments default to `spec/tests/` or the current directory?
 - Should there be a `synchestra test init` command to scaffold example scenarios?

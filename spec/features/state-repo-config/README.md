@@ -1,6 +1,6 @@
 # Feature: State Repo Config
 
-> [View in SpecStudio](https://specstudio.synchestra.io/project/features?id=synchestra@synchestra-io@github.com&path=spec%2Ffeatures%2Fstate-repo-config) — graph, discussions, approvals
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/state-repo-config?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/state-repo-config?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/state-repo-config?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/state-repo-config?op=request-change) |
 
 **Status:** Approved
 
@@ -132,7 +132,7 @@ Parsing follows the same pattern as `synchestra.yaml` and `specscore.yaml`: a sm
 **When** tools load and re-write the file
 **Then** every unknown field round-trips byte-identical; no warning or error is emitted.
 
-## Outstanding Questions
+## Open Questions
 
 - Whether `synchestra-state.yaml` should also carry a `title` field that wins over `specscore.yaml#project.title` is open. Current spec defers to specscore; could change.
 - The `https://synchestra.md/state-repo-config` schema-pointer URL is a forward reference until synchestra.md publishes the schema page.

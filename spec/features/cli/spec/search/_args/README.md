@@ -17,6 +17,6 @@ Arguments specific to `synchestra spec search`.
 
 Global arguments also accepted: [`--format`](../../../_args/format.md), [`--project`](../../../_args/project.md).
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

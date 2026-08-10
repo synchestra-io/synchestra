@@ -1,6 +1,8 @@
 # Feature: Proposals
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/proposals?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/proposals?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/proposals?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/proposals?op=request-change) |
 **Status:** Conceptual
+**Source Ideas:** —
 
 ## Summary
 
@@ -93,7 +95,7 @@ Add passkey-based authentication as an alternative to password login.
 
 This proposal is not implemented in the current feature spec.
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 ```
@@ -165,7 +167,7 @@ Example:
 | [support-passkeys](support-passkeys/README.md) | `submitted` | `@alex` | [#42](https://github.com/org/repo/issues/42) | `2026-03-12` |
 | [magic-link-login](magic-link-login/README.md) | `draft` | `@sam` | — | `2026-03-15` |
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 ```
@@ -273,7 +275,7 @@ This creates a bidirectional, traceable chain: **proposal → plan → tasks**.
 - The parent feature's compact `Proposals` table includes proposals regardless of status, including `draft` and `rejected`, subject to the configured row limit.
 - For this specification layer, incorporation into the parent feature `README.md` is the gate for `implemented`. Runtime delivery may be tracked elsewhere, but it is not required to keep the proposal history consistent with the spec.
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.
 

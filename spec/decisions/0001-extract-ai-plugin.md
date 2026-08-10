@@ -1,6 +1,6 @@
 # ADR-0001: Extract AI plugin to a dedicated repository
 
-**Status:** Accepted
+**Status:** Approved
 **Date:** 2026-04-18
 
 ## Context
@@ -59,3 +59,6 @@ Phase 1 of the extraction (creating the new repository with the plugin contents)
 - **Phase 2:** Remove `synchestra/ai-plugin/` from the `synchestra` repository after the new repository is verified working. Update references in `AGENTS.md`, feature specs that point at `ai-plugin/skills/`, and the Copilot CLI symlink (`.github/skills`).
 - **Distribution branding:** Set up `install.synchestra.io/skills` as a redirect to the latest GitHub release of `ai-plugin-synchestra`.
 - **Skill naming / prefix convention:** Tracked as sub-decision C in the remote-dispatch ideation thread; resolve separately.
+
+---
+*This document follows the https://specscore.md/decision-specification*

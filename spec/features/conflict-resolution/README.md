@@ -1,6 +1,8 @@
 # Feature: Conflict Resolution
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/conflict-resolution?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/conflict-resolution?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/conflict-resolution?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/conflict-resolution?op=request-change) |
 **Status:** Conceptual
+**Source Ideas:** —
 
 ## Summary
 
@@ -45,7 +47,7 @@ The AI merge sub-agent assigns a confidence score to its resolution. Below a con
 - How is the confidence threshold configured and calibrated?
 - Should there be a "dry-run" mode where the sub-agent proposes a resolution but always waits for human approval?
 
-## Outstanding Questions
+## Open Questions
 
 - How does this interact with branch protection rules that require PR reviews?
 - What happens when the conflict resolution itself conflicts with another concurrent push? (Recursive conflict.)

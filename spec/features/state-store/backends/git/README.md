@@ -1,5 +1,6 @@
 # Backend: Git State Store
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/state-store/backends/git?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/state-store/backends/git?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/state-store/backends/git?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/state-store/backends/git?op=request-change) |
 **Parent:** [Backends](../)
 
 **Status:** Conceptual
@@ -205,7 +206,7 @@ For single-host setups, `manual` or `on_interval` sync policies eliminate networ
 
 For projects with hundreds of concurrent agents or thousands of tasks, database backends may offer better performance. See the [backend matrix](../) for alternatives.
 
-## Outstanding Questions
+## Open Questions
 
 - Should the git backend batch multiple mutations into a single commit when they occur within a short window (e.g., creating a task and immediately enqueuing it)?
 - How should the git backend handle partial failures (e.g., commit succeeds but push fails due to network error)?

@@ -5,6 +5,7 @@ status: Approved
 
 # Feature: Dispatch Agent Command
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/agent-skills/dispatch?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/agent-skills/dispatch?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/agent-skills/dispatch?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/agent-skills/dispatch?op=request-change) |
 **Status:** Approved
 **Source Ideas:** [Remote Dispatch](https://github.com/synchestra-io/synchestra-marketing/blob/main/ideas/remote-dispatch.md)
 
@@ -82,7 +83,7 @@ The plugin recognizes provider-neutral `@fast`, `@balanced`, and `@large`, plus 
 - [cli/runner/dispatch](../../cli/runner/dispatch/README.md) — deterministic CLI operation
 - [ADR-0006](../../../decisions/0006-queued-remote-dispatch-boundary.md) — ownership boundary
 
-## Outstanding Questions
+## Open Questions
 
 1. Whether `/dispatch` is a universal unnamespaced alias on every supported agent platform depends on each platform's collision rules; the namespaced command is always valid.
 

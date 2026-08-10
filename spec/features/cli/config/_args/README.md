@@ -14,6 +14,6 @@ Arguments shared across `synchestra config` subcommands.
 
 The root directory where repositories are stored on disk. See [repos-dir.md](repos-dir.md).
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

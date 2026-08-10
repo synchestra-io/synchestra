@@ -1,5 +1,6 @@
 # Command: `synchestra task list`
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/list?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/list?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/list?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/task/list?op=request-change) |
 **Parent:** [task](../README.md)
 **Skill:** [task: list](https://github.com/synchestra-io/ai-plugin-synchestra/blob/main/skills/task/references/list.md)
 
@@ -90,7 +91,7 @@ write-tests,Write tests,implement-api
 deploy-staging,Deploy staging,"implement-api,write-tests"
 ```
 
-## Outstanding Questions
+## Open Questions
 
 - Should there be a `--depth` flag to limit how deep in the task hierarchy to list?
 - Should there be `--assigned-to` filtering by run ID?

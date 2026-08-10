@@ -1,5 +1,6 @@
 # Command Group: `synchestra state`
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/state?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/state?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/state?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/state?op=request-change) |
 **Parent:** [CLI](../README.md)
 
 Commands for manually synchronizing the project's state repository with its remote. These commands are policy-unaware — they execute immediately and unconditionally, regardless of the project's [sync policy](../../state-store/backends/git/README.md#sync-policy).
@@ -32,7 +33,7 @@ Merges pending agent branch commits to local main and pushes to origin. Use when
 
 Equivalent to `pull` followed by `push`, with conflict retry. The go-to command when you want to ensure full bidirectional sync. See [sync/README.md](sync/README.md).
 
-## Outstanding Questions
+## Open Questions
 
 - Should there be a `synchestra state info` subcommand to show current sync policy, last pull/push timestamps, and pending local commits?
 - Should there be a `synchestra state status` subcommand to show sync health (e.g., "3 local commits unpushed, last pull 2m ago")?

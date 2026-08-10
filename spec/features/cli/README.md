@@ -1,10 +1,33 @@
 # Feature: CLI
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli?op=request-change) |
 **Status:** In Progress
+**Source Ideas:** —
 
 ## Summary
 
 The Synchestra CLI (`synchestra`) is the primary interface for agents and humans to interact with Synchestra-managed projects. It validates inputs, enforces state transitions, and handles the git commit-and-push mechanics so callers don't have to.
+
+## Contents
+
+| Child | Description |
+|---|---|
+| [auth](auth/README.md) | TODO: Add description. |
+| [code](code/README.md) | TODO: Add description. |
+| [config](config/README.md) | TODO: Add description. |
+| [feature](feature/README.md) | TODO: Add description. |
+| [init](init/README.md) | TODO: Add description. |
+| [mcp](mcp/README.md) | TODO: Add description. |
+| [project](project/README.md) | TODO: Add description. |
+| [runner](runner/README.md) | TODO: Add description. |
+| [self-update](self-update/README.md) | TODO: Add description. |
+| [serve](serve/README.md) | TODO: Add description. |
+| [server](server/README.md) | TODO: Add description. |
+| [session](session/README.md) | TODO: Add description. |
+| [spec](spec/README.md) | TODO: Add description. |
+| [state](state/README.md) | TODO: Add description. |
+| [task](task/README.md) | TODO: Add description. |
+| [test](test/README.md) | TODO: Add description. |
 
 ## Design Principles
 
@@ -248,7 +271,7 @@ Commands for managing remote runners and dispatching plans or tasks to them. The
 
 Commands for inspecting and controlling the runtime sessions created by `runner dispatch`. Sessions are orthogonal to tasks — they report runtime state (alive/idle/crashed), not SpecScore lifecycle state. See [session/README.md](session/README.md).
 
-## Outstanding Questions
+## Open Questions
 
 - Should the CLI support `--dry-run` for mutation commands?
 

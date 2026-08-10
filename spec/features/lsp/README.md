@@ -1,6 +1,8 @@
 # Feature: LSP for Specifications
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/lsp?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/lsp?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/lsp?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/lsp?op=request-change) |
 **Status:** Conceptual
+**Source Ideas:** â€”
 
 ## Summary
 
@@ -129,7 +131,7 @@ The incremental cost of adding LSP on top of working CLI packages is moderate â€
 
 Not defined yet.
 
-## Outstanding Questions
+## Open Questions
 
 - Should the LSP server support specification files beyond feature READMEs (e.g., plans, proposal documents, acceptance criteria)?
 - Should the LSP server integrate with git to show feature status changes (e.g., "this feature was modified in the current branch but not yet pushed")?

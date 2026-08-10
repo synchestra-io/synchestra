@@ -32,6 +32,6 @@ synchestra task new --project my-service --task deploy-staging \
   --depends-on setup-db,create-schema
 ```
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

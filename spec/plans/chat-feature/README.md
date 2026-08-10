@@ -43,7 +43,7 @@ Phases 3-5 from the original roadmap do not yet have their own detailed developm
 - **External service integration.** The Raise Issue workflow depends on GitHub Issues API integration. This adds an external dependency and potential failure modes (rate limiting, authentication, API changes).
 - **Fast-path complexity.** The fast path (implement during conversation) involves coordinating real-time task creation, agent dispatch, and code generation while maintaining a conversational UX. This is architecturally complex and may need simplification in v1.
 
-## Outstanding Questions
+## Open Questions
 
 - Should phases 3-5 have their own detailed development plans, or are the step descriptions in this high-level plan sufficient for task generation?
 - What is the target technology stack for the server-side components — Go (matching the existing CLI), or a different language better suited for real-time chat (e.g., TypeScript/Node.js)?

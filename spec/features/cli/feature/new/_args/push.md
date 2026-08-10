@@ -30,6 +30,6 @@ synchestra feature new --title "Task Status Board" --push
 synchestra feature new --title "Task Status Board" --commit --push
 ```
 
-## Outstanding Questions
+## Open Questions
 
 None at this time.

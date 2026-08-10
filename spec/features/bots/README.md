@@ -1,6 +1,8 @@
 # Feature: Bots
 
+> [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/bots?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/bots?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/bots?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/bots?op=request-change) |
 **Status:** Conceptual
+**Source Ideas:** —
 
 ## Summary
 
@@ -51,7 +53,7 @@ Each bot kind has a distinct trust boundary and lifecycle:
 
 Not defined yet.
 
-## Outstanding Questions
+## Open Questions
 
 - Should in-container bots and host-level bots share a common registration/discovery mechanism, or are they fundamentally different enough to warrant separate specs?
 - Do we need a bot permission model beyond the existing user/project authorization?
