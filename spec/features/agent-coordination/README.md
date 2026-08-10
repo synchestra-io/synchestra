@@ -65,9 +65,12 @@ from “needs resumption,” without inferring either from branch age.
 
 An **Effort** is the durable unit of requested work. It has a stable ID,
 project/repository IDs, title, declared scope, initiator, creation time, and a
-private Work Log reference. The exact original prompt may live only in the
-private Work Log/Synchestra archive; neither a public dashboard nor a Git state
-repository needs to duplicate it.
+private Work Log reference. The exact original prompt lives in the private
+local Work Log and may be copied only to an explicitly configured, authorized,
+encrypted private Synchestra server/cloud archive. It MUST NOT enter a public
+dashboard, generic operational event, Git state repository, Git fallback,
+mirror, or backup. Those surfaces retain only its digest and private-archive
+receipt/reference.
 
 A **Run** is one execution attempt within an effort. It records the agent
 family (`codex`, `claude`, `human`, or registered implementation), model,
@@ -101,7 +104,9 @@ terminal run follows a two-phase finalization protocol:
 
 The local archive has configurable retention and is never removed merely because
 the worktree is removed/recycled. Remote archival uses a durable outbox/retry
-record and stores a receipt plus sealed-content hash when accepted. By default a
+record and an authenticated encrypted private-payload channel; it stores a
+receipt plus sealed-content hash when accepted. The generic state journal and
+Git replicas receive the receipt/hash, never the prompt-bearing payload. By default a
 remote/server outage does not block safe cleanup because the local archive is
 already durable; a project may require a remote archive receipt before cleanup.
 Archived terminal logs feed recent/history views but never count as active
@@ -316,6 +321,10 @@ same thread, and no message is mistaken for an authoritative task transition.
   exposes configurable retention rather than risking automatic evidence loss;
   metadata/hash and any required remote archive receipt may outlive private
   prompt content under a later policy.
+- Which key authority should protect optional prompt-bearing remote archives?
+  Lean: a per-log data key plus an organization/account key identifier in the
+  envelope, allowing founder-hosted server-managed keys first and customer-KMS
+  or client-held keys later without changing the sealed archive format.
 
 ---
 *This document follows the https://specscore.md/feature-specification*
