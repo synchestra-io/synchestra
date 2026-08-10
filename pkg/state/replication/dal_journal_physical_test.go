@@ -199,6 +199,51 @@ func TestGitPushJournal_BareOriginReceiptAndFreshCloneParity(t *testing.T) {
 	if err != nil || fallbackReceipt.AwaitingPush {
 		t.Fatalf("fallback remote receipt = %+v, %v", fallbackReceipt, err)
 	}
+	// A failed push retains a private pending receipt and can be resumed without
+	// appending another journal event. The remote URL is changed only after the
+	// expected base was captured, simulating a transport outage mid-delivery.
+	expected, err := pushed.remote.ExpectedBase(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := local.Append(ctx, relayEvents(t)[1]); err != nil {
+		t.Fatal(err)
+	}
+	pending, err := pushed.remote.RecordPending(ctx, expected)
+	if err != nil {
+		t.Fatal(err)
+	}
+	gitCommand(t, root, "remote", "set-url", "origin", filepath.Join(t.TempDir(), "missing.git"))
+	if _, err := pushed.remote.PushPending(ctx, pending); err == nil {
+		t.Fatal("unreachable remote push unexpectedly succeeded")
+	}
+	gitCommand(t, root, "remote", "set-url", "origin", bare)
+	resumed, err := pushed.remote.ResumePending(ctx, pending.CommitSHA)
+	if err != nil || resumed.AwaitingPush {
+		t.Fatalf("resume = %+v, %v", resumed, err)
+	}
+	// A deletion after expected-base capture is a CAS failure, not permission to
+	// recreate the ref. Restoring the original ref makes the same receipt safe
+	// to resume, still without a second append.
+	expected, err = pushed.remote.ExpectedBase(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := local.Append(ctx, relayEvents(t)[2]); err != nil {
+		t.Fatal(err)
+	}
+	pending, err = pushed.remote.RecordPending(ctx, expected)
+	if err != nil {
+		t.Fatal(err)
+	}
+	gitCommand(t, bare, "update-ref", "-d", "refs/heads/main")
+	if _, err := pushed.remote.PushPending(ctx, pending); err == nil {
+		t.Fatal("CAS push recreated deleted remote ref")
+	}
+	gitCommand(t, bare, "update-ref", "refs/heads/main", expected)
+	if _, err := pushed.remote.ResumePending(ctx, pending.CommitSHA); err != nil {
+		t.Fatalf("resume after restoring expected base: %v", err)
+	}
 	fresh := filepath.Join(t.TempDir(), "fresh")
 	if out, err := exec.Command("git", "clone", bare, fresh).CombinedOutput(); err != nil {
 		t.Fatalf("fresh clone: %v: %s", err, out)

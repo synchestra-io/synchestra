@@ -9,7 +9,7 @@ require (
 	github.com/dal-go/dalgo2sql v0.10.0
 	github.com/dal-go/dalgo2sqlite v0.1.0
 	github.com/dal-go/record v0.1.2
-	github.com/ingitdb/dalgo2ingitdb v0.3.0
+	github.com/ingitdb/dalgo2ingitdb v0.3.1
 	github.com/ingitdb/ingitdb-cli v0.65.4
 	github.com/ingitdb/ingitdb-go/ingitdb v0.5.2
 	github.com/spf13/cobra v1.10.2

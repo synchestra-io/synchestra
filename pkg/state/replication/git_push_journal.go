@@ -5,8 +5,11 @@ package replication
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 )
 
@@ -16,6 +19,7 @@ import (
 type GitCommitReceipt struct {
 	CommitSHA    string
 	RemoteRef    string
+	ExpectedBase string
 	AwaitingPush bool
 }
 
@@ -64,7 +68,11 @@ func (j *GitPushJournal) AppendAndPush(ctx context.Context, event Event) (GitCom
 	if err := j.Journal.Append(ctx, event); err != nil {
 		return GitCommitReceipt{}, err
 	}
-	return j.remote.PushExpected(ctx, expected)
+	pending, err := j.remote.RecordPending(ctx, expected)
+	if err != nil {
+		return GitCommitReceipt{}, err
+	}
+	return j.remote.PushPending(ctx, pending)
 }
 
 func (d *GitRemoteDurability) ExpectedBase(ctx context.Context) (string, error) {
@@ -82,25 +90,112 @@ func (d *GitRemoteDurability) ExpectedBase(ctx context.Context) (string, error) 
 	return remote, nil
 }
 
-func (d *GitRemoteDurability) PushExpected(ctx context.Context, expected string) (GitCommitReceipt, error) {
+func (d *GitRemoteDurability) RecordPending(ctx context.Context, expected string) (GitCommitReceipt, error) {
 	commit, err := d.localHead(ctx)
 	if err != nil {
 		return GitCommitReceipt{}, err
 	}
-	receipt := GitCommitReceipt{CommitSHA: commit, AwaitingPush: true}
-	ref := "refs/heads/" + d.branch
-	if out, err := d.git(ctx, "push", d.remote, "HEAD:"+ref); err != nil {
-		return receipt, fmt.Errorf("replication: push Git commit from expected base %s: %w: %s", expected, err, out)
+	receipt := GitCommitReceipt{CommitSHA: commit, ExpectedBase: expected, RemoteRef: "refs/heads/" + d.branch, AwaitingPush: true}
+	if err := d.writePending(ctx, receipt); err != nil {
+		return GitCommitReceipt{}, err
+	}
+	return receipt, nil
+}
+
+func (d *GitRemoteDurability) PushPending(ctx context.Context, receipt GitCommitReceipt) (GitCommitReceipt, error) {
+	if receipt.CommitSHA == "" || receipt.RemoteRef != "refs/heads/"+d.branch {
+		return receipt, fmt.Errorf("replication: invalid pending Git receipt")
+	}
+	if receipt.ExpectedBase != "" {
+		if out, err := d.git(ctx, "merge-base", "--is-ancestor", receipt.ExpectedBase, receipt.CommitSHA); err != nil {
+			return receipt, fmt.Errorf("replication: pending commit is not descendant of expected base: %w: %s", err, out)
+		}
+	}
+	lease := "--force-with-lease=" + receipt.RemoteRef + ":" + receipt.ExpectedBase
+	if out, err := d.git(ctx, "push", lease, d.remote, receipt.CommitSHA+":"+receipt.RemoteRef); err != nil {
+		return receipt, fmt.Errorf("replication: CAS push Git commit from expected base %s: %w: %s", receipt.ExpectedBase, err, out)
 	}
 	remote, err := d.remoteHead(ctx)
 	if err != nil {
 		return receipt, err
 	}
-	if remote != commit {
-		return receipt, fmt.Errorf("replication: Git remote receipt %s does not match pushed commit %s", remote, commit)
+	if remote != receipt.CommitSHA {
+		return receipt, fmt.Errorf("replication: Git remote receipt %s does not match pushed commit %s", remote, receipt.CommitSHA)
 	}
-	receipt.RemoteRef, receipt.AwaitingPush = ref, false
+	if err := d.removePending(ctx, receipt.CommitSHA); err != nil {
+		return receipt, err
+	}
+	receipt.AwaitingPush = false
 	return receipt, nil
+}
+
+// ResumePending retries the exact local commit already recorded after a push
+// failure. It performs no new append and succeeds idempotently after a remote
+// receipt has already been observed.
+func (d *GitRemoteDurability) ResumePending(ctx context.Context, commitSHA string) (GitCommitReceipt, error) {
+	receipt, err := d.readPending(ctx, commitSHA)
+	if err != nil {
+		return GitCommitReceipt{}, err
+	}
+	if remote, err := d.remoteHead(ctx); err == nil && remote == receipt.CommitSHA {
+		if err := d.removePending(ctx, receipt.CommitSHA); err != nil {
+			return receipt, err
+		}
+		receipt.AwaitingPush = false
+		return receipt, nil
+	}
+	return d.PushPending(ctx, receipt)
+}
+
+func (d *GitRemoteDurability) pendingPath(ctx context.Context, commit string) (string, error) {
+	out, err := d.git(ctx, "rev-parse", "--git-path", "synchestra/replication-pending/"+commit+".json")
+	if err != nil {
+		return "", fmt.Errorf("replication: resolve pending receipt path: %w: %s", err, out)
+	}
+	path := strings.TrimSpace(string(out))
+	if !filepath.IsAbs(path) {
+		path = filepath.Join(d.repoDir, path)
+	}
+	return path, nil
+}
+func (d *GitRemoteDurability) writePending(ctx context.Context, receipt GitCommitReceipt) error {
+	path, err := d.pendingPath(ctx, receipt.CommitSHA)
+	if err != nil {
+		return err
+	}
+	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+		return err
+	}
+	data, err := json.Marshal(receipt)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(path, data, 0o600)
+}
+func (d *GitRemoteDurability) readPending(ctx context.Context, commit string) (GitCommitReceipt, error) {
+	path, err := d.pendingPath(ctx, commit)
+	if err != nil {
+		return GitCommitReceipt{}, err
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return GitCommitReceipt{}, fmt.Errorf("replication: read pending receipt: %w", err)
+	}
+	var receipt GitCommitReceipt
+	if err := json.Unmarshal(data, &receipt); err != nil {
+		return GitCommitReceipt{}, err
+	}
+	return receipt, nil
+}
+func (d *GitRemoteDurability) removePending(ctx context.Context, commit string) error {
+	path, err := d.pendingPath(ctx, commit)
+	if err != nil {
+		return err
+	}
+	if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
+		return err
+	}
+	return nil
 }
 
 func (d *GitRemoteDurability) localHead(ctx context.Context) (string, error) {

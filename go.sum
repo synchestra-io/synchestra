@@ -76,6 +76,8 @@ github.com/ingitdb/dalgo2ingitdb v0.2.4 h1:tAt3bduXnDOIA4Q2jXU9tJ1NTXK8gp/WJ7frU
 github.com/ingitdb/dalgo2ingitdb v0.2.4/go.mod h1:YMVSt4bDlPx2aU8TcdGyTDFqSERqgr4yoUg+iP20ibA=
 github.com/ingitdb/dalgo2ingitdb v0.3.0 h1:MKUmPu+Ob3zpoq5J/2cCdQBW9KAe8RRDmixl21rlqnI=
 github.com/ingitdb/dalgo2ingitdb v0.3.0/go.mod h1:YMVSt4bDlPx2aU8TcdGyTDFqSERqgr4yoUg+iP20ibA=
+github.com/ingitdb/dalgo2ingitdb v0.3.1 h1:LoVryIQ89nEZwbWCXH7vB012PaILswClG6QqDc2wVBA=
+github.com/ingitdb/dalgo2ingitdb v0.3.1/go.mod h1:YMVSt4bDlPx2aU8TcdGyTDFqSERqgr4yoUg+iP20ibA=
 github.com/ingitdb/dalgo2ingitdb4github v0.2.3 h1:9cOBFdWWtUREBkbnL5hvO7fT0gYzl08hLHy3jesiIJI=
 github.com/ingitdb/dalgo2ingitdb4github v0.2.3/go.mod h1:4AJrmWiyCBI+9pwLQq1PE8EFlgNfHboXXL4C/UJ5Tlg=
 github.com/ingitdb/dalgo2ingitdb4local v0.0.4 h1:rbpPMvXeEoDDp6HJFbzZh9g0QGJuOW3eZ7RTjFxiO28=

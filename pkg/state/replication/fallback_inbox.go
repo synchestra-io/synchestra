@@ -130,7 +130,11 @@ func (i *GitFallbackInboxPush) AppendFallbackAndPush(ctx context.Context, envelo
 	if err := i.AppendFallback(ctx, envelope); err != nil {
 		return GitCommitReceipt{}, err
 	}
-	return i.remote.PushExpected(ctx, expected)
+	pending, err := i.remote.RecordPending(ctx, expected)
+	if err != nil {
+		return GitCommitReceipt{}, err
+	}
+	return i.remote.PushPending(ctx, pending)
 }
 
 func NewDALFallbackInbox(db dal.DB, projectID, commitMessage string) (*DALFallbackInbox, error) {
