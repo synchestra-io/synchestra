@@ -43,7 +43,7 @@ The app subscribes to the following events:
 |---|---|
 | `issues` | New issues, status changes — sync with task queue |
 | `pull_request` | PR opened, merged, closed — update task progress |
-| `push` | Commits to tracked branches — detect state repo updates |
+| `push` | Wake reconciliation for tracked code/state refs; never apply a webhook body as state truth |
 | `installation` | App installed, uninstalled, or permissions changed |
 | `installation_repositories` | Repositories added to or removed from installation |
 
@@ -75,6 +75,20 @@ Other features query the GitHub App's installation status:
 - **State sync** — uses installation tokens to push/pull state repo changes.
 - **Issue sync** (future) — listens to `issues` webhooks to create/update Synchestra tasks.
 - **PR tracking** (future) — listens to `pull_request` webhooks to update task progress.
+
+### Coordination Boundary
+
+For agent coordination, GitHub events are latency hints. The receiver verifies
+the delivery signature, installation/repository scope, and delivery ID, then
+wakes the registered project's reconciliation worker. That worker fetches the
+remote and emits a verified `repository.ref.updated` event only after the
+configured ref resolves to the observed SHA.
+
+Webhook payloads MUST NOT directly mutate Synchestra task/claim/lease state,
+mark a worktree refreshed, or advance the state-change journal. GitHub can
+duplicate, delay, reorder, or omit webhooks; server startup and periodic Git
+reconciliation remain the correctness path. This same rule applies to future
+Git-provider integrations.
 
 ### Uninstallation
 

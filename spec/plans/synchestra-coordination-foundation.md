@@ -1,0 +1,191 @@
+---
+format: https://specscore.md/plan-specification
+status: Draft
+---
+# Plan: Synchestra Coordination Foundation
+
+**Status:** Draft
+**Source:** none
+**Date:** 2026-08-10
+**Owner:** codex
+**Supersedes:** —
+
+## Summary
+
+Implement the first safe, observable coordination path for a founder now and a
+team later: every active effort/run/worktree claim is visible per repository;
+Codex and Claude runs coordinate over an audited channel; one writer owns each
+branch/worktree; state is fast on a SQLite server yet portable to required Git;
+and server outage leaves communication/recovery working through Git rather than
+creating two authorities.
+
+SpecScore remains generic. Its extension/event boundary may supply context, but
+the Synchestra CLI/server owns operational state and Workbench owns local
+checkout/worktree actions and Hybrid Work Log projection.
+
+## End-to-End Journey
+
+> “I open a repository and can see active and recent agents, their worktrees,
+> their relationships, and conflicts. Two agents about to modify the same
+> library coordinate through an auditable thread. If one dies, I can resume its
+> exact effort; if it lands or is aborted, I can tell whether its worktree and
+> branch are safe to remove. This remains understandable when the server is
+> down.”
+
+| Stage | Observable good result | E2E evidence |
+|---|---|---|
+| Start | Creating an effort/run and worktree claim returns one ID and owner; repository view shows it. | CLI/API create then independent project/repository query. |
+| Coordinate | An overlapping claim is visible and a targeted message is acknowledged by the other run. | Two isolated agent fixtures; inspect their shared thread/audit. |
+| Base moves | A verified main update reaches exactly affected claims; dirty worktree is marked, not rewritten. | Temporary remote + dirty fixture; assert notification and unchanged index. |
+| Server fails | Agents exchange/ack Git envelopes and preserve checkpoints. | Stop server; inspect Git state and local Work Log; restart/reconcile. |
+| Recover | Successor learns origin/model/prompt reference/branch/base/tip and can take only an expired or handed-off claim. | Kill a fixture run, start successor, prove lease fencing. |
+| Close | Landed and aborted records remain distinct in seven-day view; cleanup accepts only verified eligible state. | Forge/temporary direct-push evidence plus cleanup dry-run. |
+
+**Divergent epilogues.** The landed branch/worktree becomes cleanup-eligible only
+after verified delivery and required Git durability. An aborted/unlanded effort
+stays recent, resumable, and explicitly non-eligible until handed off or
+authorized for discard. Both leave an audit record.
+
+## Approach
+
+Freeze backend-neutral records, journal/outbox, authority fencing, and CLI
+contracts before implementation. First deliver local Git-active behavior so
+recovery works without a server. Then add DALgo SQLite active mode and Git
+mirror mode, server reconciliation, and notifications. Workbench integrates
+only after Synchestra can return deterministic claims/health/cleanup decisions.
+
+DALgo and inGitDB are upstream prerequisites, not workarounds in Synchestra:
+inGitDB supplies the Git DALgo adapter; `dalgo2sqlite` supplies SQLite. The
+first release validates the identical lifecycle workload in both Git-active →
+SQLite-mirror and SQLite-active → Git-mirror modes, measuring correctness and
+performance before increasing scale.
+
+## Completed Work
+
+| Completed item | Evidence | Result |
+|---|---|---|
+| Authoritative-store topology and offline fallback design | `f4b2fd5` | Exactly one active endpoint, Git-required replica, journal/outbox, barriers, fence epochs, Git fallback, reconciliation, and two-direction validation defined. |
+| SpecScore initialization and deterministic standard lint fixes | `1463c23` | Synchestra is initialized for SpecScore; `Outstanding Questions` was mechanically migrated to `Open Questions` wherever the current linter could fix it. Legacy lint debt remains visible. |
+| SQLite, agent coordination, and repository-update contracts | this plan's accompanying specification changes | Defined records, one-writer/handoff tradeoffs, active/recent views, refresh policy, verified signals, and implementation acceptance criteria. |
+
+These are approved design/preparatory artifacts, not a claim that the runtime
+is implemented or delivered.
+
+## Tasks
+
+### Task 1: Extend the backend-neutral state model and topology validator
+
+**Id:** task-1
+**Verifies:** state-store/topology#ac:topology-rejects-zero-or-multiple-active, state-store/topology#ac:promotion-fences-former-active
+**Depends-On:** —
+**Status:** planning
+
+Extend `state.Store` with effort/run/worktree claim, message, activity,
+replication journal, cursor, authority lease, and health contracts. Implement
+configuration validation for exactly one active, one-or-more replicas, and
+Git-required topology; add deterministic schema and migration ownership.
+
+### Task 2: Add DALgo/inGitDB Git endpoint and append-only fallback ingress
+
+**Id:** task-2
+**Verifies:** state-store/topology#ac:git-active-replicates-to-sqlite, state-store/topology/offline-fallback#ac:agents-communicate-with-server-down, state-store/topology/offline-fallback#ac:communication-fallback-does-not-split-authority
+**Depends-On:** 1
+**Status:** planning
+
+Extend inGitDB/DALgo upstream for transactional buffering, deterministic
+serialization, expected-base/CAS, and commit SHA evidence. Implement Git-active
+journal records, immutable fallback envelopes, recipient acknowledgements, and
+direct Git active/recent queries with conflict-retry semantics.
+
+### Task 3: Implement fenced effort/run/worktree claims and audited messaging
+
+**Id:** task-3
+**Verifies:** agent-coordination#ac:one-writer-claim-is-fenced, agent-coordination#ac:messages-survive-transport-switch, agent-coordination#ac:abandoned-run-is-resumable
+**Depends-On:** 1, 2
+**Status:** planning
+
+Implement lifecycle transitions, lease/fence enforcement, explicit handoff,
+scope declarations, message threads, acknowledgements, and recovery records.
+Integrate the Workbench Hybrid Work Log through stable IDs/references rather
+than duplicating private prompt content in the Git state repository.
+
+### Task 4: Implement DALgo SQLite active endpoint, journal, and outbox
+
+**Id:** task-4
+**Verifies:** state-store/backends/sqlite#ac:sqlite-active-uses-one-transaction, state-store/backends/sqlite#ac:sqlite-restart-obeys-fencing, state-store/topology#ac:sqlite-active-commits-outbox-atomically
+**Depends-On:** 1
+**Status:** planning
+
+Create `sqlitestore` using `dalgo2sqlite`, migrations, conditional claim
+writes, one transaction for projection/journal/outbox, idempotent receipts,
+and labelled query responses. Add crash-injection tests at each transaction
+boundary and restart/promotion fence coverage.
+
+### Task 5: Implement replica workers, barriers, verification, and promotion
+
+**Id:** task-5
+**Verifies:** state-store/topology#ac:replica-outage-does-not-create-dual-write, state-store/topology#ac:mirror-barrier-proves-git-durability, state-store/backends/sqlite#ac:git-barrier-proves-portable-durability
+**Depends-On:** 2, 4
+**Status:** planning
+
+Deliver ordered outbox apply, checksum/cursor verification, health/lag metrics,
+mirror barriers, backup checkpoints, and explicit lease/epoch promotion.
+Exercise Git-active→SQLite and SQLite-active→Git workloads and record the
+required performance/recovery comparison without exposing private payloads.
+
+### Task 6: Implement server reconciliation and verified ref notifications
+
+**Id:** task-6
+**Verifies:** agent-coordination/repository-change-notifications#ac:verified-ref-update-notifies-affected-runs, agent-coordination/repository-change-notifications#ac:webhook-is-a-hint-not-truth, state-store/topology/offline-fallback#ac:webhook-loss-does-not-lose-state
+**Depends-On:** 3, 5
+**Status:** planning
+
+Add server startup/periodic Git reconciliation and optional GitHub App webhook
+ingress as a signed, deduplicated wake-up hint. Emit verified
+`repository.ref.updated`, derive `worktree.base_advanced`, and preserve dirty
+checkout safety. Update serve/server/API and repository configuration contracts.
+
+### Task 7: Integrate Workbench lifecycle, refresh policy, and safe cleanup/recycle
+
+**Id:** task-7
+**Verifies:** agent-coordination#ac:completed-and-aborted-are-distinguishable, agent-coordination#ac:delivery-requires-merge-and-asset-disposition, agent-coordination#ac:recycle-is-explicit-and-isolated, agent-coordination#ac:offline-archive-does-not-block-default-cleanup, agent-coordination/repository-change-notifications#ac:dirty-worktree-is-never-auto-integrated, agent-coordination#ac:overlap-is-visible-and-coordinated
+**Depends-On:** 3, 6
+**Status:** planning
+
+Make WB create all managed worktrees under canonical owner/repository paths,
+write/update local Work Log projections, renew/release claims, apply the
+60-minute/pre-critical-operation refresh policy, surface overlap, and call
+Synchestra before cleanup. Completion requires merge to the declared task or
+feature target plus removal/recycle of every claimed asset. Default cleanup
+removes. Optional recycle seals to a mandatory local archive, queues optional
+remote archival, then resets/rebinds a new Work Log, claim, and base while
+retaining only configured caches. Landing verification must accept forge PR
+evidence and verified direct-to-target landing, never graph-shape guesses.
+
+### Task 8: Deliver project/repository views and prove the full outage/recovery journey
+
+**Id:** task-8
+**Verifies:** agent-coordination#ac:abandoned-run-is-resumable, agent-coordination#ac:completed-and-aborted-are-distinguishable, agent-coordination/repository-change-notifications#ac:fallback-notification-reconciles-once, state-store/topology#ac:backend-comparison-is-equivalent
+**Depends-On:** 5, 6, 7
+**Status:** planning
+
+Add CLI JSON/table/graph views for active and seven-day recent records, then
+run the full independent E2E journey: two overlapping agents, targeted
+coordination, a ref advance, server outage/fallback, restart reconciliation,
+dead-run takeover, landed/aborted branches, and cleanup eligibility. This task
+owns the mechanism-level E2E evidence and operator runbook.
+
+## Open Questions
+
+1. The current Synchestra `state.Store` is task/chat-centric; Task 1 decides
+   whether effort/run/worktree APIs are a composed `Agent()` store or a sibling
+   top-level coordinator interface. Both preserve backend-neutral domain code.
+2. The initial SQLite server is single-host by design. Cross-host HA and a
+   remote SQL backend require a separate consensus/lease-witness decision;
+   they are not implicit in the SQLite MVP.
+3. The GitHub App's current permissions predate this feature. Task 6 must
+   reduce them to the minimum required for verified push hints and document any
+   additional permission before requesting it from users.
+
+---
+*This document follows the https://specscore.md/plan-specification*

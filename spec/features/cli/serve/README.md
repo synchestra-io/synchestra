@@ -52,11 +52,16 @@ Exit codes `1` (Conflict) and `4` (Invalid state transition) do not apply — `s
 6. Validate protocol flags — at least one required; `--https` requires `--tls-cert` and `--tls-key`
 7. Start listeners for each specified protocol
 8. Run in foreground, stream logs to stdout/stderr
-9. On SIGINT (Ctrl+C) or SIGTERM: clean shutdown (drain connections, exit 0)
+9. Reconcile configured Git state/code repositories at startup, then start
+   configured periodic reconciliation/watch workers; a file/webhook signal only
+   wakes a fetch-and-verify cycle
+10. On SIGINT (Ctrl+C) or SIGTERM: stop accepting new requests, drain durable
+    outbox/reconciliation work to its checkpoint where possible, and exit 0
 
 ## Open Questions
 
 - Should `serve` support hot-reload when spec/state files change (file watching)?
+  A watcher will remain a reconciliation hint, never a mutation source.
 - Should there be a `--log-level` argument?
 
 ---
