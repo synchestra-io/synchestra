@@ -17,7 +17,23 @@ var (
 	ErrFallbackWrite = errors.New("replication: Git fallback accepts communication events only")
 	ErrReplicaAhead  = errors.New("replication: replica is ahead of source")
 	ErrDiverged      = errors.New("replication: source and replica diverged")
+	ErrRoleFenced    = errors.New("replication: endpoint role is fenced from authority writes")
 )
+
+// RoleFenceError carries the evidence needed to diagnose a split-brain write
+// attempt without granting a replica an authority mutation seam.
+type RoleFenceError struct {
+	EndpointID     string
+	Role           Role
+	AuthorityEpoch int64
+	EventEpoch     int64
+}
+
+func (e *RoleFenceError) Error() string {
+	return fmt.Sprintf("%v: endpoint=%q role=%q authority_epoch=%d event_epoch=%d", ErrRoleFenced, e.EndpointID, e.Role, e.AuthorityEpoch, e.EventEpoch)
+}
+
+func (e *RoleFenceError) Unwrap() error { return ErrRoleFenced }
 
 // Journal is the one persistence seam shared by Git/inGitDB and
 // SQLite/DALgo. Append is idempotent by event ID and may only accept a
@@ -27,6 +43,13 @@ type Journal interface {
 	Append(context.Context, Event) error
 	After(context.Context, Cursor) ([]Event, error)
 	Head(context.Context) (Cursor, string, error)
+}
+
+// ReplicaIngestor is the explicit non-authority seam used by Replicate. Domain
+// code should depend on Journal; the distinct interface makes replica writes a
+// deliberate capability rather than an alternate domain Append path.
+type ReplicaIngestor interface {
+	IngestReplica(context.Context, Event) error
 }
 
 // ReplicaHealth makes lag or a failed replication visible rather than silently
@@ -64,8 +87,13 @@ func Replicate(ctx context.Context, source, replica Journal, endpointID string) 
 		return ReplicaHealth{EndpointID: endpointID, Cursor: cursor, LastError: err.Error()}, err
 	}
 	pending := int64(len(events))
+	ingestor, ok := replica.(ReplicaIngestor)
+	if !ok {
+		err := fmt.Errorf("replication: endpoint %q has no replica-ingest seam", endpointID)
+		return ReplicaHealth{EndpointID: endpointID, Cursor: cursor, EventLag: int64(len(events)), LastError: err.Error()}, err
+	}
 	for _, event := range events {
-		if err := replica.Append(ctx, event); err != nil {
+		if err := ingestor.IngestReplica(ctx, event); err != nil {
 			return ReplicaHealth{EndpointID: endpointID, Cursor: cursor, EventLag: pending, LastError: err.Error()}, err
 		}
 		cursor = event.Cursor
@@ -107,6 +135,14 @@ func NewMemoryJournal() *MemoryJournal {
 }
 
 func (j *MemoryJournal) Append(_ context.Context, event Event) error {
+	return j.append(event)
+}
+
+func (j *MemoryJournal) IngestReplica(_ context.Context, event Event) error {
+	return j.append(event)
+}
+
+func (j *MemoryJournal) append(event Event) error {
 	if err := event.Verify(); err != nil {
 		return err
 	}

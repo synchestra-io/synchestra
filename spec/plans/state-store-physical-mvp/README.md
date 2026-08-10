@@ -25,8 +25,8 @@
 
 | Item | Evidence | Verifies |
 |---|---|---|
-| Backend-neutral topology and ordered journal contract | `pkg/state/replication`, commit `bdf27b1` | one active, Git-required, epoch/sequence/checksum/idempotency rules |
-| Physical Git/inGitDB ↔ SQLite/DALgo replication | `dal_journal_physical_test.go` | both active→mirror directions, restart persistence, exact lag/divergence fencing, Git remote receipt and fresh-clone parity |
+| Backend-neutral topology and ordered journal contract | `pkg/state/replication` | role/epoch-fenced authority append, explicit replica ingest, Git-required topology, epoch/sequence/checksum/idempotency rules |
+| Physical Git/inGitDB ↔ SQLite/DALgo replication | `dal_journal_physical_test.go`, `git_durability_test.go` | both active→mirror directions, restart persistence, exact lag/divergence fencing, crash-recoverable CAS receipts, concurrent append serialization, remote-descendant proof, and fresh-clone parity |
 | Git adapter rollback-safe multi-record transaction | `github.com/ingitdb/dalgo2ingitdb` commits `b093a18`, `27d3f4d` | failed domain+journal+outbox write leaves no changed state; caller index and readers remain isolated |
 
 ## Remaining Tasks
@@ -106,6 +106,16 @@ server-down Git-fallback.
 **Verifies:** The harness asserts ordered messages, correlation/evidence in
 both Work Logs, Git↔SQLite parity, merge task→feature→main, and zero abandoned
 branches/worktrees after the audited cleanup operation.
+
+### 5. Replace prototype collection scans with project-indexed lookups
+
+Head, event-ID, and idempotency reads are physically project-keyed today, but
+the DAL query path still scans and verifies whole collections. Add direct
+project-key queries plus a durable idempotency index before claiming
+multi-tenant team or large-corporation scale. This remains **Planned**.
+
+**Verifies:** Corrupt or high-volume records for project A neither block nor
+materially slow head/event/idempotency operations for project B.
 
 ## Open Questions
 

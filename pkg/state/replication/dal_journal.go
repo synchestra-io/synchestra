@@ -36,6 +36,9 @@ type DALJournal struct {
 	replicaIDs []string
 	message    string
 	projectID  string
+	endpointID string
+	role       Role
+	epoch      int64
 }
 
 // DALJournalOptions configures the durable outbox. CommitMessage is passed to
@@ -45,9 +48,12 @@ type DALJournal struct {
 type DALJournalOptions struct {
 	// ProjectID scopes every physical key and is required: one server database
 	// may host many projects, but no journal instance may cross their boundary.
-	ProjectID     string
-	ReplicaIDs    []string
-	CommitMessage string
+	ProjectID      string
+	EndpointID     string
+	Role           Role
+	AuthorityEpoch int64
+	ReplicaIDs     []string
+	CommitMessage  string
 }
 
 func NewDALJournal(db dal.DB, options DALJournalOptions) (*DALJournal, error) {
@@ -56,6 +62,15 @@ func NewDALJournal(db dal.DB, options DALJournalOptions) (*DALJournal, error) {
 	}
 	if strings.TrimSpace(options.ProjectID) == "" {
 		return nil, fmt.Errorf("replication: journal project id is required")
+	}
+	if strings.TrimSpace(options.EndpointID) == "" {
+		return nil, fmt.Errorf("replication: journal endpoint id is required")
+	}
+	if options.Role != RoleActive && options.Role != RoleReplica {
+		return nil, fmt.Errorf("replication: journal endpoint %q has invalid role %q", options.EndpointID, options.Role)
+	}
+	if options.AuthorityEpoch < 1 {
+		return nil, fmt.Errorf("replication: journal authority epoch must be positive")
 	}
 	ids := append([]string(nil), options.ReplicaIDs...)
 	sort.Strings(ids)
@@ -67,7 +82,7 @@ func NewDALJournal(db dal.DB, options DALJournalOptions) (*DALJournal, error) {
 			return nil, fmt.Errorf("replication: duplicate replica id %q", id)
 		}
 	}
-	return &DALJournal{db: db, projectID: options.ProjectID, replicaIDs: ids, message: options.CommitMessage}, nil
+	return &DALJournal{db: db, projectID: options.ProjectID, endpointID: options.EndpointID, role: options.Role, epoch: options.AuthorityEpoch, replicaIDs: ids, message: options.CommitMessage}, nil
 }
 
 // EnsureDALJournalSchema provisions exactly the collections required by this
@@ -91,6 +106,20 @@ func EnsureDALJournalSchema(ctx context.Context, db dal.DB) error {
 }
 
 func (j *DALJournal) Append(ctx context.Context, event Event) error {
+	if j.role != RoleActive || event.Cursor.Epoch != j.epoch {
+		return &RoleFenceError{EndpointID: j.endpointID, Role: j.role, AuthorityEpoch: j.epoch, EventEpoch: event.Cursor.Epoch}
+	}
+	return j.append(ctx, event)
+}
+
+func (j *DALJournal) IngestReplica(ctx context.Context, event Event) error {
+	if j.role != RoleReplica {
+		return &RoleFenceError{EndpointID: j.endpointID, Role: j.role, AuthorityEpoch: j.epoch, EventEpoch: event.Cursor.Epoch}
+	}
+	return j.append(ctx, event)
+}
+
+func (j *DALJournal) append(ctx context.Context, event Event) error {
 	if err := event.Verify(); err != nil {
 		return err
 	}

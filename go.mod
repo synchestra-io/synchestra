@@ -9,6 +9,7 @@ require (
 	github.com/dal-go/dalgo2sql v0.10.0
 	github.com/dal-go/dalgo2sqlite v0.1.0
 	github.com/dal-go/record v0.1.2
+	github.com/gofrs/flock v0.13.0
 	github.com/ingitdb/dalgo2ingitdb v0.3.1
 	github.com/ingitdb/ingitdb-cli v0.65.4
 	github.com/ingitdb/ingitdb-go/ingitdb v0.5.2
@@ -35,7 +36,6 @@ require (
 	github.com/datatug/cliformat v0.0.1 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/georgysavva/scany/v2 v2.1.4 // indirect
-	github.com/gofrs/flock v0.13.0 // indirect
 	github.com/google/go-github/v88 v88.0.0 // indirect
 	github.com/google/go-querystring v1.2.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect

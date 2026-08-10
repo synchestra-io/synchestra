@@ -18,6 +18,13 @@ Drain, acknowledgement, and recovery scheduling are **Planned**; this
 foundation replicates from the authority journal and does not claim that its
 write-only outbox records provide recovery.
 
+Every physical journal is configured with an endpoint role and authority
+epoch. Only the active endpoint accepts domain `Append`; replicas accept the
+same immutable event solely through the explicit replication-ingest seam.
+Git delivery serializes append/push operations in the worktree's private Git
+directory and persists a checksummed intent before append, allowing authority
+events and fallback envelopes to resume after any commit/receipt/push crash.
+
 ## Open Questions
 
 None at this time.

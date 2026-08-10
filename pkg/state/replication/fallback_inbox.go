@@ -123,18 +123,56 @@ func NewGitFallbackInboxPush(inbox FallbackInbox, remote *GitRemoteDurability) (
 }
 
 func (i *GitFallbackInboxPush) AppendFallbackAndPush(ctx context.Context, envelope FallbackEnvelope) (GitCommitReceipt, error) {
-	expected, err := i.remote.ExpectedBase(ctx)
+	if err := envelope.Verify(); err != nil {
+		return GitCommitReceipt{}, err
+	}
+	payload, err := json.Marshal(envelope)
 	if err != nil {
 		return GitCommitReceipt{}, err
 	}
-	if err := i.AppendFallback(ctx, envelope); err != nil {
-		return GitCommitReceipt{}, err
-	}
-	pending, err := i.remote.RecordPending(ctx, expected)
-	if err != nil {
-		return GitCommitReceipt{}, err
-	}
-	return i.remote.PushPending(ctx, pending)
+	operationID := gitOperationFallbackV1 + ":" + envelope.Checksum
+	return i.remote.runOperation(ctx, operationID, gitOperationFallbackV1, payload, func() error {
+		return i.AppendFallback(ctx, envelope)
+	}, func() (bool, error) {
+		envelopes, err := i.FallbackEnvelopes(ctx)
+		if err != nil {
+			return false, err
+		}
+		for _, existing := range envelopes {
+			if existing.EnvelopeID == envelope.EnvelopeID && existing.Checksum == envelope.Checksum {
+				return true, nil
+			}
+		}
+		return false, nil
+	})
+}
+
+func (i *GitFallbackInboxPush) ResumeOperation(ctx context.Context, operationID string) (GitCommitReceipt, error) {
+	return i.remote.resumeOperation(ctx, operationID, gitOperationFallbackV1, func(payload json.RawMessage) (func() error, func() (bool, error), error) {
+		var envelope FallbackEnvelope
+		if err := json.Unmarshal(payload, &envelope); err != nil {
+			return nil, nil, fmt.Errorf("replication: decode pending fallback envelope: %w", err)
+		}
+		if err := envelope.Verify(); err != nil {
+			return nil, nil, err
+		}
+		if want := gitOperationFallbackV1 + ":" + envelope.Checksum; operationID != want {
+			return nil, nil, fmt.Errorf("replication: fallback receipt operation ID does not match serialized envelope")
+		}
+		verify := func() (bool, error) {
+			envelopes, err := i.FallbackEnvelopes(ctx)
+			if err != nil {
+				return false, err
+			}
+			for _, existing := range envelopes {
+				if existing.EnvelopeID == envelope.EnvelopeID && existing.Checksum == envelope.Checksum {
+					return true, nil
+				}
+			}
+			return false, nil
+		}
+		return func() error { return i.AppendFallback(ctx, envelope) }, verify, nil
+	})
 }
 
 func NewDALFallbackInbox(db dal.DB, projectID, commitMessage string) (*DALFallbackInbox, error) {

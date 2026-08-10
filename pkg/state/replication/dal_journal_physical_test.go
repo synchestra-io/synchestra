@@ -24,7 +24,7 @@ import (
 func TestDALJournal_PhysicalGitActiveReplicatesToSQLiteAndRestarts(t *testing.T) {
 	ctx := context.Background()
 	gitRoot, gitJournal := newGitJournal(t, []string{"sqlite-mirror"})
-	sqlitePath, sqliteJournal := newSQLiteJournal(t, []string{"git-mirror"})
+	sqlitePath, sqliteJournal := newSQLiteJournalWithRole(t, []string{"git-mirror"}, RoleReplica, "sqlite-mirror")
 
 	events := relayEvents(t)
 	appendAll(t, gitJournal, events)
@@ -54,19 +54,20 @@ func TestDALJournal_PhysicalGitActiveReplicatesToSQLiteAndRestarts(t *testing.T)
 			t.Fatal(err)
 		}
 	}
-	_, reopened := newSQLiteJournalAt(t, sqlitePath, []string{"git-mirror"})
+	_, reopened := newSQLiteJournalAt(t, sqlitePath, []string{"git-mirror"}, RoleReplica, "sqlite-mirror")
 	assertPhysicalParity(t, gitJournal, reopened)
 }
 
 func TestDALJournal_PhysicalSQLiteActiveReplicatesToGitAndDoesNotDualWrite(t *testing.T) {
 	ctx := context.Background()
-	gitRoot, gitMirror := newGitJournal(t, nil)
+	gitRoot, gitMirror := newGitJournalWithRole(t, nil, RoleReplica, "git-mirror")
 	_, sqliteActive := newSQLiteJournal(t, []string{"git-mirror"})
 	events := relayEvents(t)
 	appendAll(t, sqliteActive, events)
 
 	// A failed mirror delivery never rolls back or ambiguously changes the
-	// SQLite active transaction. Its durable outbox remains the recovery path.
+	// SQLite active transaction. The durable outbox remains pending evidence;
+	// drain/ack recovery is Planned and is not simulated by this test.
 	broken := journalFailer{Journal: gitMirror, err: errors.New("Git unavailable")}
 	failureHealth, err := Replicate(ctx, sqliteActive, broken, "git-mirror")
 	if err == nil {
@@ -125,7 +126,7 @@ func TestDALJournal_SQLiteRollsBackDomainJournalAndOutboxTogether(t *testing.T) 
 	ctx := context.Background()
 	_, sqliteJournal := newSQLiteJournal(t, []string{"git-mirror"})
 	failing := failAfterSet{DB: sqliteJournal.db, failOn: 2}
-	journal, err := NewDALJournal(&failing, DALJournalOptions{ProjectID: "github.com/fair-split/relay", ReplicaIDs: []string{"git-mirror"}})
+	journal, err := NewDALJournal(&failing, DALJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: "sqlite-active", Role: RoleActive, AuthorityEpoch: 1, ReplicaIDs: []string{"git-mirror"}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -141,6 +142,41 @@ func TestDALJournal_SQLiteRollsBackDomainJournalAndOutboxTogether(t *testing.T) 
 		if len(records) != 0 {
 			t.Fatalf("%s has %d records after rollback, want 0", collection, len(records))
 		}
+	}
+}
+
+func TestDALJournal_RoleAndEpochFenceDomainWritesButAllowReplicaIngest(t *testing.T) {
+	ctx := context.Background()
+	_, mirror := newSQLiteJournalWithRole(t, nil, RoleReplica, "sqlite-mirror")
+	event := relayEvents(t)[0]
+	err := mirror.Append(ctx, event)
+	var fence *RoleFenceError
+	if !errors.Is(err, ErrRoleFenced) || !errors.As(err, &fence) {
+		t.Fatalf("mirror direct append error = %v, want role fence evidence", err)
+	}
+	if fence.EndpointID != "sqlite-mirror" || fence.Role != RoleReplica || fence.AuthorityEpoch != 1 || fence.EventEpoch != 1 {
+		t.Fatalf("role fence evidence = %+v", fence)
+	}
+	if err := mirror.IngestReplica(ctx, event); err != nil {
+		t.Fatalf("explicit replica ingest: %v", err)
+	}
+	if head, _, err := mirror.Head(ctx); err != nil || head != event.Cursor {
+		t.Fatalf("replica head after ingest = %+v, %v", head, err)
+	}
+
+	_, active := newSQLiteJournal(t, nil)
+	if err := active.IngestReplica(ctx, event); !errors.Is(err, ErrRoleFenced) {
+		t.Fatalf("active endpoint replica ingest error = %v, want role fence", err)
+	}
+	future := event
+	future.Cursor.Epoch = 2
+	future.Checksum = ""
+	future, err = NewEvent(future)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := active.Append(ctx, future); !errors.Is(err, ErrRoleFenced) {
+		t.Fatalf("wrong authority epoch append error = %v, want role fence", err)
 	}
 }
 
@@ -164,7 +200,7 @@ func TestGitPushJournal_BareOriginReceiptAndFreshCloneParity(t *testing.T) {
 	gitCommand(t, root, "add", "-A")
 	gitCommand(t, root, "commit", "-m", "journal schema")
 	gitCommand(t, root, "push", "origin", "HEAD:refs/heads/main")
-	local, err := NewDALJournal(database, DALJournalOptions{ProjectID: "github.com/fair-split/relay", CommitMessage: "synchestra state"})
+	local, err := NewDALJournal(database, DALJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: "git-active", Role: RoleActive, AuthorityEpoch: 1, CommitMessage: "synchestra state"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -199,49 +235,50 @@ func TestGitPushJournal_BareOriginReceiptAndFreshCloneParity(t *testing.T) {
 	if err != nil || fallbackReceipt.AwaitingPush {
 		t.Fatalf("fallback remote receipt = %+v, %v", fallbackReceipt, err)
 	}
-	// A failed push retains a private pending receipt and can be resumed without
-	// appending another journal event. The remote URL is changed only after the
-	// expected base was captured, simulating a transport outage mid-delivery.
-	expected, err := pushed.remote.ExpectedBase(ctx)
-	if err != nil {
-		t.Fatal(err)
+	// A transport failure after receipt finalization keeps the serialized event
+	// and exact commit/base/ref durable. A new wrapper reconstructs and resumes
+	// it without appending a second journal commit.
+	missing := filepath.Join(t.TempDir(), "missing.git")
+	pushed.remote.testFault = func(stage string) error {
+		if stage == "receipt-finalized" {
+			gitCommand(t, root, "remote", "set-url", "origin", missing)
+		}
+		return nil
 	}
-	if err := local.Append(ctx, relayEvents(t)[1]); err != nil {
-		t.Fatal(err)
+	pending, err := pushed.AppendAndPush(ctx, relayEvents(t)[1])
+	if err == nil || !pending.AwaitingPush {
+		t.Fatalf("failed transport receipt = %+v, %v", pending, err)
 	}
-	pending, err := pushed.remote.RecordPending(ctx, expected)
-	if err != nil {
-		t.Fatal(err)
-	}
-	gitCommand(t, root, "remote", "set-url", "origin", filepath.Join(t.TempDir(), "missing.git"))
-	if _, err := pushed.remote.PushPending(ctx, pending); err == nil {
-		t.Fatal("unreachable remote push unexpectedly succeeded")
-	}
+	commitCount := gitCommand(t, root, "rev-list", "--count", "HEAD")
 	gitCommand(t, root, "remote", "set-url", "origin", bare)
-	resumed, err := pushed.remote.ResumePending(ctx, pending.CommitSHA)
+	restarted, err := NewGitPushJournal(local, root, "origin", "main")
+	if err != nil {
+		t.Fatal(err)
+	}
+	resumed, err := restarted.ResumeOperation(ctx, pending.OperationID)
 	if err != nil || resumed.AwaitingPush {
 		t.Fatalf("resume = %+v, %v", resumed, err)
 	}
-	// A deletion after expected-base capture is a CAS failure, not permission to
-	// recreate the ref. Restoring the original ref makes the same receipt safe
-	// to resume, still without a second append.
-	expected, err = pushed.remote.ExpectedBase(ctx)
-	if err != nil {
-		t.Fatal(err)
+	if got := gitCommand(t, root, "rev-list", "--count", "HEAD"); got != commitCount {
+		t.Fatalf("resume appended a second commit: got %s, want %s", got, commitCount)
 	}
-	if err := local.Append(ctx, relayEvents(t)[2]); err != nil {
-		t.Fatal(err)
+
+	// A deletion after expected-base capture remains a CAS failure rather than
+	// permission to recreate the ref. The same serialized operation resumes once
+	// the expected base is restored.
+	restarted.remote.testFault = func(stage string) error {
+		if stage == "receipt-finalized" {
+			gitCommand(t, bare, "update-ref", "-d", "refs/heads/main")
+		}
+		return nil
 	}
-	pending, err = pushed.remote.RecordPending(ctx, expected)
-	if err != nil {
-		t.Fatal(err)
+	pending, err = restarted.AppendAndPush(ctx, relayEvents(t)[2])
+	if err == nil || !pending.AwaitingPush {
+		t.Fatalf("deleted-ref CAS receipt = %+v, %v", pending, err)
 	}
-	gitCommand(t, bare, "update-ref", "-d", "refs/heads/main")
-	if _, err := pushed.remote.PushPending(ctx, pending); err == nil {
-		t.Fatal("CAS push recreated deleted remote ref")
-	}
-	gitCommand(t, bare, "update-ref", "refs/heads/main", expected)
-	if _, err := pushed.remote.ResumePending(ctx, pending.CommitSHA); err != nil {
+	gitCommand(t, bare, "update-ref", "refs/heads/main", pending.ExpectedBase)
+	restarted.remote.testFault = nil
+	if _, err := restarted.ResumeOperation(ctx, pending.OperationID); err != nil {
 		t.Fatalf("resume after restoring expected base: %v", err)
 	}
 	fresh := filepath.Join(t.TempDir(), "fresh")
@@ -252,7 +289,7 @@ func TestGitPushJournal_BareOriginReceiptAndFreshCloneParity(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	freshJournal, err := NewDALJournal(freshDB, DALJournalOptions{ProjectID: "github.com/fair-split/relay"})
+	freshJournal, err := NewDALJournal(freshDB, DALJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: "git-mirror", Role: RoleReplica, AuthorityEpoch: 1})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -271,7 +308,8 @@ type journalFailer struct {
 	err error
 }
 
-func (j journalFailer) Append(context.Context, Event) error { return j.err }
+func (j journalFailer) Append(context.Context, Event) error        { return j.err }
+func (j journalFailer) IngestReplica(context.Context, Event) error { return j.err }
 
 // failAfterSet injects failure after the domain message record is written but
 // before journal/head/outbox finish. The real SQLite DALgo transaction must
@@ -302,6 +340,10 @@ func (tx *failAfterSetTx) Set(ctx context.Context, record dalrecord.Record) erro
 }
 
 func newGitJournal(t *testing.T, replicaIDs []string) (string, *DALJournal) {
+	return newGitJournalWithRole(t, replicaIDs, RoleActive, "git-active")
+}
+
+func newGitJournalWithRole(t *testing.T, replicaIDs []string, role Role, endpointID string) (string, *DALJournal) {
 	t.Helper()
 	root := t.TempDir()
 	gitInit(t, root)
@@ -314,7 +356,7 @@ func newGitJournal(t *testing.T, replicaIDs []string) (string, *DALJournal) {
 	}
 	gitCommand(t, root, "add", "-A")
 	gitCommand(t, root, "commit", "-m", "journal schema")
-	journal, err := NewDALJournal(database, DALJournalOptions{ProjectID: "github.com/fair-split/relay", ReplicaIDs: replicaIDs, CommitMessage: "synchestra state"})
+	journal, err := NewDALJournal(database, DALJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: endpointID, Role: role, AuthorityEpoch: 1, ReplicaIDs: replicaIDs, CommitMessage: "synchestra state"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -323,10 +365,15 @@ func newGitJournal(t *testing.T, replicaIDs []string) (string, *DALJournal) {
 
 func newSQLiteJournal(t *testing.T, replicaIDs []string) (string, *DALJournal) {
 	t.Helper()
-	return newSQLiteJournalAt(t, filepath.Join(t.TempDir(), "synchestra.db"), replicaIDs)
+	return newSQLiteJournalWithRole(t, replicaIDs, RoleActive, "sqlite-active")
 }
 
-func newSQLiteJournalAt(t *testing.T, path string, replicaIDs []string) (string, *DALJournal) {
+func newSQLiteJournalWithRole(t *testing.T, replicaIDs []string, role Role, endpointID string) (string, *DALJournal) {
+	t.Helper()
+	return newSQLiteJournalAt(t, filepath.Join(t.TempDir(), "synchestra.db"), replicaIDs, role, endpointID)
+}
+
+func newSQLiteJournalAt(t *testing.T, path string, replicaIDs []string, role Role, endpointID string) (string, *DALJournal) {
 	t.Helper()
 	recordsets := make(map[string]*dalgo2sql.Recordset, 4)
 	for _, collection := range []string{eventsCollection, headCollection, messagesCollection, outboxCollection} {
@@ -339,7 +386,7 @@ func newSQLiteJournalAt(t *testing.T, path string, replicaIDs []string) (string,
 	if err := EnsureDALJournalSchema(context.Background(), database); err != nil {
 		t.Fatal(err)
 	}
-	journal, err := NewDALJournal(database, DALJournalOptions{ProjectID: "github.com/fair-split/relay", ReplicaIDs: replicaIDs})
+	journal, err := NewDALJournal(database, DALJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: endpointID, Role: role, AuthorityEpoch: 1, ReplicaIDs: replicaIDs})
 	if err != nil {
 		t.Fatal(err)
 	}
