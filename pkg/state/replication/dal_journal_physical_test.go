@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os/exec"
 	"path/filepath"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -96,6 +97,48 @@ func TestDALJournal_PhysicalSQLiteActiveReplicatesToGitAndDoesNotDualWrite(t *te
 	assertPhysicalParity(t, sqliteActive, gitMirror)
 	if got := gitCommand(t, gitRoot, "rev-list", "--count", "HEAD"); got != "5" {
 		t.Fatalf("Git mirror commit count = %s, want schema base plus 4", got)
+	}
+}
+
+func TestGitPushJournal_ReplicaIngestIsRemoteDurableAndAuthorityAppendIsFenced(t *testing.T) {
+	ctx := context.Background()
+	fixture := newGitDurabilityFixtureWithRole(t, RoleReplica, "git-mirror", []string{"git-mirror"})
+	_, sqliteActive := newSQLiteJournal(t, []string{"git-mirror"})
+	events := relayEvents(t)
+	appendAll(t, sqliteActive, events)
+
+	health, err := Replicate(ctx, sqliteActive, fixture.pushed, "git-mirror")
+	if err != nil || health.EventLag != 0 || health.Cursor != events[len(events)-1].Cursor {
+		t.Fatalf("SQLite active -> durable Git replica = %+v, %v", health, err)
+	}
+	remoteBeforeFence := gitCommand(t, fixture.root, "ls-remote", "origin", "refs/heads/main")
+	err = fixture.pushed.Append(ctx, events[0])
+	var fence *RoleFenceError
+	if !errors.Is(err, ErrRoleFenced) || !errors.As(err, &fence) {
+		t.Fatalf("Git replica public append error = %v, want role fence evidence", err)
+	}
+	if fence.EndpointID != "git-mirror" || fence.Role != RoleReplica || fence.AuthorityEpoch != 1 || fence.EventEpoch != 1 {
+		t.Fatalf("Git wrapper role fence evidence = %+v", fence)
+	}
+	if remoteAfterFence := gitCommand(t, fixture.root, "ls-remote", "origin", "refs/heads/main"); remoteAfterFence != remoteBeforeFence {
+		t.Fatalf("role-fenced append changed remote: before=%s after=%s", remoteBeforeFence, remoteAfterFence)
+	}
+
+	fresh := filepath.Join(t.TempDir(), "fresh-replica")
+	if out, err := exec.Command("git", "clone", fixture.bare, fresh).CombinedOutput(); err != nil {
+		t.Fatalf("fresh replica clone: %v: %s", err, out)
+	}
+	freshDB, err := dalgo2ingitdb.NewDatabase(fresh, validator.NewCollectionsReader())
+	if err != nil {
+		t.Fatal(err)
+	}
+	freshJournal, err := NewDALJournal(freshDB, DALJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: "git-mirror", Role: RoleReplica, AuthorityEpoch: 1, ReplicaIDs: []string{"git-mirror"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertPhysicalParity(t, sqliteActive, freshJournal)
+	for _, collection := range []string{eventsCollection, messagesCollection, outboxCollection, headCollection} {
+		assertEncodedCollectionParity(t, sqliteActive.db, freshDB, collection)
 	}
 }
 
@@ -231,9 +274,9 @@ func TestGitPushJournal_BareOriginReceiptAndFreshCloneParity(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	fallbackReceipt, err := fallback.AppendFallbackAndPush(ctx, envelope)
-	if err != nil || fallbackReceipt.AwaitingPush {
-		t.Fatalf("fallback remote receipt = %+v, %v", fallbackReceipt, err)
+	var remoteInbox FallbackInbox = fallback
+	if err := remoteInbox.AppendFallback(ctx, envelope); err != nil {
+		t.Fatalf("interface-typed fallback remote append: %v", err)
 	}
 	// A transport failure after receipt finalization keeps the serialized event
 	// and exact commit/base/ref durable. A new wrapper reconstructs and resumes
@@ -443,6 +486,24 @@ func assertPhysicalParity(t *testing.T, source, replica Journal) {
 	}
 	if fmt.Sprintf("%#v", got) != fmt.Sprintf("%#v", want) {
 		t.Fatalf("physical journal mismatch\n got: %#v\nwant: %#v", got, want)
+	}
+}
+
+func assertEncodedCollectionParity(t *testing.T, source, replica queryExecutor, collection string) {
+	t.Helper()
+	ctx := context.Background()
+	want, err := loadEncodedCollection(ctx, source, collection)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err := loadEncodedCollection(ctx, replica, collection)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sort.Strings(want)
+	sort.Strings(got)
+	if fmt.Sprintf("%#v", got) != fmt.Sprintf("%#v", want) {
+		t.Fatalf("physical %s mismatch\n got: %#v\nwant: %#v", collection, got, want)
 	}
 }
 

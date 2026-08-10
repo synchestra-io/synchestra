@@ -26,7 +26,7 @@
 | Item | Evidence | Verifies |
 |---|---|---|
 | Backend-neutral topology and ordered journal contract | `pkg/state/replication` | role/epoch-fenced authority append, explicit replica ingest, Git-required topology, epoch/sequence/checksum/idempotency rules |
-| Physical Git/inGitDB ↔ SQLite/DALgo replication | `dal_journal_physical_test.go`, `git_durability_test.go` | both active→mirror directions, restart persistence, exact lag/divergence fencing, crash-recoverable CAS receipts, concurrent append serialization, remote-descendant proof, and fresh-clone parity |
+| Physical Git/inGitDB ↔ SQLite/DALgo replication | `dal_journal_physical_test.go`, `git_durability_test.go` | both active→mirror directions, role-safe remote replica ingest, restart persistence, exact lag/divergence fencing, crash-recoverable CAS receipts, concurrent append serialization, remote-descendant/local-base synchronization, and fresh-clone domain/journal/outbox parity |
 | Git adapter rollback-safe multi-record transaction | `github.com/ingitdb/dalgo2ingitdb` commits `b093a18`, `27d3f4d` | failed domain+journal+outbox write leaves no changed state; caller index and readers remain isolated |
 
 ## Remaining Tasks
@@ -37,6 +37,8 @@ Implement `synchestra state topology`, `synchestra state status`,
 `synchestra state replicate`, `synchestra state wait`, and
 `synchestra state reconcile`. `status --format json` returns active endpoint,
 authority epoch, each replica cursor/lag/last error, and cleanup backlog.
+The existing outbox rows are durable pending evidence only; resumable
+drain/ack behavior remains **Planned**.
 
 Before implementing the command group, add a machine-readable capability
 matrix to `spec/features/cli/` and test it against Cobra help. It is the

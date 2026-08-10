@@ -28,11 +28,11 @@ const synchestraSchemaHeader = "# Synchestra Repo Config Schema: https://synches
 const SynchestraConfigFile = "synchestra.yaml"
 
 const (
-	stateModeEmbedded    = "embedded"
-	stateModeSeparate    = "separate-repo"
-	stateModeHubManaged  = "hub-managed"
-	defaultStateBranch   = "synchestra-state"
-	worktreeDir          = ".synchestra"
+	stateModeEmbedded   = "embedded"
+	stateModeSeparate   = "separate-repo"
+	stateModeHubManaged = "hub-managed"
+	defaultStateBranch  = "synchestra-state"
+	worktreeDir         = ".synchestra"
 )
 
 // Command returns the cobra.Command for `synchestra init`.

@@ -111,15 +111,28 @@ type DALFallbackInbox struct {
 // durability protocol as authority journal commits. It never turns inbox data
 // into authority events; reconciliation remains planned.
 type GitFallbackInboxPush struct {
-	FallbackInbox
+	inbox  FallbackInbox
 	remote *GitRemoteDurability
 }
+
+var _ FallbackInbox = (*GitFallbackInboxPush)(nil)
 
 func NewGitFallbackInboxPush(inbox FallbackInbox, remote *GitRemoteDurability) (*GitFallbackInboxPush, error) {
 	if inbox == nil || remote == nil {
 		return nil, fmt.Errorf("replication: fallback inbox and Git remote are required")
 	}
-	return &GitFallbackInboxPush{FallbackInbox: inbox, remote: remote}, nil
+	return &GitFallbackInboxPush{inbox: inbox, remote: remote}, nil
+}
+
+// AppendFallback is the FallbackInbox seam and is always remotely durable.
+// The local DAL inbox is intentionally not embedded or otherwise promoted.
+func (i *GitFallbackInboxPush) AppendFallback(ctx context.Context, envelope FallbackEnvelope) error {
+	_, err := i.AppendFallbackAndPush(ctx, envelope)
+	return err
+}
+
+func (i *GitFallbackInboxPush) FallbackEnvelopes(ctx context.Context) ([]FallbackEnvelope, error) {
+	return i.inbox.FallbackEnvelopes(ctx)
 }
 
 func (i *GitFallbackInboxPush) AppendFallbackAndPush(ctx context.Context, envelope FallbackEnvelope) (GitCommitReceipt, error) {
@@ -132,9 +145,9 @@ func (i *GitFallbackInboxPush) AppendFallbackAndPush(ctx context.Context, envelo
 	}
 	operationID := gitOperationFallbackV1 + ":" + envelope.Checksum
 	return i.remote.runOperation(ctx, operationID, gitOperationFallbackV1, payload, func() error {
-		return i.AppendFallback(ctx, envelope)
+		return i.inbox.AppendFallback(ctx, envelope)
 	}, func() (bool, error) {
-		envelopes, err := i.FallbackEnvelopes(ctx)
+		envelopes, err := i.inbox.FallbackEnvelopes(ctx)
 		if err != nil {
 			return false, err
 		}
@@ -148,7 +161,7 @@ func (i *GitFallbackInboxPush) AppendFallbackAndPush(ctx context.Context, envelo
 }
 
 func (i *GitFallbackInboxPush) ResumeOperation(ctx context.Context, operationID string) (GitCommitReceipt, error) {
-	return i.remote.resumeOperation(ctx, operationID, gitOperationFallbackV1, func(payload json.RawMessage) (func() error, func() (bool, error), error) {
+	return i.remote.resumeOperation(ctx, operationID, []string{gitOperationFallbackV1}, func(_ string, payload json.RawMessage) (func() error, func() (bool, error), error) {
 		var envelope FallbackEnvelope
 		if err := json.Unmarshal(payload, &envelope); err != nil {
 			return nil, nil, fmt.Errorf("replication: decode pending fallback envelope: %w", err)
@@ -160,7 +173,7 @@ func (i *GitFallbackInboxPush) ResumeOperation(ctx context.Context, operationID 
 			return nil, nil, fmt.Errorf("replication: fallback receipt operation ID does not match serialized envelope")
 		}
 		verify := func() (bool, error) {
-			envelopes, err := i.FallbackEnvelopes(ctx)
+			envelopes, err := i.inbox.FallbackEnvelopes(ctx)
 			if err != nil {
 				return false, err
 			}
@@ -171,7 +184,7 @@ func (i *GitFallbackInboxPush) ResumeOperation(ctx context.Context, operationID 
 			}
 			return false, nil
 		}
-		return func() error { return i.AppendFallback(ctx, envelope) }, verify, nil
+		return func() error { return i.inbox.AppendFallback(ctx, envelope) }, verify, nil
 	})
 }
 

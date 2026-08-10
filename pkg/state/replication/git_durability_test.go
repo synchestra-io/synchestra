@@ -20,13 +20,20 @@ import (
 )
 
 type gitDurabilityFixture struct {
-	bare    string
-	root    string
-	journal *DALJournal
-	pushed  *GitPushJournal
+	bare       string
+	root       string
+	journal    *DALJournal
+	pushed     *GitPushJournal
+	role       Role
+	endpointID string
+	replicaIDs []string
 }
 
 func newGitDurabilityFixture(t *testing.T) gitDurabilityFixture {
+	return newGitDurabilityFixtureWithRole(t, RoleActive, "git-active", nil)
+}
+
+func newGitDurabilityFixtureWithRole(t *testing.T, role Role, endpointID string, replicaIDs []string) gitDurabilityFixture {
 	t.Helper()
 	ctx := context.Background()
 	bare := filepath.Join(t.TempDir(), "origin.git")
@@ -47,7 +54,7 @@ func newGitDurabilityFixture(t *testing.T) gitDurabilityFixture {
 	gitCommand(t, root, "add", "-A")
 	gitCommand(t, root, "commit", "-m", "journal schema")
 	gitCommand(t, root, "push", "origin", "HEAD:refs/heads/main")
-	journal, err := NewDALJournal(database, DALJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: "git-active", Role: RoleActive, AuthorityEpoch: 1, CommitMessage: "synchestra state"})
+	journal, err := NewDALJournal(database, DALJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: endpointID, Role: role, AuthorityEpoch: 1, ReplicaIDs: replicaIDs, CommitMessage: "synchestra state"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -55,7 +62,7 @@ func newGitDurabilityFixture(t *testing.T) gitDurabilityFixture {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return gitDurabilityFixture{bare: bare, root: root, journal: journal, pushed: pushed}
+	return gitDurabilityFixture{bare: bare, root: root, journal: journal, pushed: pushed, role: role, endpointID: endpointID, replicaIDs: append([]string(nil), replicaIDs...)}
 }
 
 func reopenGitPushJournal(t *testing.T, fixture gitDurabilityFixture) *GitPushJournal {
@@ -64,7 +71,7 @@ func reopenGitPushJournal(t *testing.T, fixture gitDurabilityFixture) *GitPushJo
 	if err != nil {
 		t.Fatal(err)
 	}
-	journal, err := NewDALJournal(database, DALJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: "git-active", Role: RoleActive, AuthorityEpoch: 1, CommitMessage: "synchestra state"})
+	journal, err := NewDALJournal(database, DALJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: fixture.endpointID, Role: fixture.role, AuthorityEpoch: 1, ReplicaIDs: fixture.replicaIDs, CommitMessage: "synchestra state"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -149,6 +156,29 @@ func TestGitFallbackRecoversCommittedAppendFromSerializedIntent(t *testing.T) {
 	}
 }
 
+func TestGitPushJournalReplicaIngestResumesThroughRoleSafeSeam(t *testing.T) {
+	fixture := newGitDurabilityFixtureWithRole(t, RoleReplica, "git-mirror", []string{"git-mirror"})
+	event := relayEvents(t)[0]
+	fixture.pushed.remote.testFault = func(stage string) error {
+		if stage == "receipt-finalized" {
+			return errors.New("injected replica delivery crash")
+		}
+		return nil
+	}
+	pending, err := fixture.pushed.IngestReplicaAndPush(context.Background(), event)
+	if err == nil || !pending.AwaitingPush || pending.OperationKind != gitOperationReplicaV1 {
+		t.Fatalf("replica ingest crash = %+v, %v", pending, err)
+	}
+	restarted := reopenGitPushJournal(t, fixture)
+	completed, err := restarted.ResumeOperation(context.Background(), pending.OperationID)
+	if err != nil || completed.AwaitingPush {
+		t.Fatalf("replica ingest resume = %+v, %v", completed, err)
+	}
+	if head, hash, err := restarted.Head(context.Background()); err != nil || head != event.Cursor || hash != event.Checksum {
+		t.Fatalf("replica head after resume = %+v %q, %v", head, hash, err)
+	}
+}
+
 func TestGitDeliverySerializesConcurrentExpectedBaseAppendAndReceipt(t *testing.T) {
 	fixture := newGitDurabilityFixture(t)
 	entered := make(chan struct{})
@@ -209,6 +239,15 @@ func TestGitDeliveryResumeAcceptsFetchedRemoteDescendant(t *testing.T) {
 	if err == nil || !pending.AwaitingPush {
 		t.Fatalf("readback crash = %+v, %v", pending, err)
 	}
+	stagedPath := filepath.Join(fixture.root, "local-staged.txt")
+	if err := os.WriteFile(stagedPath, []byte("preserve staged\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	gitCommand(t, fixture.root, "add", "local-staged.txt")
+	untrackedPath := filepath.Join(fixture.root, "local-untracked.txt")
+	if err := os.WriteFile(untrackedPath, []byte("preserve untracked\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 	restarted := reopenGitPushJournal(t, fixture)
 	completed, err := restarted.ResumeOperation(context.Background(), pending.OperationID)
 	if err != nil || completed.AwaitingPush {
@@ -219,6 +258,41 @@ func TestGitDeliveryResumeAcceptsFetchedRemoteDescendant(t *testing.T) {
 		t.Fatal("test did not create a remote descendant")
 	}
 	gitCommand(t, fixture.root, "merge-base", "--is-ancestor", completed.CommitSHA, remoteHead)
+	if localHead := gitCommand(t, fixture.root, "rev-parse", "HEAD"); localHead != remoteHead {
+		t.Fatalf("local head after descendant receipt = %s, want %s", localHead, remoteHead)
+	}
+	status := gitCommand(t, fixture.root, "status", "--short")
+	if !strings.Contains(status, "A  local-staged.txt") || !strings.Contains(status, "?? local-untracked.txt") {
+		t.Fatalf("descendant synchronization lost dirty state:\n%s", status)
+	}
+
+	second, err := restarted.AppendAndPush(context.Background(), relayEvents(t)[1])
+	if err != nil || second.AwaitingPush {
+		t.Fatalf("append after descendant synchronization = %+v, %v", second, err)
+	}
+	status = gitCommand(t, fixture.root, "status", "--short")
+	if !strings.Contains(status, "A  local-staged.txt") || !strings.Contains(status, "?? local-untracked.txt") {
+		t.Fatalf("subsequent append lost dirty state:\n%s", status)
+	}
+	if names := gitCommand(t, fixture.root, "show", "--format=", "--name-only", second.CommitSHA); strings.Contains(names, "local-staged.txt") || strings.Contains(names, "local-untracked.txt") {
+		t.Fatalf("operation commit captured unrelated dirty state:\n%s", names)
+	}
+	fresh := filepath.Join(t.TempDir(), "fresh-after-descendant")
+	if out, err := exec.Command("git", "clone", fixture.bare, fresh).CombinedOutput(); err != nil {
+		t.Fatalf("clone descendant result: %v: %s", err, out)
+	}
+	freshDB, err := dalgo2ingitdb.NewDatabase(fresh, validator.NewCollectionsReader())
+	if err != nil {
+		t.Fatal(err)
+	}
+	freshJournal, err := NewDALJournal(freshDB, DALJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: "git-mirror", Role: RoleReplica, AuthorityEpoch: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err := freshJournal.After(context.Background(), Cursor{})
+	if err != nil || len(got) != 2 || got[0].Checksum != relayEvents(t)[0].Checksum || got[1].Checksum != relayEvents(t)[1].Checksum {
+		t.Fatalf("fresh clone after descendant and next append = %#v, %v", got, err)
+	}
 }
 
 func TestGitDeliveryRejectsRemoteSiblingWithPendingReceiptIntact(t *testing.T) {
