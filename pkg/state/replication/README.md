@@ -13,10 +13,22 @@ for a narrow v1 communication allowlist; it is not a journal authority.
 Reconciliation into the active journal is **Planned** and must allocate fresh
 authoritative cursors exactly once.
 
-The durable outbox currently records **pending** per-replica delivery work.
-Drain, acknowledgement, and recovery scheduling are **Planned**; this
-foundation replicates from the authority journal and does not claim that its
-write-only outbox records provide recovery.
+The durable outbox records one pending per-replica delivery row per append,
+in the same transaction as the domain write, journal event, and head.
+`DrainOutbox` (`outbox.go`) is the consumer: it walks an `OutboxSource`'s
+pending rows for one replica in cursor order, applies each through the same
+idempotent `ReplicaIngestor` seam `Replicate` uses, and acknowledges (deletes)
+the row only once the replica accepts it. Both halves are independently safe
+to repeat — `Journal.Append`/`IngestReplica` dedupe by event ID, and deleting
+an already-gone outbox row is a documented no-op on every DAL adapter this
+package targets — so a crash between apply and ack, or two drain workers
+racing over the same rows, never double-applies or loses a delivery.
+`DrainOutbox` never decides convergence itself: `Replicate`'s head/cursor/
+checksum comparison remains the source of truth for replica health, and the
+two compose (an operator typically drains, then verifies, before treating a
+replica as caught up). `*DALJournal` implements `OutboxSource` against the
+real `outboxCollection`; `MemoryJournal` implements it in-memory for fast
+conformance and concurrency tests.
 
 Every physical journal is configured with an endpoint role and authority
 epoch. Only the active endpoint accepts domain `Append`; replicas accept the

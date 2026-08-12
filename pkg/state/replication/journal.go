@@ -122,16 +122,35 @@ func compareCursor(a, b Cursor) int {
 // production backend: production Git and SQLite adapters must satisfy the
 // Journal contract using inGitDB/DALgo respectively.
 type MemoryJournal struct {
-	mu       sync.Mutex
-	events   []Event
-	byID     map[string]Event
-	byKey    map[string]string
-	head     Cursor
-	headHash string
+	mu         sync.Mutex
+	events     []Event
+	byID       map[string]Event
+	byKey      map[string]string
+	head       Cursor
+	headHash   string
+	replicaIDs []string
+	// outbox mirrors DALJournal's durable per-replica outbox rows in memory:
+	// one pending entry per (replicaID, eventID) written by the same append
+	// that commits the event, removed only by AckOutbox. It exists so
+	// DrainOutbox has a fast, deterministic OutboxSource for conformance and
+	// concurrency tests that do not need a real SQLite/Git backend.
+	outbox map[string]map[string]Event
 }
 
-func NewMemoryJournal() *MemoryJournal {
-	return &MemoryJournal{byID: make(map[string]Event), byKey: make(map[string]string)}
+var (
+	_ OutboxSource = (*MemoryJournal)(nil)
+	_ OutboxSource = (*DALJournal)(nil)
+)
+
+// NewMemoryJournal builds a harness journal. replicaIDs is optional: when
+// supplied, every appended event is also queued into that replica's
+// in-memory outbox, mirroring DALJournalOptions.ReplicaIDs.
+func NewMemoryJournal(replicaIDs ...string) *MemoryJournal {
+	outbox := make(map[string]map[string]Event, len(replicaIDs))
+	for _, id := range replicaIDs {
+		outbox[id] = make(map[string]Event)
+	}
+	return &MemoryJournal{byID: make(map[string]Event), byKey: make(map[string]string), replicaIDs: append([]string(nil), replicaIDs...), outbox: outbox}
 }
 
 func (j *MemoryJournal) Append(_ context.Context, event Event) error {
@@ -140,6 +159,30 @@ func (j *MemoryJournal) Append(_ context.Context, event Event) error {
 
 func (j *MemoryJournal) IngestReplica(_ context.Context, event Event) error {
 	return j.append(event)
+}
+
+// PendingOutbox returns replicaID's undelivered rows in cursor order. An
+// unconfigured replicaID simply has no rows, matching DALJournal's behavior
+// of only fanning events out to the replicas it was constructed with.
+func (j *MemoryJournal) PendingOutbox(_ context.Context, replicaID string) ([]Event, error) {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	pending := j.outbox[replicaID]
+	result := make([]Event, 0, len(pending))
+	for _, event := range pending {
+		result = append(result, event)
+	}
+	SortEvents(result)
+	return result, nil
+}
+
+// AckOutbox deletes replicaID's row for eventID. Deleting an absent map key
+// is a no-op in Go, so acknowledging twice is always safe.
+func (j *MemoryJournal) AckOutbox(_ context.Context, replicaID, eventID string) error {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	delete(j.outbox[replicaID], eventID)
+	return nil
 }
 
 func (j *MemoryJournal) append(event Event) error {
@@ -179,6 +222,9 @@ func (j *MemoryJournal) append(event Event) error {
 	j.byID[event.EventID] = event
 	j.byKey[event.IdempotencyKey] = event.EventID
 	j.head, j.headHash = event.Cursor, event.Checksum
+	for _, replicaID := range j.replicaIDs {
+		j.outbox[replicaID][event.EventID] = event
+	}
 	return nil
 }
 

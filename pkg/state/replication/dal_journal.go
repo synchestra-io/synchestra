@@ -191,6 +191,39 @@ func (j *DALJournal) Head(ctx context.Context) (Cursor, string, error) {
 	return loadHead(ctx, j.db, j.projectID)
 }
 
+// PendingOutbox returns replicaID's durable outbox rows for this endpoint's
+// project, ordered by cursor. Every row was written in the same transaction
+// as the domain message, journal event, and head (see append above); nothing
+// removes a row except AckOutbox, so this is always the exact undelivered
+// tail regardless of which endpoint or process last drained it.
+func (j *DALJournal) PendingOutbox(ctx context.Context, replicaID string) ([]Event, error) {
+	if strings.TrimSpace(replicaID) == "" {
+		return nil, fmt.Errorf("replication: outbox replica id is required")
+	}
+	return loadOutboxEvents(ctx, j.db, j.projectID, replicaID)
+}
+
+// AckOutbox deletes replicaID's durable outbox row for eventID. Delete is a
+// documented no-op on both DAL adapters this package targets — dalgo2sql
+// issues "DELETE ... WHERE id = ?" (zero rows affected is not an error) and
+// dalgo2ingitdb explicitly treats a missing record as already-deleted — so
+// acknowledging a row that is already gone (a second drain worker raced
+// ahead, or a prior crash landed after this exact delete had already
+// committed) is always safe and never surfaces an error to the caller.
+func (j *DALJournal) AckOutbox(ctx context.Context, replicaID, eventID string) error {
+	if strings.TrimSpace(replicaID) == "" || strings.TrimSpace(eventID) == "" {
+		return fmt.Errorf("replication: outbox ack requires a replica id and event id")
+	}
+	options := []dal.TransactionOption{}
+	if j.message != "" {
+		options = append(options, dal.TxWithMessage(fmt.Sprintf("%s: ack outbox %s/%s", j.message, replicaID, eventID)))
+	}
+	key := record.NewKeyWithID(outboxCollection, outboxKey(j.projectID, replicaID, eventID))
+	return j.db.RunReadwriteTransaction(ctx, func(ctx context.Context, tx dal.ReadwriteTransaction) error {
+		return tx.Delete(ctx, key)
+	}, options...)
+}
+
 func validateNext(head Cursor, headHash string, event Event) error {
 	if head.IsZero() {
 		if event.Cursor.Epoch != 1 || event.Cursor.Sequence != 1 || event.PreviousHash != "" {
@@ -276,8 +309,15 @@ func keyPart(value string) string { return base64.RawURLEncoding.EncodeToString(
 func eventKey(projectID, eventID string) string {
 	return "project-" + keyPart(projectID) + "--event-" + keyPart(eventID)
 }
+
+// outboxKeyPrefix identifies every outbox row queued for one replica,
+// regardless of event. loadOutboxEvents filters the outbox scan against it;
+// outboxKey appends the specific event segment used by Set/Delete.
+func outboxKeyPrefix(projectID, replicaID string) string {
+	return "project-" + keyPart(projectID) + "--replica-" + keyPart(replicaID) + "--event-"
+}
 func outboxKey(projectID, replicaID, eventID string) string {
-	return "project-" + keyPart(projectID) + "--replica-" + keyPart(replicaID) + "--event-" + keyPart(eventID)
+	return outboxKeyPrefix(projectID, replicaID) + keyPart(eventID)
 }
 func headKey(projectID string) string { return "project-" + keyPart(projectID) + "--head" }
 
@@ -328,4 +368,59 @@ func loadEncodedCollection(ctx context.Context, executor queryExecutor, collecti
 		encodedValues = append(encodedValues, encoded)
 	}
 	return encodedValues, nil
+}
+
+// loadOutboxEvents scans the outbox collection for one replica's durable
+// delivery rows. It cannot reuse loadEncodedCollection/loadCollection as-is:
+// the stored event JSON carries no replica ID (the same event fans out to
+// many replicas' keys), so filtering needs each record's key, not just its
+// data.
+func loadOutboxEvents(ctx context.Context, executor queryExecutor, projectID, replicaID string) ([]Event, error) {
+	ref := dal.NewRootCollectionRef(outboxCollection, "")
+	query := dal.NewQueryBuilder(dal.From(ref)).SelectIntoRecordset()
+	reader, err := executor.ExecuteQueryToRecordsReader(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("replication: query %s: %w", outboxCollection, err)
+	}
+	defer func() { _ = reader.Close() }()
+	prefix := outboxKeyPrefix(projectID, replicaID)
+	var events []Event
+	for {
+		rec, readErr := reader.Next()
+		if errors.Is(readErr, io.EOF) || errors.Is(readErr, dal.ErrNoMoreRecords) {
+			break
+		}
+		if readErr != nil {
+			return nil, fmt.Errorf("replication: read %s: %w", outboxCollection, readErr)
+		}
+		data, ok := rec.Data().(map[string]any)
+		if !ok {
+			return nil, fmt.Errorf("replication: %s record %v is not object data", outboxCollection, rec.Key().ID)
+		}
+		// dalgo2ingitdb's query reader returns the record ID on Key().ID;
+		// dalgo2sql's returns "" there and puts the selected id column into
+		// Data()["id"] instead. Recognize whichever the adapter populated
+		// rather than assuming one shape.
+		id, ok := rec.Key().ID.(string)
+		if !ok || id == "" {
+			id, ok = data["id"].(string)
+		}
+		if !ok || !strings.HasPrefix(id, prefix) {
+			continue
+		}
+		encoded, ok := data["event_json"].(string)
+		if !ok {
+			return nil, fmt.Errorf("replication: %s record %v has no event_json", outboxCollection, rec.Key().ID)
+		}
+		var event Event
+		if err := json.Unmarshal([]byte(encoded), &event); err != nil {
+			return nil, fmt.Errorf("replication: decode %s: %w", outboxCollection, err)
+		}
+		if err := event.Verify(); err != nil {
+			return nil, err
+		}
+		events = append(events, event)
+	}
+	SortEvents(events)
+	return events, nil
 }

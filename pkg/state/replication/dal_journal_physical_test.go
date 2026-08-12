@@ -100,6 +100,63 @@ func TestDALJournal_PhysicalSQLiteActiveReplicatesToGitAndDoesNotDualWrite(t *te
 	}
 }
 
+// TestDALJournal_OutboxDrainDeliversAndAcksAcrossBothPhysicalDirections
+// exercises PendingOutbox/AckOutbox/DrainOutbox against real SQLite and Git
+// DALgo adapters in both supported topologies, proving the durable outbox
+// this test's sibling physical tests only assert gets written is also
+// correctly drained and acknowledged on real backends, not just the in-memory
+// harness.
+func TestDALJournal_OutboxDrainDeliversAndAcksAcrossBothPhysicalDirections(t *testing.T) {
+	ctx := context.Background()
+	t.Run("git_active_to_sqlite_mirror", func(t *testing.T) {
+		_, gitJournal := newGitJournal(t, []string{"sqlite-mirror"})
+		_, sqliteJournal := newSQLiteJournalWithRole(t, nil, RoleReplica, "sqlite-mirror")
+		events := relayEvents(t)
+		appendAll(t, gitJournal, events)
+
+		health, err := DrainOutbox(ctx, gitJournal, sqliteJournal, "sqlite-mirror")
+		if err != nil {
+			t.Fatalf("drain Git -> SQLite: %v", err)
+		}
+		if health.EventLag != 0 || health.Cursor != events[len(events)-1].Cursor {
+			t.Fatalf("drain health = %+v", health)
+		}
+		assertPhysicalParity(t, gitJournal, sqliteJournal)
+		pending, err := gitJournal.PendingOutbox(ctx, "sqlite-mirror")
+		if err != nil || len(pending) != 0 {
+			t.Fatalf("Git active outbox after drain = %#v, %v; want empty", pending, err)
+		}
+	})
+	t.Run("sqlite_active_to_git_mirror", func(t *testing.T) {
+		gitRoot, gitMirror := newGitJournalWithRole(t, nil, RoleReplica, "git-mirror")
+		_, sqliteActive := newSQLiteJournal(t, []string{"git-mirror"})
+		events := relayEvents(t)
+		appendAll(t, sqliteActive, events)
+
+		health, err := DrainOutbox(ctx, sqliteActive, gitMirror, "git-mirror")
+		if err != nil {
+			t.Fatalf("drain SQLite -> Git: %v", err)
+		}
+		if health.EventLag != 0 {
+			t.Fatalf("drain health = %+v, want no lag", health)
+		}
+		assertPhysicalParity(t, sqliteActive, gitMirror)
+		if got := gitCommand(t, gitRoot, "rev-list", "--count", "HEAD"); got != "5" {
+			t.Fatalf("Git mirror commit count = %s, want schema base plus 4 (one commit per drained event)", got)
+		}
+		pending, err := sqliteActive.PendingOutbox(ctx, "git-mirror")
+		if err != nil || len(pending) != 0 {
+			t.Fatalf("SQLite active outbox after drain = %#v, %v; want empty", pending, err)
+		}
+
+		// AckOutbox is idempotent on both physical adapters: acking an
+		// already-drained row again must not error.
+		if err := sqliteActive.AckOutbox(ctx, "git-mirror", events[0].EventID); err != nil {
+			t.Fatalf("re-ack of an already-acked physical outbox row: %v", err)
+		}
+	})
+}
+
 func TestGitPushJournal_ReplicaIngestIsRemoteDurableAndAuthorityAppendIsFenced(t *testing.T) {
 	ctx := context.Background()
 	fixture := newGitDurabilityFixtureWithRole(t, RoleReplica, "git-mirror", []string{"git-mirror"})
