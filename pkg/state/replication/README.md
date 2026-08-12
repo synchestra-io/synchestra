@@ -37,6 +37,19 @@ Git delivery serializes append/push operations in the worktree's private Git
 directory and persists a checksummed intent before append, allowing authority
 events and fallback envelopes to resume after any commit/receipt/push crash.
 
+`Promote` (`promotion.go`) implements the explicit administrative promotion
+workflow from `state-store/topology`'s "Promotion and Recovery" section: it
+refuses a candidate replica that is not converged with the active (lag > 0 in
+either direction, or diverged at an equal cursor), then signs one promotion
+checkpoint event at the next authority epoch and durably records it on both
+the candidate (which becomes active) and the former active (which becomes a
+fenced replica) before switching either endpoint's local role. Any other
+reachable required replica receives the same checkpoint through the ordinary
+`IngestReplica` seam. `Promote` does not drain or catch up the candidate
+itself — callers run `DrainOutbox`/`Replicate` first — and it requires a
+reachable handle on the current active, which the founder-MVP single-host
+SQLite topology always has even when the server process is down.
+
 ## Open Questions
 
 None at this time.

@@ -12,6 +12,7 @@ import (
 	"io"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/dal-go/dalgo/dal"
 	"github.com/dal-go/dalgo/dbschema"
@@ -37,8 +38,14 @@ type DALJournal struct {
 	message    string
 	projectID  string
 	endpointID string
-	role       Role
-	epoch      int64
+
+	// mu guards role/epoch together. Promote's PromoteToActive/FenceAsReplica
+	// hold it for the whole checkpoint-then-transition sequence so a
+	// concurrent Append/IngestReplica never observes the new epoch paired
+	// with the old role or vice versa.
+	mu    sync.RWMutex
+	role  Role
+	epoch int64
 }
 
 // DALJournalOptions configures the durable outbox. CommitMessage is passed to
@@ -105,16 +112,27 @@ func EnsureDALJournalSchema(ctx context.Context, db dal.DB) error {
 	return nil
 }
 
+// roleEpoch returns a consistent snapshot of the endpoint's local role and
+// authority epoch. See the DALJournal.mu doc comment for why Append and
+// IngestReplica must read both fields together.
+func (j *DALJournal) roleEpoch() (Role, int64) {
+	j.mu.RLock()
+	defer j.mu.RUnlock()
+	return j.role, j.epoch
+}
+
 func (j *DALJournal) Append(ctx context.Context, event Event) error {
-	if j.role != RoleActive || event.Cursor.Epoch != j.epoch {
-		return &RoleFenceError{EndpointID: j.endpointID, Role: j.role, AuthorityEpoch: j.epoch, EventEpoch: event.Cursor.Epoch}
+	role, epoch := j.roleEpoch()
+	if role != RoleActive || event.Cursor.Epoch != epoch {
+		return &RoleFenceError{EndpointID: j.endpointID, Role: role, AuthorityEpoch: epoch, EventEpoch: event.Cursor.Epoch}
 	}
 	return j.append(ctx, event)
 }
 
 func (j *DALJournal) IngestReplica(ctx context.Context, event Event) error {
-	if j.role != RoleReplica {
-		return &RoleFenceError{EndpointID: j.endpointID, Role: j.role, AuthorityEpoch: j.epoch, EventEpoch: event.Cursor.Epoch}
+	role, epoch := j.roleEpoch()
+	if role != RoleReplica {
+		return &RoleFenceError{EndpointID: j.endpointID, Role: role, AuthorityEpoch: epoch, EventEpoch: event.Cursor.Epoch}
 	}
 	return j.append(ctx, event)
 }
