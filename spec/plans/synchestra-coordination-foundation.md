@@ -80,7 +80,8 @@ is implemented or delivered.
 **Id:** task-1
 **Verifies:** state-store/topology#ac:topology-rejects-zero-or-multiple-active, state-store/topology#ac:promotion-fences-former-active
 **Depends-On:** —
-**Status:** planning
+**Status:** in_progress
+**Note:** Partial per 2026-08-12 audit: foundations merged via 3ebea33, material gaps remain
 
 Extend `state.Store` with effort/run/worktree claim, message, activity,
 replication journal, cursor, authority lease, and health contracts. Implement
@@ -92,7 +93,10 @@ Git-required topology; add deterministic schema and migration ownership.
 **Id:** task-2
 **Verifies:** state-store/topology#ac:git-active-replicates-to-sqlite, state-store/topology/offline-fallback#ac:agents-communicate-with-server-down, state-store/topology/offline-fallback#ac:communication-fallback-does-not-split-authority
 **Depends-On:** 1
-**Status:** planning
+**Status:** complete
+**Implemented-by:** 3ebea33
+**Note:** Delivered: DALJournal over dalgo2ingitdb, GitPushJournal CAS receipts, DALFallbackInbox; verified by 2026-08-12 audit
+**Evidence:** merge 3ebea33, green Go CI run 31387278088 at f1c0bab
 
 Extend inGitDB/DALgo upstream for transactional buffering, deterministic
 serialization, expected-base/CAS, and commit SHA evidence. Implement Git-active
@@ -119,7 +123,8 @@ history. This provenance/correction slice remains Planned.
 **Id:** task-4
 **Verifies:** state-store/backends/sqlite#ac:sqlite-active-uses-one-transaction, state-store/backends/sqlite#ac:sqlite-restart-obeys-fencing, state-store/topology#ac:sqlite-active-commits-outbox-atomically
 **Depends-On:** 1
-**Status:** planning
+**Status:** in_progress
+**Note:** Partial per 2026-08-12 audit: foundations merged via 3ebea33, material gaps remain
 
 Create `sqlitestore` using `dalgo2sqlite`, migrations, conditional claim
 writes, one transaction for projection/journal/outbox, idempotent receipts,
@@ -131,7 +136,8 @@ boundary and restart/promotion fence coverage.
 **Id:** task-5
 **Verifies:** state-store/topology#ac:replica-outage-does-not-create-dual-write, state-store/topology#ac:mirror-barrier-proves-git-durability, state-store/backends/sqlite#ac:git-barrier-proves-portable-durability
 **Depends-On:** 2, 4
-**Status:** planning
+**Status:** in_progress
+**Note:** Partial per 2026-08-12 audit: foundations merged via 3ebea33, material gaps remain
 
 Deliver ordered outbox apply, checksum/cursor verification, health/lag metrics,
 mirror barriers, backup checkpoints, and explicit lease/epoch promotion.
