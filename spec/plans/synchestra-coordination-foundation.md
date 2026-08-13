@@ -252,7 +252,10 @@ is not unnecessarily serialized.
 **Id:** task-12
 **Verifies:** state-store/journal-batching#ac:batch-flushes-at-item-threshold, state-store/journal-batching#ac:batch-flushes-at-time-threshold, state-store/journal-batching#ac:zero-disables-each-dimension, state-store/journal-batching#ac:defaults-are-100-items-1000ms, state-store/journal-batching#ac:append-acknowledges-only-durable-commits, state-store/journal-batching#ac:close-flushes-pending-batch, state-store/journal-batching#ac:batched-events-preserve-fencing-and-order
 **Depends-On:** 2
-**Status:** in_progress
+**Status:** complete
+**Implemented-by:** 4d80a51
+**Note:** Group-commit batching per state-store/journal-batching: 7 ACs tested, flush-then-fence, gitstore wiring pinned batching-off until task-3 wires Close()
+**Evidence:** PR #19 squash merge 4d80a51, xhigh review + 5 mutation-verified fixes, green Go CI
 
 Add group-commit batching to the journal append path: accumulate concurrent
 appends and commit them in one storage transaction when a configurable item
