@@ -80,7 +80,10 @@ is implemented or delivered.
 **Id:** task-1
 **Verifies:** state-store/topology#ac:topology-rejects-zero-or-multiple-active, state-store/topology#ac:promotion-fences-former-active
 **Depends-On:** —
-**Status:** in_progress
+**Status:** complete
+**Implemented-by:** cef972d5a624a3ad249bafc31f02df0f31e8578e
+**Note:** Agent() composed sub-store contracts, agentstore implementation, gitstore wiring; integration-reviewed and batch-landed with PR #15
+**Evidence:** PR #18 squash merge, post-merge main CI run 31679577079
 **Note:** Partial per 2026-08-12 audit: foundations merged via 3ebea33, material gaps remain
 
 Extend `state.Store` with effort/run/worktree claim, message, activity,
