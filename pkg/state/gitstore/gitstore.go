@@ -6,8 +6,10 @@ package gitstore
 import (
 	"context"
 	"errors"
+	"sync"
 
 	"github.com/synchestra-io/synchestra/pkg/state"
+	"github.com/synchestra-io/synchestra/pkg/state/agentstore"
 	"github.com/synchestra-io/synchestra/pkg/state/replication"
 )
 
@@ -38,6 +40,20 @@ type GitStateStore struct {
 	sync          state.SyncConfig
 	runID         string
 	agentOptions  GitStoreOptions
+
+	// agentOnce/agentCore/agentErr cache the *agentstore.Store (and, through
+	// it, the replication.Journal) buildAgentCore constructs, so every call
+	// to Agent() on ONE GitStateStore instance shares the SAME journal
+	// instance rather than opening a fresh Git-backed database and journal
+	// per call. This matters for two things task-3 wires together: (1) with
+	// group-commit batching enabled (agent.go), concurrent writes through
+	// this store's Agent() can only ever land in the same pending batch if
+	// they share a journal; (2) Close (below) can only flush the batch that
+	// was actually written to if it closes that SAME cached journal, not a
+	// newly-constructed empty one. See gitstore/README.md.
+	agentOnce sync.Once
+	agentCore *agentstore.Store
+	agentErr  error
 }
 
 // New creates a new GitStateStore with git-backend-specific options.
@@ -62,6 +78,19 @@ func (s *GitStateStore) Task() state.TaskStore       { return &gitTaskStore{stor
 func (s *GitStateStore) Chat() state.ChatStore       { return &gitChatStore{store: s} }
 func (s *GitStateStore) Project() state.ProjectStore { return &gitProjectStore{store: s} }
 func (s *GitStateStore) State() state.StateSync      { return &gitStateSync{store: s} }
+
+// Close flushes any pending group-commit batch on the Agent() journal, if
+// one was ever constructed on this GitStateStore instance
+// (state-store/journal-batching#ac:close-flushes-pending-batch). A
+// GitStateStore whose Agent() was never called (or failed to construct) has
+// nothing to flush and this is a safe no-op. Safe to call more than once —
+// it delegates to agentstore.Store.Close, itself idempotent.
+func (s *GitStateStore) Close(ctx context.Context) error {
+	if s.agentCore == nil {
+		return nil
+	}
+	return s.agentCore.Close(ctx)
+}
 
 // --- ArtifactStore ---
 

@@ -22,16 +22,28 @@ import (
 // thin wiring: the effort/run/worktree-claim/message/activity/lease/health
 // domain logic lives once in pkg/state/agentstore, not here.
 //
+// The underlying *agentstore.Store (and its journal) is constructed once
+// per GitStateStore instance and cached (s.agentOnce) — repeated Agent()
+// calls on the SAME GitStateStore return the SAME instance, matching a
+// single CLI invocation's or long-running server's actual lifecycle, so (1)
+// group-commit batching (below) can actually group writes issued through
+// separate Agent() calls, and (2) GitStateStore.Close closes the journal
+// that was actually written to rather than a freshly-built empty one. A
+// distinct GitStateStore (e.g. a restarted CLI process, or a test's
+// newStore() helper) gets its own fresh journal, exactly as before.
+//
 // StateRepoPath must already be an initialized Git repository (a clone or
 // `git init`); construction is fail-closed rather than silently succeeding
 // against a bogus path — every method on the returned AgentStore surfaces
-// the same construction error until the store is reconfigured.
+// the same construction error until a new GitStateStore is constructed.
 func (s *GitStateStore) Agent() state.AgentStore {
-	core, err := s.buildAgentCore()
-	if err != nil {
-		return unavailableAgentStore{err: fmt.Errorf("gitstore: Agent() unavailable: %w", err)}
+	s.agentOnce.Do(func() {
+		s.agentCore, s.agentErr = s.buildAgentCore()
+	})
+	if s.agentErr != nil {
+		return unavailableAgentStore{err: fmt.Errorf("gitstore: Agent() unavailable: %w", s.agentErr)}
 	}
-	return core
+	return s.agentCore
 }
 
 func (s *GitStateStore) buildAgentCore() (*agentstore.Store, error) {
@@ -57,21 +69,17 @@ func (s *GitStateStore) buildAgentCore() (*agentstore.Store, error) {
 		AuthorityEpoch: opts.AuthorityEpoch,
 		ReplicaIDs:     opts.ReplicaIDs,
 		CommitMessage:  "synchestra agent state",
-		// Batching is pinned OFF here -- both knobs explicit zero, not left
-		// nil, which would pick up the documented 100-item/1000ms default.
-		// Three reasons, together: (1) nothing calls Agent() concurrently
-		// today, so there is no burst of Appends for batching to actually
-		// group; (2) Close() is not wired through state.AgentStore/
-		// GitStateStore's lifecycle, so a pending batch here would never be
-		// proactively flushed -- only ever resolved by waiting out the full
-		// 1000ms timer; (3) turning batching on measured an 11x regression
-		// in this package's own test suite (see the commit introducing this
-		// pin for before/after pkg/state/gitstore test timing). Flip this on
-		// in the same change that wires real concurrent callers plus a
-		// Close path -- task-3, see pkg/state/agentstore/README.md's Open
-		// Questions.
-		MaxBatchItems:   zeroBatchKnob(),
-		MaxBatchDelayMS: zeroBatchKnob(),
+		// Batching now uses the documented default (100 items/1000ms, nil
+		// MaxBatchItems/MaxBatchDelayMS) rather than the explicit-zero pin
+		// this wiring carried before task-3: Agent() is now constructed once
+		// per GitStateStore and cached (see the doc comment above), so
+		// concurrent callers sharing one GitStateStore actually have a batch
+		// to group into, and Close (GitStateStore.Close, gitstore.go) is now
+		// wired through the Store lifecycle so a one-shot CLI invocation's
+		// lone pending Append does not have to wait out the full window —
+		// see pkg/cli/agent's runFlushed helper and
+		// pkg/state/agentstore/README.md's Open Questions for the measured
+		// before/after.
 	})
 	if err != nil {
 		return nil, fmt.Errorf("gitstore: configure Git journal: %w", err)
@@ -82,17 +90,6 @@ func (s *GitStateStore) buildAgentCore() (*agentstore.Store, error) {
 		ActorID:        "gitstore:" + s.runID,
 		AuthorityEpoch: opts.AuthorityEpoch,
 	})
-}
-
-// zeroBatchKnob returns a fresh pointer to 0 -- replication.DALJournalOptions'
-// MaxBatchItems/MaxBatchDelayMS are *int specifically so a caller can spell
-// "explicitly disabled" (a non-nil pointer to 0) distinctly from "not
-// configured" (nil, which picks up the documented default); see
-// buildAgentCore's comment for why this package's Agent() journal pins both
-// to explicit zero today.
-func zeroBatchKnob() *int {
-	zero := 0
-	return &zero
 }
 
 // withDefaults fills in the Agent()-only fields left zero by a caller that
@@ -129,6 +126,7 @@ func (u unavailableAgentStore) Journal() state.JournalStore   { return unavailab
 func (u unavailableAgentStore) Cursor() state.CursorStore     { return unavailableCursorStore(u) }
 func (u unavailableAgentStore) Lease() state.LeaseStore       { return unavailableLeaseStore(u) }
 func (u unavailableAgentStore) Health() state.HealthStore     { return unavailableHealthStore(u) }
+func (u unavailableAgentStore) Close(context.Context) error   { return u.err }
 
 type unavailableEffortStore struct{ err error }
 
@@ -140,6 +138,9 @@ func (u unavailableEffortStore) Get(context.Context, string) (state.Effort, erro
 }
 func (u unavailableEffortStore) List(context.Context, state.EffortFilter) ([]state.Effort, error) {
 	return nil, u.err
+}
+func (u unavailableEffortStore) Transition(context.Context, string, state.EffortTransitionParams) (state.Effort, error) {
+	return state.Effort{}, u.err
 }
 
 type unavailableRunStore struct{ err error }
@@ -159,6 +160,9 @@ func (u unavailableRunStore) Finish(context.Context, string, string) (state.Run,
 func (u unavailableRunStore) Correct(context.Context, string, state.RunCorrection) (state.Run, error) {
 	return state.Run{}, u.err
 }
+func (u unavailableRunStore) Transition(context.Context, string, state.RunTransitionParams) (state.Run, error) {
+	return state.Run{}, u.err
+}
 
 type unavailableWorktreeStore struct{ err error }
 
@@ -176,6 +180,9 @@ func (u unavailableWorktreeStore) Get(context.Context, string) (state.WorktreeCl
 }
 func (u unavailableWorktreeStore) List(context.Context, state.WorktreeFilter) ([]state.WorktreeClaim, error) {
 	return nil, u.err
+}
+func (u unavailableWorktreeStore) Handoff(context.Context, string, state.WorktreeHandoffParams) (state.WorktreeClaim, error) {
+	return state.WorktreeClaim{}, u.err
 }
 
 type unavailableMessageStore struct{ err error }
@@ -225,6 +232,9 @@ func (u unavailableLeaseStore) Renew(context.Context, string, state.LeaseFence) 
 }
 func (u unavailableLeaseStore) Release(context.Context, string, state.LeaseFence) error { return u.err }
 func (u unavailableLeaseStore) Get(context.Context, string) (state.AuthorityLease, error) {
+	return state.AuthorityLease{}, u.err
+}
+func (u unavailableLeaseStore) Transfer(context.Context, string, state.LeaseFence, string) (state.AuthorityLease, error) {
 	return state.AuthorityLease{}, u.err
 }
 
