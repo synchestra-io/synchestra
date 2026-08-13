@@ -27,9 +27,15 @@ var lifecycleTransitions = map[state.LifecycleStatus]map[state.LifecycleStatus]b
 		state.LifecycleStatusAborted: true,
 	},
 	state.LifecycleStatusActive: {
-		state.LifecycleStatusHandoffPending:  true,
-		state.LifecycleStatusAwaitingMerge:   true,
-		state.LifecycleStatusAwaitingPush:    true,
+		state.LifecycleStatusHandoffPending: true,
+		state.LifecycleStatusAwaitingMerge:  true,
+		state.LifecycleStatusAwaitingPush:   true,
+		// active -> awaiting_cleanup is allowed to skip awaiting_merge/
+		// awaiting_push directly (e.g. a run whose work never needed a
+		// merge or push); this table does not itself verify that a skip is
+		// legitimate rather than merely convenient — gating these
+		// transitions on evidence that merge/push actually happened (or
+		// were genuinely not needed) is task-7/8 scope, not task-3's.
 		state.LifecycleStatusAwaitingCleanup: true,
 		state.LifecycleStatusAborted:         true,
 		state.LifecycleStatusFailed:          true,
