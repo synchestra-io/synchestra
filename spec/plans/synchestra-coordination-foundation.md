@@ -111,7 +111,10 @@ direct Git active/recent queries with conflict-retry semantics.
 **Id:** task-3
 **Verifies:** agent-coordination#ac:one-writer-claim-is-fenced, agent-coordination#ac:messages-survive-transport-switch, agent-coordination#ac:abandoned-run-is-resumable, agent-coordination#ac:optional-model-provenance-is-correctable
 **Depends-On:** 1, 2
-**Status:** in_progress
+**Status:** complete
+**Implemented-by:** 3cab34e541db4886c1eeb6f702bdab6d06e11902
+**Note:** Lifecycle state machine, typed audited messaging, TTL reclaim with fence re-validation, Close/batching wiring, agent CLI
+**Evidence:** PR #21 squash merge, post-merge CI run 31726469417 (Go CI, success), 31726469452 (Release, success)
 
 Implement lifecycle transitions, lease/fence enforcement, explicit handoff,
 scope declarations, message threads, acknowledgements, and recovery records.
@@ -139,8 +142,10 @@ boundary and restart/promotion fence coverage.
 **Id:** task-5
 **Verifies:** state-store/topology#ac:replica-outage-does-not-create-dual-write, state-store/topology#ac:mirror-barrier-proves-git-durability, state-store/backends/sqlite#ac:git-barrier-proves-portable-durability
 **Depends-On:** 2, 4
-**Status:** in_progress
-**Note:** Partial per 2026-08-12 audit: foundations merged via 3ebea33, material gaps remain
+**Status:** complete
+**Implemented-by:** 3f71f69891287b5042e8f3293cf83bb81774cb26
+**Note:** Barriers (state wait, RemoteDurable proof), checkpoint/restore/verify-convergence, backend comparison record
+**Evidence:** PR #20 squash merge, post-merge CI run 31725906113 (Go CI, success), 31725906035 (Release, success)
 
 Deliver ordered outbox apply, checksum/cursor verification, health/lag metrics,
 mirror barriers, backup checkpoints, and explicit lease/epoch promotion.
