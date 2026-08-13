@@ -1,7 +1,7 @@
 package replication
 
 // Features implemented: state-store/backends/git
-// Features depended on:  state-store/topology
+// Features depended on:  state-store/topology, state-store/journal-batching
 
 import (
 	"bytes"
@@ -51,12 +51,43 @@ type GitCommitReceipt struct {
 	Checksum         string          `json:"checksum"`
 }
 
+// GitPushJournal composes a Journal with durable CAS push evidence per call
+// (see deliverEvent/GitRemoteDurability below): its own operation lock
+// (acquireOperationLock) already serializes every mutating call across the
+// whole endpoint, so wrapping a group-commit-batching-enabled DALJournal
+// here defeats batching's purpose rather than merely being redundant with
+// it. Concretely: GitPushJournal.Append (via deliverEvent -> runOperation ->
+// withOperationLock) never lets a second caller even ENTER this type's
+// Append while one call is in flight, so the wrapped DALJournal's pending
+// batch can never accumulate more than the one event this call is
+// delivering -- every call still pays up to the full configured time window
+// waiting for a "batch" of exactly one item, with none of batching's
+// throughput benefit. state-store/journal-batching's group-commit design is
+// for a journal Append callers can reach directly and concurrently (e.g.
+// pkg/state/gitstore's current *DALJournal wiring); a future feature that
+// wants both durable per-endpoint CAS push AND batched local commits needs
+// its own batching-aware redesign of this type (e.g. pushing a whole
+// flushed batch's final commit in one CAS operation instead of one push per
+// event), which is out of scope here. Construct the wrapped Journal with
+// batching disabled (both knobs zero) when composing with GitPushJournal
+// until that redesign exists.
 type GitPushJournal struct {
 	Journal
 	remote *GitRemoteDurability
 }
 
 var _ ReplicaIngestor = (*GitPushJournal)(nil)
+
+// Close passes through to the wrapped Journal's Close, if it implements
+// BatchedJournal (state-store/journal-batching#ac:close-flushes-pending-batch).
+// A Journal without batching support (or with it disabled) has nothing
+// pending, so this is a safe no-op for those.
+func (j *GitPushJournal) Close(ctx context.Context) error {
+	if closer, ok := j.Journal.(interface{ Close(context.Context) error }); ok {
+		return closer.Close(ctx)
+	}
+	return nil
+}
 
 // GitRemoteDurability owns cross-process operation serialization, crash-safe
 // receipt files, atomic remote CAS, and fetched ancestry proof. testFault is an

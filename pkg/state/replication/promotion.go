@@ -1,7 +1,7 @@
 package replication
 
 // Features implemented: state-store/topology
-// Features depended on:  state-store/backends/git, state-store/backends/sqlite
+// Features depended on:  state-store/backends/git, state-store/backends/sqlite, state-store/journal-batching
 
 import (
 	"context"
@@ -406,15 +406,25 @@ func evaluateConvergence(candidateHead Cursor, candidateHash string, activeHead 
 
 // FenceAsReplica is DALJournal's implementation of PromotableJournal's
 // fence-first seam: see that interface's doc comment and Promote's doc
-// comment for the full contract. Holding j.mu for the role check, the fresh
-// head read, the append, AND the role/epoch flip is what makes this atomic
-// with respect to a concurrent Append (see the Append/IngestReplica doc
-// comment above).
+// comment for the full contract. Holding j.mu for the role check, the
+// flush-then-fence batch drain, the fresh head read, the append, AND the
+// role/epoch flip is what makes this atomic with respect to a concurrent
+// Append (see the Append/IngestReplica doc comment above). If batching is
+// enabled, the pending batch is flushed FIRST -- before the fresh head read,
+// before the checkpoint is built, and before it is appended -- so every
+// event legitimately enqueued before this call acquired j.mu durably
+// commits at the OLD epoch, and the checkpoint's PreviousHash chains onto a
+// head that already reflects them. See appendBatcher's "Promotion interplay
+// (flush-then-fence)" doc comment in batch.go and this package's README
+// "Batching" section.
 func (j *DALJournal) FenceAsReplica(ctx context.Context, request PromotionRequest, candidateEndpointID string) (Event, error) {
 	j.mu.Lock()
 	defer j.mu.Unlock()
 	if j.role != RoleActive {
 		return Event{}, fmt.Errorf("%w: %q has role %q, not active", ErrFenceSourceNotActive, j.endpointID, j.role)
+	}
+	if j.batcher != nil {
+		j.batcher.flush(ctx)
 	}
 	_, hash, err := loadHead(ctx, j.db, j.projectID)
 	if err != nil {

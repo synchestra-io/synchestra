@@ -1,6 +1,6 @@
 package replication
 
-// Features implemented: state-store/topology, state-store/topology/offline-fallback, agent-coordination
+// Features implemented: state-store/topology, state-store/topology/offline-fallback, agent-coordination, state-store/journal-batching
 
 import (
 	"context"
@@ -9,6 +9,16 @@ import (
 	"testing"
 	"time"
 )
+
+// zeroBatch is a shared "disable batching" knob pointer for this package's
+// journal fixtures (state-store/journal-batching). Most of this package's
+// pre-existing tests append events one at a time and assert on each
+// Append's immediate outcome; without this, the journal's own documented
+// default (100 items / 1000ms, state-store/journal-batching#ac:defaults-are-100-items-1000ms)
+// would make every sequential single Append wait out the full window before
+// returning. Tests that specifically exercise batching (batch_test.go)
+// construct their own explicit window instead of using this.
+var zeroBatch = func() *int { v := 0; return &v }()
 
 func TestTopologyRequiresOneActiveReplicaAndGit(t *testing.T) {
 	valid := Topology{ProjectID: "github.com/fair-split/relay", Endpoints: []Endpoint{
@@ -26,11 +36,11 @@ func TestTopologyRequiresOneActiveReplicaAndGit(t *testing.T) {
 
 func TestReplicateOrdersTypedThreadEventsAndPreservesAuditFields(t *testing.T) {
 	ctx := context.Background()
-	git, err := NewMemoryJournal(MemoryJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: "git-active", Role: RoleActive, AuthorityEpoch: 1})
+	git, err := NewMemoryJournal(MemoryJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: "git-active", Role: RoleActive, AuthorityEpoch: 1, MaxBatchItems: zeroBatch, MaxBatchDelayMS: zeroBatch})
 	if err != nil {
 		t.Fatal(err)
 	}
-	sqlite, err := NewMemoryJournal(MemoryJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: "sqlite-mirror", Role: RoleReplica, AuthorityEpoch: 1})
+	sqlite, err := NewMemoryJournal(MemoryJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: "sqlite-mirror", Role: RoleReplica, AuthorityEpoch: 1, MaxBatchItems: zeroBatch, MaxBatchDelayMS: zeroBatch})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -80,7 +90,7 @@ func TestReplicateOrdersTypedThreadEventsAndPreservesAuditFields(t *testing.T) {
 
 func TestMemoryJournalRejectsFencedOrBrokenChainEvent(t *testing.T) {
 	ctx := context.Background()
-	j, err := NewMemoryJournal(MemoryJournalOptions{ProjectID: "p", EndpointID: "active", Role: RoleActive, AuthorityEpoch: 1})
+	j, err := NewMemoryJournal(MemoryJournalOptions{ProjectID: "p", EndpointID: "active", Role: RoleActive, AuthorityEpoch: 1, MaxBatchItems: zeroBatch, MaxBatchDelayMS: zeroBatch})
 	if err != nil {
 		t.Fatal(err)
 	}

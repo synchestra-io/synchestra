@@ -1,7 +1,7 @@
 package agentstore
 
 // Features implemented: state-store, agent-coordination
-// Features depended on:  state-store/topology
+// Features depended on:  state-store/topology, state-store/journal-batching
 
 import (
 	"context"
@@ -67,6 +67,7 @@ func TestHealthReportReflectsConfiguredEndpoint(t *testing.T) {
 	// MemoryJournal always starts RoleActive at the given epoch.
 	journal, err := replication.NewMemoryJournal(replication.MemoryJournalOptions{
 		ProjectID: "p", EndpointID: "sqlite-active", Role: replication.RoleActive, AuthorityEpoch: 1,
+		MaxBatchItems: zeroBatch, MaxBatchDelayMS: zeroBatch,
 	})
 	if err != nil {
 		t.Fatalf("NewMemoryJournal: %v", err)

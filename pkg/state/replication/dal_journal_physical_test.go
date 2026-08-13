@@ -1,6 +1,6 @@
 package replication
 
-// Features implemented: state-store/topology, state-store/backends/git, state-store/backends/sqlite, agent-coordination
+// Features implemented: state-store/topology, state-store/backends/git, state-store/backends/sqlite, agent-coordination, state-store/journal-batching
 
 import (
 	"context"
@@ -243,7 +243,7 @@ func TestGitPushJournal_ReplicaIngestIsRemoteDurableAndAuthorityAppendIsFenced(t
 	if err != nil {
 		t.Fatal(err)
 	}
-	freshJournal, err := NewDALJournal(freshDB, DALJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: "git-mirror", Role: RoleReplica, AuthorityEpoch: 1, ReplicaIDs: []string{"git-mirror"}})
+	freshJournal, err := NewDALJournal(freshDB, DALJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: "git-mirror", Role: RoleReplica, AuthorityEpoch: 1, ReplicaIDs: []string{"git-mirror"}, MaxBatchItems: zeroBatch, MaxBatchDelayMS: zeroBatch})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -280,7 +280,7 @@ func TestDALJournal_SQLiteRollsBackDomainJournalAndOutboxTogether(t *testing.T) 
 	ctx := context.Background()
 	_, sqliteJournal := newSQLiteJournal(t, []string{"git-mirror"})
 	failing := failAfterSet{DB: sqliteJournal.db, failOn: 2}
-	journal, err := NewDALJournal(&failing, DALJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: "sqlite-active", Role: RoleActive, AuthorityEpoch: 1, ReplicaIDs: []string{"git-mirror"}})
+	journal, err := NewDALJournal(&failing, DALJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: "sqlite-active", Role: RoleActive, AuthorityEpoch: 1, ReplicaIDs: []string{"git-mirror"}, MaxBatchItems: zeroBatch, MaxBatchDelayMS: zeroBatch})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -354,7 +354,7 @@ func TestGitPushJournal_BareOriginReceiptAndFreshCloneParity(t *testing.T) {
 	gitCommand(t, root, "add", "-A")
 	gitCommand(t, root, "commit", "-m", "journal schema")
 	gitCommand(t, root, "push", "origin", "HEAD:refs/heads/main")
-	local, err := NewDALJournal(database, DALJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: "git-active", Role: RoleActive, AuthorityEpoch: 1, CommitMessage: "synchestra state"})
+	local, err := NewDALJournal(database, DALJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: "git-active", Role: RoleActive, AuthorityEpoch: 1, CommitMessage: "synchestra state", MaxBatchItems: zeroBatch, MaxBatchDelayMS: zeroBatch})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -443,7 +443,7 @@ func TestGitPushJournal_BareOriginReceiptAndFreshCloneParity(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	freshJournal, err := NewDALJournal(freshDB, DALJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: "git-mirror", Role: RoleReplica, AuthorityEpoch: 1})
+	freshJournal, err := NewDALJournal(freshDB, DALJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: "git-mirror", Role: RoleReplica, AuthorityEpoch: 1, MaxBatchItems: zeroBatch, MaxBatchDelayMS: zeroBatch})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -499,6 +499,17 @@ func newGitJournal(t *testing.T, replicaIDs []string) (string, *DALJournal) {
 
 func newGitJournalWithRole(t *testing.T, replicaIDs []string, role Role, endpointID string) (string, *DALJournal) {
 	t.Helper()
+	return newGitJournalWithOptions(t, DALJournalOptions{EndpointID: endpointID, Role: role, ReplicaIDs: replicaIDs, CommitMessage: "synchestra state", MaxBatchItems: zeroBatch, MaxBatchDelayMS: zeroBatch})
+}
+
+// newGitJournalWithOptions is the batching-tests' entry point: opts is used
+// almost verbatim (only ProjectID/AuthorityEpoch are defaulted when zero),
+// so a caller can set MaxBatchItems/MaxBatchDelayMS explicitly to exercise
+// group-commit batching against a real Git/inGitDB backend
+// (state-store/journal-batching) rather than going through
+// newGitJournalWithRole's fixed zeroBatch default.
+func newGitJournalWithOptions(t *testing.T, opts DALJournalOptions) (string, *DALJournal) {
+	t.Helper()
 	root := t.TempDir()
 	gitInit(t, root)
 	database, err := dalgo2ingitdb.NewDatabase(root, validator.NewCollectionsReader())
@@ -510,7 +521,26 @@ func newGitJournalWithRole(t *testing.T, replicaIDs []string, role Role, endpoin
 	}
 	gitCommand(t, root, "add", "-A")
 	gitCommand(t, root, "commit", "-m", "journal schema")
-	journal, err := NewDALJournal(database, DALJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: endpointID, Role: role, AuthorityEpoch: 1, ReplicaIDs: replicaIDs, CommitMessage: "synchestra state"})
+	if opts.ProjectID == "" {
+		opts.ProjectID = "github.com/fair-split/relay"
+	}
+	if opts.EndpointID == "" {
+		opts.EndpointID = "git-active"
+	}
+	if opts.Role == "" {
+		opts.Role = RoleActive
+	}
+	if opts.AuthorityEpoch == 0 {
+		opts.AuthorityEpoch = 1
+	}
+	if opts.CommitMessage == "" {
+		// dalgo2ingitdb only creates a Git commit for a transaction carrying
+		// dal.TxWithMessage (see DALJournal.append/commitBatch, which add it
+		// only when j.message != ""); without this default every write here
+		// would silently stage without ever committing.
+		opts.CommitMessage = "synchestra state"
+	}
+	journal, err := NewDALJournal(database, opts)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -540,7 +570,7 @@ func newSQLiteJournalAt(t *testing.T, path string, replicaIDs []string, role Rol
 	if err := EnsureDALJournalSchema(context.Background(), database); err != nil {
 		t.Fatal(err)
 	}
-	journal, err := NewDALJournal(database, DALJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: endpointID, Role: role, AuthorityEpoch: 1, ReplicaIDs: replicaIDs})
+	journal, err := NewDALJournal(database, DALJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: endpointID, Role: role, AuthorityEpoch: 1, ReplicaIDs: replicaIDs, MaxBatchItems: zeroBatch, MaxBatchDelayMS: zeroBatch})
 	if err != nil {
 		t.Fatal(err)
 	}

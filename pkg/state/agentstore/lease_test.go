@@ -1,7 +1,7 @@
 package agentstore
 
 // Features implemented: state-store, agent-coordination
-// Features depended on:  state-store/topology
+// Features depended on:  state-store/topology, state-store/journal-batching
 
 import (
 	"context"
@@ -13,6 +13,17 @@ import (
 	"github.com/synchestra-io/synchestra/pkg/state"
 	"github.com/synchestra-io/synchestra/pkg/state/replication"
 )
+
+// zeroBatch is a shared "disable batching" knob pointer for this package's
+// journal fixtures (state-store/journal-batching). Most of this package's
+// tests append events one at a time and assert on each Append's immediate
+// outcome; without this, the journal's own documented default (100 items /
+// 1000ms, state-store/journal-batching#ac:defaults-are-100-items-1000ms)
+// would make every sequential single Append wait out the full window before
+// returning. Tests that specifically exercise batching (e.g. lease
+// uniqueness under concurrency with batching enabled) construct their own
+// explicit small window instead of using this.
+var zeroBatch = func() *int { v := 0; return &v }()
 
 // tickingClock returns a Now func that advances by one second on every call,
 // starting at base. Deterministic (no wall-clock flakiness) but strictly
@@ -54,6 +65,7 @@ func newTestJournal(t *testing.T, epoch int64, endpointID string) *replication.M
 	t.Helper()
 	journal, err := replication.NewMemoryJournal(replication.MemoryJournalOptions{
 		ProjectID: "github.com/fair-split/relay", EndpointID: endpointID, Role: replication.RoleActive, AuthorityEpoch: epoch,
+		MaxBatchItems: zeroBatch, MaxBatchDelayMS: zeroBatch,
 	})
 	if err != nil {
 		t.Fatalf("NewMemoryJournal: %v", err)
@@ -197,12 +209,14 @@ func TestPromotionFencesFormerActiveStoreOnNextWrite(t *testing.T) {
 	const projectID = "github.com/fair-split/relay"
 	activeJournal, err := replication.NewMemoryJournal(replication.MemoryJournalOptions{
 		ProjectID: projectID, EndpointID: "old-active", Role: replication.RoleActive, AuthorityEpoch: 1,
+		MaxBatchItems: zeroBatch, MaxBatchDelayMS: zeroBatch,
 	})
 	if err != nil {
 		t.Fatalf("NewMemoryJournal(active): %v", err)
 	}
 	candidateJournal, err := replication.NewMemoryJournal(replication.MemoryJournalOptions{
 		ProjectID: projectID, EndpointID: "new-active", Role: replication.RoleReplica, AuthorityEpoch: 1,
+		MaxBatchItems: zeroBatch, MaxBatchDelayMS: zeroBatch,
 	})
 	if err != nil {
 		t.Fatalf("NewMemoryJournal(candidate): %v", err)

@@ -1,7 +1,7 @@
 package replication
 
 // Features implemented: state-store/backends/git, state-store/topology/offline-fallback
-// Features depended on:  state-store/topology
+// Features depended on:  state-store/topology, state-store/journal-batching
 
 import (
 	"context"
@@ -54,7 +54,7 @@ func newGitDurabilityFixtureWithRole(t *testing.T, role Role, endpointID string,
 	gitCommand(t, root, "add", "-A")
 	gitCommand(t, root, "commit", "-m", "journal schema")
 	gitCommand(t, root, "push", "origin", "HEAD:refs/heads/main")
-	journal, err := NewDALJournal(database, DALJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: endpointID, Role: role, AuthorityEpoch: 1, ReplicaIDs: replicaIDs, CommitMessage: "synchestra state"})
+	journal, err := NewDALJournal(database, DALJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: endpointID, Role: role, AuthorityEpoch: 1, ReplicaIDs: replicaIDs, CommitMessage: "synchestra state", MaxBatchItems: zeroBatch, MaxBatchDelayMS: zeroBatch})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -71,7 +71,7 @@ func reopenGitPushJournal(t *testing.T, fixture gitDurabilityFixture) *GitPushJo
 	if err != nil {
 		t.Fatal(err)
 	}
-	journal, err := NewDALJournal(database, DALJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: fixture.endpointID, Role: fixture.role, AuthorityEpoch: 1, ReplicaIDs: fixture.replicaIDs, CommitMessage: "synchestra state"})
+	journal, err := NewDALJournal(database, DALJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: fixture.endpointID, Role: fixture.role, AuthorityEpoch: 1, ReplicaIDs: fixture.replicaIDs, CommitMessage: "synchestra state", MaxBatchItems: zeroBatch, MaxBatchDelayMS: zeroBatch})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -234,7 +234,7 @@ func TestPromoteFencesGitBackedActiveThroughDurablePush(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	freshJournal, err := NewDALJournal(freshDB, DALJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: "git-active", Role: RoleActive, AuthorityEpoch: 1})
+	freshJournal, err := NewDALJournal(freshDB, DALJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: "git-active", Role: RoleActive, AuthorityEpoch: 1, MaxBatchItems: zeroBatch, MaxBatchDelayMS: zeroBatch})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -361,7 +361,7 @@ func TestGitDeliveryResumeAcceptsFetchedRemoteDescendant(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	freshJournal, err := NewDALJournal(freshDB, DALJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: "git-mirror", Role: RoleReplica, AuthorityEpoch: 1})
+	freshJournal, err := NewDALJournal(freshDB, DALJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: "git-mirror", Role: RoleReplica, AuthorityEpoch: 1, MaxBatchItems: zeroBatch, MaxBatchDelayMS: zeroBatch})
 	if err != nil {
 		t.Fatal(err)
 	}

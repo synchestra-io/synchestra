@@ -1,7 +1,7 @@
 package replication
 
 // Features implemented: state-store/topology
-// Features depended on:  state-store/backends/git, state-store/backends/sqlite, agent-coordination
+// Features depended on:  state-store/backends/git, state-store/backends/sqlite, agent-coordination, state-store/journal-batching
 
 import (
 	"context"
@@ -35,11 +35,11 @@ func chainedEvent(t *testing.T, projectID, eventID string, cursor Cursor, previo
 
 func newMemoryPair(t *testing.T, projectID, activeID, candidateID string) (*MemoryJournal, *MemoryJournal) {
 	t.Helper()
-	active, err := NewMemoryJournal(MemoryJournalOptions{ProjectID: projectID, EndpointID: activeID, Role: RoleActive, AuthorityEpoch: 1})
+	active, err := NewMemoryJournal(MemoryJournalOptions{ProjectID: projectID, EndpointID: activeID, Role: RoleActive, AuthorityEpoch: 1, MaxBatchItems: zeroBatch, MaxBatchDelayMS: zeroBatch})
 	if err != nil {
 		t.Fatal(err)
 	}
-	candidate, err := NewMemoryJournal(MemoryJournalOptions{ProjectID: projectID, EndpointID: candidateID, Role: RoleReplica, AuthorityEpoch: 1})
+	candidate, err := NewMemoryJournal(MemoryJournalOptions{ProjectID: projectID, EndpointID: candidateID, Role: RoleReplica, AuthorityEpoch: 1, MaxBatchItems: zeroBatch, MaxBatchDelayMS: zeroBatch})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -430,7 +430,7 @@ func TestPromoteReplicaFanOutFailureIsNonFatal(t *testing.T) {
 
 func mustMemoryReplica(t *testing.T, projectID, endpointID string) *MemoryJournal {
 	t.Helper()
-	j, err := NewMemoryJournal(MemoryJournalOptions{ProjectID: projectID, EndpointID: endpointID, Role: RoleReplica, AuthorityEpoch: 1})
+	j, err := NewMemoryJournal(MemoryJournalOptions{ProjectID: projectID, EndpointID: endpointID, Role: RoleReplica, AuthorityEpoch: 1, MaxBatchItems: zeroBatch, MaxBatchDelayMS: zeroBatch})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -453,11 +453,11 @@ func (a *alwaysFailIngest) IngestReplica(context.Context, Event) error { return 
 // empty) set the candidate was originally constructed with.
 func TestPromoteEstablishesNewActiveReplicaSet(t *testing.T) {
 	ctx := context.Background()
-	active, err := NewMemoryJournal(MemoryJournalOptions{ProjectID: "p", EndpointID: "active", Role: RoleActive, AuthorityEpoch: 1, ReplicaIDs: []string{"candidate"}})
+	active, err := NewMemoryJournal(MemoryJournalOptions{ProjectID: "p", EndpointID: "active", Role: RoleActive, AuthorityEpoch: 1, ReplicaIDs: []string{"candidate"}, MaxBatchItems: zeroBatch, MaxBatchDelayMS: zeroBatch})
 	if err != nil {
 		t.Fatal(err)
 	}
-	candidate, err := NewMemoryJournal(MemoryJournalOptions{ProjectID: "p", EndpointID: "candidate", Role: RoleReplica, AuthorityEpoch: 1})
+	candidate, err := NewMemoryJournal(MemoryJournalOptions{ProjectID: "p", EndpointID: "candidate", Role: RoleReplica, AuthorityEpoch: 1, MaxBatchItems: zeroBatch, MaxBatchDelayMS: zeroBatch})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -504,7 +504,7 @@ func TestPromoteEstablishesNewActiveReplicaSet(t *testing.T) {
 // guard the finding identified), not just silently misbehaving.
 func TestFenceAsReplicaRefusesNonActiveRole(t *testing.T) {
 	ctx := context.Background()
-	replica, err := NewMemoryJournal(MemoryJournalOptions{ProjectID: "p", EndpointID: "already-replica", Role: RoleReplica, AuthorityEpoch: 1})
+	replica, err := NewMemoryJournal(MemoryJournalOptions{ProjectID: "p", EndpointID: "already-replica", Role: RoleReplica, AuthorityEpoch: 1, MaxBatchItems: zeroBatch, MaxBatchDelayMS: zeroBatch})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -522,7 +522,7 @@ func TestPromoteToActiveSentinelErrorsDistinguishBenignFromDangerous(t *testing.
 	checkpoint := chainedEvent(t, "p", "checkpoint", Cursor{2, 1}, "sha256:whatever")
 
 	t.Run("target_is_active_at_a_different_epoch", func(t *testing.T) {
-		active, err := NewMemoryJournal(MemoryJournalOptions{ProjectID: "p", EndpointID: "already-active", Role: RoleActive, AuthorityEpoch: 5})
+		active, err := NewMemoryJournal(MemoryJournalOptions{ProjectID: "p", EndpointID: "already-active", Role: RoleActive, AuthorityEpoch: 5, MaxBatchItems: zeroBatch, MaxBatchDelayMS: zeroBatch})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -537,7 +537,7 @@ func TestPromoteToActiveSentinelErrorsDistinguishBenignFromDangerous(t *testing.
 		// reachable through the public constructor, so exercise the other
 		// documented refusal: a replica whose head does not yet match the
 		// checkpoint (not caught up).
-		replica, err := NewMemoryJournal(MemoryJournalOptions{ProjectID: "p", EndpointID: "not-caught-up", Role: RoleReplica, AuthorityEpoch: 1})
+		replica, err := NewMemoryJournal(MemoryJournalOptions{ProjectID: "p", EndpointID: "not-caught-up", Role: RoleReplica, AuthorityEpoch: 1, MaxBatchItems: zeroBatch, MaxBatchDelayMS: zeroBatch})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -698,15 +698,15 @@ func TestPromoteConcurrentAppendDuringPromotionNeverProducesDualActive(t *testin
 // ever win.
 func TestPromoteConcurrentDoublePromoteExactlyOneCandidateWins(t *testing.T) {
 	ctx := context.Background()
-	active, err := NewMemoryJournal(MemoryJournalOptions{ProjectID: "p", EndpointID: "active", Role: RoleActive, AuthorityEpoch: 1})
+	active, err := NewMemoryJournal(MemoryJournalOptions{ProjectID: "p", EndpointID: "active", Role: RoleActive, AuthorityEpoch: 1, MaxBatchItems: zeroBatch, MaxBatchDelayMS: zeroBatch})
 	if err != nil {
 		t.Fatal(err)
 	}
-	candidateA, err := NewMemoryJournal(MemoryJournalOptions{ProjectID: "p", EndpointID: "candidate-a", Role: RoleReplica, AuthorityEpoch: 1})
+	candidateA, err := NewMemoryJournal(MemoryJournalOptions{ProjectID: "p", EndpointID: "candidate-a", Role: RoleReplica, AuthorityEpoch: 1, MaxBatchItems: zeroBatch, MaxBatchDelayMS: zeroBatch})
 	if err != nil {
 		t.Fatal(err)
 	}
-	candidateB, err := NewMemoryJournal(MemoryJournalOptions{ProjectID: "p", EndpointID: "candidate-b", Role: RoleReplica, AuthorityEpoch: 1})
+	candidateB, err := NewMemoryJournal(MemoryJournalOptions{ProjectID: "p", EndpointID: "candidate-b", Role: RoleReplica, AuthorityEpoch: 1, MaxBatchItems: zeroBatch, MaxBatchDelayMS: zeroBatch})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -815,7 +815,7 @@ func TestPromoteResumesAfterTransientFenceFailureOnRealBackend(t *testing.T) {
 		t.Fatal(err)
 	}
 	failing := &dbFailingFirstN{DB: baseActive.db, remaining: 1}
-	active, err := NewDALJournal(failing, DALJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: "sqlite-active", Role: RoleActive, AuthorityEpoch: 1})
+	active, err := NewDALJournal(failing, DALJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: "sqlite-active", Role: RoleActive, AuthorityEpoch: 1, MaxBatchItems: zeroBatch, MaxBatchDelayMS: zeroBatch})
 	if err != nil {
 		t.Fatal(err)
 	}
