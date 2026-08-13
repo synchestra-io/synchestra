@@ -16,6 +16,7 @@ The default implementation is a git-backed store (`gitstore`) that maps directly
 |---|---|
 | [backends](backends/README.md) | TODO: Add description. |
 | [chat-store](chat-store/README.md) | TODO: Add description. |
+| [journal-batching](journal-batching/README.md) | Group-commit batching for the journal append path: flush at N items or K ms, whichever first; exit flush; durability semantics unchanged. |
 | [project-store](project-store/README.md) | TODO: Add description. |
 | [task-store](task-store/README.md) | TODO: Add description. |
 | [topology](topology/README.md) | TODO: Add description. |

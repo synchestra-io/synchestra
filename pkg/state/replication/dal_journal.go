@@ -12,6 +12,7 @@ import (
 	"io"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/dal-go/dalgo/dal"
 	"github.com/dal-go/dalgo/dbschema"
@@ -37,8 +38,14 @@ type DALJournal struct {
 	message    string
 	projectID  string
 	endpointID string
-	role       Role
-	epoch      int64
+
+	// mu guards role/epoch together. Promote's PromoteToActive/FenceAsReplica
+	// hold it for the whole checkpoint-then-transition sequence so a
+	// concurrent Append/IngestReplica never observes the new epoch paired
+	// with the old role or vice versa.
+	mu    sync.RWMutex
+	role  Role
+	epoch int64
 }
 
 // DALJournalOptions configures the durable outbox. CommitMessage is passed to
@@ -105,7 +112,59 @@ func EnsureDALJournalSchema(ctx context.Context, db dal.DB) error {
 	return nil
 }
 
+// roleEpoch returns a consistent snapshot of the endpoint's local role and
+// authority epoch. See the DALJournal.mu doc comment for why Append and
+// IngestReplica must read both fields together.
+func (j *DALJournal) roleEpoch() (Role, int64) {
+	j.mu.RLock()
+	defer j.mu.RUnlock()
+	return j.role, j.epoch
+}
+
+// EndpointID and RoleEpoch expose the fields PromotableJournal needs; they
+// are otherwise unexported so nothing outside promotion.go's fencing seam can
+// read or race the role/epoch pair casually.
+func (j *DALJournal) EndpointID() string       { return j.endpointID }
+func (j *DALJournal) RoleEpoch() (Role, int64) { return j.roleEpoch() }
+
+// HeadEvent returns the full latest durable event, not just its cursor and
+// hash. Promote's resumable-fence detection (promotion.go's ensureFenced)
+// inspects HeadEvent's Kind/IdempotencyKey/Payload to recognize a checkpoint
+// a previous, partial Promote call already left durably in place, rather
+// than re-fencing or refusing outright.
+func (j *DALJournal) HeadEvent(ctx context.Context) (Event, bool, error) {
+	head, _, err := j.Head(ctx)
+	if err != nil {
+		return Event{}, false, err
+	}
+	if head.IsZero() {
+		return Event{}, false, nil
+	}
+	events, err := j.After(ctx, Cursor{Epoch: head.Epoch, Sequence: head.Sequence - 1})
+	if err != nil {
+		return Event{}, false, err
+	}
+	if len(events) == 0 {
+		return Event{}, false, fmt.Errorf("replication: head cursor %v has no matching event", head)
+	}
+	return events[len(events)-1], true, nil
+}
+
+// Append and IngestReplica hold j.mu for the role/epoch precondition check
+// AND the entire underlying append transaction, not just the check. This is
+// what closes the promotion race that used to let a concurrent Append slip
+// between FenceAsReplica's precondition check and its durable write: once
+// FenceAsReplica (or PromoteToActive) requests the exclusive lock, Go's
+// sync.RWMutex blocks any new Append/IngestReplica from starting until the
+// fence/promotion completes, and any Append that already holds the read lock
+// finishes (succeeding or failing on its own) before the fence can proceed.
+// Every write therefore resolves to exactly one of "completed before the
+// role/epoch transition" or "observed the new role/epoch and failed here" --
+// never a raw checksum-chain/sequence-gap error that hides a role transition
+// as its real cause.
 func (j *DALJournal) Append(ctx context.Context, event Event) error {
+	j.mu.RLock()
+	defer j.mu.RUnlock()
 	if j.role != RoleActive || event.Cursor.Epoch != j.epoch {
 		return &RoleFenceError{EndpointID: j.endpointID, Role: j.role, AuthorityEpoch: j.epoch, EventEpoch: event.Cursor.Epoch}
 	}
@@ -113,6 +172,8 @@ func (j *DALJournal) Append(ctx context.Context, event Event) error {
 }
 
 func (j *DALJournal) IngestReplica(ctx context.Context, event Event) error {
+	j.mu.RLock()
+	defer j.mu.RUnlock()
 	if j.role != RoleReplica {
 		return &RoleFenceError{EndpointID: j.endpointID, Role: j.role, AuthorityEpoch: j.epoch, EventEpoch: event.Cursor.Epoch}
 	}
@@ -189,6 +250,55 @@ func (j *DALJournal) After(ctx context.Context, cursor Cursor) ([]Event, error) 
 
 func (j *DALJournal) Head(ctx context.Context) (Cursor, string, error) {
 	return loadHead(ctx, j.db, j.projectID)
+}
+
+// PendingOutbox returns replicaID's durable outbox rows for this endpoint's
+// project, ordered by cursor. Every row was written in the same transaction
+// as the domain message, journal event, and head (see append above); nothing
+// removes a row except AckOutbox, so this is always the exact undelivered
+// tail regardless of which endpoint or process last drained it.
+func (j *DALJournal) PendingOutbox(ctx context.Context, replicaID string) ([]Event, error) {
+	if strings.TrimSpace(replicaID) == "" {
+		return nil, fmt.Errorf("replication: outbox replica id is required")
+	}
+	return loadOutboxEvents(ctx, j.db, j.projectID, replicaID)
+}
+
+// AckOutbox deletes replicaID's durable outbox rows for eventIDs, all in one
+// transaction (DrainOutbox batches every ack from one drain into a single
+// call instead of one transaction per event). Delete is a documented no-op
+// on both DAL adapters this package targets — dalgo2sql issues
+// "DELETE ... WHERE id = ?" (zero rows affected is not an error) and
+// dalgo2ingitdb explicitly treats a missing record as already-deleted — so
+// acknowledging a row that is already gone (a second drain worker raced
+// ahead, or a prior crash landed after this exact delete had already
+// committed) is always safe and never surfaces an error to the caller. A
+// zero-length eventIDs call is a no-op that does not open a transaction.
+func (j *DALJournal) AckOutbox(ctx context.Context, replicaID string, eventIDs ...string) error {
+	if strings.TrimSpace(replicaID) == "" {
+		return fmt.Errorf("replication: outbox ack requires a replica id")
+	}
+	if len(eventIDs) == 0 {
+		return nil
+	}
+	for _, eventID := range eventIDs {
+		if strings.TrimSpace(eventID) == "" {
+			return fmt.Errorf("replication: outbox ack requires a non-blank event id")
+		}
+	}
+	options := []dal.TransactionOption{}
+	if j.message != "" {
+		options = append(options, dal.TxWithMessage(fmt.Sprintf("%s: ack outbox %s/%d event(s)", j.message, replicaID, len(eventIDs))))
+	}
+	return j.db.RunReadwriteTransaction(ctx, func(ctx context.Context, tx dal.ReadwriteTransaction) error {
+		for _, eventID := range eventIDs {
+			key := record.NewKeyWithID(outboxCollection, outboxKey(j.projectID, replicaID, eventID))
+			if err := tx.Delete(ctx, key); err != nil {
+				return err
+			}
+		}
+		return nil
+	}, options...)
 }
 
 func validateNext(head Cursor, headHash string, event Event) error {
@@ -271,15 +381,47 @@ func loadIdempotencyKey(ctx context.Context, executor queryExecutor, projectID, 
 	return "", false, nil
 }
 
+// keyPart base64url-encodes an arbitrary ID segment for use inside a
+// composite record key. base64.RawURLEncoding's alphabet includes '-' and
+// '_', so any delimiter used to join segments MUST lie outside that alphabet
+// -- see keySeparator.
 func keyPart(value string) string { return base64.RawURLEncoding.EncodeToString([]byte(value)) }
 
+// keySeparator joins key segments. It is deliberately '.', which never
+// appears in base64.RawURLEncoding output (alphabet: A-Z a-z 0-9 - _). Using
+// a separator drawn from the SAME alphabet as keyPart's output (the original
+// "--replica-"/"--event-" text separators both included '-', which the
+// alphabet also produces) let a crafted ID collide with a delimiter and make
+// one replica's outbox PREFIX a literal prefix of ANOTHER replica's rows --
+// e.g. replica ID "abc" (keyPart "YWJj") vs. a replica ID X such that
+// keyPart(X) == "YWJj--event-" (X = base64url-decode("YWJj--event-")): with
+// the OLD text separators, outboxKeyPrefix(project, "abc") (which ends in
+// "...replica-YWJj--event-") was byte-for-byte a prefix of every
+// outboxKey(project, X, eventID) (which starts
+// "...replica-YWJj--event---event-..."), so scanning for "abc"'s rows would
+// also match every row actually queued for X. Because keySeparator can never
+// occur inside a keyPart output, that construction is now structurally
+// impossible: splitting any generated key on keySeparator boundaries always
+// recovers the exact same segments it was built from. See
+// TestOutboxKeyPrefixDoesNotCollideAcrossReplicas for the reproduction.
+const keySeparator = "."
+
 func eventKey(projectID, eventID string) string {
-	return "project-" + keyPart(projectID) + "--event-" + keyPart(eventID)
+	return "project" + keySeparator + keyPart(projectID) + keySeparator + "event" + keySeparator + keyPart(eventID)
+}
+
+// outboxKeyPrefix identifies every outbox row queued for one replica,
+// regardless of event. loadOutboxEvents filters the outbox scan against it;
+// outboxKey appends the specific event segment used by Set/Delete.
+func outboxKeyPrefix(projectID, replicaID string) string {
+	return "project" + keySeparator + keyPart(projectID) + keySeparator + "replica" + keySeparator + keyPart(replicaID) + keySeparator + "event" + keySeparator
 }
 func outboxKey(projectID, replicaID, eventID string) string {
-	return "project-" + keyPart(projectID) + "--replica-" + keyPart(replicaID) + "--event-" + keyPart(eventID)
+	return outboxKeyPrefix(projectID, replicaID) + keyPart(eventID)
 }
-func headKey(projectID string) string { return "project-" + keyPart(projectID) + "--head" }
+func headKey(projectID string) string {
+	return "project" + keySeparator + keyPart(projectID) + keySeparator + "head"
+}
 
 func loadCollection(ctx context.Context, executor queryExecutor, collection string) ([]Event, error) {
 	encoded, err := loadEncodedCollection(ctx, executor, collection)
@@ -328,4 +470,62 @@ func loadEncodedCollection(ctx context.Context, executor queryExecutor, collecti
 		encodedValues = append(encodedValues, encoded)
 	}
 	return encodedValues, nil
+}
+
+// loadOutboxEvents scans the outbox collection for one replica's durable
+// delivery rows. It cannot reuse loadEncodedCollection/loadCollection as-is:
+// the stored event JSON carries no replica ID (the same event fans out to
+// many replicas' keys), so filtering needs each record's key, not just its
+// data.
+func loadOutboxEvents(ctx context.Context, executor queryExecutor, projectID, replicaID string) ([]Event, error) {
+	ref := dal.NewRootCollectionRef(outboxCollection, "")
+	query := dal.NewQueryBuilder(dal.From(ref)).SelectIntoRecordset()
+	reader, err := executor.ExecuteQueryToRecordsReader(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("replication: query %s: %w", outboxCollection, err)
+	}
+	defer func() { _ = reader.Close() }()
+	prefix := outboxKeyPrefix(projectID, replicaID)
+	var events []Event
+	for {
+		rec, readErr := reader.Next()
+		if errors.Is(readErr, io.EOF) || errors.Is(readErr, dal.ErrNoMoreRecords) {
+			break
+		}
+		if readErr != nil {
+			return nil, fmt.Errorf("replication: read %s: %w", outboxCollection, readErr)
+		}
+		data, ok := rec.Data().(map[string]any)
+		if !ok {
+			return nil, fmt.Errorf("replication: %s record %v is not object data", outboxCollection, rec.Key().ID)
+		}
+		// Workaround for dal-go/dalgo2sql query reader not populating
+		// Key().ID — remove when fixed upstream:
+		// https://github.com/dal-go/dalgo2sql/issues/168. dalgo2ingitdb's
+		// query reader returns the record ID on Key().ID; dalgo2sql's
+		// returns "" there and puts the selected id column into
+		// Data()["id"] instead. Recognize whichever the adapter populated
+		// rather than assuming one shape.
+		id, ok := rec.Key().ID.(string)
+		if !ok || id == "" {
+			id, ok = data["id"].(string)
+		}
+		if !ok || !strings.HasPrefix(id, prefix) {
+			continue
+		}
+		encoded, ok := data["event_json"].(string)
+		if !ok {
+			return nil, fmt.Errorf("replication: %s record %v has no event_json", outboxCollection, rec.Key().ID)
+		}
+		var event Event
+		if err := json.Unmarshal([]byte(encoded), &event); err != nil {
+			return nil, fmt.Errorf("replication: decode %s: %w", outboxCollection, err)
+		}
+		if err := event.Verify(); err != nil {
+			return nil, err
+		}
+		events = append(events, event)
+	}
+	SortEvents(events)
+	return events, nil
 }

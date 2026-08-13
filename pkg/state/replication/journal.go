@@ -6,6 +6,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
+	"strings"
 	"sync"
 	"time"
 )
@@ -21,7 +23,15 @@ var (
 )
 
 // RoleFenceError carries the evidence needed to diagnose a split-brain write
-// attempt without granting a replica an authority mutation seam.
+// attempt without granting a replica an authority mutation seam. Both
+// DALJournal and MemoryJournal hold their role/epoch lock for the entire
+// append transaction (not just the precondition check), so a write that
+// races a concurrent promotion always resolves to exactly one of: it
+// completes before the promotion's fence commits, or it observes the new
+// role/epoch and fails here -- it can never fall through to a raw
+// checksum-chain or sequence-gap error that would hide the role transition
+// that actually explains the failure (see journal.go/dal_journal.go's mu
+// doc comments and promotion.go's fence-first design).
 type RoleFenceError struct {
 	EndpointID     string
 	Role           Role
@@ -52,20 +62,89 @@ type ReplicaIngestor interface {
 	IngestReplica(context.Context, Event) error
 }
 
+// PromotableJournal is the fencing/promotion seam Promote (promotion.go)
+// operates over. It lets Promote work uniformly across *DALJournal (local
+// role/epoch plus a DALgo transaction), *GitPushJournal (composes the same
+// local write with durable CAS push, so a Git-backed endpoint's checkpoint is
+// never stranded locally -- see git_push_journal.go), and *MemoryJournal (a
+// fast harness for concurrency/-race tests). It is deliberately not embedded
+// in Journal/ReplicaIngestor: ordinary replication code has no business
+// fencing or promoting an endpoint.
+type PromotableJournal interface {
+	Journal
+	ReplicaIngestor
+	// EndpointID identifies this endpoint for fencing evidence, promotion
+	// resume detection, and PromotionResult.
+	EndpointID() string
+	// RoleEpoch returns a consistent snapshot of this endpoint's local role
+	// and authority epoch.
+	RoleEpoch() (Role, int64)
+	// HeadEvent returns the full latest durable event (not just cursor and
+	// hash). ok is false for an empty journal. Promote's resumable-fence
+	// detection inspects this to recognize a checkpoint a previous, partial
+	// Promote call already left durably in place.
+	HeadEvent(ctx context.Context) (Event, bool, error)
+	// FenceAsReplica durably records the one promotion checkpoint event as
+	// this endpoint's own next event -- chaining it onto THIS endpoint's own
+	// current head, computed fresh inside the same locked/transactional scope
+	// used to flip role/epoch, never from a snapshot read before that lock --
+	// then downgrades this endpoint from active to replica. See
+	// promotion.go's package doc comment for the full fence-first sequence
+	// and its resumability contract.
+	FenceAsReplica(ctx context.Context, request PromotionRequest, candidateEndpointID string) (Event, error)
+	// PromoteToActive verifies checkpoint is already this endpoint's current
+	// head (Promote's catch-up step establishes that before ever calling
+	// this), sets this endpoint's replica set to replicaIDs, and flips this
+	// endpoint from replica to active. It never appends the checkpoint
+	// itself -- by the time it is called, ordinary replication (Replicate/
+	// DrainOutbox/IngestReplica) already delivered it through the normal
+	// idempotent seam.
+	PromoteToActive(ctx context.Context, checkpoint Event, replicaIDs []string) error
+}
+
 // ReplicaHealth makes lag or a failed replication visible rather than silently
 // presenting a mirror as fresh.
 type ReplicaHealth struct {
 	EndpointID string
 	Cursor     Cursor
 	EventLag   int64
-	LastOK     time.Time
-	LastError  string
+	// LastOK is stamped via time.Now().UTC(), deliberately: Replicate/
+	// DrainOutbox/Promote's fan-out run across process and machine
+	// boundaries, so a location-independent wall-clock timestamp is what
+	// makes health reports comparable/loggable across them. Time.UTC()
+	// documented-ly strips the monotonic clock reading a bare time.Now()
+	// carries, which is fine here — LastOK is a health-reporting value for
+	// display/comparison, never used for in-process Since()-based duration
+	// math that would need the monotonic reading.
+	LastOK    time.Time
+	LastError string
+}
+
+// aheadOrDivergedError is the cursor/checksum comparison shared by Replicate
+// (which otherwise accepts a downstream that simply lags) and Promote's
+// evaluateConvergence (which refuses lag too): a downstream ahead of its
+// source is always invalid, and a downstream at the same cursor with a
+// different checksum is always a diverged chain. Keeping this one comparison
+// in one place means the two call sites can never quietly disagree about what
+// "ahead" or "diverged" means.
+func aheadOrDivergedError(downstream Cursor, downstreamHash string, source Cursor, sourceHash string) error {
+	switch {
+	case compareCursor(downstream, source) > 0:
+		return fmt.Errorf("%w: %v is ahead of %v", ErrReplicaAhead, downstream, source)
+	case compareCursor(downstream, source) == 0 && !downstream.IsZero() && downstreamHash != sourceHash:
+		return fmt.Errorf("%w at cursor %v", ErrDiverged, downstream)
+	default:
+		return nil
+	}
 }
 
 // Replicate copies all contiguous events after the replica cursor. The source
 // stays authoritative; partial delivery remains observable on the replica and
 // can resume safely because Append is idempotent.
 func Replicate(ctx context.Context, source, replica Journal, endpointID string) (ReplicaHealth, error) {
+	if source == nil || replica == nil {
+		return ReplicaHealth{EndpointID: endpointID}, fmt.Errorf("replication: replicate needs a source and a replica")
+	}
 	head, sourceHash, err := source.Head(ctx)
 	if err != nil {
 		return ReplicaHealth{EndpointID: endpointID, LastError: err.Error()}, err
@@ -74,32 +153,41 @@ func Replicate(ctx context.Context, source, replica Journal, endpointID string) 
 	if err != nil {
 		return ReplicaHealth{EndpointID: endpointID, LastError: err.Error()}, err
 	}
-	if compareCursor(cursor, head) > 0 {
-		err := fmt.Errorf("%w: replica %v source %v", ErrReplicaAhead, cursor, head)
-		return ReplicaHealth{EndpointID: endpointID, Cursor: cursor, LastError: err.Error()}, err
-	}
-	if cursor == head && !cursor.IsZero() && replicaHash != sourceHash {
-		err := fmt.Errorf("%w at cursor %v", ErrDiverged, cursor)
+	if err := aheadOrDivergedError(cursor, replicaHash, head, sourceHash); err != nil {
 		return ReplicaHealth{EndpointID: endpointID, Cursor: cursor, LastError: err.Error()}, err
 	}
 	events, err := source.After(ctx, cursor)
 	if err != nil {
 		return ReplicaHealth{EndpointID: endpointID, Cursor: cursor, LastError: err.Error()}, err
 	}
-	pending := int64(len(events))
 	ingestor, ok := replica.(ReplicaIngestor)
 	if !ok {
 		err := fmt.Errorf("replication: endpoint %q has no replica-ingest seam", endpointID)
 		return ReplicaHealth{EndpointID: endpointID, Cursor: cursor, EventLag: int64(len(events)), LastError: err.Error()}, err
 	}
+	health, _, err := ingestEvents(ctx, ingestor, endpointID, cursor, events)
+	return health, err
+}
+
+// ingestEvents applies events (already known to be the caller's exact
+// contiguous catch-up set) to ingestor one at a time via the same idempotent
+// ReplicaIngestor seam, updating cursor/lag as it goes and collecting the
+// event IDs it successfully applied before any failure. Replicate and
+// DrainOutbox share this one loop so their health bookkeeping can never
+// drift apart; DrainOutbox additionally uses the returned applied IDs to
+// batch its outbox ack into one call per drain.
+func ingestEvents(ctx context.Context, ingestor ReplicaIngestor, endpointID string, cursor Cursor, events []Event) (ReplicaHealth, []string, error) {
+	remaining := int64(len(events))
+	applied := make([]string, 0, len(events))
 	for _, event := range events {
 		if err := ingestor.IngestReplica(ctx, event); err != nil {
-			return ReplicaHealth{EndpointID: endpointID, Cursor: cursor, EventLag: pending, LastError: err.Error()}, err
+			return ReplicaHealth{EndpointID: endpointID, Cursor: cursor, EventLag: remaining, LastError: err.Error()}, applied, err
 		}
+		applied = append(applied, event.EventID)
 		cursor = event.Cursor
-		pending--
+		remaining--
 	}
-	return ReplicaHealth{EndpointID: endpointID, Cursor: cursor, EventLag: pending, LastOK: time.Now().UTC()}, nil
+	return ReplicaHealth{EndpointID: endpointID, Cursor: cursor, EventLag: remaining, LastOK: time.Now().UTC()}, applied, nil
 }
 
 func compareCursor(a, b Cursor) int {
@@ -118,36 +206,242 @@ func compareCursor(a, b Cursor) int {
 	return 0
 }
 
-// MemoryJournal is a strict conformance harness implementation. It is not a
-// production backend: production Git and SQLite adapters must satisfy the
-// Journal contract using inGitDB/DALgo respectively.
-type MemoryJournal struct {
-	mu       sync.Mutex
-	events   []Event
-	byID     map[string]Event
-	byKey    map[string]string
-	head     Cursor
-	headHash string
+// validatedReplicaIDs trims, sorts, and rejects blank or duplicate replica
+// IDs. It is shared by NewDALJournal/NewMemoryJournal (initial construction)
+// and PromoteToActive (establishing the newly-active endpoint's replica set,
+// state-store/topology#ac:promotion-fences-former-active's stale-fan-out
+// fix) so both paths enforce the exact same topology hygiene.
+func validatedReplicaIDs(replicaIDs []string) ([]string, error) {
+	ids := append([]string(nil), replicaIDs...)
+	sort.Strings(ids)
+	for i, id := range ids {
+		if strings.TrimSpace(id) == "" {
+			return nil, fmt.Errorf("replication: replica id is required")
+		}
+		if i > 0 && ids[i-1] == id {
+			return nil, fmt.Errorf("replication: duplicate replica id %q", id)
+		}
+	}
+	return ids, nil
 }
 
-func NewMemoryJournal() *MemoryJournal {
-	return &MemoryJournal{byID: make(map[string]Event), byKey: make(map[string]string)}
+// MemoryJournal is a strict conformance harness implementation. It is not a
+// production backend: production Git and SQLite adapters must satisfy the
+// Journal contract using inGitDB/DALgo respectively. It mirrors DALJournal's
+// project scoping, role/epoch fencing (including fence-first promotion), and
+// outbox validation so fast in-memory tests -- including -race concurrency
+// tests that would be impractical against a real DB/Git backend -- exercise
+// the same invariants the physical adapters do.
+type MemoryJournal struct {
+	mu         sync.Mutex
+	projectID  string
+	endpointID string
+	role       Role
+	epoch      int64
+	events     []Event
+	byID       map[string]Event
+	byKey      map[string]string
+	head       Cursor
+	headHash   string
+	replicaIDs []string
+	// outbox mirrors DALJournal's durable per-replica outbox rows in memory:
+	// one pending entry per (replicaID, eventID) written by the same append
+	// that commits the event, removed only by AckOutbox. It exists so
+	// DrainOutbox has a fast, deterministic OutboxSource for conformance and
+	// concurrency tests that do not need a real SQLite/Git backend.
+	outbox map[string]map[string]Event
+}
+
+var (
+	_ OutboxSource      = (*MemoryJournal)(nil)
+	_ OutboxSource      = (*DALJournal)(nil)
+	_ PromotableJournal = (*MemoryJournal)(nil)
+	_ PromotableJournal = (*DALJournal)(nil)
+	_ PromotableJournal = (*GitPushJournal)(nil)
+)
+
+// MemoryJournalOptions configures a harness journal with the same required
+// fields DALJournalOptions requires, so both types validate identically.
+type MemoryJournalOptions struct {
+	ProjectID      string
+	EndpointID     string
+	Role           Role
+	AuthorityEpoch int64
+	ReplicaIDs     []string
+}
+
+// NewMemoryJournal builds a harness journal, validating exactly the fields
+// NewDALJournal validates (non-blank project/endpoint ID, a real role, a
+// positive authority epoch, and non-blank/non-duplicate replica IDs) so a
+// test cannot silently construct a journal DALJournal would have refused.
+func NewMemoryJournal(options MemoryJournalOptions) (*MemoryJournal, error) {
+	if strings.TrimSpace(options.ProjectID) == "" {
+		return nil, fmt.Errorf("replication: memory journal project id is required")
+	}
+	if strings.TrimSpace(options.EndpointID) == "" {
+		return nil, fmt.Errorf("replication: memory journal endpoint id is required")
+	}
+	if options.Role != RoleActive && options.Role != RoleReplica {
+		return nil, fmt.Errorf("replication: memory journal endpoint %q has invalid role %q", options.EndpointID, options.Role)
+	}
+	if options.AuthorityEpoch < 1 {
+		return nil, fmt.Errorf("replication: memory journal authority epoch must be positive")
+	}
+	ids, err := validatedReplicaIDs(options.ReplicaIDs)
+	if err != nil {
+		return nil, err
+	}
+	outbox := make(map[string]map[string]Event, len(ids))
+	for _, id := range ids {
+		outbox[id] = make(map[string]Event)
+	}
+	return &MemoryJournal{
+		projectID: options.ProjectID, endpointID: options.EndpointID, role: options.Role, epoch: options.AuthorityEpoch,
+		byID: make(map[string]Event), byKey: make(map[string]string), replicaIDs: ids, outbox: outbox,
+	}, nil
+}
+
+func (j *MemoryJournal) EndpointID() string { return j.endpointID }
+
+func (j *MemoryJournal) RoleEpoch() (Role, int64) {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	return j.role, j.epoch
+}
+
+func (j *MemoryJournal) HeadEvent(_ context.Context) (Event, bool, error) {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	if len(j.events) == 0 {
+		return Event{}, false, nil
+	}
+	return j.events[len(j.events)-1], true, nil
 }
 
 func (j *MemoryJournal) Append(_ context.Context, event Event) error {
-	return j.append(event)
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	if j.role != RoleActive || event.Cursor.Epoch != j.epoch {
+		return &RoleFenceError{EndpointID: j.endpointID, Role: j.role, AuthorityEpoch: j.epoch, EventEpoch: event.Cursor.Epoch}
+	}
+	return j.appendLocked(event)
 }
 
 func (j *MemoryJournal) IngestReplica(_ context.Context, event Event) error {
-	return j.append(event)
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	if j.role != RoleReplica {
+		return &RoleFenceError{EndpointID: j.endpointID, Role: j.role, AuthorityEpoch: j.epoch, EventEpoch: event.Cursor.Epoch}
+	}
+	return j.appendLocked(event)
 }
 
-func (j *MemoryJournal) append(event Event) error {
-	if err := event.Verify(); err != nil {
+// FenceAsReplica is MemoryJournal's parity implementation of the fence-first
+// promotion seam: see PromotableJournal's doc comment and promotion.go for
+// the full contract. Holding j.mu for the entire precondition-check, head-
+// read, and append means a concurrent Append/IngestReplica can never
+// interleave with a fence the way the pre-redesign race allowed.
+func (j *MemoryJournal) FenceAsReplica(_ context.Context, request PromotionRequest, candidateEndpointID string) (Event, error) {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	if j.role != RoleActive {
+		return Event{}, fmt.Errorf("%w: %q has role %q, not active", ErrFenceSourceNotActive, j.endpointID, j.role)
+	}
+	checkpoint, err := buildPromotionCheckpoint(j.projectID, j.endpointID, candidateEndpointID, request, j.headHash, j.epoch+1)
+	if err != nil {
+		return Event{}, err
+	}
+	if err := j.appendLocked(checkpoint); err != nil {
+		return Event{}, err
+	}
+	j.role, j.epoch = RoleReplica, checkpoint.Cursor.Epoch
+	return checkpoint, nil
+}
+
+// PromoteToActive is MemoryJournal's parity implementation; see
+// PromotableJournal's doc comment for the contract.
+func (j *MemoryJournal) PromoteToActive(_ context.Context, checkpoint Event, replicaIDs []string) error {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	if j.role == RoleActive {
+		if j.epoch != checkpoint.Cursor.Epoch {
+			return fmt.Errorf("%w: %q is already active at epoch %d, checkpoint is epoch %d", ErrPromoteTargetWrongEpoch, j.endpointID, j.epoch, checkpoint.Cursor.Epoch)
+		}
+		// Idempotent resume no-op: already promoted for this exact checkpoint.
+	} else {
+		if j.role != RoleReplica {
+			return fmt.Errorf("%w: %q has role %q", ErrPromoteTargetNotReplica, j.endpointID, j.role)
+		}
+		if j.head != checkpoint.Cursor || j.headHash != checkpoint.Checksum {
+			return fmt.Errorf("%w: %q head %v/%s does not match checkpoint %v/%s; catch it up before promoting", ErrPromotionNotConverged, j.endpointID, j.head, j.headHash, checkpoint.Cursor, checkpoint.Checksum)
+		}
+		j.role, j.epoch = RoleActive, checkpoint.Cursor.Epoch
+	}
+	ids, err := validatedReplicaIDs(replicaIDs)
+	if err != nil {
 		return err
+	}
+	j.replicaIDs = ids
+	if j.outbox == nil {
+		j.outbox = make(map[string]map[string]Event, len(ids))
+	}
+	for _, id := range ids {
+		if _, exists := j.outbox[id]; !exists {
+			j.outbox[id] = make(map[string]Event)
+		}
+	}
+	return nil
+}
+
+// PendingOutbox returns replicaID's undelivered rows in cursor order. An
+// unconfigured replicaID simply has no rows, matching DALJournal's behavior
+// of only fanning events out to the replicas it was constructed with.
+func (j *MemoryJournal) PendingOutbox(_ context.Context, replicaID string) ([]Event, error) {
+	if strings.TrimSpace(replicaID) == "" {
+		return nil, fmt.Errorf("replication: outbox replica id is required")
 	}
 	j.mu.Lock()
 	defer j.mu.Unlock()
+	pending := j.outbox[replicaID]
+	result := make([]Event, 0, len(pending))
+	for _, event := range pending {
+		result = append(result, event)
+	}
+	SortEvents(result)
+	return result, nil
+}
+
+// AckOutbox deletes replicaID's rows for eventIDs. Deleting an absent map key
+// is a no-op in Go, so acknowledging an already-gone row (including twice) is
+// always safe. Accepting multiple event IDs lets DrainOutbox batch every ack
+// from one drain into a single call, mirroring DALJournal's one-transaction
+// batched ack.
+func (j *MemoryJournal) AckOutbox(_ context.Context, replicaID string, eventIDs ...string) error {
+	if strings.TrimSpace(replicaID) == "" {
+		return fmt.Errorf("replication: outbox ack requires a replica id")
+	}
+	for _, eventID := range eventIDs {
+		if strings.TrimSpace(eventID) == "" {
+			return fmt.Errorf("replication: outbox ack requires a non-blank event id")
+		}
+	}
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	for _, eventID := range eventIDs {
+		delete(j.outbox[replicaID], eventID)
+	}
+	return nil
+}
+
+// appendLocked assumes j.mu is already held by the caller (Append,
+// IngestReplica, FenceAsReplica).
+func (j *MemoryJournal) appendLocked(event Event) error {
+	if err := event.Verify(); err != nil {
+		return err
+	}
+	if event.ProjectID != j.projectID {
+		return fmt.Errorf("replication: event project %q does not match journal project %q", event.ProjectID, j.projectID)
+	}
 	if existing, exists := j.byID[event.EventID]; exists {
 		if existing.Checksum != event.Checksum {
 			return fmt.Errorf("replication: event id %q reused with different checksum", event.EventID)
@@ -179,6 +473,12 @@ func (j *MemoryJournal) append(event Event) error {
 	j.byID[event.EventID] = event
 	j.byKey[event.IdempotencyKey] = event.EventID
 	j.head, j.headHash = event.Cursor, event.Checksum
+	for _, replicaID := range j.replicaIDs {
+		if j.outbox[replicaID] == nil {
+			j.outbox[replicaID] = make(map[string]Event)
+		}
+		j.outbox[replicaID][event.EventID] = event
+	}
 	return nil
 }
 
