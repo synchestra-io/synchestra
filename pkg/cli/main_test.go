@@ -4,10 +4,29 @@ package cli
 
 import "testing"
 
-func TestRootCmdDoesNotAdvertiseWithdrawnStateStubs(t *testing.T) {
+// TestRootCmdAdvertisesStateWaitButNotTheWithdrawnSyncStubs pins the current
+// "state" command group's real, intentional shape: `synchestra state wait`
+// (state-store/topology's mirror barrier) is real and reachable, while
+// `pull`/`push`/`sync` remain the withdrawn stubs from
+// "fix(state): harden physical journal boundaries" -- unregistered because
+// they print "not implemented yet" and always fail, not because "state" as a
+// whole is off-limits. See pkg/cli/state/state.go's Command() doc comment.
+func TestRootCmdAdvertisesStateWaitButNotTheWithdrawnSyncStubs(t *testing.T) {
 	root := newRootCmd(nil, nil)
-	if found, _, err := root.Find([]string{"state"}); err == nil && found.Name() == "state" {
-		t.Fatal("withdrawn state stubs must not be registered or advertised")
+
+	found, _, err := root.Find([]string{"state", "wait"})
+	if err != nil {
+		t.Fatalf("synchestra state wait: %v", err)
+	}
+	if found.Name() != "wait" {
+		t.Errorf("synchestra state wait resolved to %q", found.Name())
+	}
+
+	for _, stub := range []string{"pull", "push", "sync"} {
+		found, _, err := root.Find([]string{"state", stub})
+		if err == nil && found.Name() == stub {
+			t.Errorf("withdrawn state stub %q must not be registered or advertised", stub)
+		}
 	}
 }
 

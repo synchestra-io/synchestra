@@ -312,6 +312,27 @@ order without duplicate effects.
 **Then** the authority epoch increments, new writes succeed only on the new
 active, and the former active rejects stale-epoch writes after reconnecting.
 
+### AC: checkpoint-restore-joins-as-replica
+
+**Given** a durable point-in-time `Checkpoint` of a journal
+**When** it is replayed into a target endpoint via `Restore`
+**Then** a freshly constructed, empty target becomes a caught-up replica; a
+target already holding events is refused with `ErrRestoreTargetNotEmpty`
+without being touched; and a target mistakenly constructed with the active
+role fails closed with `RoleFenceError` on the very first replayed event,
+never silently accepting a bulk write onto an authority.
+
+### AC: checkpoint-verify-detects-divergence
+
+**Given** a source journal and a second journal being compared
+**When** `VerifyConvergence` runs at a shared cursor (the lower of their two
+current heads when none is given)
+**Then** it reports `Equivalent: true` only when both sides' checksum chains
+actually agree at that cursor, and reports the mismatched per-side hashes as
+`Equivalent: false` when they do not — even when both journals report the
+identical cursor, so convergence is never inferred from matching sequence
+numbers alone.
+
 ### AC: mirror-barrier-proves-git-durability
 
 **Given** SQLite active and a required Git mirror
