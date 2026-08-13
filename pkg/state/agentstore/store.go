@@ -116,6 +116,23 @@ func (s *Store) Cursor() state.CursorStore     { return cursorStore{s} }
 func (s *Store) Lease() state.LeaseStore       { return leaseStore{s} }
 func (s *Store) Health() state.HealthStore     { return healthStore{s} }
 
+// Close flushes any pending group-commit batch on the underlying journal
+// (state-store/journal-batching#ac:close-flushes-pending-batch) via a
+// duck-typed check, mirroring how replication.GitPushJournal.Close passes
+// through to its wrapped Journal: agentstore depends only on the
+// backend-neutral replication.Journal interface, which does not itself
+// declare Close (only BatchedJournal does), so this is how a batching-aware
+// journal's Close is reached without agentstore importing
+// replication.BatchedJournal directly. A Journal without batching support
+// (or with it disabled) has nothing pending, so this is a safe no-op for
+// those. See state.AgentStore.Close's doc comment for the "why" (task-3).
+func (s *Store) Close(ctx context.Context) error {
+	if closer, ok := s.journal.(interface{ Close(context.Context) error }); ok {
+		return closer.Close(ctx)
+	}
+	return nil
+}
+
 // Compile-time interface check.
 var _ state.AgentStore = (*Store)(nil)
 

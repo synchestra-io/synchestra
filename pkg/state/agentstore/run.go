@@ -5,16 +5,20 @@ package agentstore
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
 	"time"
 
 	"github.com/synchestra-io/synchestra/pkg/state"
+	"github.com/synchestra-io/synchestra/pkg/state/replication"
 )
 
-// runStore implements state.RunStore. Like effortStore, runs have no
-// uniqueness precondition, so writes use appendWithRetry directly.
+// runStore implements state.RunStore. Start/Finish/Correct have no
+// uniqueness precondition, so they use appendWithRetry directly. Transition
+// does have a precondition (the current Status must allow the requested
+// move), so it uses snapshot+tryAppendAt like effortStore.Transition.
 type runStore struct{ store *Store }
 
 var _ state.RunStore = runStore{}
@@ -47,11 +51,32 @@ type runCorrectedPayload struct {
 	CorrectedAt     time.Time             `json:"corrected_at"`
 }
 
+// runTransitionedPayload is task-3's audited lifecycle-transition event —
+// see effortTransitionedPayload's sibling doc comment; Run/Effort share one
+// lifecycle vocabulary (lifecycle.go) but each records its own event stream.
+type runTransitionedPayload struct {
+	Schema       string                      `json:"schema"`
+	RunID        string                      `json:"run_id"`
+	From         state.LifecycleStatus       `json:"from"`
+	To           state.LifecycleStatus       `json:"to"`
+	Reason       string                      `json:"reason,omitempty"`
+	Disposition  state.CompletionDisposition `json:"disposition,omitempty"`
+	TransitionAt time.Time                   `json:"transition_at"`
+}
+
 func (s *Store) loadRuns(ctx context.Context) (map[string]state.Run, error) {
-	events, err := s.loadEvents(ctx, KindRunStarted, KindRunFinished, KindRunCorrected)
+	events, err := s.loadEvents(ctx, KindRunStarted, KindRunFinished, KindRunCorrected, KindRunTransitioned)
 	if err != nil {
 		return nil, err
 	}
+	return foldRuns(events)
+}
+
+// foldRuns folds a pre-filtered event slice into the current run-by-ID
+// projection — shared by loadRuns (a fresh journal read) and Transition (an
+// already-snapshotted read pinned to the same observation its append is
+// validated against).
+func foldRuns(events []replication.Event) (map[string]state.Run, error) {
 	runs := make(map[string]state.Run, len(events))
 	for _, event := range events {
 		switch event.Kind {
@@ -64,6 +89,7 @@ func (s *Store) loadRuns(ctx context.Context) (map[string]state.Run, error) {
 				ID: payload.RunID, EffortID: payload.EffortID, AgentFamily: payload.AgentFamily,
 				Model: payload.Model, ModelProvenance: payload.ModelProvenance, Role: payload.Role,
 				ParentRunID: payload.ParentRunID, StartedAt: payload.StartedAt,
+				Status: state.LifecycleStatusActive,
 			}
 		case KindRunFinished:
 			var payload runFinishedPayload
@@ -86,6 +112,22 @@ func (s *Store) loadRuns(ctx context.Context) (map[string]state.Run, error) {
 				run.ModelProvenance = payload.ModelProvenance
 				runs[payload.RunID] = run
 			}
+		case KindRunTransitioned:
+			var payload runTransitionedPayload
+			if err := json.Unmarshal(event.Payload, &payload); err != nil {
+				return nil, fmt.Errorf("agentstore: decode %s: %w", KindRunTransitioned, err)
+			}
+			if run, ok := runs[payload.RunID]; ok {
+				run.Status = payload.To
+				// See effort.go's foldEfforts: preserve a previously
+				// recorded terminal disposition across a later non-terminal
+				// transition (e.g. superseded -> archived) rather than
+				// clobbering it with the zero value.
+				if payload.Disposition != "" {
+					run.Disposition = payload.Disposition
+				}
+				runs[payload.RunID] = run
+			}
 		}
 	}
 	return runs, nil
@@ -103,6 +145,7 @@ func (r runStore) Start(ctx context.Context, params state.RunStartParams) (state
 	run := state.Run{
 		ID: id, EffortID: params.EffortID, AgentFamily: params.AgentFamily, Model: params.Model,
 		ModelProvenance: params.ModelProvenance, Role: params.Role, ParentRunID: params.ParentRunID, StartedAt: now,
+		Status: state.LifecycleStatusActive,
 	}
 	payload := runStartedPayload{
 		Schema: schemaRunStartedV1, RunID: id, EffortID: params.EffortID, AgentFamily: params.AgentFamily,
@@ -179,6 +222,47 @@ func (r runStore) Correct(ctx context.Context, runID string, correction state.Ru
 	run.Model = correction.Model
 	run.ModelProvenance = correction.ModelProvenance
 	return run, nil
+}
+
+// Transition appends a typed, audited lifecycle-transition event (task-3).
+// See effortStore.Transition's doc comment — this is the run-scoped twin.
+func (r runStore) Transition(ctx context.Context, runID string, params state.RunTransitionParams) (state.Run, error) {
+	var lastErr error
+	for attempt := 0; attempt < maxAppendRetries; attempt++ {
+		head, headHash, events, err := r.store.snapshot(ctx, KindRunStarted, KindRunFinished, KindRunCorrected, KindRunTransitioned)
+		if err != nil {
+			return state.Run{}, err
+		}
+		runs, err := foldRuns(events)
+		if err != nil {
+			return state.Run{}, err
+		}
+		run, ok := runs[runID]
+		if !ok {
+			return state.Run{}, fmt.Errorf("agentstore: run %q: %w", runID, state.ErrNotFound)
+		}
+		if err := validateLifecycleTransition("run", runID, run.Status, params.To, params.Disposition); err != nil {
+			return state.Run{}, err
+		}
+		now := r.store.options.Now()
+		payload := runTransitionedPayload{
+			Schema: schemaRunTransitionedV1, RunID: runID, From: run.Status, To: params.To,
+			Reason: params.Reason, Disposition: params.Disposition, TransitionAt: now,
+		}
+		if _, err := r.store.tryAppendAt(ctx, head, headHash, KindRunTransitioned, run.EffortID, payload); err != nil {
+			if errors.Is(err, errSequenceRace) {
+				lastErr = err
+				continue
+			}
+			return state.Run{}, err
+		}
+		run.Status = params.To
+		if params.Disposition != "" {
+			run.Disposition = params.Disposition
+		}
+		return run, nil
+	}
+	return state.Run{}, fmt.Errorf("agentstore: transition run %q exhausted retries: %w", runID, lastErr)
 }
 
 // validateModelProvenance enforces "a model value is never guessed": a

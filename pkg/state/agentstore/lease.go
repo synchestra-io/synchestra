@@ -16,9 +16,9 @@ import (
 )
 
 // leaseStore implements state.LeaseStore. It is the sole uniqueness/fencing
-// primitive in this package: worktreeStore.Claim/Renew/Release (worktree.go)
-// delegate their exclusivity entirely to this type rather than duplicating
-// the check-then-append race handling.
+// primitive in this package: worktreeStore.Claim/Renew/Release/Handoff
+// (worktree.go) delegate their exclusivity entirely to this type rather than
+// duplicating the check-then-append race handling.
 type leaseStore struct{ store *Store }
 
 var _ state.LeaseStore = leaseStore{}
@@ -47,6 +47,42 @@ type leaseReleasedPayload struct {
 	ReleasedAt time.Time `json:"released_at"`
 }
 
+// leaseReclaimedPayload is task-3's TTL/expiry reclaim event
+// (agent-coordination#ac:abandoned-run-is-resumable): a single audited event
+// both invalidates the abandoned lease's fence and grants the new one, so
+// there is no window in which the projection could show the resource as
+// simultaneously free and held (the same "one event per compound state
+// change" shape KindWorktreeReclaimed and KindLeaseTransferred use, and the
+// same reasoning the package README's Open Questions note for why plain
+// Claim already needs no separate transaction primitive here).
+type leaseReclaimedPayload struct {
+	Schema                string    `json:"schema"`
+	LeaseID               string    `json:"lease_id"`
+	Resource              string    `json:"resource"`
+	HolderRunID           string    `json:"holder_run_id"`
+	Epoch                 int64     `json:"authority_epoch"`
+	Token                 string    `json:"fence_token"`
+	AcquiredAt            time.Time `json:"acquired_at"`
+	ExpiresAt             time.Time `json:"expires_at,omitempty"`
+	SupersededLeaseID     string    `json:"superseded_lease_id"`
+	SupersededHolderRunID string    `json:"superseded_holder_run_id"`
+	SupersededExpiredAt   time.Time `json:"superseded_expired_at"`
+}
+
+// leaseTransferredPayload is task-3's voluntary-handoff event: the SAME
+// lease ID moves to a new holder under a freshly minted fence token, unlike
+// Reclaim (which mints a brand new lease ID for an abandoned resource).
+type leaseTransferredPayload struct {
+	Schema          string    `json:"schema"`
+	LeaseID         string    `json:"lease_id"`
+	FromHolderRunID string    `json:"from_holder_run_id"`
+	ToHolderRunID   string    `json:"to_holder_run_id"`
+	Epoch           int64     `json:"authority_epoch"`
+	Token           string    `json:"fence_token"`
+	TransferredAt   time.Time `json:"transferred_at"`
+	ExpiresAt       time.Time `json:"expires_at,omitempty"`
+}
+
 // leaseProjection is the deterministic in-memory fold of every lease event
 // for one project, used both to answer Get/List-shaped reads and to decide
 // whether Acquire may proceed.
@@ -56,8 +92,12 @@ type leaseProjection struct {
 	byResource map[string]string // resource -> lease ID, only while active
 }
 
+// leaseEventKinds is every Kind foldLeaseProjection understands, shared by
+// loadLeaseProjection/loadLeaseSnapshot so the two can never drift apart.
+var leaseEventKinds = []string{KindLeaseAcquired, KindLeaseRenewed, KindLeaseReleased, KindLeaseReclaimed, KindLeaseTransferred}
+
 func (s *Store) loadLeaseProjection(ctx context.Context) (leaseProjection, error) {
-	events, err := s.loadEvents(ctx, KindLeaseAcquired, KindLeaseRenewed, KindLeaseReleased)
+	events, err := s.loadEvents(ctx, leaseEventKinds...)
 	if err != nil {
 		return leaseProjection{}, err
 	}
@@ -69,7 +109,7 @@ func (s *Store) loadLeaseProjection(ctx context.Context) (leaseProjection, error
 // (see Store.snapshot's doc comment for why this closes the TOCTOU gap a
 // plain projection-then-append would leave open).
 func (s *Store) loadLeaseSnapshot(ctx context.Context) (replication.Cursor, string, leaseProjection, error) {
-	head, headHash, events, err := s.snapshot(ctx, KindLeaseAcquired, KindLeaseRenewed, KindLeaseReleased)
+	head, headHash, events, err := s.snapshot(ctx, leaseEventKinds...)
 	if err != nil {
 		return replication.Cursor{}, "", leaseProjection{}, err
 	}
@@ -118,9 +158,50 @@ func foldLeaseProjection(events []replication.Event) (leaseProjection, error) {
 					delete(proj.byResource, lease.Resource)
 				}
 			}
+		case KindLeaseReclaimed:
+			var payload leaseReclaimedPayload
+			if err := json.Unmarshal(event.Payload, &payload); err != nil {
+				return leaseProjection{}, fmt.Errorf("agentstore: decode %s: %w", KindLeaseReclaimed, err)
+			}
+			// Release the superseded (abandoned) lease first...
+			if superseded, ok := proj.byID[payload.SupersededLeaseID]; ok {
+				proj.released[payload.SupersededLeaseID] = true
+				if proj.byResource[superseded.Resource] == payload.SupersededLeaseID {
+					delete(proj.byResource, superseded.Resource)
+				}
+			}
+			// ...then establish the new lease, exactly like Acquired does.
+			lease := state.AuthorityLease{
+				ID: payload.LeaseID, Resource: payload.Resource, HolderRunID: payload.HolderRunID,
+				Fence:      state.LeaseFence{Epoch: payload.Epoch, Token: payload.Token},
+				AcquiredAt: payload.AcquiredAt, RenewedAt: payload.AcquiredAt, ExpiresAt: payload.ExpiresAt,
+			}
+			proj.byID[lease.ID] = lease
+			delete(proj.released, lease.ID)
+			proj.byResource[lease.Resource] = lease.ID
+		case KindLeaseTransferred:
+			var payload leaseTransferredPayload
+			if err := json.Unmarshal(event.Payload, &payload); err != nil {
+				return leaseProjection{}, fmt.Errorf("agentstore: decode %s: %w", KindLeaseTransferred, err)
+			}
+			if lease, ok := proj.byID[payload.LeaseID]; ok {
+				lease.HolderRunID = payload.ToHolderRunID
+				lease.Fence = state.LeaseFence{Epoch: payload.Epoch, Token: payload.Token}
+				lease.RenewedAt = payload.TransferredAt
+				lease.ExpiresAt = payload.ExpiresAt
+				proj.byID[payload.LeaseID] = lease
+			}
 		}
 	}
 	return proj, nil
+}
+
+// leaseExpired reports whether lease's recorded TTL deadline has passed as
+// of now. A zero ExpiresAt (TTL<=0 at Acquire time) never expires, matching
+// pre-task-3 behavior. See LeaseStore.Acquire's doc comment for the
+// wall-clock caveats this basis carries.
+func leaseExpired(lease state.AuthorityLease, now time.Time) bool {
+	return !lease.ExpiresAt.IsZero() && !now.Before(lease.ExpiresAt)
 }
 
 func (l leaseStore) Acquire(ctx context.Context, params state.LeaseAcquireParams) (state.AuthorityLease, error) {
@@ -136,16 +217,42 @@ func (l leaseStore) Acquire(ctx context.Context, params state.LeaseAcquireParams
 		if err != nil {
 			return state.AuthorityLease{}, err
 		}
-		if existingID, held := proj.byResource[params.Resource]; held {
-			existing := proj.byID[existingID]
-			return state.AuthorityLease{}, fmt.Errorf("agentstore: resource %q already leased by run %q: %w", params.Resource, existing.HolderRunID, state.ErrConflict)
-		}
 		now := l.store.options.Now()
-		leaseID := l.store.options.NewID()
 		var expiresAt time.Time
 		if params.TTL > 0 {
 			expiresAt = now.Add(params.TTL)
 		}
+		if existingID, held := proj.byResource[params.Resource]; held {
+			existing := proj.byID[existingID]
+			if !leaseExpired(existing, now) {
+				return state.AuthorityLease{}, fmt.Errorf("agentstore: resource %q already leased by run %q: %w", params.Resource, existing.HolderRunID, state.ErrConflict)
+			}
+			// The current holder's TTL has elapsed and it was never
+			// explicitly released: reclaim it for the new caller
+			// (agent-coordination#ac:abandoned-run-is-resumable). One event
+			// both fences the old holder's token and grants the new lease.
+			leaseID := l.store.options.NewID()
+			lease := state.AuthorityLease{
+				ID: leaseID, Resource: params.Resource, HolderRunID: params.HolderRunID,
+				Fence:      state.LeaseFence{Epoch: l.store.options.AuthorityEpoch, Token: l.store.options.NewID()},
+				AcquiredAt: now, RenewedAt: now, ExpiresAt: expiresAt,
+				Reclaimed: true, SupersededLeaseID: existing.ID,
+			}
+			payload := leaseReclaimedPayload{
+				Schema: schemaLeaseReclaimedV1, LeaseID: lease.ID, Resource: lease.Resource, HolderRunID: lease.HolderRunID,
+				Epoch: lease.Fence.Epoch, Token: lease.Fence.Token, AcquiredAt: now, ExpiresAt: expiresAt,
+				SupersededLeaseID: existing.ID, SupersededHolderRunID: existing.HolderRunID, SupersededExpiredAt: existing.ExpiresAt,
+			}
+			if _, err := l.store.tryAppendAt(ctx, head, headHash, KindLeaseReclaimed, params.Resource, payload); err != nil {
+				if errors.Is(err, errSequenceRace) {
+					lastErr = err
+					continue
+				}
+				return state.AuthorityLease{}, err
+			}
+			return lease, nil
+		}
+		leaseID := l.store.options.NewID()
 		lease := state.AuthorityLease{
 			ID: leaseID, Resource: params.Resource, HolderRunID: params.HolderRunID,
 			Fence:      state.LeaseFence{Epoch: l.store.options.AuthorityEpoch, Token: l.store.options.NewID()},
@@ -230,4 +337,46 @@ func (l leaseStore) Get(ctx context.Context, resource string) (state.AuthorityLe
 		return state.AuthorityLease{}, fmt.Errorf("agentstore: resource %q: %w", resource, state.ErrNotFound)
 	}
 	return proj.byID[leaseID], nil
+}
+
+// Transfer proves the presented fence is still current and moves this SAME
+// lease to toHolderRunID under a freshly minted fence token, in one audited
+// event — the voluntary-handoff counterpart to Acquire's TTL-based reclaim.
+// WorktreeStore.Handoff is built on this.
+func (l leaseStore) Transfer(ctx context.Context, leaseID string, fence state.LeaseFence, toHolderRunID string) (state.AuthorityLease, error) {
+	if strings.TrimSpace(toHolderRunID) == "" {
+		return state.AuthorityLease{}, fmt.Errorf("agentstore: lease transfer needs a target holder run id")
+	}
+	proj, err := l.store.loadLeaseProjection(ctx)
+	if err != nil {
+		return state.AuthorityLease{}, err
+	}
+	lease, ok := proj.byID[leaseID]
+	if !ok {
+		return state.AuthorityLease{}, fmt.Errorf("agentstore: lease %q: %w", leaseID, state.ErrNotFound)
+	}
+	if proj.released[leaseID] {
+		return state.AuthorityLease{}, fmt.Errorf("agentstore: lease %q already released: %w", leaseID, state.ErrLeaseFenced)
+	}
+	if lease.Fence != fence {
+		return state.AuthorityLease{}, fmt.Errorf("agentstore: lease %q fence %+v does not match current %+v: %w", leaseID, fence, lease.Fence, state.ErrLeaseFenced)
+	}
+	now := l.store.options.Now()
+	var expiresAt time.Time
+	if !lease.ExpiresAt.IsZero() {
+		expiresAt = now.Add(lease.ExpiresAt.Sub(lease.RenewedAt))
+	}
+	newFence := state.LeaseFence{Epoch: l.store.options.AuthorityEpoch, Token: l.store.options.NewID()}
+	payload := leaseTransferredPayload{
+		Schema: schemaLeaseTransferredV1, LeaseID: leaseID, FromHolderRunID: lease.HolderRunID, ToHolderRunID: toHolderRunID,
+		Epoch: newFence.Epoch, Token: newFence.Token, TransferredAt: now, ExpiresAt: expiresAt,
+	}
+	if _, err := l.store.appendWithRetry(ctx, KindLeaseTransferred, lease.Resource, payload); err != nil {
+		return state.AuthorityLease{}, err
+	}
+	lease.HolderRunID = toHolderRunID
+	lease.Fence = newFence
+	lease.RenewedAt = now
+	lease.ExpiresAt = expiresAt
+	return lease, nil
 }

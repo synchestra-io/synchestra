@@ -28,6 +28,42 @@ type JournalEntry struct {
 	OccurredAt    time.Time
 }
 
+// --- Lifecycle (task-3) ---
+
+// LifecycleStatus is the effort/run lifecycle state-machine vocabulary from
+// spec/features/agent-coordination's "State machine, merge target, and
+// cleanup" section. Efforts and runs share one vocabulary; a worktree
+// claim's liveness is tracked separately by its lease/fence (see
+// WorktreeClaim), not by LifecycleStatus.
+type LifecycleStatus string
+
+const (
+	LifecycleStatusPlanning        LifecycleStatus = "planning"
+	LifecycleStatusActive          LifecycleStatus = "active"
+	LifecycleStatusHandoffPending  LifecycleStatus = "handoff_pending"
+	LifecycleStatusAwaitingMerge   LifecycleStatus = "awaiting_merge"
+	LifecycleStatusAwaitingPush    LifecycleStatus = "awaiting_push"
+	LifecycleStatusAwaitingCleanup LifecycleStatus = "awaiting_cleanup"
+	LifecycleStatusCompleted       LifecycleStatus = "completed"
+	LifecycleStatusAborted         LifecycleStatus = "aborted"
+	LifecycleStatusFailed          LifecycleStatus = "failed"
+	LifecycleStatusSuperseded      LifecycleStatus = "superseded"
+	LifecycleStatusArchived        LifecycleStatus = "archived"
+)
+
+// CompletionDisposition records why a terminal run/effort is considered
+// delivered or not, per agent-coordination's "Completed runs record one
+// of" list. It is set only on a transition into a terminal LifecycleStatus
+// (completed, aborted, failed).
+type CompletionDisposition string
+
+const (
+	CompletionDispositionLanded    CompletionDisposition = "landed"
+	CompletionDispositionHandoff   CompletionDisposition = "handoff"
+	CompletionDispositionNotLanded CompletionDisposition = "not_landed"
+	CompletionDispositionDiscarded CompletionDisposition = "discarded"
+)
+
 // --- Effort ---
 
 // Effort is the durable unit of requested work. The exact original prompt
@@ -43,6 +79,15 @@ type Effort struct {
 	InitiatorRunID string
 	WorkLogRef     string
 	CreatedAt      time.Time
+
+	// Status is this effort's current lifecycle state. New efforts start at
+	// LifecycleStatusPlanning; EffortStore.Transition is the only way to
+	// move it, and only along the transitions agentstore's lifecycle table
+	// allows (task-3).
+	Status LifecycleStatus
+	// Disposition is set once Status reaches a terminal state (completed,
+	// aborted, failed) and explains why, per CompletionDisposition.
+	Disposition CompletionDisposition
 }
 
 // EffortCreateParams holds parameters for creating a new effort.
@@ -59,6 +104,15 @@ type EffortCreateParams struct {
 type EffortFilter struct {
 	ProjectID    string
 	RepositoryID string
+}
+
+// EffortTransitionParams holds parameters for an explicit, typed effort
+// lifecycle transition. agentstore validates it against the lifecycle table
+// and refuses an illegal move by wrapping ErrInvalidTransition.
+type EffortTransitionParams struct {
+	To          LifecycleStatus
+	Reason      string
+	Disposition CompletionDisposition // required when To is a terminal status
 }
 
 // --- Run ---
@@ -106,6 +160,18 @@ type Run struct {
 	StartedAt       time.Time
 	EndedAt         *time.Time
 	TerminalReason  string
+
+	// Status is this run's current lifecycle state. New runs start at
+	// LifecycleStatusActive (a Run records one execution ATTEMPT already
+	// under way); RunStore.Transition is the only way to move it. Status is
+	// orthogonal to EndedAt/TerminalReason: Finish records the fact that
+	// execution stopped and why, Transition records the audited lifecycle
+	// decision (e.g. active -> awaiting_cleanup -> completed) — a caller
+	// finishing a run explicitly calls both.
+	Status LifecycleStatus
+	// Disposition is set once Status reaches a terminal state (completed,
+	// aborted, failed) and explains why, per CompletionDisposition.
+	Disposition CompletionDisposition
 }
 
 // RunStartParams holds parameters for starting a new run.
@@ -132,6 +198,16 @@ type RunCorrection struct {
 	Model           *string
 	ModelProvenance ModelProvenance
 	Reason          string
+}
+
+// RunTransitionParams holds parameters for an explicit, typed run lifecycle
+// transition. agentstore validates it against the same lifecycle table
+// EffortTransitionParams uses and refuses an illegal move by wrapping
+// ErrInvalidTransition.
+type RunTransitionParams struct {
+	To          LifecycleStatus
+	Reason      string
+	Disposition CompletionDisposition // required when To is a terminal status
 }
 
 // --- Worktree claim ---
@@ -189,7 +265,47 @@ type WorktreeFilter struct {
 	ActiveOnly   bool // when true, excludes released claims
 }
 
+// WorktreeHandoffParams holds parameters for explicit sequential handoff
+// (agent-coordination's "Sequential cooperation is supported through
+// explicit handoff"): the outgoing run proves it still holds the current
+// fence, and the incoming run becomes the sole writer under a freshly
+// minted fence token — the outgoing run's old fence is refused by any
+// later Renew/Release, exactly like a fenced-out loser of Claim.
+type WorktreeHandoffParams struct {
+	Fence   LeaseFence // the outgoing run's current fence, proving authority to hand off
+	ToRunID string     // the incoming run accepting ownership
+	Reason  string     // optional human-readable handoff reason/checkpoint summary
+}
+
 // --- Message ---
+
+// MessageKind categorizes a message's purpose within a coordination thread.
+// The typed negotiation sequence (agent-coordination/cross-harness-
+// conformance's "Typed negotiation") requires at minimum request, proposal,
+// counterexample, and accepted-decision records; MessageKindNote is the
+// general-purpose default for messages outside that negotiation sequence
+// (e.g. a plain checkpoint/status note).
+type MessageKind string
+
+const (
+	MessageKindRequest          MessageKind = "coordination.request"
+	MessageKindProposal         MessageKind = "coordination.proposal"
+	MessageKindCounterexample   MessageKind = "coordination.counterexample"
+	MessageKindDecisionAccepted MessageKind = "coordination.decision.accepted"
+	MessageKindNote             MessageKind = "coordination.note"
+)
+
+// EvidenceRef is a typed reference to supporting evidence a message cites —
+// e.g. the counterexample/test evidence an accepted decision must reference
+// (agent-coordination/cross-harness-conformance: "The accepted decision
+// references the counterexample/test evidence"). Kept as a small typed
+// struct rather than an anonymous map so evidence is a first-class,
+// schema-checked part of the message payload.
+type EvidenceRef struct {
+	Kind        string // e.g. "test", "counterexample", "commit", "claim"
+	Description string
+	Reference   string // e.g. a claim ID, commit SHA, test name, or external URI
+}
 
 // Message is an immutable envelope linked to a sender run, recipient run(s),
 // effort, and thread. The message body is private state; callers control
@@ -205,6 +321,14 @@ type Message struct {
 	ClaimID         string
 	Body            string
 	SentAt          time.Time
+
+	// Kind categorizes this message's purpose. Zero value (empty string) is
+	// treated as MessageKindNote by callers that care about typed
+	// negotiation; it is not required for a plain audited message.
+	Kind MessageKind
+	// Evidence is typed supporting evidence this message cites — required by
+	// convention on a MessageKindDecisionAccepted message.
+	Evidence []EvidenceRef
 }
 
 // MessageSendParams holds parameters for sending a message.
@@ -217,6 +341,8 @@ type MessageSendParams struct {
 	RepositoryID    string
 	ClaimID         string
 	Body            string
+	Kind            MessageKind
+	Evidence        []EvidenceRef
 }
 
 // MessageAck is a recipient's acknowledgement of a message, recorded as a
@@ -268,6 +394,14 @@ type AuthorityLease struct {
 	AcquiredAt  time.Time
 	RenewedAt   time.Time
 	ExpiresAt   time.Time
+
+	// Reclaimed reports whether this Acquire call reclaimed an expired,
+	// un-released lease (agent-coordination#ac:abandoned-run-is-resumable)
+	// rather than acquiring a previously-unheld resource. SupersededLeaseID
+	// is set when Reclaimed is true and names the lease this one replaced —
+	// that lease's fence is now refused by any later Renew/Release.
+	Reclaimed         bool
+	SupersededLeaseID string
 }
 
 // LeaseAcquireParams holds parameters for acquiring an authority lease.
