@@ -351,6 +351,24 @@ any backend's domain state at a cursor is fully determined by replaying
   still-catching-up replica can be compared at a cursor they both actually
   have.
 
+**Caveats**, disclosed rather than silently accepted:
+
+- `Restore`'s empty-target check is read-then-write, not one atomic
+  precondition: it refuses a target that was already non-empty at that
+  read, but does not fence `target` against a second writer landing events
+  concurrently with the replay. A race between `Restore` and any other
+  writer on the same target can leave it with an unrecoverable
+  interleaving of the checkpoint's history and the other writer's — the
+  target endpoint must receive no other writes for the duration of a
+  `Restore` call.
+- Every replayed event commits through the ordinary append path, which
+  writes an outbox row for `target`'s own configured downstream replicas on
+  every event, exactly as live replication would. A `Restore` therefore
+  backfills outbox rows for the FULL replayed history to every one of
+  `target`'s configured replica IDs — a naive `DrainOutbox` call right after
+  `Restore` should be expected to re-deliver the ENTIRE restored history to
+  each of those replicas, not just "whatever changes next."
+
 ## Open Questions
 
 None at this time.

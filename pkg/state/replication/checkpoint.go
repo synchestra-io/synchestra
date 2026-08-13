@@ -188,6 +188,25 @@ func (c Checkpoint) Verify() error {
 // fence-first workflow an ordinary caught-up mirror uses) once the restored
 // endpoint should become active
 // (state-store/topology#ac:checkpoint-restore-joins-as-replica).
+//
+// Two caveats, disclosed rather than silently accepted:
+//   - The empty-target check (the Head read below) is read-then-write, not
+//     one atomic precondition: it refuses a target that was ALREADY
+//     non-empty at that read, but does not fence target against a second
+//     writer landing events concurrently with this call's own replay. A
+//     race between Restore and any other writer on the same target can
+//     leave it with an unrecoverable interleaving of the checkpoint's
+//     history and the other writer's -- the target endpoint must receive no
+//     other writes for the duration of a Restore call.
+//   - Every replayed event commits through the ordinary append path
+//     (ingestEvents -> ReplicaIngestor), which writes an outbox row for
+//     target's OWN configured downstream replicas on every event, exactly
+//     as live replication would. A Restore therefore backfills outbox rows
+//     for the FULL replayed history to every one of target's configured
+//     replica IDs, not merely events from this point forward -- a caller
+//     that drains target's outbox with a naive DrainOutbox call right after
+//     Restore should expect it to re-deliver the ENTIRE restored history to
+//     each of those replicas, not just "whatever changes next."
 func Restore(ctx context.Context, checkpoint Checkpoint, target Journal, targetEndpointID string) (ReplicaHealth, error) {
 	if target == nil {
 		return ReplicaHealth{EndpointID: targetEndpointID}, fmt.Errorf("replication: restore needs a target journal")

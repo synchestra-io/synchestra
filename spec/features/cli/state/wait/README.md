@@ -109,6 +109,27 @@ mirror barrier unsatisfied: replica git-mirror requested 1:42, observed 1:40 aft
    before reporting success.
 6. Print the result (text or JSON) and exit with the corresponding code.
 
+## Caveats
+
+- **Polling contends with replication traffic.** Proving remote durability
+  (step 5) calls `VerifyLocalHeadDurable`, which acquires the same
+  cross-process operation lock every mutating call (`Append`/
+  `IngestReplica`/fence/promote) on that Git-backed endpoint serializes
+  through. A poll that lands while a live write holds that lock blocks until
+  the write releases it — on a busy mirror, a single lock acquisition can
+  consume up to whatever `--timeout` budget remains, not just one
+  `--poll-interval` tick.
+- **A stale `--cursor` from an older authority epoch can report a false
+  "satisfied."** Cursors compare by `epoch` first, then `sequence`
+  (`state-store/topology`'s Vocabulary): once the replica's head has
+  advanced into ANY newer epoch, that head already compares greater than
+  every cursor from an older epoch, regardless of the old epoch's own
+  sequence number. An operator who passes a `--cursor` captured before a
+  promotion can therefore see `mirror barrier satisfied` without the
+  replica ever having actually reached that specific sequence — `--cursor`
+  values should be treated as scoped to the epoch they were captured in, not
+  reused across a promotion.
+
 ## Open Questions
 
 1. `--project` has no autodetection source today. A future `repo-config`

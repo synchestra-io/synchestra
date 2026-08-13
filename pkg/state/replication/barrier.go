@@ -33,7 +33,11 @@ var ErrBarrierTimeout = errors.New("replication: mirror barrier timed out before
 // the barrier as satisfied; when absent (e.g. a bare *DALJournal or a future
 // SQLite journal, where the local transaction commit already IS that
 // backend's durability boundary — there is no separate remote hop to prove),
-// reaching the target cursor locally is already sufficient.
+// reaching the target cursor locally is already sufficient. Honest
+// disclosure of the current contract difference: a Git-backed RemoteDurable
+// replica's barrier proves CONTENT ancestry (a live fetch and ancestry
+// check), while a non-RemoteDurable replica's barrier proves only that its
+// own cursor NUMBER has reached target, with no independent content check.
 type RemoteDurable interface {
 	// RemoteReceipt reports whether at is durably present on this journal's
 	// configured remote right now, and the commit SHA that recorded it when
@@ -43,6 +47,16 @@ type RemoteDurable interface {
 	// ok is false both when the local journal has not yet reached at
 	// (nothing to prove yet) and when it has reached at locally but the
 	// remote has not (yet) confirmed it.
+	//
+	// Caveat, disclosed rather than silently accepted: on *GitPushJournal,
+	// this call (via GitRemoteDurability.VerifyLocalHeadDurable) acquires
+	// the SAME cross-process operation lock that every mutating call on the
+	// endpoint (Append/IngestReplica/fence/promote) serializes through.
+	// Wait's polling therefore contends with ordinary replication traffic
+	// for that lock -- on a busy mirror, a single RemoteReceipt call can
+	// block for as long as an in-flight write holds the lock, which can
+	// itself consume up to whatever Timeout budget remains, not merely one
+	// PollInterval tick.
 	RemoteReceipt(ctx context.Context, at Cursor) (commitSHA string, ok bool, err error)
 }
 

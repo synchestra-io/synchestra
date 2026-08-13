@@ -36,7 +36,15 @@ explicit "barrier unsatisfied" outcome (exit code 1).
 
 The target cursor is either given directly with --cursor (epoch:sequence,
 e.g. "1:42" -- typically the cursor a prior terminal command returned) or
-resolved from a second local journal's current head with --source-dir.`,
+resolved from a second local journal's current head with --source-dir.
+
+Caveat: --cursor values are scoped to the authority epoch they were captured
+in. Cursors compare by epoch first, then sequence, so once the replica's
+head has advanced into ANY newer epoch (e.g. after a promotion), that head
+already satisfies every cursor from an older epoch regardless of the old
+epoch's own sequence number. Reusing a --cursor captured before a promotion
+can therefore report "satisfied" without the replica ever having actually
+reached that specific sequence.`,
 		Args: cobra.NoArgs,
 		RunE: runWait,
 	}
@@ -139,6 +147,13 @@ func runWait(cmd *cobra.Command, _ []string) error {
 // parseCursor accepts "epoch:sequence" (e.g. "1:42"), matching the same
 // (authority_epoch, sequence) pair state-store/topology's Cursor vocabulary
 // entry and the state-change JSON schema use.
+//
+// Caveat: the returned Cursor is only meaningful within the authority epoch
+// it was captured in. replication.Wait's cursor comparison orders by epoch
+// first, so a stale --cursor from an older epoch is satisfied by ANY
+// replica head in a newer epoch regardless of the old epoch's own sequence
+// number -- an operator-supplied --cursor value should never be reused
+// across a promotion.
 func parseCursor(raw string) (replication.Cursor, error) {
 	epochPart, seqPart, ok := strings.Cut(raw, ":")
 	if !ok {
