@@ -1,5 +1,8 @@
 package state
 
+// Features implemented: cli/state/wait
+// Features depended on:  state-store/topology, state-store/backends/git
+
 import (
 	"bytes"
 	"context"
