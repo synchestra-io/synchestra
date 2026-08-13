@@ -170,8 +170,16 @@ type CursorStore interface {
 // mechanism — used to fence exclusive operations such as worktree claims
 // across promotion.
 type LeaseStore interface {
-	// Acquire takes a new lease on a named resource. If a live lease already
-	// exists for that resource, Acquire returns an error wrapping ErrConflict.
+	// Acquire takes a new lease on a named resource. If an unreleased lease
+	// already exists for that resource, Acquire returns an error wrapping
+	// ErrConflict. LeaseAcquireParams.TTL is recorded onto
+	// AuthorityLease.ExpiresAt but is NOT YET ENFORCED: no implementation
+	// evaluates ExpiresAt against the current time, so a lease stays held
+	// until it is explicitly released via a fenced Release, no matter how
+	// long ago it expired. Expiry evaluation/reconciliation for an abandoned
+	// run is out of scope here — see
+	// pkg/state/agentstore/README.md's "Open Questions" (task-3,
+	// abandoned-run-is-resumable), which owns closing this gap.
 	Acquire(ctx context.Context, params LeaseAcquireParams) (AuthorityLease, error)
 
 	// Renew proves the fence token presented is still current and extends the

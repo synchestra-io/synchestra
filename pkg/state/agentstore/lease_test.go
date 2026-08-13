@@ -41,9 +41,29 @@ func newTestStore(t *testing.T, journal replication.Journal, epoch int64, actorI
 	return store
 }
 
+// newTestJournal builds a fresh, valid active MemoryJournal for pairing with
+// newTestStore. Its ProjectID must match newTestStore's fixed ProjectID
+// ("github.com/fair-split/relay") and its AuthorityEpoch must match the
+// epoch the paired Store is constructed with -- MemoryJournal (like
+// DALJournal) enforces both on every Append, and either mismatch compiles
+// cleanly but fails at runtime (a project mismatch errors immediately, an
+// epoch mismatch surfaces as a RoleFenceError/state.ErrLeaseFenced) rather
+// than at construction, so centralizing construction here is what keeps the
+// two values from drifting apart across this package's tests.
+func newTestJournal(t *testing.T, epoch int64, endpointID string) *replication.MemoryJournal {
+	t.Helper()
+	journal, err := replication.NewMemoryJournal(replication.MemoryJournalOptions{
+		ProjectID: "github.com/fair-split/relay", EndpointID: endpointID, Role: replication.RoleActive, AuthorityEpoch: epoch,
+	})
+	if err != nil {
+		t.Fatalf("NewMemoryJournal: %v", err)
+	}
+	return journal
+}
+
 func TestLeaseAcquireIsExclusivePerResource(t *testing.T) {
 	ctx := context.Background()
-	store := newTestStore(t, replication.NewMemoryJournal(), 1, "server")
+	store := newTestStore(t, newTestJournal(t, 1, "server"), 1, "server")
 	lease, err := store.Lease().Acquire(ctx, state.LeaseAcquireParams{Resource: "worktree:p:repo:main", HolderRunID: "run-a"})
 	if err != nil {
 		t.Fatalf("first Acquire: %v", err)
@@ -71,7 +91,7 @@ func TestLeaseAcquireIsExclusivePerResource(t *testing.T) {
 // agent-coordination#ac:one-writer-claim-is-fenced.
 func TestLeaseAcquireIsExclusiveUnderConcurrency(t *testing.T) {
 	ctx := context.Background()
-	store := newTestStore(t, replication.NewMemoryJournal(), 1, "server")
+	store := newTestStore(t, newTestJournal(t, 1, "server"), 1, "server")
 	const racers = 12
 	var wg sync.WaitGroup
 	results := make(chan error, racers)
@@ -114,7 +134,7 @@ func TestLeaseAcquireIsExclusiveUnderConcurrency(t *testing.T) {
 
 func TestLeaseRenewRejectsStaleFence(t *testing.T) {
 	ctx := context.Background()
-	store := newTestStore(t, replication.NewMemoryJournal(), 1, "server")
+	store := newTestStore(t, newTestJournal(t, 1, "server"), 1, "server")
 	lease, err := store.Lease().Acquire(ctx, state.LeaseAcquireParams{Resource: "r", HolderRunID: "run-a"})
 	if err != nil {
 		t.Fatalf("Acquire: %v", err)
@@ -134,7 +154,7 @@ func TestLeaseRenewRejectsStaleFence(t *testing.T) {
 
 func TestLeaseReleaseRejectsStaleFenceAndIsIdempotent(t *testing.T) {
 	ctx := context.Background()
-	store := newTestStore(t, replication.NewMemoryJournal(), 1, "server")
+	store := newTestStore(t, newTestJournal(t, 1, "server"), 1, "server")
 	lease, err := store.Lease().Acquire(ctx, state.LeaseAcquireParams{Resource: "r", HolderRunID: "run-a"})
 	if err != nil {
 		t.Fatalf("Acquire: %v", err)
@@ -156,18 +176,39 @@ func TestLeaseReleaseRejectsStaleFenceAndIsIdempotent(t *testing.T) {
 
 // TestPromotionFencesFormerActiveStoreOnNextWrite is the direct proof for
 // state-store/topology#ac:promotion-fences-former-active's claim/lease half:
-// once a new active endpoint (epoch 2) has recorded at least one event on
-// the shared journal, a Store instance still configured for the old epoch
-// (1) can never again succeed at Lease().Acquire — every attempt is rejected
-// as fenced, exactly like DALJournal enforces for Git/SQLite (see
-// pkg/state/replication/dal_journal.go's Append entry check plus
-// validateNext's epoch comparison, which MemoryJournal mirrors for this
+// once a real replication.Promote() call has fenced the former active and
+// promoted the candidate to active at the new epoch, a Store instance still
+// configured for the old epoch can never again succeed at Lease().Acquire —
+// every attempt is rejected as fenced, exactly like DALJournal enforces for
+// Git/SQLite (see pkg/state/replication/dal_journal.go's Append entry check
+// plus validateNext's epoch comparison, which MemoryJournal mirrors for this
 // backend-neutral conformance test).
+//
+// This drives the real fence-first Promote() workflow across two distinct
+// MemoryJournals, one per endpoint -- the same topology production
+// promotion uses -- rather than the pre-redesign trick of appending
+// different-epoch events onto one journal shared by two Store instances,
+// which the fence-first MemoryJournal now correctly refuses with a
+// RoleFenceError (a MemoryJournal has exactly one role/epoch for its whole
+// lifetime; role/epoch transitions only ever happen through
+// FenceAsReplica/PromoteToActive, i.e. through Promote).
 func TestPromotionFencesFormerActiveStoreOnNextWrite(t *testing.T) {
 	ctx := context.Background()
-	journal := replication.NewMemoryJournal()
-	oldActive := newTestStore(t, journal, 1, "old-active")
-	newActive := newTestStore(t, journal, 2, "new-active")
+	const projectID = "github.com/fair-split/relay"
+	activeJournal, err := replication.NewMemoryJournal(replication.MemoryJournalOptions{
+		ProjectID: projectID, EndpointID: "old-active", Role: replication.RoleActive, AuthorityEpoch: 1,
+	})
+	if err != nil {
+		t.Fatalf("NewMemoryJournal(active): %v", err)
+	}
+	candidateJournal, err := replication.NewMemoryJournal(replication.MemoryJournalOptions{
+		ProjectID: projectID, EndpointID: "new-active", Role: replication.RoleReplica, AuthorityEpoch: 1,
+	})
+	if err != nil {
+		t.Fatalf("NewMemoryJournal(candidate): %v", err)
+	}
+	oldActive := newTestStore(t, activeJournal, 1, "old-active")
+	newActive := newTestStore(t, candidateJournal, 2, "new-active")
 
 	// The old active successfully holds a lease before promotion.
 	lease, err := oldActive.Lease().Acquire(ctx, state.LeaseAcquireParams{Resource: "worktree:p:repo:feature", HolderRunID: "run-old"})
@@ -175,12 +216,14 @@ func TestPromotionFencesFormerActiveStoreOnNextWrite(t *testing.T) {
 		t.Fatalf("pre-promotion Acquire: %v", err)
 	}
 
-	// Promotion: the new active endpoint writes at epoch 2. In production
-	// this event is the recorded promotion checkpoint (topology spec,
-	// "Promotion and Recovery"); for this contract-level test any epoch-2
-	// event is sufficient to move the journal head past epoch 1.
-	if _, err := newActive.Lease().Acquire(ctx, state.LeaseAcquireParams{Resource: "worktree:p:repo:other", HolderRunID: "run-new"}); err != nil {
-		t.Fatalf("promotion write at new epoch: %v", err)
+	// Promotion: fence the old active and promote the candidate to active at
+	// the new epoch via the real fence-first workflow (fence active -> catch
+	// up candidate -> promote candidate), exactly as an operator would run
+	// it in production.
+	if _, err := replication.Promote(ctx, activeJournal, candidateJournal, nil, replication.PromotionRequest{
+		ActorID: "operator", CommandID: "promote-fences-former-active",
+	}); err != nil {
+		t.Fatalf("Promote: %v", err)
 	}
 
 	// The former active can no longer renew its pre-promotion lease...

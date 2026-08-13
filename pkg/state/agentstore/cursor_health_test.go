@@ -14,7 +14,7 @@ import (
 
 func TestCursorAdvanceIsMonotonic(t *testing.T) {
 	ctx := context.Background()
-	store := newTestStore(t, replication.NewMemoryJournal(), 1, "server")
+	store := newTestStore(t, newTestJournal(t, 1, "server"), 1, "server")
 
 	zero, err := store.Cursor().Get(ctx, "dashboard")
 	if err != nil {
@@ -57,12 +57,20 @@ func TestCursorAdvanceIsMonotonic(t *testing.T) {
 
 func TestHealthReportReflectsConfiguredEndpoint(t *testing.T) {
 	ctx := context.Background()
-	journal := replication.NewMemoryJournal()
 	// AuthorityEpoch must be 1 here: both MemoryJournal and DALJournal require
 	// the very first event ever appended to a fresh journal to be epoch
 	// 1/sequence 1 (a brand new project always starts at epoch 1; epoch only
 	// advances via a recorded promotion event, which this test does not
-	// perform). See store.go's nextSequence doc comment.
+	// perform). See store.go's nextSequence doc comment. The journal's
+	// ProjectID/EndpointID must match the Options passed to New below --
+	// MemoryJournal enforces ProjectID on every Append, and a fresh
+	// MemoryJournal always starts RoleActive at the given epoch.
+	journal, err := replication.NewMemoryJournal(replication.MemoryJournalOptions{
+		ProjectID: "p", EndpointID: "sqlite-active", Role: replication.RoleActive, AuthorityEpoch: 1,
+	})
+	if err != nil {
+		t.Fatalf("NewMemoryJournal: %v", err)
+	}
 	store, err := New(journal, Options{ProjectID: "p", ActorID: "server", EndpointID: "sqlite-active", AuthorityEpoch: 1})
 	if err != nil {
 		t.Fatalf("New: %v", err)

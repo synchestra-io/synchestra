@@ -10,7 +10,12 @@ import (
 )
 
 func TestNewValidatesOptions(t *testing.T) {
-	journal := replication.NewMemoryJournal()
+	journal, err := replication.NewMemoryJournal(replication.MemoryJournalOptions{
+		ProjectID: "p", EndpointID: "server", Role: replication.RoleActive, AuthorityEpoch: 1,
+	})
+	if err != nil {
+		t.Fatalf("NewMemoryJournal: %v", err)
+	}
 	cases := []struct {
 		name string
 		opts Options

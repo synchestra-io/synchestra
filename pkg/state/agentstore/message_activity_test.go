@@ -9,12 +9,11 @@ import (
 	"testing"
 
 	"github.com/synchestra-io/synchestra/pkg/state"
-	"github.com/synchestra-io/synchestra/pkg/state/replication"
 )
 
 func TestMessageSendThreadAndAcknowledge(t *testing.T) {
 	ctx := context.Background()
-	store := newTestStore(t, replication.NewMemoryJournal(), 1, "server")
+	store := newTestStore(t, newTestJournal(t, 1, "server"), 1, "server")
 
 	first, err := store.Message().Send(ctx, state.MessageSendParams{
 		ThreadID: "fair-split", SenderRunID: "run-a", RecipientRunIDs: []string{"run-b"}, Body: "proposal",
@@ -69,7 +68,7 @@ func TestMessageSendThreadAndAcknowledge(t *testing.T) {
 
 func TestActivityRecordAndFilter(t *testing.T) {
 	ctx := context.Background()
-	store := newTestStore(t, replication.NewMemoryJournal(), 1, "server")
+	store := newTestStore(t, newTestJournal(t, 1, "server"), 1, "server")
 	if _, err := store.Activity().Record(ctx, state.ActivityRecordParams{EffortID: "e1", RunID: "run-a", Kind: "claim.acquired"}); err != nil {
 		t.Fatalf("Record: %v", err)
 	}

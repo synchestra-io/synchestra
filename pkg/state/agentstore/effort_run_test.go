@@ -9,12 +9,11 @@ import (
 	"testing"
 
 	"github.com/synchestra-io/synchestra/pkg/state"
-	"github.com/synchestra-io/synchestra/pkg/state/replication"
 )
 
 func TestEffortCreateGetList(t *testing.T) {
 	ctx := context.Background()
-	store := newTestStore(t, replication.NewMemoryJournal(), 1, "server")
+	store := newTestStore(t, newTestJournal(t, 1, "server"), 1, "server")
 
 	effort, err := store.Effort().Create(ctx, state.EffortCreateParams{
 		ProjectID: "p", RepositoryID: "relay", Title: "Fair Split relay", ScopeAreas: []string{"pkg/relay"},
@@ -53,7 +52,7 @@ func TestEffortCreateGetList(t *testing.T) {
 
 func TestRunLifecycleFactsAndModelProvenance(t *testing.T) {
 	ctx := context.Background()
-	store := newTestStore(t, replication.NewMemoryJournal(), 1, "server")
+	store := newTestStore(t, newTestJournal(t, 1, "server"), 1, "server")
 	effort, err := store.Effort().Create(ctx, state.EffortCreateParams{ProjectID: "p", RepositoryID: "relay", Title: "t"})
 	if err != nil {
 		t.Fatalf("Create effort: %v", err)
@@ -135,7 +134,7 @@ func TestRunLifecycleFactsAndModelProvenance(t *testing.T) {
 
 func TestRunStartRequiresEffortID(t *testing.T) {
 	ctx := context.Background()
-	store := newTestStore(t, replication.NewMemoryJournal(), 1, "server")
+	store := newTestStore(t, newTestJournal(t, 1, "server"), 1, "server")
 	if _, err := store.Run().Start(ctx, state.RunStartParams{AgentFamily: state.AgentFamilyCodex}); err == nil {
 		t.Fatal("Start without effort id unexpectedly succeeded")
 	}

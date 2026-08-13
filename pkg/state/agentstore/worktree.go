@@ -57,7 +57,6 @@ type worktreeRenewedPayload struct {
 	ClaimID    string    `json:"claim_id"`
 	FenceEpoch int64     `json:"fence_epoch"`
 	FenceToken string    `json:"fence_token"`
-	HeadSHA    string    `json:"head_sha,omitempty"`
 	RenewedAt  time.Time `json:"renewed_at"`
 }
 
@@ -95,9 +94,6 @@ func (s *Store) loadWorktreeProjection(ctx context.Context) (map[string]state.Wo
 			if claim, ok := claims[payload.ClaimID]; ok {
 				claim.Fence = state.LeaseFence{Epoch: payload.FenceEpoch, Token: payload.FenceToken}
 				claim.RenewedAt = payload.RenewedAt
-				if payload.HeadSHA != "" {
-					claim.HeadSHA = payload.HeadSHA
-				}
 				claims[payload.ClaimID] = claim
 			}
 		case KindWorktreeReleased:
@@ -163,7 +159,7 @@ func (w worktreeStore) Renew(ctx context.Context, claimID string, fence state.Le
 	}
 	payload := worktreeRenewedPayload{
 		Schema: schemaWorktreeRenewedV1, ClaimID: claimID, FenceEpoch: lease.Fence.Epoch, FenceToken: lease.Fence.Token,
-		HeadSHA: claim.HeadSHA, RenewedAt: lease.RenewedAt,
+		RenewedAt: lease.RenewedAt,
 	}
 	if _, err := w.store.appendWithRetry(ctx, KindWorktreeRenewed, claim.RepositoryID+":"+claim.Branch, payload); err != nil {
 		return state.WorktreeClaim{}, err

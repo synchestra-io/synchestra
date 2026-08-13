@@ -10,12 +10,11 @@ import (
 	"testing"
 
 	"github.com/synchestra-io/synchestra/pkg/state"
-	"github.com/synchestra-io/synchestra/pkg/state/replication"
 )
 
 func TestWorktreeClaimIsUniquePerRepositoryAndBranch(t *testing.T) {
 	ctx := context.Background()
-	store := newTestStore(t, replication.NewMemoryJournal(), 1, "server")
+	store := newTestStore(t, newTestJournal(t, 1, "server"), 1, "server")
 	params := state.WorktreeClaimParams{
 		ProjectID: "github.com/fair-split/relay", RepositoryID: "relay", RunID: "run-a",
 		WorktreePath: "/work/relay", Branch: "agent/run-a", TargetRef: "main", BaseSHA: "deadbeef",
@@ -62,7 +61,7 @@ func TestWorktreeClaimIsUniquePerRepositoryAndBranch(t *testing.T) {
 
 func TestWorktreeClaimUnderConcurrencyHasExactlyOneWinner(t *testing.T) {
 	ctx := context.Background()
-	store := newTestStore(t, replication.NewMemoryJournal(), 1, "server")
+	store := newTestStore(t, newTestJournal(t, 1, "server"), 1, "server")
 	const racers = 10
 	var wg sync.WaitGroup
 	successes := 0
@@ -98,7 +97,7 @@ func TestWorktreeClaimUnderConcurrencyHasExactlyOneWinner(t *testing.T) {
 
 func TestWorktreeRenewAndReleaseRespectFence(t *testing.T) {
 	ctx := context.Background()
-	store := newTestStore(t, replication.NewMemoryJournal(), 1, "server")
+	store := newTestStore(t, newTestJournal(t, 1, "server"), 1, "server")
 	claim, err := store.Worktree().Claim(ctx, state.WorktreeClaimParams{
 		ProjectID: "p", RepositoryID: "relay", RunID: "run-a", Branch: "main",
 	})
@@ -139,7 +138,7 @@ func TestWorktreeRenewAndReleaseRespectFence(t *testing.T) {
 
 func TestWorktreeClaimRejectsIncompleteParams(t *testing.T) {
 	ctx := context.Background()
-	store := newTestStore(t, replication.NewMemoryJournal(), 1, "server")
+	store := newTestStore(t, newTestJournal(t, 1, "server"), 1, "server")
 	if _, err := store.Worktree().Claim(ctx, state.WorktreeClaimParams{ProjectID: "p"}); err == nil {
 		t.Fatal("Claim with missing fields unexpectedly succeeded")
 	}
@@ -147,7 +146,7 @@ func TestWorktreeClaimRejectsIncompleteParams(t *testing.T) {
 
 func TestWorktreeGetMissingClaimReturnsNotFound(t *testing.T) {
 	ctx := context.Background()
-	store := newTestStore(t, replication.NewMemoryJournal(), 1, "server")
+	store := newTestStore(t, newTestJournal(t, 1, "server"), 1, "server")
 	if _, err := store.Worktree().Get(ctx, "does-not-exist"); !errors.Is(err, state.ErrNotFound) {
 		t.Fatalf("Get error = %v, want ErrNotFound", err)
 	}
