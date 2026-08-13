@@ -32,6 +32,21 @@ func gitInit(t *testing.T, dir string) {
 // repository, and a claim survives being read back through a second,
 // independently-constructed GitStateStore pointed at the same repo path
 // (the way a restarted CLI process would see it).
+//
+// This test deliberately does NOT use state.CloseAfter around Claim: Claim
+// issues two SEQUENTIAL Appends internally (a lease acquire, then a
+// worktree.claimed/reclaimed follow-up — see worktree.go and
+// pkg/state/agentstore/README.md's Open Questions), and the second Append
+// only starts once the first has already returned. Racing a single Close
+// call against the whole two-Append sequence is unsafe: Close may flush and
+// close the journal after the first Append lands but before the second one
+// even enqueues, permanently failing it with ErrJournalClosed instead of
+// speeding it up. CloseAfter's doc comment states this constraint;
+// pkg/cli/agent's command wiring honors it by only using CloseAfter around
+// genuinely single-Append operations (message send/ack) and calling
+// Worktree() mutations plainly. See TestGitStateStoreAgentRespectsPromotion
+// FenceThroughRealGit below for the real-Git, single-Append exit-flush
+// proof, and pkg/state/agentstore/close_test.go for the journal-level one.
 func TestGitStateStoreAgentClaimsAWorktreeThroughRealGit(t *testing.T) {
 	repo := t.TempDir()
 	gitInit(t, repo)
@@ -48,22 +63,31 @@ func TestGitStateStoreAgentClaimsAWorktreeThroughRealGit(t *testing.T) {
 		return s
 	}
 
-	claim, err := newStore().Agent().Worktree().Claim(ctx, state.WorktreeClaimParams{
+	claimStore := newStore()
+	claim, err := claimStore.Agent().Worktree().Claim(ctx, state.WorktreeClaimParams{
 		ProjectID: "github.com/fair-split/relay", RepositoryID: "relay", RunID: "run-a",
 		WorktreePath: "/work/relay", Branch: "agent/run-a", TargetRef: "main",
 	})
 	if err != nil {
 		t.Fatalf("Claim: %v", err)
 	}
+	if err := claimStore.Close(ctx); err != nil {
+		t.Fatalf("Close: %v", err)
+	}
 	if claim.ID == "" || claim.Fence.IsZero() {
 		t.Fatalf("unexpected claim: %+v", claim)
 	}
 
 	// A competing claim on the same repository+branch is rejected...
-	if _, err := newStore().Agent().Worktree().Claim(ctx, state.WorktreeClaimParams{
+	competingStore := newStore()
+	_, err = competingStore.Agent().Worktree().Claim(ctx, state.WorktreeClaimParams{
 		ProjectID: "github.com/fair-split/relay", RepositoryID: "relay", RunID: "run-b", Branch: "agent/run-a",
-	}); !errors.Is(err, state.ErrConflict) {
+	})
+	if !errors.Is(err, state.ErrConflict) {
 		t.Fatalf("competing Claim error = %v, want ErrConflict", err)
+	}
+	if err := competingStore.Close(ctx); err != nil {
+		t.Fatalf("Close: %v", err)
 	}
 
 	// ...and a fresh GitStateStore over the same on-disk repo (simulating a
@@ -89,7 +113,17 @@ func TestGitStateStoreAgentClaimsAWorktreeThroughRealGit(t *testing.T) {
 // journal, not just the in-memory conformance harness (see
 // pkg/state/agentstore/lease_test.go's
 // TestPromotionFencesFormerActiveStoreOnNextWrite for the backend-neutral
-// version of this same proof).
+// version of this same proof). This test is about fencing CORRECTNESS, not
+// exit-flush latency, so it deliberately does not use state.CloseAfter: the
+// fenced outcome here is only decided once the journal's actual commit
+// validation runs (the local role/epoch precondition alone does not catch
+// it — see CloseAfter's doc comment on the "at most one Append" contract),
+// and racing a forced Close against that under real Git I/O (slower, and
+// variable, under -race in particular) risks observing ErrJournalClosed
+// instead of the fencing outcome this test asserts. See
+// TestGitStateStoreAgentClaimsAWorktreeThroughRealGit's doc comment for the
+// full reasoning and pkg/state/agentstore/close_test.go for the
+// deterministic (in-memory journal) exit-flush proof.
 func TestGitStateStoreAgentRespectsPromotionFenceThroughRealGit(t *testing.T) {
 	repo := t.TempDir()
 	gitInit(t, repo)
@@ -106,16 +140,23 @@ func TestGitStateStoreAgentRespectsPromotionFenceThroughRealGit(t *testing.T) {
 		}
 		return s
 	}
+	acquire := func(store state.Store, resource, holder string) (state.AuthorityLease, error) {
+		lease, err := store.Agent().Lease().Acquire(ctx, state.LeaseAcquireParams{Resource: resource, HolderRunID: holder})
+		if closeErr := store.Close(ctx); closeErr != nil {
+			t.Fatalf("Close: %v", closeErr)
+		}
+		return lease, err
+	}
 
-	if _, err := newStoreAtEpoch(1).Agent().Lease().Acquire(ctx, state.LeaseAcquireParams{Resource: "worktree:relay:main", HolderRunID: "run-old"}); err != nil {
+	if _, err := acquire(newStoreAtEpoch(1), "worktree:relay:main", "run-old"); err != nil {
 		t.Fatalf("pre-promotion Acquire at epoch 1: %v", err)
 	}
 	// Promotion: a store at epoch 2 writes to the same repository.
-	if _, err := newStoreAtEpoch(2).Agent().Lease().Acquire(ctx, state.LeaseAcquireParams{Resource: "worktree:relay:other", HolderRunID: "run-new"}); err != nil {
+	if _, err := acquire(newStoreAtEpoch(2), "worktree:relay:other", "run-new"); err != nil {
 		t.Fatalf("promotion write at epoch 2: %v", err)
 	}
 	// The former active (still epoch 1) is now fenced.
-	if _, err := newStoreAtEpoch(1).Agent().Lease().Acquire(ctx, state.LeaseAcquireParams{Resource: "worktree:relay:another", HolderRunID: "run-old"}); !errors.Is(err, state.ErrLeaseFenced) {
+	if _, err := acquire(newStoreAtEpoch(1), "worktree:relay:another", "run-old"); !errors.Is(err, state.ErrLeaseFenced) {
 		t.Fatalf("post-promotion Acquire at old epoch error = %v, want ErrLeaseFenced", err)
 	}
 }

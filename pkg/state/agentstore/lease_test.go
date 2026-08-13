@@ -96,6 +96,26 @@ func TestLeaseAcquireIsExclusivePerResource(t *testing.T) {
 	}
 }
 
+// TestLeaseAcquireRejectsNegativeTTL proves a negative TTL is refused
+// outright rather than silently folded into TTL<=0's "no TTL, never
+// expires" behavior (leaseExpired, lease.go) -- a negative duration is
+// almost always a caller bug (e.g. a subtraction done backwards), and
+// granting an indefinite, unreclaimable lease in response would hide it
+// rather than surface it.
+func TestLeaseAcquireRejectsNegativeTTL(t *testing.T) {
+	ctx := context.Background()
+	store := newTestStore(t, newTestJournal(t, 1, "server"), 1, "server")
+	if _, err := store.Lease().Acquire(ctx, state.LeaseAcquireParams{
+		Resource: "r", HolderRunID: "run-a", TTL: -time.Minute,
+	}); !errors.Is(err, state.ErrInvalidArgument) {
+		t.Fatalf("Acquire with a negative TTL error = %v, want state.ErrInvalidArgument", err)
+	}
+	// The rejected Acquire must not have left a partial/held lease behind.
+	if _, err := store.Lease().Get(ctx, "r"); !errors.Is(err, state.ErrNotFound) {
+		t.Fatalf("Get after rejected negative-TTL Acquire error = %v, want ErrNotFound", err)
+	}
+}
+
 // TestLeaseAcquireIsExclusiveUnderConcurrency proves the uniqueness guarantee
 // holds under real goroutine concurrency, not just sequential simulation:
 // every goroutine reads an empty projection before any of them append, yet

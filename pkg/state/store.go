@@ -29,6 +29,15 @@ type Store interface {
 	// worktree claim, message, activity, replication-journal access, cursor,
 	// authority lease, and health. See AgentStore.
 	Agent() AgentStore
+
+	// Close releases any resources this Store's lifecycle owns — in
+	// particular, flushing a pending group-commit batch on the Agent()
+	// journal, if one was ever constructed (state-store/journal-batching).
+	// A backend with nothing to flush treats this as a safe no-op. A caller
+	// that owns a Store's lifecycle — a one-shot CLI invocation in
+	// particular — must call Close before process exit; see AgentStore's
+	// Close doc comment. Safe to call more than once.
+	Close(ctx context.Context) error
 }
 
 // StoreFactory is a constructor function that each backend provides.

@@ -22,4 +22,13 @@ var (
 	// (state-store/topology#ac:promotion-fences-former-active) at the domain
 	// layer.
 	ErrLeaseFenced = errors.New("lease fenced")
+
+	// ErrInvalidArgument is returned when a caller-supplied value is
+	// malformed or outside the domain's accepted vocabulary/range, and the
+	// problem is not itself a lifecycle transition (state.ErrInvalidTransition
+	// covers those) — e.g. an unrecognized state.MessageKind, or a negative
+	// lease TTL. CLI wiring (pkg/cli/agent/resolve.go's mapStoreError) maps
+	// this to exitcode.InvalidArgs, matching how a bad flag caught before
+	// ever reaching the store is reported.
+	ErrInvalidArgument = errors.New("invalid argument")
 )

@@ -40,6 +40,26 @@ var errSequenceRace = errors.New("agentstore: journal sequence race")
 type Store struct {
 	journal replication.Journal
 	options Options
+
+	// testFenceCheckSeam is an unexported deterministic hook (mirroring
+	// replication.GitRemoteDurability.testFault's pattern): when non-nil,
+	// lease.go's Renew/Release/Transfer retry loop calls it with (op,
+	// leaseID) immediately after a snapshot's fence check has passed but
+	// before that same snapshot's tryAppendAt commits. Package tests use it
+	// to pause a goroutine deterministically inside that exact window and
+	// interleave a concurrent reclaim/release, rather than relying on
+	// goroutine-scheduling luck to hit the race
+	// (agent-coordination#ac:one-writer-claim-is-fenced). Nil (a no-op) in
+	// production and in every test that does not explicitly set it.
+	testFenceCheckSeam func(op, leaseID string)
+}
+
+// fireTestSeam calls testFenceCheckSeam if one is set; a no-op otherwise.
+// Centralized so every CAS retry loop's seam call is a one-liner.
+func (s *Store) fireTestSeam(op, leaseID string) {
+	if s.testFenceCheckSeam != nil {
+		s.testFenceCheckSeam(op, leaseID)
+	}
 }
 
 // Options configures a Store instance.
@@ -115,6 +135,23 @@ func (s *Store) Journal() state.JournalStore   { return journalStore{s} }
 func (s *Store) Cursor() state.CursorStore     { return cursorStore{s} }
 func (s *Store) Lease() state.LeaseStore       { return leaseStore{s} }
 func (s *Store) Health() state.HealthStore     { return healthStore{s} }
+
+// Close flushes any pending group-commit batch on the underlying journal
+// (state-store/journal-batching#ac:close-flushes-pending-batch) via a
+// duck-typed check, mirroring how replication.GitPushJournal.Close passes
+// through to its wrapped Journal: agentstore depends only on the
+// backend-neutral replication.Journal interface, which does not itself
+// declare Close (only BatchedJournal does), so this is how a batching-aware
+// journal's Close is reached without agentstore importing
+// replication.BatchedJournal directly. A Journal without batching support
+// (or with it disabled) has nothing pending, so this is a safe no-op for
+// those. See state.AgentStore.Close's doc comment for the "why" (task-3).
+func (s *Store) Close(ctx context.Context) error {
+	if closer, ok := s.journal.(interface{ Close(context.Context) error }); ok {
+		return closer.Close(ctx)
+	}
+	return nil
+}
 
 // Compile-time interface check.
 var _ state.AgentStore = (*Store)(nil)
