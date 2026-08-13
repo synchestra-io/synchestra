@@ -111,7 +111,7 @@ direct Git active/recent queries with conflict-retry semantics.
 **Id:** task-3
 **Verifies:** agent-coordination#ac:one-writer-claim-is-fenced, agent-coordination#ac:messages-survive-transport-switch, agent-coordination#ac:abandoned-run-is-resumable, agent-coordination#ac:optional-model-provenance-is-correctable
 **Depends-On:** 1, 2
-**Status:** planning
+**Status:** in_progress
 
 Implement lifecycle transitions, lease/fence enforcement, explicit handoff,
 scope declarations, message threads, acknowledgements, and recovery records.
