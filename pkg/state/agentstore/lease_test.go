@@ -144,6 +144,81 @@ func TestLeaseAcquireIsExclusiveUnderConcurrency(t *testing.T) {
 	}
 }
 
+// TestLeaseAcquireIsExclusiveUnderConcurrencyWithBatchingEnabled is
+// TestLeaseAcquireIsExclusiveUnderConcurrency's group-commit-batching
+// sibling (state-store/journal-batching): the same 12 racers now share a
+// journal with a small but nonzero batching window, so their first-round
+// tryAppendAt calls are very likely to land in the SAME physical batch
+// rather than each committing in its own transaction. Store.Lease().Acquire
+// re-derives its projection on every retry of a lost sequence race
+// (lease.go's doc comment), and a batch's own commitOneLocked/appendData
+// loop resolves a same-cursor collision the identical way an unbatched
+// per-event race does (exactly one winner, everyone else ErrSequenceGap ->
+// agentstore's errSequenceRace -> retried) -- so this must converge to the
+// same exactly-one-winner outcome, proving appendWithRetry/CAS's retry
+// ladder is unchanged by batching, just as
+// pkg/state/replication/batch_test.go's
+// TestBatchedEventsPreserveFencingAndOrder proves at the journal level.
+func TestLeaseAcquireIsExclusiveUnderConcurrencyWithBatchingEnabled(t *testing.T) {
+	ctx := context.Background()
+	journal, err := replication.NewMemoryJournal(replication.MemoryJournalOptions{
+		ProjectID: "github.com/fair-split/relay", EndpointID: "server", Role: replication.RoleActive, AuthorityEpoch: 1,
+		// A small window keeps the test fast while still forcing real
+		// group-commit batching: MaxItems below the racer count means the
+		// time window is what actually triggers at least the first flush.
+		MaxBatchItems: intPtrForTest(6), MaxBatchDelayMS: intPtrForTest(20),
+	})
+	if err != nil {
+		t.Fatalf("NewMemoryJournal: %v", err)
+	}
+	if journal.BatchSettings() != (replication.BatchSettings{MaxItems: 6, MaxDelayMS: 20}) {
+		t.Fatalf("BatchSettings = %+v, want the configured small window (batching must actually be enabled for this test to prove anything)", journal.BatchSettings())
+	}
+	store := newTestStore(t, journal, 1, "server")
+	const racers = 12
+	var wg sync.WaitGroup
+	results := make(chan error, racers)
+	var successes int32
+	var mu sync.Mutex
+	var winners []state.AuthorityLease
+	for i := 0; i < racers; i++ {
+		wg.Add(1)
+		go func(n int) {
+			defer wg.Done()
+			lease, err := store.Lease().Acquire(ctx, state.LeaseAcquireParams{Resource: "worktree:p:repo:main", HolderRunID: "run"})
+			if err == nil {
+				mu.Lock()
+				successes++
+				winners = append(winners, lease)
+				mu.Unlock()
+			}
+			results <- err
+		}(i)
+	}
+	wg.Wait()
+	close(results)
+	conflicts := 0
+	for err := range results {
+		if err == nil {
+			continue
+		}
+		if !errors.Is(err, state.ErrConflict) {
+			t.Fatalf("unexpected concurrent Acquire error under batching: %v", err)
+		}
+		conflicts++
+	}
+	if successes != 1 {
+		t.Fatalf("successful Acquire calls under batching = %d, want exactly 1 (winners=%+v)", successes, winners)
+	}
+	if conflicts != racers-1 {
+		t.Fatalf("conflicting Acquire calls under batching = %d, want %d", conflicts, racers-1)
+	}
+}
+
+// intPtrForTest avoids colliding with any *int helper another file in this
+// package might define; kept local and trivial on purpose.
+func intPtrForTest(v int) *int { return &v }
+
 func TestLeaseRenewRejectsStaleFence(t *testing.T) {
 	ctx := context.Background()
 	store := newTestStore(t, newTestJournal(t, 1, "server"), 1, "server")
