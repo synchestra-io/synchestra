@@ -15,6 +15,7 @@ import (
 	"github.com/ingitdb/ingitdb-go/ingitdb/materializer"
 	"github.com/ingitdb/ingitdb-go/ingitdb/validator"
 	"github.com/spf13/cobra"
+	agentcmd "github.com/synchestra-io/synchestra/pkg/cli/agent"
 	"github.com/synchestra-io/synchestra/pkg/cli/code"
 	"github.com/synchestra-io/synchestra/pkg/cli/feature"
 	"github.com/synchestra-io/synchestra/pkg/cli/project"
@@ -84,6 +85,7 @@ func newRootCmd(
 		spec.Command(),
 		runner.Command(runner.Dependencies{Getwd: osGetwd, UserHomeDir: osUserHomeDir}),
 		taskcmd.Command(),
+		agentcmd.Command(),
 		selfupdatecmd.Command(version),
 	)
 
