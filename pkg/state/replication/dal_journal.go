@@ -210,13 +210,13 @@ func (j *DALJournal) Append(ctx context.Context, event Event) error {
 		defer j.mu.RUnlock()
 		return j.append(ctx, event)
 	}
-	done, flushNow, err := j.batcher.enqueue(event)
+	done, flushNow, generation, err := j.batcher.enqueue(event)
 	j.mu.RUnlock()
 	if err != nil {
 		return err
 	}
 	if flushNow {
-		j.batcher.flush(ctx)
+		j.batcher.flush(ctx, &generation)
 	}
 	return j.batcher.wait(ctx, done)
 }

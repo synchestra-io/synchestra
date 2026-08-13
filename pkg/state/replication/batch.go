@@ -86,12 +86,22 @@ type batchCommitFunc func(ctx context.Context, events []Event) ([]error, error)
 // that makes pending reach MaxItems performs the flush itself, synchronously,
 // after releasing b.mu; (2) a single time.AfterFunc timer, armed only once --
 // when the first item enters an empty pending slice -- fires and flushes; (3)
-// Close (or a caller-driven explicit flush) drains whatever is pending. A
-// "generation" counter guards against a stale timer firing after another
-// trigger already drained the window it was armed for: flush increments the
-// generation, and the timer callback no-ops unless the generation it captured
-// at arm-time still matches. This is what keeps the design to one monotonic
-// timer per open window rather than polling or restarting a timer per item.
+// Close (or a caller-driven explicit flush, e.g. a promotion's flush-then-
+// fence) drains whatever is pending unconditionally. A "generation" counter
+// guards (1) and (2) against draining a LATER window than the one they were
+// triggered for: both capture the window's generation at the moment their
+// event joined it (enqueue's return value; the timer closure's argument) and
+// pass it into flush, which re-checks that capture against the current
+// generation atomically, under the same lock that would otherwise let it
+// drain -- not merely before calling flush, since time.Timer.Stop cannot
+// retroactively cancel a callback that has already started running, so a
+// stale timer's callback WILL still execute after another trigger has
+// drained its window and even started a new one. Close and an explicit
+// flush-then-fence flush pass a nil generation to force-drain regardless,
+// since they must flush whatever is legitimately pending right now, no
+// matter which window it belongs to. This is what keeps the design to one
+// monotonic timer per open window rather than polling or restarting a timer
+// per item.
 //
 // # Durability (REQ group-commit-not-buffering)
 //
@@ -140,28 +150,33 @@ func newAppendBatcher(settings BatchSettings, commit batchCommitFunc) *appendBat
 }
 
 // enqueue places event in the pending batch and reports whether this call
-// crossed the configured item-count threshold. It never blocks on I/O --
-// only on b.mu, held briefly -- so it is safe (and required, see promotion
-// interplay above) for a caller to hold an outer role/epoch lock across this
-// call. The caller must release that outer lock before calling flush/wait
-// (both of which may block on the actual commit), and must call flush
-// itself when flushNow is true -- enqueue only detects the threshold, it
-// does not act on it, since acting means a slow commit this fast/lock-holding
-// method must not perform.
-func (b *appendBatcher) enqueue(event Event) (done chan error, flushNow bool, err error) {
+// crossed the configured item-count threshold, plus the window's generation
+// at the moment this event joined it. It never blocks on I/O -- only on
+// b.mu, held briefly -- so it is safe (and required, see promotion interplay
+// above) for a caller to hold an outer role/epoch lock across this call. The
+// caller must release that outer lock before calling flush/wait (both of
+// which may block on the actual commit), and must call flush(ctx,
+// &generation) itself when flushNow is true -- enqueue only detects the
+// threshold, it does not act on it, since acting means a slow commit this
+// fast/lock-holding method must not perform. Passing the returned generation
+// back into flush (rather than forcing) is what keeps this trigger, like the
+// timer, from ever draining a window later than the one this event actually
+// joined -- see flush's doc comment.
+func (b *appendBatcher) enqueue(event Event) (done chan error, flushNow bool, generation uint64, err error) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	if b.closed {
-		return nil, false, ErrJournalClosed
+		return nil, false, 0, ErrJournalClosed
 	}
 	item := pendingAppend{event: event, done: make(chan error, 1)}
 	b.pending = append(b.pending, item)
+	generation = b.generation
 	if len(b.pending) == 1 && b.settings.MaxDelayMS > 0 {
-		generation := b.generation
-		b.timer = time.AfterFunc(b.settings.delay(), func() { b.onTimerFired(generation) })
+		armedGeneration := generation
+		b.timer = time.AfterFunc(b.settings.delay(), func() { b.onTimerFired(armedGeneration) })
 	}
 	flushNow = b.settings.MaxItems > 0 && len(b.pending) >= b.settings.MaxItems
-	return item.done, flushNow, nil
+	return item.done, flushNow, generation, nil
 }
 
 // wait blocks until done resolves or ctx is cancelled. A cancelled wait does
@@ -178,31 +193,46 @@ func (b *appendBatcher) wait(ctx context.Context, done chan error) error {
 }
 
 // onTimerFired is the sole callback of the one timer armed per open window
-// (see the type doc comment). It no-ops if another trigger already drained
-// this window (generation mismatch or empty pending) or the batcher closed.
+// (see the type doc comment). It delegates straight to flush, passing the
+// generation it was armed with: flush is what re-checks that generation
+// atomically at drain time, which is the only place this can safely happen
+// (see flush's doc comment for why a pre-check here, before calling flush,
+// would not be enough).
 func (b *appendBatcher) onTimerFired(generation uint64) {
-	b.mu.Lock()
-	if b.closed || generation != b.generation || len(b.pending) == 0 {
-		b.mu.Unlock()
-		return
-	}
-	b.mu.Unlock()
-	b.flush(context.Background())
+	b.flush(context.Background(), &generation)
 }
 
 // flush drains whatever is currently pending and commits it. It is safe to
 // call from multiple goroutines/triggers concurrently (an item-threshold
 // enqueue, a fired timer, Close, and a promotion's flush-then-fence step can
-// all reach here); only the first to observe a non-empty pending slice
-// performs a commit, every other concurrent caller finds it already drained
-// and no-ops. It never returns an error itself -- each event's own result
-// (including a shared infrastructure failure, see batchCommitFunc) is
-// delivered through its own done channel, which is what every caller
-// (Append via wait, or a trigger that does not own a specific event) relies
-// on instead.
-func (b *appendBatcher) flush(ctx context.Context) {
+// all reach here).
+//
+// generation, when non-nil, restricts this call to the window it was
+// captured for (by enqueue or the timer closure): if b.generation has
+// already moved past it -- another trigger drained that window and
+// possibly started a new one -- this call no-ops rather than draining
+// whatever happens to be pending in that NEXT window, which it was never
+// triggered for. The check runs under b.mu, atomically with the drain
+// itself, so there is no gap between "check" and "act" for another trigger
+// to race into. generation nil forces an unconditional drain of whatever is
+// currently pending, regardless of which window it belongs to -- Close and
+// an explicit flush-then-fence flush use this, since both need every
+// legitimately pending event flushed right now.
+//
+// Either way, only the first caller to observe a non-empty, generation-
+// matching pending slice performs a commit; every other concurrent caller
+// finds it already drained (or not-yet-this-generation's) and no-ops. It
+// never returns an error itself -- each event's own result (including a
+// shared infrastructure failure, see batchCommitFunc) is delivered through
+// its own done channel, which is what every caller (Append via wait, or a
+// trigger that does not own a specific event) relies on instead.
+func (b *appendBatcher) flush(ctx context.Context, generation *uint64) {
 	b.mu.Lock()
 	if len(b.pending) == 0 {
+		b.mu.Unlock()
+		return
+	}
+	if generation != nil && *generation != b.generation {
 		b.mu.Unlock()
 		return
 	}
@@ -255,6 +285,6 @@ func (b *appendBatcher) Close(ctx context.Context) error {
 		b.timer = nil
 	}
 	b.mu.Unlock()
-	b.flush(ctx)
+	b.flush(ctx, nil)
 	return nil
 }

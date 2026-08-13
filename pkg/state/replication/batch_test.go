@@ -330,7 +330,7 @@ func TestAppendDoesNotAcknowledgeBeforeItsBatchCommits(t *testing.T) {
 	batcher := newAppendBatcher(BatchSettings{MaxItems: 1, MaxDelayMS: 0}, commit)
 	event := chainedEvent(t, "p", "seed", Cursor{1, 1}, "")
 
-	done, flushNow, err := batcher.enqueue(event)
+	done, flushNow, generation, err := batcher.enqueue(event)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -339,7 +339,7 @@ func TestAppendDoesNotAcknowledgeBeforeItsBatchCommits(t *testing.T) {
 	}
 	appendDone := make(chan error, 1)
 	go func() {
-		batcher.flush(context.Background())
+		batcher.flush(context.Background(), &generation)
 		appendDone <- batcher.wait(context.Background(), done)
 	}()
 	select {
@@ -524,11 +524,11 @@ func TestFenceAsReplicaFlushesPendingBatchBeforeCheckpoint(t *testing.T) {
 
 	pending1 := chainedEvent(t, "p", "pending-1", Cursor{1, 2}, seed.Checksum)
 	pending2 := chainedEvent(t, "p", "pending-2", Cursor{1, 3}, pending1.Checksum)
-	done1, flushNow1, err := journal.batcher.enqueue(pending1)
+	done1, flushNow1, _, err := journal.batcher.enqueue(pending1)
 	if err != nil || flushNow1 {
 		t.Fatalf("enqueue pending-1: flushNow=%v err=%v", flushNow1, err)
 	}
-	done2, flushNow2, err := journal.batcher.enqueue(pending2)
+	done2, flushNow2, _, err := journal.batcher.enqueue(pending2)
 	if err != nil || flushNow2 {
 		t.Fatalf("enqueue pending-2: flushNow=%v err=%v", flushNow2, err)
 	}
@@ -606,11 +606,11 @@ func TestDALJournalFenceAsReplicaFlushesPendingBatchBeforeCheckpoint(t *testing.
 
 	pending1 := chainedEvent(t, "github.com/fair-split/relay", "pending-1", Cursor{1, 2}, seed.Checksum)
 	pending2 := chainedEvent(t, "github.com/fair-split/relay", "pending-2", Cursor{1, 3}, pending1.Checksum)
-	done1, flushNow1, err := journal.batcher.enqueue(pending1)
+	done1, flushNow1, _, err := journal.batcher.enqueue(pending1)
 	if err != nil || flushNow1 {
 		t.Fatalf("enqueue pending-1: flushNow=%v err=%v", flushNow1, err)
 	}
-	done2, flushNow2, err := journal.batcher.enqueue(pending2)
+	done2, flushNow2, _, err := journal.batcher.enqueue(pending2)
 	if err != nil || flushNow2 {
 		t.Fatalf("enqueue pending-2: flushNow=%v err=%v", flushNow2, err)
 	}
@@ -691,5 +691,84 @@ func TestBatchedAppendRoleEpochFencedAtEnqueueStillLetsOthersCommit(t *testing.T
 	}
 	if len(got) != 2 {
 		t.Fatalf("journal has %d events, want 2 (the stale-epoch event must never have entered the batch)", len(got))
+	}
+}
+
+// TestStaleTimerFlushDoesNotDrainTheNextWindow reproduces, deterministically
+// and without relying on a real timer/clock race, the exact interleaving
+// generation-aware flush closes: (1) a window's timer is armed, capturing
+// generation G; (2) some OTHER trigger (the item threshold, Close, or a
+// promotion's flush-then-fence) drains that window first -- time.Timer.Stop
+// cannot retroactively cancel a timer goroutine that has already started
+// running its callback, so the stale callback WILL still execute even
+// though flush already stopped/nilled b.timer; (3) a brand new window
+// (generation G+1) opens with its own pending event before the stale
+// callback gets scheduled. Calling onTimerFired(G) directly here -- rather
+// than racing a real timer, which would make this test flaky and
+// timing-dependent -- exercises exactly that interleaving: the stale
+// callback must observe the generation mismatch inside flush and no-op,
+// never draining the next window's event out from under it.
+func TestStaleTimerFlushDoesNotDrainTheNextWindow(t *testing.T) {
+	var calls [][]Event
+	commit := func(_ context.Context, events []Event) ([]error, error) {
+		calls = append(calls, events)
+		return make([]error, len(events)), nil
+	}
+	// MaxDelayMS is configured but its real timer is never allowed to fire
+	// in this test -- onTimerFired is invoked directly to simulate exactly
+	// the stale-callback scenario above.
+	batcher := newAppendBatcher(BatchSettings{MaxItems: 0, MaxDelayMS: 60_000}, commit)
+	first := chainedEvent(t, "p", "first", Cursor{1, 1}, "")
+
+	firstDone, flushNow, staleGeneration, err := batcher.enqueue(first)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if flushNow {
+		t.Fatal("MaxItems=0 must never report flushNow")
+	}
+
+	// Another trigger (standing in for Close or a fence's flush-then-fence
+	// step) force-drains the first window before its timer ever fires.
+	batcher.flush(context.Background(), nil)
+	if err := <-firstDone; err != nil {
+		t.Fatalf("first append: %v", err)
+	}
+	if len(calls) != 1 {
+		t.Fatalf("commit called %d times, want 1", len(calls))
+	}
+
+	// A brand new window opens, unrelated to the stale timer captured above.
+	second := chainedEvent(t, "p", "second", Cursor{1, 2}, first.Checksum)
+	secondDone, flushNow, currentGeneration, err := batcher.enqueue(second)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if flushNow {
+		t.Fatal("MaxItems=0 must never report flushNow")
+	}
+
+	// The stale timer's callback finally runs, still carrying the FIRST
+	// window's generation.
+	batcher.onTimerFired(staleGeneration)
+	select {
+	case err := <-secondDone:
+		t.Fatalf("second append resolved (err=%v) from the STALE timer callback -- it must not have touched the next window", err)
+	case <-time.After(30 * time.Millisecond):
+		// Good: the second window is still pending, untouched by the stale
+		// callback.
+	}
+	if len(calls) != 1 {
+		t.Fatalf("commit called %d times after the stale timer fired, want still 1 (the stale callback must not have committed anything)", len(calls))
+	}
+
+	// The second window still flushes normally through its own (current)
+	// generation.
+	batcher.flush(context.Background(), &currentGeneration)
+	if err := <-secondDone; err != nil {
+		t.Fatalf("second append: %v", err)
+	}
+	if len(calls) != 2 {
+		t.Fatalf("commit called %d times, want 2", len(calls))
 	}
 }

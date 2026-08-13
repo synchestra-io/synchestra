@@ -424,7 +424,7 @@ func (j *DALJournal) FenceAsReplica(ctx context.Context, request PromotionReques
 		return Event{}, fmt.Errorf("%w: %q has role %q, not active", ErrFenceSourceNotActive, j.endpointID, j.role)
 	}
 	if j.batcher != nil {
-		j.batcher.flush(ctx)
+		j.batcher.flush(ctx, nil)
 	}
 	_, hash, err := loadHead(ctx, j.db, j.projectID)
 	if err != nil {

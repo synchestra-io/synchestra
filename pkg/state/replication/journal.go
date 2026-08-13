@@ -413,13 +413,13 @@ func (j *MemoryJournal) Append(ctx context.Context, event Event) error {
 		defer j.dataMu.Unlock()
 		return j.appendData(event)
 	}
-	done, flushNow, err := j.batcher.enqueue(event)
+	done, flushNow, generation, err := j.batcher.enqueue(event)
 	j.mu.RUnlock()
 	if err != nil {
 		return err
 	}
 	if flushNow {
-		j.batcher.flush(ctx)
+		j.batcher.flush(ctx, &generation)
 	}
 	return j.batcher.wait(ctx, done)
 }
@@ -452,7 +452,7 @@ func (j *MemoryJournal) FenceAsReplica(ctx context.Context, request PromotionReq
 		return Event{}, fmt.Errorf("%w: %q has role %q, not active", ErrFenceSourceNotActive, j.endpointID, j.role)
 	}
 	if j.batcher != nil {
-		j.batcher.flush(ctx)
+		j.batcher.flush(ctx, nil)
 	}
 	j.dataMu.Lock()
 	defer j.dataMu.Unlock()
