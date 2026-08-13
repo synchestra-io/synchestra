@@ -222,6 +222,14 @@ func (l leaseStore) Acquire(ctx context.Context, params state.LeaseAcquireParams
 	if strings.TrimSpace(params.HolderRunID) == "" {
 		return state.AuthorityLease{}, fmt.Errorf("agentstore: lease holder run id is required")
 	}
+	// TTL<=0 already means "no TTL, never expires" (leaseExpired, above) --
+	// but a NEGATIVE value is refused outright rather than silently folded
+	// into that same "immortal" behavior, which would hide a caller bug
+	// (e.g. a duration computed backwards) as an indefinite grant instead of
+	// a loud rejection.
+	if params.TTL < 0 {
+		return state.AuthorityLease{}, fmt.Errorf("agentstore: lease TTL must not be negative (got %s): %w", params.TTL, state.ErrInvalidArgument)
+	}
 	var lastErr error
 	for attempt := 0; attempt < maxAppendRetries; attempt++ {
 		head, headHash, proj, err := l.store.loadLeaseSnapshot(ctx)
