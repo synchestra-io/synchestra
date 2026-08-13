@@ -142,7 +142,14 @@ func foldLeaseProjection(events []replication.Event) (leaseProjection, error) {
 			if err := json.Unmarshal(event.Payload, &payload); err != nil {
 				return leaseProjection{}, fmt.Errorf("agentstore: decode %s: %w", KindLeaseRenewed, err)
 			}
-			if lease, ok := proj.byID[payload.LeaseID]; ok {
+			// A Renewed event for an ID the fold has already marked
+			// released/reclaimed is never legitimate under the CAS-
+			// protected Renew below (a release/reclaim that lands first
+			// fences every later Renew attempt on that ID before it can
+			// append) -- guarding here too keeps this fold correct even
+			// against a corrupted or out-of-order event stream, rather
+			// than silently resurrecting a dead lease.
+			if lease, ok := proj.byID[payload.LeaseID]; ok && !proj.released[payload.LeaseID] {
 				lease.RenewedAt = payload.RenewedAt
 				lease.ExpiresAt = payload.ExpiresAt
 				proj.byID[payload.LeaseID] = lease
@@ -184,7 +191,11 @@ func foldLeaseProjection(events []replication.Event) (leaseProjection, error) {
 			if err := json.Unmarshal(event.Payload, &payload); err != nil {
 				return leaseProjection{}, fmt.Errorf("agentstore: decode %s: %w", KindLeaseTransferred, err)
 			}
-			if lease, ok := proj.byID[payload.LeaseID]; ok {
+			// Same guard as KindLeaseRenewed above: a Transferred event
+			// never legitimately lands for an already-released/reclaimed
+			// ID once Transfer is CAS-protected (below), but the fold
+			// stays defensively correct either way.
+			if lease, ok := proj.byID[payload.LeaseID]; ok && !proj.released[payload.LeaseID] {
 				lease.HolderRunID = payload.ToHolderRunID
 				lease.Fence = state.LeaseFence{Epoch: payload.Epoch, Token: payload.Token}
 				lease.RenewedAt = payload.TransferredAt
@@ -278,53 +289,89 @@ func (l leaseStore) Acquire(ctx context.Context, params state.LeaseAcquireParams
 	return state.AuthorityLease{}, fmt.Errorf("agentstore: acquire lease for %q exhausted retries: %w", params.Resource, lastErr)
 }
 
+// Renew re-derives the ENTIRE domain decision (projection + fence check)
+// from a fresh, head-pinned snapshot on every retry attempt, exactly like
+// Acquire above -- this is what makes it a real compare-and-swap rather than
+// a stale read followed by a blind append. A plain "read once, then
+// appendWithRetry" shape (what this used to do) is unsafe here: a concurrent
+// TTL reclaim (Acquire) can commit between the read and the append, and a
+// blind retry would re-append without ever noticing the lease it thinks it
+// still holds was just fenced out from under it -- returning success to a
+// now-dead holder (agent-coordination#ac:one-writer-claim-is-fenced's
+// "resumed Renew after a concurrent reclaim must be refused", the double-
+// writer this closes). See TestLeaseRenewRefusesConcurrentReclaimInFence
+// CheckWindow for the deterministic reproduction.
 func (l leaseStore) Renew(ctx context.Context, leaseID string, fence state.LeaseFence) (state.AuthorityLease, error) {
-	proj, err := l.store.loadLeaseProjection(ctx)
-	if err != nil {
-		return state.AuthorityLease{}, err
+	var lastErr error
+	for attempt := 0; attempt < maxAppendRetries; attempt++ {
+		head, headHash, proj, err := l.store.loadLeaseSnapshot(ctx)
+		if err != nil {
+			return state.AuthorityLease{}, err
+		}
+		lease, ok := proj.byID[leaseID]
+		if !ok {
+			return state.AuthorityLease{}, fmt.Errorf("agentstore: lease %q: %w", leaseID, state.ErrNotFound)
+		}
+		if proj.released[leaseID] {
+			return state.AuthorityLease{}, fmt.Errorf("agentstore: lease %q already released: %w", leaseID, state.ErrLeaseFenced)
+		}
+		if lease.Fence != fence {
+			return state.AuthorityLease{}, fmt.Errorf("agentstore: lease %q fence %+v does not match current %+v: %w", leaseID, fence, lease.Fence, state.ErrLeaseFenced)
+		}
+		l.store.fireTestSeam("renew", leaseID)
+		now := l.store.options.Now()
+		var expiresAt time.Time
+		if !lease.ExpiresAt.IsZero() {
+			expiresAt = now.Add(lease.ExpiresAt.Sub(lease.RenewedAt))
+		}
+		payload := leaseRenewedPayload{Schema: schemaLeaseRenewedV1, LeaseID: leaseID, RenewedAt: now, ExpiresAt: expiresAt}
+		if _, err := l.store.tryAppendAt(ctx, head, headHash, KindLeaseRenewed, lease.Resource, payload); err != nil {
+			if errors.Is(err, errSequenceRace) {
+				lastErr = err
+				continue
+			}
+			return state.AuthorityLease{}, err
+		}
+		lease.RenewedAt = now
+		lease.ExpiresAt = expiresAt
+		return lease, nil
 	}
-	lease, ok := proj.byID[leaseID]
-	if !ok {
-		return state.AuthorityLease{}, fmt.Errorf("agentstore: lease %q: %w", leaseID, state.ErrNotFound)
-	}
-	if proj.released[leaseID] {
-		return state.AuthorityLease{}, fmt.Errorf("agentstore: lease %q already released: %w", leaseID, state.ErrLeaseFenced)
-	}
-	if lease.Fence != fence {
-		return state.AuthorityLease{}, fmt.Errorf("agentstore: lease %q fence %+v does not match current %+v: %w", leaseID, fence, lease.Fence, state.ErrLeaseFenced)
-	}
-	now := l.store.options.Now()
-	var expiresAt time.Time
-	if !lease.ExpiresAt.IsZero() {
-		expiresAt = now.Add(lease.ExpiresAt.Sub(lease.RenewedAt))
-	}
-	payload := leaseRenewedPayload{Schema: schemaLeaseRenewedV1, LeaseID: leaseID, RenewedAt: now, ExpiresAt: expiresAt}
-	if _, err := l.store.appendWithRetry(ctx, KindLeaseRenewed, lease.Resource, payload); err != nil {
-		return state.AuthorityLease{}, err
-	}
-	lease.RenewedAt = now
-	lease.ExpiresAt = expiresAt
-	return lease, nil
+	return state.AuthorityLease{}, fmt.Errorf("agentstore: renew lease %q exhausted retries: %w", leaseID, lastErr)
 }
 
+// Release is Renew's CAS-protected twin: see Renew's doc comment for why a
+// stale read followed by appendWithRetry is unsafe, and why every retry must
+// re-derive the release decision (existence, already-released, fence match)
+// from a fresh snapshot instead of trusting the first read.
 func (l leaseStore) Release(ctx context.Context, leaseID string, fence state.LeaseFence) error {
-	proj, err := l.store.loadLeaseProjection(ctx)
-	if err != nil {
-		return err
+	var lastErr error
+	for attempt := 0; attempt < maxAppendRetries; attempt++ {
+		head, headHash, proj, err := l.store.loadLeaseSnapshot(ctx)
+		if err != nil {
+			return err
+		}
+		lease, ok := proj.byID[leaseID]
+		if !ok {
+			return fmt.Errorf("agentstore: lease %q: %w", leaseID, state.ErrNotFound)
+		}
+		if proj.released[leaseID] {
+			return nil // already released: releasing twice is not an error.
+		}
+		if lease.Fence != fence {
+			return fmt.Errorf("agentstore: lease %q fence %+v does not match current %+v: %w", leaseID, fence, lease.Fence, state.ErrLeaseFenced)
+		}
+		l.store.fireTestSeam("release", leaseID)
+		payload := leaseReleasedPayload{Schema: schemaLeaseReleasedV1, LeaseID: leaseID, ReleasedAt: l.store.options.Now()}
+		if _, err := l.store.tryAppendAt(ctx, head, headHash, KindLeaseReleased, lease.Resource, payload); err != nil {
+			if errors.Is(err, errSequenceRace) {
+				lastErr = err
+				continue
+			}
+			return err
+		}
+		return nil
 	}
-	lease, ok := proj.byID[leaseID]
-	if !ok {
-		return fmt.Errorf("agentstore: lease %q: %w", leaseID, state.ErrNotFound)
-	}
-	if proj.released[leaseID] {
-		return nil // already released: releasing twice is not an error.
-	}
-	if lease.Fence != fence {
-		return fmt.Errorf("agentstore: lease %q fence %+v does not match current %+v: %w", leaseID, fence, lease.Fence, state.ErrLeaseFenced)
-	}
-	payload := leaseReleasedPayload{Schema: schemaLeaseReleasedV1, LeaseID: leaseID, ReleasedAt: l.store.options.Now()}
-	_, err = l.store.appendWithRetry(ctx, KindLeaseReleased, lease.Resource, payload)
-	return err
+	return fmt.Errorf("agentstore: release lease %q exhausted retries: %w", leaseID, lastErr)
 }
 
 func (l leaseStore) Get(ctx context.Context, resource string) (state.AuthorityLease, error) {
@@ -342,41 +389,54 @@ func (l leaseStore) Get(ctx context.Context, resource string) (state.AuthorityLe
 // Transfer proves the presented fence is still current and moves this SAME
 // lease to toHolderRunID under a freshly minted fence token, in one audited
 // event — the voluntary-handoff counterpart to Acquire's TTL-based reclaim.
-// WorktreeStore.Handoff is built on this.
+// WorktreeStore.Handoff is built on this. Like Renew/Release above, every
+// retry re-derives the fence decision from a fresh head-pinned snapshot
+// (see Renew's doc comment): a concurrent TTL reclaim landing in the window
+// between this call's fence check and its append must fence the transfer,
+// not let it silently succeed against a lease that's already someone else's.
 func (l leaseStore) Transfer(ctx context.Context, leaseID string, fence state.LeaseFence, toHolderRunID string) (state.AuthorityLease, error) {
 	if strings.TrimSpace(toHolderRunID) == "" {
 		return state.AuthorityLease{}, fmt.Errorf("agentstore: lease transfer needs a target holder run id")
 	}
-	proj, err := l.store.loadLeaseProjection(ctx)
-	if err != nil {
-		return state.AuthorityLease{}, err
+	var lastErr error
+	for attempt := 0; attempt < maxAppendRetries; attempt++ {
+		head, headHash, proj, err := l.store.loadLeaseSnapshot(ctx)
+		if err != nil {
+			return state.AuthorityLease{}, err
+		}
+		lease, ok := proj.byID[leaseID]
+		if !ok {
+			return state.AuthorityLease{}, fmt.Errorf("agentstore: lease %q: %w", leaseID, state.ErrNotFound)
+		}
+		if proj.released[leaseID] {
+			return state.AuthorityLease{}, fmt.Errorf("agentstore: lease %q already released: %w", leaseID, state.ErrLeaseFenced)
+		}
+		if lease.Fence != fence {
+			return state.AuthorityLease{}, fmt.Errorf("agentstore: lease %q fence %+v does not match current %+v: %w", leaseID, fence, lease.Fence, state.ErrLeaseFenced)
+		}
+		l.store.fireTestSeam("transfer", leaseID)
+		now := l.store.options.Now()
+		var expiresAt time.Time
+		if !lease.ExpiresAt.IsZero() {
+			expiresAt = now.Add(lease.ExpiresAt.Sub(lease.RenewedAt))
+		}
+		newFence := state.LeaseFence{Epoch: l.store.options.AuthorityEpoch, Token: l.store.options.NewID()}
+		payload := leaseTransferredPayload{
+			Schema: schemaLeaseTransferredV1, LeaseID: leaseID, FromHolderRunID: lease.HolderRunID, ToHolderRunID: toHolderRunID,
+			Epoch: newFence.Epoch, Token: newFence.Token, TransferredAt: now, ExpiresAt: expiresAt,
+		}
+		if _, err := l.store.tryAppendAt(ctx, head, headHash, KindLeaseTransferred, lease.Resource, payload); err != nil {
+			if errors.Is(err, errSequenceRace) {
+				lastErr = err
+				continue
+			}
+			return state.AuthorityLease{}, err
+		}
+		lease.HolderRunID = toHolderRunID
+		lease.Fence = newFence
+		lease.RenewedAt = now
+		lease.ExpiresAt = expiresAt
+		return lease, nil
 	}
-	lease, ok := proj.byID[leaseID]
-	if !ok {
-		return state.AuthorityLease{}, fmt.Errorf("agentstore: lease %q: %w", leaseID, state.ErrNotFound)
-	}
-	if proj.released[leaseID] {
-		return state.AuthorityLease{}, fmt.Errorf("agentstore: lease %q already released: %w", leaseID, state.ErrLeaseFenced)
-	}
-	if lease.Fence != fence {
-		return state.AuthorityLease{}, fmt.Errorf("agentstore: lease %q fence %+v does not match current %+v: %w", leaseID, fence, lease.Fence, state.ErrLeaseFenced)
-	}
-	now := l.store.options.Now()
-	var expiresAt time.Time
-	if !lease.ExpiresAt.IsZero() {
-		expiresAt = now.Add(lease.ExpiresAt.Sub(lease.RenewedAt))
-	}
-	newFence := state.LeaseFence{Epoch: l.store.options.AuthorityEpoch, Token: l.store.options.NewID()}
-	payload := leaseTransferredPayload{
-		Schema: schemaLeaseTransferredV1, LeaseID: leaseID, FromHolderRunID: lease.HolderRunID, ToHolderRunID: toHolderRunID,
-		Epoch: newFence.Epoch, Token: newFence.Token, TransferredAt: now, ExpiresAt: expiresAt,
-	}
-	if _, err := l.store.appendWithRetry(ctx, KindLeaseTransferred, lease.Resource, payload); err != nil {
-		return state.AuthorityLease{}, err
-	}
-	lease.HolderRunID = toHolderRunID
-	lease.Fence = newFence
-	lease.RenewedAt = now
-	lease.ExpiresAt = expiresAt
-	return lease, nil
+	return state.AuthorityLease{}, fmt.Errorf("agentstore: transfer lease %q exhausted retries: %w", leaseID, lastErr)
 }

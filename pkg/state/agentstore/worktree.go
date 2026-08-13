@@ -242,6 +242,20 @@ func (w worktreeStore) Claim(ctx context.Context, params state.WorktreeClaimPara
 	return claim, nil
 }
 
+// Renew's fencing decision is made entirely by w.store.Lease().Renew, which
+// re-derives its projection and fence check from a fresh, head-pinned
+// snapshot on EVERY retry attempt (lease.go) -- that is what actually closes
+// agent-coordination#ac:one-writer-claim-is-fenced's "a concurrent TTL
+// reclaim committing between the check and the append must fence a resumed
+// Renew" gap. The w.Get call below is only a fast-fail optimization: its
+// projection can be stale (e.g. it may not yet reflect a reclaim whose
+// KindWorktreeReclaimed follow-up event, appended after the reclaim's
+// KindLeaseReclaimed, hasn't landed yet), but staleness only ever produces a
+// false NEGATIVE here (falling through to Lease().Renew, which is
+// authoritative) — ReleasedAt only transitions from unset to set, so a read
+// that already observes it set is never wrong. See
+// TestWorktreeRenewRefusesConcurrentReclaimInFenceCheckWindow
+// (fence_race_test.go) for the deterministic reproduction proving this.
 func (w worktreeStore) Renew(ctx context.Context, claimID string, fence state.LeaseFence) (state.WorktreeClaim, error) {
 	claim, err := w.Get(ctx, claimID)
 	if err != nil {
@@ -323,7 +337,9 @@ func (w worktreeStore) List(ctx context.Context, filter state.WorktreeFilter) ([
 // "Sequential cooperation is supported through explicit handoff"): the
 // outgoing run proves its current fence via Lease().Transfer, and the SAME
 // claim ID moves to ToRunID under a freshly minted fence, in one audited
-// event.
+// event. Like Renew above, the fencing decision is Lease().Transfer's alone
+// (lease.go's CAS retry loop); the leading w.Get/ReleasedAt check here is
+// the same fast-fail-only optimization Renew's doc comment explains.
 func (w worktreeStore) Handoff(ctx context.Context, claimID string, params state.WorktreeHandoffParams) (state.WorktreeClaim, error) {
 	if strings.TrimSpace(params.ToRunID) == "" {
 		return state.WorktreeClaim{}, fmt.Errorf("agentstore: worktree handoff needs a target run id")
