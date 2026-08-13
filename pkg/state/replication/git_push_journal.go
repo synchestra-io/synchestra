@@ -27,6 +27,8 @@ const (
 	gitOperationJournalV1    = "journal.append.v1"
 	gitOperationReplicaV1    = "journal.replica_ingest.v1"
 	gitOperationFallbackV1   = "fallback.append.v1"
+	gitOperationFenceV1      = "journal.fence.v1"
+	gitOperationPromoteV1    = "journal.promote.v1"
 	gitReceiptLockRetryDelay = 10 * time.Millisecond
 	maxGitOperationPayload   = 4 << 20
 )
@@ -140,11 +142,19 @@ func (j *GitPushJournal) deliverEvent(ctx context.Context, event Event, operatio
 	})
 }
 
-// ResumeOperation reconstructs an interrupted authority append or replica
-// ingest from the serialized intent. The operation kind selects the same
-// role-fenced seam used before the restart.
+// ResumeOperation reconstructs an interrupted authority append, replica
+// ingest, fence, or promote from the serialized intent. The operation kind
+// selects the same role-fenced (or promotable) seam used before the restart.
+// A fence/promote operation's local write is never re-attempted here: by the
+// time pushLatestCommit ever creates a receipt for one, the local commit
+// already happened durably as part of the promotable call itself (see
+// FenceAsReplica/PromoteToActive below) — resumeOperation's own
+// runOperationLocked short-circuits straight to pushPendingLocked for a
+// "pending"-phase receipt, so the no-op appendFn below is never actually
+// invoked in practice; it exists only to satisfy resumeOperation's uniform
+// dispatch shape.
 func (j *GitPushJournal) ResumeOperation(ctx context.Context, operationID string) (GitCommitReceipt, error) {
-	return j.remote.resumeOperation(ctx, operationID, []string{gitOperationJournalV1, gitOperationReplicaV1}, func(operationKind string, payload json.RawMessage) (func() error, func() (bool, error), error) {
+	return j.remote.resumeOperation(ctx, operationID, []string{gitOperationJournalV1, gitOperationReplicaV1, gitOperationFenceV1, gitOperationPromoteV1}, func(operationKind string, payload json.RawMessage) (func() error, func() (bool, error), error) {
 		var event Event
 		if err := json.Unmarshal(payload, &event); err != nil {
 			return nil, nil, fmt.Errorf("replication: decode pending journal event: %w", err)
@@ -176,9 +186,116 @@ func (j *GitPushJournal) ResumeOperation(ctx context.Context, operationID string
 				return nil, nil, fmt.Errorf("replication: wrapped Git journal has no replica-ingest seam")
 			}
 			return func() error { return ingestor.IngestReplica(ctx, event) }, verify, nil
+		case gitOperationFenceV1, gitOperationPromoteV1:
+			return func() error { return nil }, verify, nil
 		default:
 			return nil, nil, fmt.Errorf("replication: unsupported journal operation kind %q", operationKind)
 		}
+	})
+}
+
+// promotable type-asserts the wrapped Journal to PromotableJournal, the seam
+// FenceAsReplica/PromoteToActive/HeadEvent/RoleEpoch/EndpointID need.
+func (j *GitPushJournal) promotable() (PromotableJournal, error) {
+	p, ok := j.Journal.(PromotableJournal)
+	if !ok {
+		return nil, fmt.Errorf("replication: wrapped Git journal has no promotable seam")
+	}
+	return p, nil
+}
+
+func (j *GitPushJournal) EndpointID() string {
+	p, err := j.promotable()
+	if err != nil {
+		return ""
+	}
+	return p.EndpointID()
+}
+
+func (j *GitPushJournal) RoleEpoch() (Role, int64) {
+	p, err := j.promotable()
+	if err != nil {
+		return "", 0
+	}
+	return p.RoleEpoch()
+}
+
+func (j *GitPushJournal) HeadEvent(ctx context.Context) (Event, bool, error) {
+	p, err := j.promotable()
+	if err != nil {
+		return Event{}, false, err
+	}
+	return p.HeadEvent(ctx)
+}
+
+// FenceAsReplica composes the inner journal's fence-first checkpoint write
+// with this endpoint's durable CAS push, so a Git-backed active's fence
+// commit is never left local-only the way calling the raw *DALJournal
+// fencing seam directly (bypassing this wrapper entirely) used to: that
+// silently committed only to the local inGitDB working copy and permanently
+// jammed this wrapper's ExpectedBase precondition (local != remote with no
+// receipt explaining why) for every future operation. It runs under the same
+// cross-process operation lock as Append/IngestReplica, so it cannot
+// interleave with an in-flight push. It is idempotent the way the inner call
+// is: a resumed call whose local fence is already durable re-derives the
+// same checkpoint (a no-op locally) and simply retries the push.
+//
+// Trade-off, disclosed rather than silently accepted: unlike Append/
+// IngestReplica, this does not pre-write a durable "intent" receipt before
+// the local commit, because the checkpoint's checksum can only be computed
+// correctly INSIDE the promotable call's own locked/transactional scope
+// (chained onto the endpoint's own fresh head) — exactly what closes the
+// TOCTOU findings 1-4 exist to fix — so there is nothing to serialize as an
+// intent before that call runs. A crash between the local commit succeeding
+// and the receipt file landing (a narrow window: one local commit followed
+// by one local file write) leaves a fail-closed but not self-describing
+// state — ExpectedBase will correctly refuse every subsequent operation, but
+// ResumeOperation has no receipt to key off and needs an operator to
+// re-invoke FenceAsReplica/PromoteToActive directly (which durability-checks
+// and no-ops the already-done local write, then completes the push) rather
+// than resuming automatically via an operation ID.
+func (j *GitPushJournal) FenceAsReplica(ctx context.Context, request PromotionRequest, candidateEndpointID string) (Event, error) {
+	promotable, err := j.promotable()
+	if err != nil {
+		return Event{}, err
+	}
+	var checkpoint Event
+	err = j.remote.withPromotionLock(ctx, func() error {
+		if _, err := j.remote.ExpectedBase(ctx); err != nil {
+			return fmt.Errorf("replication: Git fence needs a synced local/remote base: %w", err)
+		}
+		var fenceErr error
+		checkpoint, fenceErr = promotable.FenceAsReplica(ctx, request, candidateEndpointID)
+		if fenceErr != nil {
+			return fenceErr
+		}
+		if _, pushErr := j.remote.pushLatestCommit(ctx, gitOperationFenceV1, checkpoint); pushErr != nil {
+			return fmt.Errorf("replication: push fence checkpoint: %w", pushErr)
+		}
+		return nil
+	})
+	return checkpoint, err
+}
+
+// PromoteToActive composes the inner journal's promotion role-flip with a
+// durable CAS push in the same way FenceAsReplica does — see its doc
+// comment, including the disclosed trade-off, for the full contract.
+func (j *GitPushJournal) PromoteToActive(ctx context.Context, checkpoint Event, replicaIDs []string) error {
+	promotable, err := j.promotable()
+	if err != nil {
+		return err
+	}
+	return j.remote.withPromotionLock(ctx, func() error {
+		if _, err := j.remote.ExpectedBase(ctx); err != nil {
+			return fmt.Errorf("replication: Git promote needs a synced local/remote base: %w", err)
+		}
+		if err := promotable.PromoteToActive(ctx, checkpoint, replicaIDs); err != nil {
+			return err
+		}
+		if _, err := j.remote.pushLatestCommit(ctx, gitOperationPromoteV1, checkpoint); err != nil {
+			return fmt.Errorf("replication: push promotion checkpoint: %w", err)
+		}
+		return nil
 	})
 }
 
@@ -351,24 +468,83 @@ func (d *GitRemoteDurability) ExpectedBase(ctx context.Context) (string, error) 
 	return remote, nil
 }
 
-func (d *GitRemoteDurability) withOperationLock(ctx context.Context, fn func() (GitCommitReceipt, error)) (GitCommitReceipt, error) {
+// acquireOperationLock is the cross-process flock every mutating operation on
+// one Git-backed endpoint serializes through — Append, IngestReplica, and now
+// FenceAsReplica/PromoteToActive (via withPromotionLock) all share it, so a
+// fence/promote can never interleave with an in-flight ordinary append push
+// or vice versa.
+func (d *GitRemoteDurability) acquireOperationLock(ctx context.Context) (*flock.Flock, error) {
 	dir, err := d.receiptDir(ctx)
 	if err != nil {
-		return GitCommitReceipt{}, err
+		return nil, err
 	}
 	if err := ensureDurableDirectory(dir); err != nil {
-		return GitCommitReceipt{}, fmt.Errorf("replication: create Git receipt directory: %w", err)
+		return nil, fmt.Errorf("replication: create Git receipt directory: %w", err)
 	}
 	lock := flock.New(filepath.Join(dir, "operation.lock"))
 	locked, err := lock.TryLockContext(ctx, gitReceiptLockRetryDelay)
 	if err != nil {
-		return GitCommitReceipt{}, fmt.Errorf("replication: acquire Git delivery lock: %w", err)
+		return nil, fmt.Errorf("replication: acquire Git delivery lock: %w", err)
 	}
 	if !locked {
-		return GitCommitReceipt{}, fmt.Errorf("replication: Git delivery lock not acquired")
+		return nil, fmt.Errorf("replication: Git delivery lock not acquired")
+	}
+	return lock, nil
+}
+
+func (d *GitRemoteDurability) withOperationLock(ctx context.Context, fn func() (GitCommitReceipt, error)) (GitCommitReceipt, error) {
+	lock, err := d.acquireOperationLock(ctx)
+	if err != nil {
+		return GitCommitReceipt{}, err
 	}
 	defer func() { _ = lock.Unlock() }()
 	return fn()
+}
+
+// withPromotionLock is withOperationLock's shape for FenceAsReplica/
+// PromoteToActive, whose result (an Event or nothing, not a GitCommitReceipt)
+// differs from the ordinary append/replica-ingest operations.
+func (d *GitRemoteDurability) withPromotionLock(ctx context.Context, fn func() error) error {
+	lock, err := d.acquireOperationLock(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = lock.Unlock() }()
+	return fn()
+}
+
+// pushLatestCommit durably pushes the current local HEAD commit — which the
+// caller (FenceAsReplica/PromoteToActive) has just produced via a promotable
+// fence/promote write, already inside acquireOperationLock/withPromotionLock
+// — using the same CAS-lease and receipt evidence AppendAndPush uses, so a
+// Git-backed promotion checkpoint is never left committed locally without
+// either being pushed or leaving a resumable pending receipt behind. The
+// receipt is created directly in "pending" phase (no separate "intent"
+// pre-image, since the local commit already happened before this is called
+// — see FenceAsReplica's doc comment for the disclosed trade-off that follows
+// from that).
+func (d *GitRemoteDurability) pushLatestCommit(ctx context.Context, kind string, event Event) (GitCommitReceipt, error) {
+	local, err := d.localHead(ctx)
+	if err != nil {
+		return GitCommitReceipt{}, err
+	}
+	if local == "" {
+		return GitCommitReceipt{}, fmt.Errorf("replication: operation %q produced no Git commit", kind)
+	}
+	parent := ""
+	if out, err := d.git(ctx, "rev-parse", local+"^"); err == nil {
+		parent = strings.TrimSpace(string(out))
+	}
+	payload, err := json.Marshal(event)
+	if err != nil {
+		return GitCommitReceipt{}, fmt.Errorf("replication: encode promotion checkpoint: %w", err)
+	}
+	receipt := GitCommitReceipt{OperationID: kind + ":" + event.Checksum, OperationKind: kind, OperationPayload: payload, CommitSHA: local, RemoteRef: "refs/heads/" + d.branch, ExpectedBase: parent, AwaitingPush: true}
+	receipt, err = d.activateReceipt(ctx, receipt, "pending")
+	if err != nil {
+		return receipt, err
+	}
+	return d.pushPendingLocked(ctx, receipt)
 }
 
 func (d *GitRemoteDurability) fault(stage string) error {
@@ -397,7 +573,9 @@ func verifyGitReceipt(receipt GitCommitReceipt) error {
 	if strings.TrimSpace(receipt.OperationID) == "" || len(receipt.OperationID) > 512 {
 		return fmt.Errorf("replication: invalid Git receipt operation ID")
 	}
-	if receipt.OperationKind != gitOperationJournalV1 && receipt.OperationKind != gitOperationReplicaV1 && receipt.OperationKind != gitOperationFallbackV1 {
+	switch receipt.OperationKind {
+	case gitOperationJournalV1, gitOperationReplicaV1, gitOperationFallbackV1, gitOperationFenceV1, gitOperationPromoteV1:
+	default:
 		return fmt.Errorf("replication: invalid Git receipt operation kind %q", receipt.OperationKind)
 	}
 	if len(receipt.OperationPayload) == 0 || len(receipt.OperationPayload) > maxGitOperationPayload || !json.Valid(receipt.OperationPayload) {

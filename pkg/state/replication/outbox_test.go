@@ -1,6 +1,7 @@
 package replication
 
 // Features implemented: state-store/topology
+// Features depended on:  state-store/topology, agent-coordination
 
 import (
 	"context"
@@ -9,14 +10,26 @@ import (
 	"testing"
 )
 
+func newDrainPair(t *testing.T, replicaID string) (*MemoryJournal, *MemoryJournal) {
+	t.Helper()
+	source, err := NewMemoryJournal(MemoryJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: "active", Role: RoleActive, AuthorityEpoch: 1, ReplicaIDs: []string{replicaID}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	replica, err := NewMemoryJournal(MemoryJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: replicaID, Role: RoleReplica, AuthorityEpoch: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return source, replica
+}
+
 // TestDrainOutboxDeliversInCursorOrderAndAcksExactlyOnce is the basic happy
 // path: every pending row is applied to the replica and acked (deleted) from
 // the source, in cursor order, and a second drain of the now-empty outbox is
 // a true no-op.
 func TestDrainOutboxDeliversInCursorOrderAndAcksExactlyOnce(t *testing.T) {
 	ctx := context.Background()
-	source := NewMemoryJournal("mirror")
-	replica := NewMemoryJournal()
+	source, replica := newDrainPair(t, "mirror")
 	events := relayEvents(t)
 	appendAll(t, source, events)
 
@@ -52,59 +65,57 @@ func TestDrainOutboxDeliversInCursorOrderAndAcksExactlyOnce(t *testing.T) {
 	}
 }
 
-// ackFailer wraps an OutboxSource and fails AckOutbox exactly once for one
-// chosen event, simulating a process crash after the replica durably applied
-// the event but before the source's outbox row was deleted. This is the
-// specific window the drain/ack design must survive without loss or
-// double-apply.
+// ackFailer wraps an OutboxSource and fails its FIRST batched AckOutbox call
+// outright (before any row is deleted), simulating a crash during the single
+// per-drain ack transaction after every event in the batch was already
+// durably applied to the replica. This is the specific window the
+// batched-ack design must survive without loss or double-apply.
 type ackFailer struct {
 	OutboxSource
-	failFor string
-	failed  bool
+	failed bool
 }
 
-func (a *ackFailer) AckOutbox(ctx context.Context, replicaID, eventID string) error {
-	if !a.failed && eventID == a.failFor {
+func (a *ackFailer) AckOutbox(ctx context.Context, replicaID string, eventIDs ...string) error {
+	if !a.failed {
 		a.failed = true
-		return errors.New("simulated crash between apply and ack")
+		return errors.New("simulated crash during batched ack")
 	}
-	return a.OutboxSource.AckOutbox(ctx, replicaID, eventID)
+	return a.OutboxSource.AckOutbox(ctx, replicaID, eventIDs...)
 }
 
-// TestDrainOutboxCrashBetweenApplyAndAckConvergesOnResume kills delivery
-// immediately after the replica accepts an event but before its outbox row
-// is acked, then resumes with a fresh DrainOutbox call standing in for a
-// restarted worker. The event must not be applied twice, and the outbox must
-// end up fully drained.
-func TestDrainOutboxCrashBetweenApplyAndAckConvergesOnResume(t *testing.T) {
+// TestDrainOutboxCrashDuringBatchedAckConvergesOnResume kills delivery
+// immediately after every pending event is durably applied to the replica
+// but before the single batched ack transaction commits, then resumes with a
+// fresh DrainOutbox call standing in for a restarted worker. No event may be
+// applied twice, and the outbox must end up fully drained.
+func TestDrainOutboxCrashDuringBatchedAckConvergesOnResume(t *testing.T) {
 	ctx := context.Background()
-	source := NewMemoryJournal("mirror")
-	replica := NewMemoryJournal()
+	source, replica := newDrainPair(t, "mirror")
 	events := relayEvents(t)
 	appendAll(t, source, events)
 
-	failing := &ackFailer{OutboxSource: source, failFor: events[1].EventID}
+	failing := &ackFailer{OutboxSource: source}
 	health, err := DrainOutbox(ctx, failing, replica, "mirror")
 	if err == nil {
-		t.Fatal("expected the injected crash between apply and ack to surface")
+		t.Fatal("expected the injected batched-ack crash to surface")
 	}
-	if health.Cursor != events[1].Cursor {
-		t.Fatalf("crash health cursor = %+v, want the applied-but-unacked event's cursor %+v", health.Cursor, events[1].Cursor)
+	if health.EventLag != 0 || health.Cursor != events[len(events)-1].Cursor {
+		t.Fatalf("crash health = %+v, want every event already applied despite the failed ack", health)
 	}
-	// The replica already durably has events[0] and events[1] — the crash is
-	// strictly after apply — but the source outbox still holds events[1]
-	// onward because the ack for events[1] never completed.
+	// The replica already durably has every event -- the crash is strictly in
+	// the batched ack, after every apply succeeded -- but the source outbox
+	// still holds every row because that one ack transaction never committed.
 	got, err := replica.After(ctx, Cursor{})
-	if err != nil || len(got) != 2 {
-		t.Fatalf("replica after crash = %#v, %v; want exactly the 2 applied events", got, err)
+	if err != nil || len(got) != len(events) {
+		t.Fatalf("replica after crash = %#v, %v; want all %d events already applied", got, err, len(events))
 	}
 	pending, err := source.PendingOutbox(ctx, "mirror")
-	if err != nil || len(pending) != len(events)-1 {
-		t.Fatalf("outbox after crash = %d rows, %v; want %d unacked rows", len(pending), err, len(events)-1)
+	if err != nil || len(pending) != len(events) {
+		t.Fatalf("outbox after crash = %d rows, %v; want all %d unacked rows", len(pending), err, len(events))
 	}
 
-	// Resume: a fresh drain redelivers events[1] (idempotent no-op on the
-	// already-caught-up replica), completes its ack, and finishes the rest.
+	// Resume: a fresh drain redelivers every event (idempotent no-op on the
+	// already-caught-up replica), and this time the batched ack succeeds.
 	resumed, err := DrainOutbox(ctx, failing, replica, "mirror")
 	if err != nil {
 		t.Fatalf("resume: %v", err)
@@ -130,6 +141,90 @@ func TestDrainOutboxCrashBetweenApplyAndAckConvergesOnResume(t *testing.T) {
 	}
 }
 
+// fenceAfterN wraps a *MemoryJournal replica and, starting with its (n+1)th
+// IngestReplica call, flips the underlying journal's role away from
+// RoleReplica before delegating -- simulating a concurrent promotion fencing
+// this replica mid-drain (e.g. because it was itself just promoted, or
+// fenced further downstream). It lets
+// TestDrainOutboxMidLoopIngestFailureLeavesResumableState exercise the exact
+// failure mode finding #13 calls out without needing a full concurrent
+// Promote() call.
+type fenceAfterN struct {
+	*MemoryJournal
+	n     int
+	calls int
+}
+
+func (f *fenceAfterN) IngestReplica(ctx context.Context, event Event) error {
+	f.calls++
+	if f.calls > f.n {
+		f.mu.Lock()
+		f.role = RoleActive
+		f.mu.Unlock()
+	}
+	return f.MemoryJournal.IngestReplica(ctx, event)
+}
+
+// TestDrainOutboxMidLoopIngestFailureLeavesResumableState fences the replica
+// out from under DrainOutbox after two of four pending events have already
+// been applied. The call must fail with a *RoleFenceError (never anything
+// else -- the ingest seam itself refuses cleanly), report EventLag/Cursor
+// for exactly what was and was not applied, and leave the source outbox
+// holding exactly the not-yet-applied rows so a later drain (once the
+// replica is un-fenced) can resume and finish.
+func TestDrainOutboxMidLoopIngestFailureLeavesResumableState(t *testing.T) {
+	ctx := context.Background()
+	source, replica := newDrainPair(t, "mirror")
+	events := relayEvents(t)
+	appendAll(t, source, events)
+
+	fencing := &fenceAfterN{MemoryJournal: replica, n: 2}
+	health, err := DrainOutbox(ctx, source, fencing, "mirror")
+	if err == nil {
+		t.Fatal("expected the mid-drain fence to surface")
+	}
+	var fence *RoleFenceError
+	if !errors.As(err, &fence) {
+		t.Fatalf("mid-drain ingest failure error = %v, want *RoleFenceError", err)
+	}
+	if fence.Role != RoleActive {
+		t.Fatalf("fence evidence role = %v, want %v (the simulated concurrent promotion)", fence.Role, RoleActive)
+	}
+	if health.Cursor != events[1].Cursor || health.EventLag != 2 {
+		t.Fatalf("mid-drain health = %+v, want cursor at events[1] and 2 remaining", health)
+	}
+	got, err := replica.After(ctx, Cursor{})
+	if err != nil || len(got) != 2 {
+		t.Fatalf("replica after mid-drain fence = %#v, %v; want exactly the 2 applied events", got, err)
+	}
+	pending, err := source.PendingOutbox(ctx, "mirror")
+	if err != nil || len(pending) != 2 {
+		t.Fatalf("outbox after mid-drain fence = %d rows, %v; want exactly the 2 not-yet-applied rows", len(pending), err)
+	}
+	for _, event := range pending {
+		if event.Cursor.Sequence <= 2 {
+			t.Fatalf("outbox after mid-drain fence retained an already-applied row: %+v", event)
+		}
+	}
+
+	// Resume: un-fence the replica (a real caller would do this by promoting
+	// it back, or simply because the simulated race is over) and drain again.
+	replica.mu.Lock()
+	replica.role = RoleReplica
+	replica.mu.Unlock()
+	resumed, err := DrainOutbox(ctx, source, replica, "mirror")
+	if err != nil {
+		t.Fatalf("resume after un-fencing: %v", err)
+	}
+	if resumed.EventLag != 0 || resumed.Cursor != events[len(events)-1].Cursor {
+		t.Fatalf("resume health = %+v, want fully drained", resumed)
+	}
+	finalPending, err := source.PendingOutbox(ctx, "mirror")
+	if err != nil || len(finalPending) != 0 {
+		t.Fatalf("outbox after resume = %#v, %v; want empty", finalPending, err)
+	}
+}
+
 // TestDrainOutboxConcurrentDrainersDoNotDoubleApply runs two independent
 // DrainOutbox calls against the same source outbox and the same replica at
 // the same time. Neither call coordinates with the other — the safety
@@ -138,8 +233,7 @@ func TestDrainOutboxCrashBetweenApplyAndAckConvergesOnResume(t *testing.T) {
 // goroutine concurrency rather than argued about.
 func TestDrainOutboxConcurrentDrainersDoNotDoubleApply(t *testing.T) {
 	ctx := context.Background()
-	source := NewMemoryJournal("mirror")
-	replica := NewMemoryJournal()
+	source, replica := newDrainPair(t, "mirror")
 	events := relayEvents(t)
 	appendAll(t, source, events)
 
@@ -189,8 +283,7 @@ func TestDrainOutboxConcurrentDrainersDoNotDoubleApply(t *testing.T) {
 // events and AckOutbox still deletes their now-stale outbox rows.
 func TestDrainOutboxAcksEventsAlreadyDeliveredByDirectReplicate(t *testing.T) {
 	ctx := context.Background()
-	source := NewMemoryJournal("mirror")
-	replica := NewMemoryJournal()
+	source, replica := newDrainPair(t, "mirror")
 	events := relayEvents(t)
 	appendAll(t, source, events)
 

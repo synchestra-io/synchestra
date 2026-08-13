@@ -26,8 +26,14 @@ func TestTopologyRequiresOneActiveReplicaAndGit(t *testing.T) {
 
 func TestReplicateOrdersTypedThreadEventsAndPreservesAuditFields(t *testing.T) {
 	ctx := context.Background()
-	git := NewMemoryJournal()
-	sqlite := NewMemoryJournal()
+	git, err := NewMemoryJournal(MemoryJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: "git-active", Role: RoleActive, AuthorityEpoch: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	sqlite, err := NewMemoryJournal(MemoryJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: "sqlite-mirror", Role: RoleReplica, AuthorityEpoch: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
 	previous := ""
 	for sequence, input := range []struct{ id, kind string }{
 		{"message-request", "message.sent"},
@@ -67,14 +73,17 @@ func TestReplicateOrdersTypedThreadEventsAndPreservesAuditFields(t *testing.T) {
 	}
 	// A second delivery is a no-op, which is essential after a duplicate Git
 	// webhook or a retry while a server is recovering.
-	if err := sqlite.Append(ctx, got[3]); err != nil {
-		t.Fatalf("idempotent append: %v", err)
+	if err := sqlite.IngestReplica(ctx, got[3]); err != nil {
+		t.Fatalf("idempotent replica ingest: %v", err)
 	}
 }
 
 func TestMemoryJournalRejectsFencedOrBrokenChainEvent(t *testing.T) {
 	ctx := context.Background()
-	j := NewMemoryJournal()
+	j, err := NewMemoryJournal(MemoryJournalOptions{ProjectID: "p", EndpointID: "active", Role: RoleActive, AuthorityEpoch: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
 	payload := json.RawMessage(`{"thread_id":"fair-split"}`)
 	first, err := NewEvent(Event{ProjectID: "p", EventID: "one", Cursor: Cursor{Epoch: 1, Sequence: 1},
 		OccurredAt: time.Date(2026, 8, 10, 0, 0, 0, 0, time.UTC), ActorID: "a", CommandID: "c", IdempotencyKey: "i1", Kind: "message.sent", Payload: payload})

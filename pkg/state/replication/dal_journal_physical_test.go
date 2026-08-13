@@ -4,6 +4,7 @@ package replication
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -21,6 +22,59 @@ import (
 	"github.com/ingitdb/dalgo2ingitdb"
 	"github.com/ingitdb/ingitdb-go/ingitdb/validator"
 )
+
+// TestOutboxKeyPrefixDoesNotCollideAcrossReplicas proves finding #7 with the
+// exact colliding pair the review construction produced: replica ID "abc"
+// (keyPart "YWJj") and a second replica ID ridB whose base64url-encoded
+// keyPart is literally "YWJj--event-" (i.e. ridB is
+// base64url-decode("YWJj--event-")). With the old "--replica-"/"--event-"
+// text separators, ridA's OWN outboxKeyPrefix ("...--replica-YWJj--event-")
+// is a byte-for-byte PREFIX of every one of ridB's outboxKey rows
+// ("...--replica-YWJj--event---event-<eventKeyPart>"), because '-' is part
+// of base64.RawURLEncoding's own alphabet and ridB's encoded form happens to
+// contain the "--event-" delimiter text mid-string. So scanning for ridA's
+// rows (loadOutboxEvents(project, "abc")) would incorrectly also match every
+// row actually queued for ridB. The current '.'-based keySeparator (outside
+// that alphabet) makes the construction structurally impossible: this test
+// reproduces the old collision against the pre-fix scheme inline and proves
+// the current key functions no longer exhibit it.
+func TestOutboxKeyPrefixDoesNotCollideAcrossReplicas(t *testing.T) {
+	const ridA = "abc"
+	decoded, err := base64.RawURLEncoding.DecodeString("YWJj--event-")
+	if err != nil {
+		t.Fatal(err)
+	}
+	ridB := string(decoded)
+	if ridA == ridB {
+		t.Fatal("test fixture invalid: the two replica IDs must differ")
+	}
+
+	// Reproduce the OLD (pre-fix) key scheme inline to prove this exact pair
+	// really did collide under it -- otherwise this test would not be
+	// demonstrating anything about the fix.
+	oldKeyPart := func(v string) string { return base64.RawURLEncoding.EncodeToString([]byte(v)) }
+	oldPrefix := func(project, replica string) string {
+		return "project-" + oldKeyPart(project) + "--replica-" + oldKeyPart(replica) + "--event-"
+	}
+	oldKey := func(project, replica, event string) string {
+		return oldPrefix(project, replica) + oldKeyPart(event)
+	}
+	oldPrefixA := oldPrefix("proj", ridA)
+	oldKeyB := oldKey("proj", ridB, "some-event")
+	if !strings.HasPrefix(oldKeyB, oldPrefixA) {
+		t.Fatalf("test fixture invalid: expected the OLD key scheme to collide on this pair (prefix=%q key=%q)", oldPrefixA, oldKeyB)
+	}
+
+	// The current key functions must not exhibit the same collision.
+	prefixA := outboxKeyPrefix("proj", ridA)
+	keyB := outboxKey("proj", ridB, "some-event")
+	if strings.HasPrefix(keyB, prefixA) {
+		t.Fatalf("replica %q's outbox prefix %q matches replica %q's event key %q — collision reproduced", ridA, prefixA, ridB, keyB)
+	}
+	if prefixA == outboxKeyPrefix("proj", ridB) {
+		t.Fatalf("distinct replica IDs produced the same outbox prefix: %q", prefixA)
+	}
+}
 
 func TestDALJournal_PhysicalGitActiveReplicatesToSQLiteAndRestarts(t *testing.T) {
 	ctx := context.Background()
