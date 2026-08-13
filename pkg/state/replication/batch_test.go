@@ -483,6 +483,174 @@ func TestBatchedEventsPreserveFencingAndOrder(t *testing.T) {
 	}
 }
 
+// TestFenceAsReplicaFlushesPendingBatchBeforeCheckpoint proves the
+// flush-then-fence design decision for a promotion arriving mid-window (see
+// promotion.go's FenceAsReplica and appendBatcher's "Promotion interplay"
+// doc comment in batch.go): every Append that reached the pending batch
+// before FenceAsReplica acquired the exclusive role/epoch lock durably
+// commits at the OLD epoch, chained BEFORE the fence's checkpoint, and any
+// Append that starts only after the fence completes observes the new role
+// and fails with *RoleFenceError -- never a raw ErrEpochFenced/
+// ErrChecksumChain that would hide the role transition.
+//
+// The pending events are enqueued directly via journal.batcher.enqueue
+// (white-box) rather than through goroutines racing the public Append API,
+// so the pending batch is deterministically populated before
+// FenceAsReplica is ever called -- no sleep-based synchronization needed to
+// avoid the (rare but real) alternate interleaving where the fence would
+// otherwise win the race and run before either goroutine's Append even
+// starts.
+func TestFenceAsReplicaFlushesPendingBatchBeforeCheckpoint(t *testing.T) {
+	ctx := context.Background()
+	// maxItems is generous and the delay window is far longer than this
+	// test's timeout budget: nothing may flush this batch except the fence
+	// arriving.
+	journal, err := NewMemoryJournal(MemoryJournalOptions{
+		ProjectID: "p", EndpointID: "active", Role: RoleActive, AuthorityEpoch: 1,
+		MaxBatchItems: intPtr(50), MaxBatchDelayMS: intPtr(60_000),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Seed via commitBatch directly rather than the public (batched) Append:
+	// Append against THIS journal would itself enqueue and wait out the same
+	// 60s window with nothing else around to trigger its flush, hanging the
+	// test on an unrelated call before the actual scenario under test even
+	// starts.
+	seed := chainedEvent(t, "p", "seed", Cursor{1, 1}, "")
+	if results, err := journal.commitBatch(ctx, []Event{seed}); err != nil || results[0] != nil {
+		t.Fatalf("seed commit: results=%v err=%v", results, err)
+	}
+
+	pending1 := chainedEvent(t, "p", "pending-1", Cursor{1, 2}, seed.Checksum)
+	pending2 := chainedEvent(t, "p", "pending-2", Cursor{1, 3}, pending1.Checksum)
+	done1, flushNow1, err := journal.batcher.enqueue(pending1)
+	if err != nil || flushNow1 {
+		t.Fatalf("enqueue pending-1: flushNow=%v err=%v", flushNow1, err)
+	}
+	done2, flushNow2, err := journal.batcher.enqueue(pending2)
+	if err != nil || flushNow2 {
+		t.Fatalf("enqueue pending-2: flushNow=%v err=%v", flushNow2, err)
+	}
+
+	result, err := journal.FenceAsReplica(ctx, PromotionRequest{ActorID: "op", CommandID: "fence-mid-window", IdempotencyKey: "fence-mid-window"}, "candidate")
+	if err != nil {
+		t.Fatalf("FenceAsReplica: %v", err)
+	}
+
+	select {
+	case err := <-done1:
+		if err != nil {
+			t.Fatalf("pending-1: %v", err)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("pending-1 never resolved after the fence flushed")
+	}
+	select {
+	case err := <-done2:
+		if err != nil {
+			t.Fatalf("pending-2: %v", err)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("pending-2 never resolved after the fence flushed")
+	}
+
+	events, err := journal.After(ctx, Cursor{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(events) != 4 {
+		t.Fatalf("journal has %d events, want 4 (seed, pending-1, pending-2, checkpoint)", len(events))
+	}
+	if events[3].Kind != PromotionCheckpointKind {
+		t.Fatalf("last event kind = %q, want the promotion checkpoint", events[3].Kind)
+	}
+	if events[3].Cursor.Epoch != 2 {
+		t.Fatalf("checkpoint epoch = %d, want 2", events[3].Cursor.Epoch)
+	}
+	if events[3].PreviousHash != pending2.Checksum {
+		t.Fatalf("checkpoint previous hash = %q, want %q -- the checkpoint must chain AFTER the flushed pending batch, not before it", events[3].PreviousHash, pending2.Checksum)
+	}
+	if result.Checksum != events[3].Checksum {
+		t.Fatalf("FenceAsReplica result checkpoint does not match the durable head event")
+	}
+
+	// A new Append after the fence, still stamped with the OLD epoch (a
+	// straggler caller that has not yet learned about the promotion), must
+	// observe the role transition directly rather than a raw chain error.
+	straggler := chainedEvent(t, "p", "straggler", Cursor{1, 4}, pending2.Checksum)
+	err = journal.Append(ctx, straggler)
+	var fence *RoleFenceError
+	if !errors.As(err, &fence) {
+		t.Fatalf("post-fence append error = %v, want *RoleFenceError", err)
+	}
+	if fence.Role != RoleReplica || fence.AuthorityEpoch != 2 {
+		t.Fatalf("fence evidence = %+v, want role=replica authority_epoch=2", fence)
+	}
+}
+
+// TestDALJournalFenceAsReplicaFlushesPendingBatchBeforeCheckpoint is
+// TestFenceAsReplicaFlushesPendingBatchBeforeCheckpoint's real-backend
+// (SQLite/DALgo) parity proof: the same flush-then-fence guarantee holds
+// against the physical transaction path, not just the in-memory harness.
+func TestDALJournalFenceAsReplicaFlushesPendingBatchBeforeCheckpoint(t *testing.T) {
+	ctx := context.Background()
+	_, journal := newSQLiteJournalWithOptions(t, DALJournalOptions{MaxBatchItems: intPtr(50), MaxBatchDelayMS: intPtr(60_000)})
+	seed := relayEvents(t)[0]
+	// Seed via commitBatch directly -- see the MemoryJournal sibling test's
+	// comment: Append against this same batching-enabled journal would
+	// itself hang out the 60s window with nothing else to trigger a flush.
+	if results, err := journal.commitBatch(ctx, []Event{seed}); err != nil || results[0] != nil {
+		t.Fatalf("seed commit: results=%v err=%v", results, err)
+	}
+
+	pending1 := chainedEvent(t, "github.com/fair-split/relay", "pending-1", Cursor{1, 2}, seed.Checksum)
+	pending2 := chainedEvent(t, "github.com/fair-split/relay", "pending-2", Cursor{1, 3}, pending1.Checksum)
+	done1, flushNow1, err := journal.batcher.enqueue(pending1)
+	if err != nil || flushNow1 {
+		t.Fatalf("enqueue pending-1: flushNow=%v err=%v", flushNow1, err)
+	}
+	done2, flushNow2, err := journal.batcher.enqueue(pending2)
+	if err != nil || flushNow2 {
+		t.Fatalf("enqueue pending-2: flushNow=%v err=%v", flushNow2, err)
+	}
+
+	result, err := journal.FenceAsReplica(ctx, PromotionRequest{ActorID: "op", CommandID: "fence-mid-window", IdempotencyKey: "fence-mid-window"}, "candidate")
+	if err != nil {
+		t.Fatalf("FenceAsReplica: %v", err)
+	}
+	if err := <-done1; err != nil {
+		t.Fatalf("pending-1: %v", err)
+	}
+	if err := <-done2; err != nil {
+		t.Fatalf("pending-2: %v", err)
+	}
+
+	events, err := journal.After(ctx, Cursor{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(events) != 4 {
+		t.Fatalf("journal has %d events, want 4 (seed, pending-1, pending-2, checkpoint)", len(events))
+	}
+	if events[3].Kind != PromotionCheckpointKind || events[3].PreviousHash != pending2.Checksum {
+		t.Fatalf("checkpoint = %+v, want it chained after pending-2 (%s)", events[3], pending2.Checksum)
+	}
+	if result.Checksum != events[3].Checksum {
+		t.Fatalf("FenceAsReplica result checkpoint does not match the durable head event")
+	}
+
+	straggler := chainedEvent(t, "github.com/fair-split/relay", "straggler", Cursor{1, 4}, pending2.Checksum)
+	err = journal.Append(ctx, straggler)
+	var fence *RoleFenceError
+	if !errors.As(err, &fence) {
+		t.Fatalf("post-fence append error = %v, want *RoleFenceError", err)
+	}
+	if fence.Role != RoleReplica || fence.AuthorityEpoch != 2 {
+		t.Fatalf("fence evidence = %+v, want role=replica authority_epoch=2", fence)
+	}
+}
+
 // TestBatchedAppendRoleEpochFencedAtEnqueueStillLetsOthersCommit covers
 // AC batched-events-preserve-fencing-and-order's "...or role/epoch fencing"
 // clause: an Append whose event targets a stale epoch is rejected

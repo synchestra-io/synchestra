@@ -559,6 +559,21 @@ func newSQLiteJournalWithRole(t *testing.T, replicaIDs []string, role Role, endp
 
 func newSQLiteJournalAt(t *testing.T, path string, replicaIDs []string, role Role, endpointID string) (string, *DALJournal) {
 	t.Helper()
+	return newSQLiteJournalAtWithOptions(t, path, DALJournalOptions{EndpointID: endpointID, Role: role, ReplicaIDs: replicaIDs, MaxBatchItems: zeroBatch, MaxBatchDelayMS: zeroBatch})
+}
+
+// newSQLiteJournalWithOptions is the batching-tests' entry point over a real
+// SQLite/DALgo backend: opts is used almost verbatim (only
+// ProjectID/EndpointID/Role/AuthorityEpoch are defaulted when zero), so a
+// caller can set MaxBatchItems/MaxBatchDelayMS explicitly
+// (state-store/journal-batching).
+func newSQLiteJournalWithOptions(t *testing.T, opts DALJournalOptions) (string, *DALJournal) {
+	t.Helper()
+	return newSQLiteJournalAtWithOptions(t, filepath.Join(t.TempDir(), "synchestra.db"), opts)
+}
+
+func newSQLiteJournalAtWithOptions(t *testing.T, path string, opts DALJournalOptions) (string, *DALJournal) {
+	t.Helper()
 	recordsets := make(map[string]*dalgo2sql.Recordset, 4)
 	for _, collection := range []string{eventsCollection, headCollection, messagesCollection, outboxCollection} {
 		recordsets[collection] = dalgo2sql.NewRecordset(collection, dalgo2sql.Table, []dal.FieldRef{dal.Field("id")})
@@ -570,7 +585,19 @@ func newSQLiteJournalAt(t *testing.T, path string, replicaIDs []string, role Rol
 	if err := EnsureDALJournalSchema(context.Background(), database); err != nil {
 		t.Fatal(err)
 	}
-	journal, err := NewDALJournal(database, DALJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: endpointID, Role: role, AuthorityEpoch: 1, ReplicaIDs: replicaIDs, MaxBatchItems: zeroBatch, MaxBatchDelayMS: zeroBatch})
+	if opts.ProjectID == "" {
+		opts.ProjectID = "github.com/fair-split/relay"
+	}
+	if opts.EndpointID == "" {
+		opts.EndpointID = "sqlite-active"
+	}
+	if opts.Role == "" {
+		opts.Role = RoleActive
+	}
+	if opts.AuthorityEpoch == 0 {
+		opts.AuthorityEpoch = 1
+	}
+	journal, err := NewDALJournal(database, opts)
 	if err != nil {
 		t.Fatal(err)
 	}
