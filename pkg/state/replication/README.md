@@ -77,17 +77,21 @@ the batcher entirely — a fresh, non-batching-aware code path — so it is
 byte-identical to the pre-batching journal, not merely "a batch of one."
 Because the defaults are nonzero, a journal built without explicit batching
 configuration batches by default. `pkg/state/gitstore`'s `Agent()` wiring
-pins both knobs to explicit zero rather than relying on that default: no
-caller reaches it concurrently today, `Close` is not wired through
-`state.AgentStore`/`GitStateStore`'s lifecycle so a pending batch would
-never be proactively flushed, and turning batching on there measured an
-11x regression in that package's own test suite (each real-Git agent test
-paying up to the full 1000ms window per append with nothing to flush it
-early). See `pkg/state/agentstore/README.md`'s Open Questions for the
-follow-up that enables batching there once real concurrent callers and a
-`Close` path exist. `BatchSettings()` reports a journal's effective
-(resolved) configuration; `Close(ctx)` flushes and durably commits any
-pending batch before returning, then refuses further `Append` calls with
+now uses that default rather than pinning both knobs to explicit zero: since
+task-3, the underlying `*agentstore.Store`/journal is constructed once per
+`GitStateStore` instance and cached (`gitstore.go`'s `agentOnce`), so
+concurrent callers sharing one instance actually have a batch to group
+into and `Close` reaches the journal that was written to, and
+`GitStateStore.Close` is wired through `state.AgentStore`/`state.Store`'s
+lifecycle so a pending batch is proactively flushed rather than left
+stranded. See `pkg/state/agentstore/README.md`'s Open Questions
+("Resolved (task-3)") for the full before/after — including the one
+residual limitation it left open, a caller with an unbounded precondition
+read ahead of its `Append` — and `pkg/cli/agent`'s per-verb notes on which
+commands need `state.CloseAfter` (`pkg/state/closeafter.go`) versus a plain
+call. `BatchSettings()` reports a journal's effective (resolved)
+configuration; `Close(ctx)` flushes and durably commits any pending batch
+before returning, then refuses further `Append` calls with
 `ErrJournalClosed` — a caller that owns a batched journal's lifecycle (a
 one-shot CLI invocation, in particular) **must** call `Close` before process
 exit for a lone append to actually be fast rather than waiting out the
@@ -153,10 +157,10 @@ incompatibility in the returned error rather than silently composing into
 that latency-with-no-benefit shape — construct the wrapped `Journal` with
 batching disabled (`MaxBatchItems`/`MaxBatchDelayMS` both pointing at zero)
 if you compose with `GitPushJournal`. Batching is for a journal callers
-reach directly and concurrently instead — a role no current call site fills
-today (`pkg/state/gitstore`'s `Agent()` wiring constructs a bare
-`*DALJournal`, never `GitPushJournal`, but pins its own batching off for
-unrelated reasons; see "Batching" above and
+reach directly and concurrently instead — a role `pkg/state/gitstore`'s
+`Agent()` wiring now fills as of task-3: it constructs a bare `*DALJournal`,
+never `GitPushJournal`, with batching left at the documented default and
+`Close` wired through the store lifecycle (see "Batching" above and
 `pkg/state/agentstore/README.md`'s Open Questions). A future feature that
 wants both durable per-endpoint CAS push and batched local commits needs its
 own batching-aware redesign of `GitPushJournal` (e.g. pushing a whole
