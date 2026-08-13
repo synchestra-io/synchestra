@@ -79,7 +79,10 @@ type GitPushJournal struct {
 	remote *GitRemoteDurability
 }
 
-var _ ReplicaIngestor = (*GitPushJournal)(nil)
+var (
+	_ ReplicaIngestor = (*GitPushJournal)(nil)
+	_ RemoteDurable   = (*GitPushJournal)(nil)
+)
 
 // Close passes through to the wrapped Journal's Close, if it implements
 // BatchedJournal (state-store/journal-batching#ac:close-flushes-pending-batch).
@@ -242,6 +245,34 @@ func (j *GitPushJournal) ResumeOperation(ctx context.Context, operationID string
 			return nil, nil, fmt.Errorf("replication: unsupported journal operation kind %q", operationKind)
 		}
 	})
+}
+
+// RemoteReceipt implements RemoteDurable (barrier.go): it proves -- via a
+// live fetch and ancestry check against the configured Git remote, never a
+// cached local receipt -- that at is durably present there. This is what
+// lets Wait's mirror barrier satisfy
+// state-store/topology#ac:mirror-barrier-proves-git-durability and
+// state-store/backends/sqlite#ac:git-barrier-proves-portable-durability
+// rather than merely observing a local commit.
+//
+// Because every IngestReplica/Append call on a GitPushJournal already blocks
+// until its own push is durably proven (deliverEvent -> pushPendingLocked ->
+// remoteContains), reaching cursor `at` locally on a GitPushJournal-backed
+// replica normally already implies remote durability by the time the ingest
+// call returned. RemoteReceipt does not trust that inference: it re-verifies
+// live every time, so a replica that somehow reached `at` through a
+// different path (a bypassed raw DALJournal write, a resumed operation whose
+// receipt-vs-push bookkeeping is mid-flight, or simply a caller wanting
+// fresh proof rather than an assumption) is never reported durable on faith.
+func (j *GitPushJournal) RemoteReceipt(ctx context.Context, at Cursor) (string, bool, error) {
+	head, _, err := j.Head(ctx)
+	if err != nil {
+		return "", false, err
+	}
+	if compareCursor(head, at) < 0 {
+		return "", false, nil
+	}
+	return j.remote.VerifyLocalHeadDurable(ctx)
 }
 
 // promotable type-asserts the wrapped Journal to PromotableJournal, the seam
@@ -552,8 +583,13 @@ func (d *GitRemoteDurability) withOperationLock(ctx context.Context, fn func() (
 }
 
 // withPromotionLock is withOperationLock's shape for FenceAsReplica/
-// PromoteToActive, whose result (an Event or nothing, not a GitCommitReceipt)
-// differs from the ordinary append/replica-ingest operations.
+// PromoteToActive/VerifyLocalHeadDurable, whose result (an Event, nothing, or
+// a commit SHA/bool pair -- not a GitCommitReceipt) differs from the
+// ordinary append/replica-ingest operations. Despite the name, it is the
+// general "hold the exclusive cross-process operation lock for a simple
+// func() error" shape; VerifyLocalHeadDurable reuses it for a read-only
+// check for the same reason every mutating call does -- it must never race
+// an in-flight push's fetch/update-ref bookkeeping.
 func (d *GitRemoteDurability) withPromotionLock(ctx context.Context, fn func() error) error {
 	lock, err := d.acquireOperationLock(ctx)
 	if err != nil {
@@ -561,6 +597,43 @@ func (d *GitRemoteDurability) withPromotionLock(ctx context.Context, fn func() e
 	}
 	defer func() { _ = lock.Unlock() }()
 	return fn()
+}
+
+// VerifyLocalHeadDurable performs a live remote check -- fetch, then an
+// ancestry proof -- that the current local HEAD commit is present on the
+// configured remote, under the same cross-process operation lock every other
+// mutating/verifying call on this endpoint uses (so it can never race an
+// in-flight push). Because a Git-backed journal's cursor at or before HEAD is
+// always recorded by an ancestor-or-self of HEAD (commits are appended
+// linearly), proving HEAD itself is an ancestor of the remote's ref is
+// sufficient evidence that any earlier cursor is durably present remotely
+// too; RemoteReceipt (git_push_journal.go) is what establishes "the caller's
+// target cursor is at or before HEAD" before ever calling this. It never
+// trusts a cached receipt file: every call re-fetches. ok is false (with no
+// error) for an unborn local branch, matching remoteContains' own "nothing
+// to prove yet" behavior.
+func (d *GitRemoteDurability) VerifyLocalHeadDurable(ctx context.Context) (string, bool, error) {
+	var commitSHA string
+	var durable bool
+	err := d.withPromotionLock(ctx, func() error {
+		local, err := d.localHead(ctx)
+		if err != nil {
+			return err
+		}
+		if local == "" {
+			return nil
+		}
+		ok, remoteCommit, err := d.remoteContains(ctx, local)
+		if err != nil {
+			return err
+		}
+		durable, commitSHA = ok, remoteCommit
+		return nil
+	})
+	if err != nil {
+		return "", false, err
+	}
+	return commitSHA, durable, nil
 }
 
 // pushLatestCommit durably pushes the current local HEAD commit — which the
