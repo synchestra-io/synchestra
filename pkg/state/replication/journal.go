@@ -1,6 +1,6 @@
 package replication
 
-// Features implemented: state-store/topology, state-store/topology/offline-fallback, agent-coordination
+// Features implemented: state-store/topology, state-store/topology/offline-fallback, agent-coordination, state-store/journal-batching
 
 import (
 	"context"
@@ -24,14 +24,20 @@ var (
 
 // RoleFenceError carries the evidence needed to diagnose a split-brain write
 // attempt without granting a replica an authority mutation seam. Both
-// DALJournal and MemoryJournal hold their role/epoch lock for the entire
-// append transaction (not just the precondition check), so a write that
-// races a concurrent promotion always resolves to exactly one of: it
-// completes before the promotion's fence commits, or it observes the new
-// role/epoch and fails here -- it can never fall through to a raw
+// DALJournal and MemoryJournal hold their role/epoch lock for the
+// precondition check AND the atomic step that makes an Append durably
+// observable to a concurrent fence -- an unbatched append's whole
+// transaction, or (when group-commit batching is enabled, see batch.go and
+// this package's README "Batching" section) the brief enqueue-into-pending
+// step, with the actual commit following once the window/threshold triggers
+// a flush. A write that races a concurrent promotion always resolves to
+// exactly one of: it (or, if batched, its whole pending batch) completes
+// before the promotion's fence commits its checkpoint, or it observes the
+// new role/epoch and fails here -- it can never fall through to a raw
 // checksum-chain or sequence-gap error that would hide the role transition
 // that actually explains the failure (see journal.go/dal_journal.go's mu
-// doc comments and promotion.go's fence-first design).
+// doc comments, promotion.go's fence-first design, and appendBatcher's
+// "Promotion interplay (flush-then-fence)" doc comment in batch.go).
 type RoleFenceError struct {
 	EndpointID     string
 	Role           Role
@@ -100,6 +106,31 @@ type PromotableJournal interface {
 	// DrainOutbox/IngestReplica) already delivered it through the normal
 	// idempotent seam.
 	PromoteToActive(ctx context.Context, checkpoint Event, replicaIDs []string) error
+}
+
+// BatchedJournal is implemented by journals that support group-commit
+// batching (state-store/journal-batching): today, *DALJournal and
+// *MemoryJournal. It is deliberately not embedded in Journal -- a plain
+// Journal (e.g. a test double like journalFailer) never needs to expose
+// batching internals -- so callers that specifically need to flush on
+// shutdown or inspect the effective configuration type-assert for it,
+// mirroring how PromotableJournal is kept separate from Journal.
+type BatchedJournal interface {
+	Journal
+	// BatchSettings returns this journal's effective (resolved) group-
+	// commit configuration -- see BatchSettings/resolveBatchSettings.
+	BatchSettings() BatchSettings
+	// Close flushes any pending batch, durably committing it before
+	// returning (state-store/journal-batching#ac:close-flushes-pending-batch),
+	// then marks the journal closed to further Append calls. A journal
+	// constructed with batching disabled (both knobs zero) still
+	// implements this trivially -- there is never anything pending to
+	// flush. Safe to call more than once. A caller that owns a batched
+	// journal's lifecycle (e.g. a one-shot CLI invocation) MUST call
+	// Close before process exit for AC close-flushes-pending-batch's
+	// "not delayed by the time window" promise to hold in practice --
+	// see this package's README "Batching" section.
+	Close(ctx context.Context) error
 }
 
 // ReplicaHealth makes lag or a failed replication visible rather than silently
@@ -228,16 +259,31 @@ func validatedReplicaIDs(replicaIDs []string) ([]string, error) {
 // MemoryJournal is a strict conformance harness implementation. It is not a
 // production backend: production Git and SQLite adapters must satisfy the
 // Journal contract using inGitDB/DALgo respectively. It mirrors DALJournal's
-// project scoping, role/epoch fencing (including fence-first promotion), and
-// outbox validation so fast in-memory tests -- including -race concurrency
-// tests that would be impractical against a real DB/Git backend -- exercise
-// the same invariants the physical adapters do.
+// project scoping, role/epoch fencing (including fence-first promotion),
+// outbox validation, and group-commit batching so fast in-memory tests --
+// including -race concurrency tests that would be impractical against a
+// real DB/Git backend -- exercise the same invariants the physical adapters
+// do (state-store/journal-batching's "MemoryJournal gets the same batching
+// semantics" parity requirement).
 type MemoryJournal struct {
-	mu         sync.Mutex
-	projectID  string
-	endpointID string
+	// mu guards role/epoch, mirroring DALJournal.mu -- see its doc comment
+	// and RoleFenceError's. It is deliberately separate from dataMu (below):
+	// FenceAsReplica/PromoteToActive hold mu for the whole checkpoint-then-
+	// transition sequence, including a nested dataMu-guarded flush/append,
+	// which would deadlock if mu and dataMu were the same lock.
+	mu         sync.RWMutex
 	role       Role
 	epoch      int64
+	projectID  string
+	endpointID string
+
+	// dataMu guards the actual journal state below, mirroring the
+	// serialization a real DB transaction provides for DALJournal.
+	// appendData/commitBatch/PendingOutbox/AckOutbox/After/Head/HeadEvent
+	// all acquire this directly; none of them touch mu, so a batch flush
+	// invoked from inside FenceAsReplica (which already holds mu) never
+	// re-enters it.
+	dataMu     sync.Mutex
 	events     []Event
 	byID       map[string]Event
 	byKey      map[string]string
@@ -250,6 +296,9 @@ type MemoryJournal struct {
 	// DrainOutbox has a fast, deterministic OutboxSource for conformance and
 	// concurrency tests that do not need a real SQLite/Git backend.
 	outbox map[string]map[string]Event
+
+	batchSettings BatchSettings
+	batcher       *appendBatcher
 }
 
 var (
@@ -258,6 +307,8 @@ var (
 	_ PromotableJournal = (*MemoryJournal)(nil)
 	_ PromotableJournal = (*DALJournal)(nil)
 	_ PromotableJournal = (*GitPushJournal)(nil)
+	_ BatchedJournal    = (*MemoryJournal)(nil)
+	_ BatchedJournal    = (*DALJournal)(nil)
 )
 
 // MemoryJournalOptions configures a harness journal with the same required
@@ -268,6 +319,14 @@ type MemoryJournalOptions struct {
 	Role           Role
 	AuthorityEpoch int64
 	ReplicaIDs     []string
+	// MaxBatchItems and MaxBatchDelayMS configure group-commit batching
+	// (state-store/journal-batching). Nil means "use the documented
+	// default" (100 items / 1000ms); an explicit pointer to 0 disables
+	// that dimension; both explicitly 0 restores immediate per-event
+	// commits, byte-identical to the pre-batching journal. See
+	// BatchSettings/resolveBatchSettings and this package's README.
+	MaxBatchItems   *int
+	MaxBatchDelayMS *int
 }
 
 // NewMemoryJournal builds a harness journal, validating exactly the fields
@@ -295,63 +354,121 @@ func NewMemoryJournal(options MemoryJournalOptions) (*MemoryJournal, error) {
 	for _, id := range ids {
 		outbox[id] = make(map[string]Event)
 	}
-	return &MemoryJournal{
+	j := &MemoryJournal{
 		projectID: options.ProjectID, endpointID: options.EndpointID, role: options.Role, epoch: options.AuthorityEpoch,
 		byID: make(map[string]Event), byKey: make(map[string]string), replicaIDs: ids, outbox: outbox,
-	}, nil
+		batchSettings: resolveBatchSettings(options.MaxBatchItems, options.MaxBatchDelayMS),
+	}
+	if !j.batchSettings.disabled() {
+		j.batcher = newAppendBatcher(j.batchSettings, j.commitBatch)
+	}
+	return j, nil
 }
 
 func (j *MemoryJournal) EndpointID() string { return j.endpointID }
 
+// BatchSettings returns this journal's effective group-commit configuration.
+func (j *MemoryJournal) BatchSettings() BatchSettings { return j.batchSettings }
+
+// Close flushes any pending batch (state-store/journal-batching#ac:close-flushes-pending-batch);
+// see BatchedJournal's doc comment for the full contract.
+func (j *MemoryJournal) Close(ctx context.Context) error {
+	if j.batcher == nil {
+		return nil
+	}
+	return j.batcher.Close(ctx)
+}
+
 func (j *MemoryJournal) RoleEpoch() (Role, int64) {
-	j.mu.Lock()
-	defer j.mu.Unlock()
+	j.mu.RLock()
+	defer j.mu.RUnlock()
 	return j.role, j.epoch
 }
 
 func (j *MemoryJournal) HeadEvent(_ context.Context) (Event, bool, error) {
-	j.mu.Lock()
-	defer j.mu.Unlock()
+	j.dataMu.Lock()
+	defer j.dataMu.Unlock()
 	if len(j.events) == 0 {
 		return Event{}, false, nil
 	}
 	return j.events[len(j.events)-1], true, nil
 }
 
-func (j *MemoryJournal) Append(_ context.Context, event Event) error {
-	j.mu.Lock()
-	defer j.mu.Unlock()
+// Append enqueues event into the pending batch (or, with batching disabled,
+// appends it immediately) and blocks until its batch durably commits (REQ
+// group-commit-not-buffering). The role/epoch precondition check and the
+// enqueue step both happen while mu is held, so a concurrent FenceAsReplica
+// -- which needs mu exclusively -- can never observe this event as "should
+// have been rejected" after the fact; see appendBatcher's "Promotion
+// interplay" doc comment in batch.go for the full argument.
+func (j *MemoryJournal) Append(ctx context.Context, event Event) error {
+	j.mu.RLock()
 	if j.role != RoleActive || event.Cursor.Epoch != j.epoch {
+		j.mu.RUnlock()
 		return &RoleFenceError{EndpointID: j.endpointID, Role: j.role, AuthorityEpoch: j.epoch, EventEpoch: event.Cursor.Epoch}
 	}
-	return j.appendLocked(event)
+	if j.batcher == nil {
+		defer j.mu.RUnlock()
+		j.dataMu.Lock()
+		defer j.dataMu.Unlock()
+		return j.appendData(event)
+	}
+	done, flushNow, generation, err := j.batcher.enqueue(event)
+	j.mu.RUnlock()
+	if err != nil {
+		return err
+	}
+	if flushNow {
+		// This call's own outcome (including a shared commit-level failure)
+		// is delivered below via wait(ctx, done), not this return value.
+		_ = j.batcher.flush(ctx, &generation)
+	}
+	return j.batcher.wait(ctx, done)
 }
 
 func (j *MemoryJournal) IngestReplica(_ context.Context, event Event) error {
-	j.mu.Lock()
-	defer j.mu.Unlock()
+	j.mu.RLock()
+	defer j.mu.RUnlock()
 	if j.role != RoleReplica {
 		return &RoleFenceError{EndpointID: j.endpointID, Role: j.role, AuthorityEpoch: j.epoch, EventEpoch: event.Cursor.Epoch}
 	}
-	return j.appendLocked(event)
+	j.dataMu.Lock()
+	defer j.dataMu.Unlock()
+	return j.appendData(event)
 }
 
 // FenceAsReplica is MemoryJournal's parity implementation of the fence-first
 // promotion seam: see PromotableJournal's doc comment and promotion.go for
-// the full contract. Holding j.mu for the entire precondition-check, head-
-// read, and append means a concurrent Append/IngestReplica can never
-// interleave with a fence the way the pre-redesign race allowed.
-func (j *MemoryJournal) FenceAsReplica(_ context.Context, request PromotionRequest, candidateEndpointID string) (Event, error) {
+// the full contract. Holding mu for the entire precondition-check,
+// flush-then-fence drain, head-read, and append means a concurrent Append/
+// IngestReplica can never interleave with a fence the way the pre-redesign
+// race allowed. If batching is enabled, the pending batch is flushed here --
+// BEFORE the checkpoint is built or appended -- so every event legitimately
+// enqueued before this call acquired mu durably commits at the OLD epoch
+// first; see appendBatcher's "Promotion interplay (flush-then-fence)" doc
+// comment in batch.go.
+func (j *MemoryJournal) FenceAsReplica(ctx context.Context, request PromotionRequest, candidateEndpointID string) (Event, error) {
 	j.mu.Lock()
 	defer j.mu.Unlock()
 	if j.role != RoleActive {
 		return Event{}, fmt.Errorf("%w: %q has role %q, not active", ErrFenceSourceNotActive, j.endpointID, j.role)
 	}
+	if j.batcher != nil {
+		// A failed pre-fence flush already delivered its error to each
+		// blocked Append's own done channel; whether to also abort the
+		// fence itself on a failed drain is a separate design question, out
+		// of scope for this batcher-level fix (state-store/journal-batching#ac:close-flushes-pending-batch's
+		// Close-error-propagation), so this preserves the existing
+		// fence-proceeds-regardless behavior.
+		_ = j.batcher.flush(ctx, nil)
+	}
+	j.dataMu.Lock()
+	defer j.dataMu.Unlock()
 	checkpoint, err := buildPromotionCheckpoint(j.projectID, j.endpointID, candidateEndpointID, request, j.headHash, j.epoch+1)
 	if err != nil {
 		return Event{}, err
 	}
-	if err := j.appendLocked(checkpoint); err != nil {
+	if err := j.appendData(checkpoint); err != nil {
 		return Event{}, err
 	}
 	j.role, j.epoch = RoleReplica, checkpoint.Cursor.Epoch
@@ -363,6 +480,8 @@ func (j *MemoryJournal) FenceAsReplica(_ context.Context, request PromotionReque
 func (j *MemoryJournal) PromoteToActive(_ context.Context, checkpoint Event, replicaIDs []string) error {
 	j.mu.Lock()
 	defer j.mu.Unlock()
+	j.dataMu.Lock()
+	defer j.dataMu.Unlock()
 	if j.role == RoleActive {
 		if j.epoch != checkpoint.Cursor.Epoch {
 			return fmt.Errorf("%w: %q is already active at epoch %d, checkpoint is epoch %d", ErrPromoteTargetWrongEpoch, j.endpointID, j.epoch, checkpoint.Cursor.Epoch)
@@ -400,8 +519,8 @@ func (j *MemoryJournal) PendingOutbox(_ context.Context, replicaID string) ([]Ev
 	if strings.TrimSpace(replicaID) == "" {
 		return nil, fmt.Errorf("replication: outbox replica id is required")
 	}
-	j.mu.Lock()
-	defer j.mu.Unlock()
+	j.dataMu.Lock()
+	defer j.dataMu.Unlock()
 	pending := j.outbox[replicaID]
 	result := make([]Event, 0, len(pending))
 	for _, event := range pending {
@@ -425,17 +544,35 @@ func (j *MemoryJournal) AckOutbox(_ context.Context, replicaID string, eventIDs 
 			return fmt.Errorf("replication: outbox ack requires a non-blank event id")
 		}
 	}
-	j.mu.Lock()
-	defer j.mu.Unlock()
+	j.dataMu.Lock()
+	defer j.dataMu.Unlock()
 	for _, eventID := range eventIDs {
 		delete(j.outbox[replicaID], eventID)
 	}
 	return nil
 }
 
-// appendLocked assumes j.mu is already held by the caller (Append,
-// IngestReplica, FenceAsReplica).
-func (j *MemoryJournal) appendLocked(event Event) error {
+// commitBatch is MemoryJournal's batchCommitFunc (see batch.go): it applies
+// every event in order under one dataMu critical section, exactly mirroring
+// DALJournal.commitBatch's one-transaction, per-event-failure-does-not-abort
+// semantics -- appendData already advances (or, on failure, leaves
+// untouched) the shared j.head/j.headHash exactly the way DALJournal's
+// commitOneLocked advances its running (head, hash) pair.
+func (j *MemoryJournal) commitBatch(_ context.Context, events []Event) ([]error, error) {
+	j.dataMu.Lock()
+	defer j.dataMu.Unlock()
+	results := make([]error, len(events))
+	for i, event := range events {
+		if err := j.appendData(event); err != nil {
+			results[i] = err
+		}
+	}
+	return results, nil
+}
+
+// appendData assumes dataMu is already held by the caller (Append,
+// IngestReplica, FenceAsReplica, commitBatch).
+func (j *MemoryJournal) appendData(event Event) error {
 	if err := event.Verify(); err != nil {
 		return err
 	}
@@ -483,8 +620,8 @@ func (j *MemoryJournal) appendLocked(event Event) error {
 }
 
 func (j *MemoryJournal) After(_ context.Context, cursor Cursor) ([]Event, error) {
-	j.mu.Lock()
-	defer j.mu.Unlock()
+	j.dataMu.Lock()
+	defer j.dataMu.Unlock()
 	result := make([]Event, 0, len(j.events))
 	for _, event := range j.events {
 		if event.Cursor.Epoch > cursor.Epoch || (event.Cursor.Epoch == cursor.Epoch && event.Cursor.Sequence > cursor.Sequence) {
@@ -495,7 +632,7 @@ func (j *MemoryJournal) After(_ context.Context, cursor Cursor) ([]Event, error)
 }
 
 func (j *MemoryJournal) Head(_ context.Context) (Cursor, string, error) {
-	j.mu.Lock()
-	defer j.mu.Unlock()
+	j.dataMu.Lock()
+	defer j.dataMu.Unlock()
 	return j.head, j.headHash, nil
 }

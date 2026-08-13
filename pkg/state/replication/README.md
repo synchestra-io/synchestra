@@ -42,13 +42,134 @@ on success.
 Every physical journal is configured with an endpoint role and authority
 epoch. Only the active endpoint accepts domain `Append`; replicas accept the
 same immutable event solely through the explicit replication-ingest seam.
-`Append`/`IngestReplica` hold the endpoint's role/epoch lock for the entire
-underlying append transaction, not just the precondition check — this is what
-lets a concurrent write and a concurrent promotion never interleave (see
-`RoleFenceError`'s doc comment). Git delivery serializes append/push
-operations in the worktree's private Git directory and persists a
-checksummed intent before append, allowing authority events and fallback
-envelopes to resume after any commit/receipt/push crash.
+`Append`/`IngestReplica` hold the endpoint's role/epoch lock for the
+precondition check and the step that makes the event durably observable to a
+concurrent fence — an unbatched append's entire transaction, or, with
+batching enabled, the brief enqueue-into-pending step (see "Batching"
+below) — this is what lets a concurrent write and a concurrent promotion
+never interleave (see `RoleFenceError`'s doc comment). Git delivery
+serializes append/push operations in the worktree's private Git directory
+and persists a checksummed intent before append, allowing authority events
+and fallback envelopes to resume after any commit/receipt/push crash.
+
+## Batching
+
+`DALJournal` and `MemoryJournal` support group-commit batching on the append
+path (`batch.go`, `state-store/journal-batching`): concurrent `Append` calls
+accumulate into one pending batch that commits in a single physical
+transaction — events, their per-replica outbox rows, and one head advance —
+when either a configurable item count or time window is reached, whichever
+comes first. This collapses what would be one Git commit (or one SQLite
+transaction) per event into one per batch, without changing durability,
+ordering, validation, or the outbox fan-out contract.
+
+Two knobs, both on `DALJournalOptions`/`MemoryJournalOptions`:
+
+- `MaxBatchItems` (`*int`) — flush when the pending batch reaches this many
+  events. Defaults to 100 when left `nil`.
+- `MaxBatchDelayMS` (`*int`) — flush this many milliseconds after the first
+  event enters an empty pending batch. Defaults to 1000 when left `nil`.
+
+Both fields are pointers so a caller can distinguish "not configured" (the
+documented default applies) from "explicitly zero" (that dimension
+contributes no flush trigger). With both explicitly zero, `Append` bypasses
+the batcher entirely — a fresh, non-batching-aware code path — so it is
+byte-identical to the pre-batching journal, not merely "a batch of one."
+Because the defaults are nonzero, a journal built without explicit batching
+configuration batches by default. `pkg/state/gitstore`'s `Agent()` wiring
+pins both knobs to explicit zero rather than relying on that default: no
+caller reaches it concurrently today, `Close` is not wired through
+`state.AgentStore`/`GitStateStore`'s lifecycle so a pending batch would
+never be proactively flushed, and turning batching on there measured an
+11x regression in that package's own test suite (each real-Git agent test
+paying up to the full 1000ms window per append with nothing to flush it
+early). See `pkg/state/agentstore/README.md`'s Open Questions for the
+follow-up that enables batching there once real concurrent callers and a
+`Close` path exist. `BatchSettings()` reports a journal's effective
+(resolved) configuration; `Close(ctx)` flushes and durably commits any
+pending batch before returning, then refuses further `Append` calls with
+`ErrJournalClosed` — a caller that owns a batched journal's lifecycle (a
+one-shot CLI invocation, in particular) **must** call `Close` before process
+exit for a lone append to actually be fast rather than waiting out the
+configured window.
+
+`appendBatcher` (`batch.go`) is the batching engine shared by both journal
+types. It arms exactly one `time.AfterFunc` timer per open window — started
+only when the first event enters an empty pending batch, generation-guarded
+against a stale fire after another trigger (the item threshold, `Close`, or
+a promotion's flush) already drained that window — rather than polling or
+restarting a timer per item. `Append` never returns before its batch's
+commit call has actually run: enqueue only records the event and a result
+channel; the flush that eventually processes the batch is what signals it.
+
+Per-event contracts are unchanged inside a batch. `DALJournal.commitOneLocked`
+and `MemoryJournal.appendData` are the single per-event decision point,
+shared between the unbatched path and `commitBatch`: sequence/epoch
+validation, checksum-chain validation, and idempotency-key uniqueness all
+run exactly as they do unbatched, against a *running* head/hash that only
+advances on a successful event. A validation failure fails only that
+event's slot in the batch's `[]error` — the running head is left untouched,
+so the rest of the batch, sorted into cursor order first
+(`appendBatcher.commitAndNotify`), still commits normally. Only a genuine
+infrastructure failure (the physical transaction itself erroring — a
+distinct internal `infraCommitError` DALJournal's `commitOneLocked` uses to
+mark this, so `commitBatch`'s loop can tell it apart from a validation
+failure) aborts the whole transaction: nothing in that batch is durable, and
+every event in it reports that same shared error. This distinction closed a
+real bug during development — without it, an infrastructure write failure
+partway through a batch was silently treated as "one event was invalid"
+while the transaction still committed whatever had already been written.
+
+**Promotion interplay: flush-then-fence.** `FenceAsReplica` (`promotion.go`)
+flushes any pending batch — still holding the exclusive role/epoch lock —
+*before* it reads the fresh head, builds the checkpoint, or appends it. Since
+that same lock is also what `Append`'s brief precondition-check-and-enqueue
+step holds, every event that reached the pending batch before a promotion
+arrived is guaranteed to already be there by the time the fence's flush
+runs (`sync.RWMutex` cannot let the fence's exclusive `Lock()` succeed until
+every such enqueue has completed and released its `RLock()`). The result:
+every legitimately in-flight `Append` still resolves to exactly one of
+"committed durably at the OLD epoch, before the checkpoint" or "observed the
+new role/epoch and failed with `*RoleFenceError`" — the same two outcomes
+the pre-batching contract promised, never a raw `ErrEpochFenced`/
+`ErrChecksumChain` that would hide the role transition. (The alternative,
+fence-then-fail-the-pending-appends, was considered and rejected: it would
+let a promotion silently drop Appends a caller had every reason to believe
+were already accepted, which is a strictly worse guarantee than what the
+unbatched journal always provided.)
+
+**`GitPushJournal` does not compose with batching.** `GitPushJournal`
+already serializes every mutating call through its own cross-process
+operation lock (`acquireOperationLock`), so wrapping a batching-enabled
+`DALJournal` underneath it defeats batching's purpose rather than merely
+being redundant with it: no second caller can ever enter `GitPushJournal
+.Append` while one call is in flight, so the wrapped journal's pending batch
+can never accumulate more than the one event that call is delivering — every
+call still pays up to the full configured time window for a "batch" of
+exactly one item, with none of the throughput benefit. `NewGitPushJournal`
+refuses to construct at all when the wrapped journal reports batching
+enabled (`BatchedJournal.BatchSettings().disabled()` is false), naming the
+incompatibility in the returned error rather than silently composing into
+that latency-with-no-benefit shape — construct the wrapped `Journal` with
+batching disabled (`MaxBatchItems`/`MaxBatchDelayMS` both pointing at zero)
+if you compose with `GitPushJournal`. Batching is for a journal callers
+reach directly and concurrently instead — a role no current call site fills
+today (`pkg/state/gitstore`'s `Agent()` wiring constructs a bare
+`*DALJournal`, never `GitPushJournal`, but pins its own batching off for
+unrelated reasons; see "Batching" above and
+`pkg/state/agentstore/README.md`'s Open Questions). A future feature that
+wants both durable per-endpoint CAS push and batched local commits needs its
+own batching-aware redesign of `GitPushJournal` (e.g. pushing a whole
+flushed batch's final commit in one CAS operation instead of one push per
+event).
+
+`MemoryJournal` mirrors every one of the above semantics — including
+flush-then-fence — for fast, deterministic, `-race`-clean tests. Its
+role/epoch lock (`mu`) is intentionally a separate lock from its data lock
+(`dataMu`, guarding events/head/outbox): `FenceAsReplica` holds `mu` for the
+whole fence sequence while its own flush step (and the batch commit inside
+it) only ever needs `dataMu`, so the two never contend with each other the
+way reusing one lock for both would.
 
 ## Promotion
 
@@ -63,7 +184,11 @@ candidate is ever touched, never after:
    `FenceAsReplica`'s locked/transactional scope, never from a snapshot read
    earlier — then downgrades the active to a replica. After this step the
    former active refuses further domain writes: the system fails toward
-   **zero** writers on any later failure in this call, never two.
+   **zero** writers on any later failure in this call, never two. If
+   group-commit batching is enabled (see "Batching" above), this step
+   flushes any pending batch first, so every event legitimately in flight
+   before the promotion arrived commits at the old epoch before the
+   checkpoint does.
 2. **Catch the candidate up.** Promote re-reads the candidate's head and, if
    it lags the fenced active's new head, delivers the remaining events —
    including the checkpoint itself — via `Replicate`, sourcing from the

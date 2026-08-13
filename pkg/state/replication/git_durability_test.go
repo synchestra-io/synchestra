@@ -1,7 +1,7 @@
 package replication
 
 // Features implemented: state-store/backends/git, state-store/topology/offline-fallback
-// Features depended on:  state-store/topology
+// Features depended on:  state-store/topology, state-store/journal-batching
 
 import (
 	"context"
@@ -54,7 +54,7 @@ func newGitDurabilityFixtureWithRole(t *testing.T, role Role, endpointID string,
 	gitCommand(t, root, "add", "-A")
 	gitCommand(t, root, "commit", "-m", "journal schema")
 	gitCommand(t, root, "push", "origin", "HEAD:refs/heads/main")
-	journal, err := NewDALJournal(database, DALJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: endpointID, Role: role, AuthorityEpoch: 1, ReplicaIDs: replicaIDs, CommitMessage: "synchestra state"})
+	journal, err := NewDALJournal(database, DALJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: endpointID, Role: role, AuthorityEpoch: 1, ReplicaIDs: replicaIDs, CommitMessage: "synchestra state", MaxBatchItems: zeroBatch, MaxBatchDelayMS: zeroBatch})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -71,7 +71,7 @@ func reopenGitPushJournal(t *testing.T, fixture gitDurabilityFixture) *GitPushJo
 	if err != nil {
 		t.Fatal(err)
 	}
-	journal, err := NewDALJournal(database, DALJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: fixture.endpointID, Role: fixture.role, AuthorityEpoch: 1, ReplicaIDs: fixture.replicaIDs, CommitMessage: "synchestra state"})
+	journal, err := NewDALJournal(database, DALJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: fixture.endpointID, Role: fixture.role, AuthorityEpoch: 1, ReplicaIDs: fixture.replicaIDs, CommitMessage: "synchestra state", MaxBatchItems: zeroBatch, MaxBatchDelayMS: zeroBatch})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -80,6 +80,67 @@ func reopenGitPushJournal(t *testing.T, fixture gitDurabilityFixture) *GitPushJo
 		t.Fatal(err)
 	}
 	return pushed
+}
+
+// TestNewGitPushJournalRefusesABatchingEnabledWrappedJournal proves the
+// loud guard: GitPushJournal's own operation lock already serializes every
+// mutating call end-to-end, so a wrapped journal with batching enabled can
+// never accumulate more than a "batch" of one -- paying up to the full
+// configured delay window for none of batching's throughput benefit.
+// Composing the two is refused outright at construction, naming the
+// incompatibility, rather than silently degrading into that shape -- see
+// this package's README "Batching" section and GitPushJournal's own doc
+// comment.
+func TestNewGitPushJournalRefusesABatchingEnabledWrappedJournal(t *testing.T) {
+	ctx := context.Background()
+	bare := filepath.Join(t.TempDir(), "origin.git")
+	gitCommand(t, t.TempDir(), "init", "--bare", "--initial-branch=main", bare)
+	root := filepath.Join(t.TempDir(), "writer")
+	if out, err := exec.Command("git", "clone", bare, root).CombinedOutput(); err != nil {
+		t.Fatalf("clone writer: %v: %s", err, out)
+	}
+	gitCommand(t, root, "config", "user.email", "test@example.com")
+	gitCommand(t, root, "config", "user.name", "Test")
+	database, err := dalgo2ingitdb.NewDatabase(root, validator.NewCollectionsReader())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := EnsureDALJournalSchema(ctx, database); err != nil {
+		t.Fatal(err)
+	}
+	gitCommand(t, root, "add", "-A")
+	gitCommand(t, root, "commit", "-m", "journal schema")
+	gitCommand(t, root, "push", "origin", "HEAD:refs/heads/main")
+
+	// No MaxBatchItems/MaxBatchDelayMS set -> the documented 100/1000ms
+	// default applies, i.e. batching IS enabled (unlike every other journal
+	// this test file constructs via zeroBatch).
+	journal, err := NewDALJournal(database, DALJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: "git-active", Role: RoleActive, AuthorityEpoch: 1, CommitMessage: "synchestra state"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if journal.BatchSettings().disabled() {
+		t.Fatal("test setup: journal must have batching enabled by default for this test to be meaningful")
+	}
+
+	_, err = NewGitPushJournal(journal, root, "origin", "main")
+	if err == nil {
+		t.Fatal("NewGitPushJournal unexpectedly succeeded wrapping a batching-enabled journal")
+	}
+	if !strings.Contains(err.Error(), "batch") {
+		t.Fatalf("error = %v, want it to name the batching incompatibility", err)
+	}
+
+	// A journal with batching explicitly disabled still composes fine --
+	// the guard is specifically about batching being enabled, not about
+	// BatchedJournal support existing at all.
+	disabled, err := NewDALJournal(database, DALJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: "git-active-2", Role: RoleActive, AuthorityEpoch: 1, CommitMessage: "synchestra state", MaxBatchItems: zeroBatch, MaxBatchDelayMS: zeroBatch})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := NewGitPushJournal(disabled, root, "origin", "main"); err != nil {
+		t.Fatalf("NewGitPushJournal with batching explicitly disabled: %v", err)
+	}
 }
 
 func TestGitDeliveryRecoversEveryAppendReceiptBoundaryFromSerializedIntent(t *testing.T) {
@@ -234,7 +295,7 @@ func TestPromoteFencesGitBackedActiveThroughDurablePush(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	freshJournal, err := NewDALJournal(freshDB, DALJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: "git-active", Role: RoleActive, AuthorityEpoch: 1})
+	freshJournal, err := NewDALJournal(freshDB, DALJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: "git-active", Role: RoleActive, AuthorityEpoch: 1, MaxBatchItems: zeroBatch, MaxBatchDelayMS: zeroBatch})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -361,7 +422,7 @@ func TestGitDeliveryResumeAcceptsFetchedRemoteDescendant(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	freshJournal, err := NewDALJournal(freshDB, DALJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: "git-mirror", Role: RoleReplica, AuthorityEpoch: 1})
+	freshJournal, err := NewDALJournal(freshDB, DALJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: "git-mirror", Role: RoleReplica, AuthorityEpoch: 1, MaxBatchItems: zeroBatch, MaxBatchDelayMS: zeroBatch})
 	if err != nil {
 		t.Fatal(err)
 	}

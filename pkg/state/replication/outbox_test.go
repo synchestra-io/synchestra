@@ -1,7 +1,7 @@
 package replication
 
 // Features implemented: state-store/topology
-// Features depended on:  state-store/topology, agent-coordination
+// Features depended on:  state-store/topology, agent-coordination, state-store/journal-batching
 
 import (
 	"context"
@@ -12,11 +12,11 @@ import (
 
 func newDrainPair(t *testing.T, replicaID string) (*MemoryJournal, *MemoryJournal) {
 	t.Helper()
-	source, err := NewMemoryJournal(MemoryJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: "active", Role: RoleActive, AuthorityEpoch: 1, ReplicaIDs: []string{replicaID}})
+	source, err := NewMemoryJournal(MemoryJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: "active", Role: RoleActive, AuthorityEpoch: 1, ReplicaIDs: []string{replicaID}, MaxBatchItems: zeroBatch, MaxBatchDelayMS: zeroBatch})
 	if err != nil {
 		t.Fatal(err)
 	}
-	replica, err := NewMemoryJournal(MemoryJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: replicaID, Role: RoleReplica, AuthorityEpoch: 1})
+	replica, err := NewMemoryJournal(MemoryJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: replicaID, Role: RoleReplica, AuthorityEpoch: 1, MaxBatchItems: zeroBatch, MaxBatchDelayMS: zeroBatch})
 	if err != nil {
 		t.Fatal(err)
 	}
