@@ -244,6 +244,24 @@ allocator, resolve to one provider before workers start, and land with one
 implementation and zero cleanup backlog; also prove independent same-repo work
 is not unnecessarily serialized.
 
+### Task 12: Implement journal group-commit batching
+
+**Id:** task-12
+**Verifies:** state-store/journal-batching#ac:batch-flushes-at-item-threshold, state-store/journal-batching#ac:batch-flushes-at-time-threshold, state-store/journal-batching#ac:zero-disables-each-dimension, state-store/journal-batching#ac:defaults-are-100-items-1000ms, state-store/journal-batching#ac:append-acknowledges-only-durable-commits, state-store/journal-batching#ac:close-flushes-pending-batch, state-store/journal-batching#ac:batched-events-preserve-fencing-and-order
+**Depends-On:** 2
+**Status:** planning
+
+Add group-commit batching to the journal append path: accumulate concurrent
+appends and commit them in one storage transaction when a configurable item
+count or time window is reached, whichever comes first (`0` disables a knob;
+both zero restores immediate per-event commits; defaults 100 items / 1000 ms).
+Append acknowledges only after its batch durably commits; closing the journal
+— including process exit — flushes the pending batch. Per-event validation,
+fencing, cursor ordering, and atomic outbox fan-out are unchanged. Founder
+directive 2026-08-13. Sequence the implementation after the in-flight
+outbox/promotion and Agent() store branches land, since all three touch the
+append path.
+
 ## Open Questions
 
 1. The current Synchestra `state.Store` is task/chat-centric; Task 1 decides
