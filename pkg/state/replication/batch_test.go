@@ -317,6 +317,85 @@ func TestBatchCommitIsAllOrNothingOnInfrastructureFailure(t *testing.T) {
 	}
 }
 
+// TestCommitPanicDeliversErrorToEveryWaiterWithoutStrandingThem proves
+// callCommit's containment: a storage-layer panic during b.commit must not
+// strand every sibling waiter in the batch mid-commit (their done channels
+// would otherwise simply never receive anything, hanging every blocked
+// Append/Close forever). Every waiter must unblock with a delivered error,
+// treated exactly like any other whole-transaction failure, and the
+// batcher must remain usable for a subsequent, unrelated batch afterward.
+func TestCommitPanicDeliversErrorToEveryWaiterWithoutStrandingThem(t *testing.T) {
+	panicking := func(context.Context, []Event) ([]error, error) {
+		panic("simulated storage-layer panic")
+	}
+	batcher := newAppendBatcher(BatchSettings{MaxItems: 3, MaxDelayMS: 0}, panicking)
+	seed := chainedEvent(t, "p", "seed", Cursor{1, 1}, "")
+	second := chainedEvent(t, "p", "second", Cursor{1, 2}, seed.Checksum)
+	third := chainedEvent(t, "p", "third", Cursor{1, 3}, second.Checksum)
+
+	done1, flushNow1, _, err := batcher.enqueue(seed)
+	if err != nil || flushNow1 {
+		t.Fatalf("enqueue seed: flushNow=%v err=%v", flushNow1, err)
+	}
+	done2, flushNow2, _, err := batcher.enqueue(second)
+	if err != nil || flushNow2 {
+		t.Fatalf("enqueue second: flushNow=%v err=%v", flushNow2, err)
+	}
+	done3, flushNow3, generation, err := batcher.enqueue(third)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !flushNow3 {
+		t.Fatal("enqueue crossing MaxItems=3 must report flushNow")
+	}
+
+	flushErr := batcher.flush(context.Background(), &generation)
+	if flushErr == nil {
+		t.Fatal("flush of a panicking commit unexpectedly returned nil")
+	}
+
+	for i, done := range []chan error{done1, done2, done3} {
+		select {
+		case err := <-done:
+			if err == nil {
+				t.Fatalf("waiter %d got a nil error after a panicking commit", i)
+			}
+			if !errors.Is(err, flushErr) {
+				t.Fatalf("waiter %d error = %v, want the same recovered error flush returned (%v)", i, err, flushErr)
+			}
+		case <-time.After(2 * time.Second):
+			t.Fatalf("waiter %d never resolved after a panicking commit -- it was stranded", i)
+		}
+	}
+
+	// The batcher itself remains usable for a subsequent, unrelated batch:
+	// flush already reset pending/generation/timer before the panicking
+	// commit ever ran, so nothing about the batcher's own state was
+	// corrupted by the contained panic.
+	batcher.commit = func(_ context.Context, events []Event) ([]error, error) {
+		return make([]error, len(events)), nil
+	}
+	next := chainedEvent(t, "p", "next", Cursor{1, 4}, third.Checksum)
+	doneNext, flushNowNext, nextGeneration, err := batcher.enqueue(next)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if flushNowNext {
+		t.Fatal("MaxItems=3 must not report flushNow for a lone fourth append")
+	}
+	if err := batcher.flush(context.Background(), &nextGeneration); err != nil {
+		t.Fatalf("post-panic flush: %v", err)
+	}
+	select {
+	case err := <-doneNext:
+		if err != nil {
+			t.Fatalf("post-panic append: %v", err)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("post-panic append never resolved -- batcher left unusable")
+	}
+}
+
 // TestAppendDoesNotAcknowledgeBeforeItsBatchCommits is the ordering half of
 // AC append-acknowledges-only-durable-commits: Append must not return
 // (success OR failure) until commit has actually run, proven with a gated

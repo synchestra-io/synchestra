@@ -5,6 +5,7 @@ package replication
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sort"
 	"sync"
 	"time"
@@ -253,12 +254,14 @@ func (b *appendBatcher) flush(ctx context.Context, generation *uint64) error {
 }
 
 // commitAndNotify sorts items into cursor order (state-store/journal-batching#ac:batched-events-preserve-fencing-and-order),
-// commits them as one call to b.commit, and delivers each item's result. It
+// commits them as one call to b.commit (via callCommit, which contains a
+// storage-layer panic rather than letting it strand every sibling waiter --
+// see callCommit's doc comment), and delivers each item's result. It
 // returns the same shared commit-level error it delivers to every item's
-// done channel when the whole transaction fails (nil otherwise) -- flush
-// propagates this up to Close, so a shutdown caller can tell a failed
-// commit apart from a durably-flushed one, exactly like every individual
-// waiter already can via its own done channel.
+// done channel when the whole transaction fails or panics (nil otherwise)
+// -- flush propagates this up to Close, so a shutdown caller can tell a
+// failed commit apart from a durably-flushed one, exactly like every
+// individual waiter already can via its own done channel.
 func (b *appendBatcher) commitAndNotify(ctx context.Context, items []pendingAppend) error {
 	sort.SliceStable(items, func(i, k int) bool {
 		return compareCursor(items[i].event.Cursor, items[k].event.Cursor) < 0
@@ -267,7 +270,7 @@ func (b *appendBatcher) commitAndNotify(ctx context.Context, items []pendingAppe
 	for i, item := range items {
 		events[i] = item.event
 	}
-	results, err := b.commit(ctx, events)
+	results, err := b.callCommit(ctx, events)
 	if err != nil {
 		for _, item := range items {
 			item.done <- err
@@ -278,6 +281,31 @@ func (b *appendBatcher) commitAndNotify(ctx context.Context, items []pendingAppe
 		item.done <- results[i]
 	}
 	return nil
+}
+
+// callCommit invokes b.commit with a recover() around exactly that call --
+// before either notification loop in commitAndNotify has sent anything, so
+// recovering here can never race a partial delivery -- converting a panic
+// from the underlying storage layer into a plain error return instead of
+// letting it unwind past this batch's flush. Without this, a panicking
+// commit (e.g. a driver bug or a nil-pointer bug several layers down) would
+// strand every sibling waiter in the same batch mid-commit: their done
+// channels would simply never receive anything, hanging every blocked
+// Append/Close forever instead of surfacing a definitive error. The
+// recovered panic is treated as an ordinary whole-transaction failure by
+// its only caller (commitAndNotify): delivered to every item's done
+// channel and returned up through flush, never re-panicked. The batcher's
+// own internal state (pending/generation/timer) is already fully reset by
+// flush before this call ever runs, so a contained panic leaves the
+// batcher itself perfectly usable for the next window.
+func (b *appendBatcher) callCommit(ctx context.Context, events []Event) (results []error, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			results = nil
+			err = fmt.Errorf("replication: batch commit panicked: %v", r)
+		}
+	}()
+	return b.commit(ctx, events)
 }
 
 // Close flushes any pending batch and durably commits it before returning
