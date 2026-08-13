@@ -146,15 +146,22 @@ being redundant with it: no second caller can ever enter `GitPushJournal
 .Append` while one call is in flight, so the wrapped journal's pending batch
 can never accumulate more than the one event that call is delivering — every
 call still pays up to the full configured time window for a "batch" of
-exactly one item, with none of the throughput benefit. Batching is for a
-journal callers reach directly and concurrently (`pkg/state/gitstore`'s
-current wiring, which constructs a bare `*DALJournal`, never
-`GitPushJournal`); construct the wrapped `Journal` with batching disabled
-(`MaxBatchItems`/`MaxBatchDelayMS` both pointing at zero) if you compose
-with `GitPushJournal` today. A future feature that wants both durable
-per-endpoint CAS push and batched local commits needs its own batching-aware
-redesign of `GitPushJournal` (e.g. pushing a whole flushed batch's final
-commit in one CAS operation instead of one push per event).
+exactly one item, with none of the throughput benefit. `NewGitPushJournal`
+refuses to construct at all when the wrapped journal reports batching
+enabled (`BatchedJournal.BatchSettings().disabled()` is false), naming the
+incompatibility in the returned error rather than silently composing into
+that latency-with-no-benefit shape — construct the wrapped `Journal` with
+batching disabled (`MaxBatchItems`/`MaxBatchDelayMS` both pointing at zero)
+if you compose with `GitPushJournal`. Batching is for a journal callers
+reach directly and concurrently instead — a role no current call site fills
+today (`pkg/state/gitstore`'s `Agent()` wiring constructs a bare
+`*DALJournal`, never `GitPushJournal`, but pins its own batching off for
+unrelated reasons; see "Batching" above and
+`pkg/state/agentstore/README.md`'s Open Questions). A future feature that
+wants both durable per-endpoint CAS push and batched local commits needs its
+own batching-aware redesign of `GitPushJournal` (e.g. pushing a whole
+flushed batch's final commit in one CAS operation instead of one push per
+event).
 
 `MemoryJournal` mirrors every one of the above semantics — including
 flush-then-fence — for fast, deterministic, `-race`-clean tests. Its

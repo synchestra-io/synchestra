@@ -70,7 +70,10 @@ type GitCommitReceipt struct {
 // flushed batch's final commit in one CAS operation instead of one push per
 // event), which is out of scope here. Construct the wrapped Journal with
 // batching disabled (both knobs zero) when composing with GitPushJournal
-// until that redesign exists.
+// until that redesign exists -- NewGitPushJournal refuses to construct
+// otherwise, returning an error naming the incompatibility, rather than
+// silently degrading to one-item batches that pay the latency with none of
+// the throughput.
 type GitPushJournal struct {
 	Journal
 	remote *GitRemoteDurability
@@ -99,9 +102,25 @@ type GitRemoteDurability struct {
 	testFault func(stage string) error
 }
 
+// NewGitPushJournal refuses to wrap a journal with group-commit batching
+// enabled (state-store/journal-batching): GitPushJournal's own operation
+// lock already serializes every mutating call end-to-end, so a wrapped
+// journal's pending batch can never accumulate more than the one event a
+// given call is delivering -- every call would still pay up to the full
+// configured delay window for a "batch" of exactly one item, with none of
+// batching's throughput benefit (see the type doc comment above). Loudly
+// refusing at construction, rather than silently composing into that
+// latency-with-no-benefit shape, is the whole point of this check:
+// construct the wrapped Journal with MaxBatchItems/MaxBatchDelayMS both
+// explicitly zero instead.
 func NewGitPushJournal(journal Journal, repoDir, remote, branch string) (*GitPushJournal, error) {
 	if journal == nil {
 		return nil, fmt.Errorf("replication: Git push journal needs a journal")
+	}
+	if batched, ok := journal.(BatchedJournal); ok {
+		if settings := batched.BatchSettings(); !settings.disabled() {
+			return nil, fmt.Errorf("replication: Git push journal cannot wrap a batching-enabled journal (MaxItems=%d MaxDelayMS=%d): GitPushJournal's own operation lock serializes every mutating call, so composing it with batching only adds latency for none of the throughput benefit -- construct the wrapped journal with MaxBatchItems/MaxBatchDelayMS both explicitly zero", settings.MaxItems, settings.MaxDelayMS)
+		}
 	}
 	durability, err := NewGitRemoteDurability(repoDir, remote, branch)
 	if err != nil {
