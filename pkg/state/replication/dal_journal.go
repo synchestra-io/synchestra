@@ -216,7 +216,9 @@ func (j *DALJournal) Append(ctx context.Context, event Event) error {
 		return err
 	}
 	if flushNow {
-		j.batcher.flush(ctx, &generation)
+		// This call's own outcome (including a shared commit-level failure)
+		// is delivered below via wait(ctx, done), not this return value.
+		_ = j.batcher.flush(ctx, &generation)
 	}
 	return j.batcher.wait(ctx, done)
 }

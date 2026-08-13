@@ -339,7 +339,7 @@ func TestAppendDoesNotAcknowledgeBeforeItsBatchCommits(t *testing.T) {
 	}
 	appendDone := make(chan error, 1)
 	go func() {
-		batcher.flush(context.Background(), &generation)
+		_ = batcher.flush(context.Background(), &generation)
 		appendDone <- batcher.wait(context.Background(), done)
 	}()
 	select {
@@ -408,6 +408,53 @@ func TestBatchCloseFlushesPendingBatch(t *testing.T) {
 	next := chainedEvent(t, "p", "after-close", Cursor{1, 2}, seed.Checksum)
 	if err := journal.Append(ctx, next); !errors.Is(err, ErrJournalClosed) {
 		t.Fatalf("append after Close error = %v, want %v", err, ErrJournalClosed)
+	}
+}
+
+// TestBatchCloseReturnsAFailedFlushError proves Close does not discard the
+// outcome of the very flush it performs: a shutdown caller reading
+// Close()==nil as "everything pending is now durable" would otherwise be
+// deceived by a commit that actually failed. The blocked Append-equivalent
+// waiter still gets its own delivered error too, exactly as an ordinary
+// (non-Close) flush failure would deliver it -- Close's return is the
+// batch-wide signal on top of that, not a replacement for it.
+func TestBatchCloseReturnsAFailedFlushError(t *testing.T) {
+	injected := errors.New("simulated commit failure")
+	failing := func(context.Context, []Event) ([]error, error) {
+		return nil, injected
+	}
+	// A delay window far longer than this test's timeout: nothing but Close
+	// may flush this pending event.
+	batcher := newAppendBatcher(BatchSettings{MaxItems: 0, MaxDelayMS: 60_000}, failing)
+	event := chainedEvent(t, "p", "seed", Cursor{1, 1}, "")
+
+	done, flushNow, _, err := batcher.enqueue(event)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if flushNow {
+		t.Fatal("MaxItems=0 must never report flushNow")
+	}
+
+	closeErr := batcher.Close(context.Background())
+	if !errors.Is(closeErr, injected) {
+		t.Fatalf("Close error = %v, want %v -- Close must propagate its flush's commit failure, not silently report success", closeErr, injected)
+	}
+
+	select {
+	case waiterErr := <-done:
+		if !errors.Is(waiterErr, injected) {
+			t.Fatalf("blocked Append's error = %v, want %v", waiterErr, injected)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("blocked Append never resolved after Close")
+	}
+
+	// A second Close remains a safe no-op (nil), even after the first
+	// Close's flush already failed -- there is nothing left pending to fail
+	// again.
+	if err := batcher.Close(context.Background()); err != nil {
+		t.Fatalf("second Close: %v", err)
 	}
 }
 
@@ -730,7 +777,9 @@ func TestStaleTimerFlushDoesNotDrainTheNextWindow(t *testing.T) {
 
 	// Another trigger (standing in for Close or a fence's flush-then-fence
 	// step) force-drains the first window before its timer ever fires.
-	batcher.flush(context.Background(), nil)
+	if err := batcher.flush(context.Background(), nil); err != nil {
+		t.Fatalf("force flush: %v", err)
+	}
 	if err := <-firstDone; err != nil {
 		t.Fatalf("first append: %v", err)
 	}
@@ -764,7 +813,9 @@ func TestStaleTimerFlushDoesNotDrainTheNextWindow(t *testing.T) {
 
 	// The second window still flushes normally through its own (current)
 	// generation.
-	batcher.flush(context.Background(), &currentGeneration)
+	if err := batcher.flush(context.Background(), &currentGeneration); err != nil {
+		t.Fatalf("current-generation flush: %v", err)
+	}
 	if err := <-secondDone; err != nil {
 		t.Fatalf("second append: %v", err)
 	}

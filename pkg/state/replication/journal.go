@@ -419,7 +419,9 @@ func (j *MemoryJournal) Append(ctx context.Context, event Event) error {
 		return err
 	}
 	if flushNow {
-		j.batcher.flush(ctx, &generation)
+		// This call's own outcome (including a shared commit-level failure)
+		// is delivered below via wait(ctx, done), not this return value.
+		_ = j.batcher.flush(ctx, &generation)
 	}
 	return j.batcher.wait(ctx, done)
 }
@@ -452,7 +454,13 @@ func (j *MemoryJournal) FenceAsReplica(ctx context.Context, request PromotionReq
 		return Event{}, fmt.Errorf("%w: %q has role %q, not active", ErrFenceSourceNotActive, j.endpointID, j.role)
 	}
 	if j.batcher != nil {
-		j.batcher.flush(ctx, nil)
+		// A failed pre-fence flush already delivered its error to each
+		// blocked Append's own done channel; whether to also abort the
+		// fence itself on a failed drain is a separate design question, out
+		// of scope for this batcher-level fix (state-store/journal-batching#ac:close-flushes-pending-batch's
+		// Close-error-propagation), so this preserves the existing
+		// fence-proceeds-regardless behavior.
+		_ = j.batcher.flush(ctx, nil)
 	}
 	j.dataMu.Lock()
 	defer j.dataMu.Unlock()

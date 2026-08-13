@@ -424,7 +424,13 @@ func (j *DALJournal) FenceAsReplica(ctx context.Context, request PromotionReques
 		return Event{}, fmt.Errorf("%w: %q has role %q, not active", ErrFenceSourceNotActive, j.endpointID, j.role)
 	}
 	if j.batcher != nil {
-		j.batcher.flush(ctx, nil)
+		// A failed pre-fence flush already delivered its error to each
+		// blocked Append's own done channel; whether to also abort the
+		// fence itself on a failed drain is a separate design question, out
+		// of scope for this batcher-level fix (state-store/journal-batching#ac:close-flushes-pending-batch's
+		// Close-error-propagation), so this preserves the existing
+		// fence-proceeds-regardless behavior.
+		_ = j.batcher.flush(ctx, nil)
 	}
 	_, hash, err := loadHead(ctx, j.db, j.projectID)
 	if err != nil {

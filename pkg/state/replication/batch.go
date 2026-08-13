@@ -197,15 +197,23 @@ func (b *appendBatcher) wait(ctx context.Context, done chan error) error {
 // generation it was armed with: flush is what re-checks that generation
 // atomically at drain time, which is the only place this can safely happen
 // (see flush's doc comment for why a pre-check here, before calling flush,
-// would not be enough).
+// would not be enough). Its own commit outcome, if any, is already fully
+// handled by commitAndNotify (delivered to every waiter's done channel), so
+// there is nothing further for this fire-and-forget callback to do with
+// flush's returned error.
 func (b *appendBatcher) onTimerFired(generation uint64) {
-	b.flush(context.Background(), &generation)
+	_ = b.flush(context.Background(), &generation)
 }
 
-// flush drains whatever is currently pending and commits it. It is safe to
-// call from multiple goroutines/triggers concurrently (an item-threshold
-// enqueue, a fired timer, Close, and a promotion's flush-then-fence step can
-// all reach here).
+// flush drains whatever is currently pending and commits it, returning the
+// shared commit-level error, if the underlying physical transaction itself
+// failed (nil on every no-op, and on a transaction that ran to completion --
+// even one containing per-event validation failures, which are delivered
+// individually through each item's own done channel exactly as always,
+// never through this return value). It is safe to call from multiple
+// goroutines/triggers concurrently (an item-threshold enqueue, a fired
+// timer, Close, and a promotion's flush-then-fence step can all reach
+// here).
 //
 // generation, when non-nil, restricts this call to the window it was
 // captured for (by enqueue or the timer closure): if b.generation has
@@ -221,20 +229,17 @@ func (b *appendBatcher) onTimerFired(generation uint64) {
 //
 // Either way, only the first caller to observe a non-empty, generation-
 // matching pending slice performs a commit; every other concurrent caller
-// finds it already drained (or not-yet-this-generation's) and no-ops. It
-// never returns an error itself -- each event's own result (including a
-// shared infrastructure failure, see batchCommitFunc) is delivered through
-// its own done channel, which is what every caller (Append via wait, or a
-// trigger that does not own a specific event) relies on instead.
-func (b *appendBatcher) flush(ctx context.Context, generation *uint64) {
+// finds it already drained (or not-yet-this-generation's) and no-ops
+// (returning nil).
+func (b *appendBatcher) flush(ctx context.Context, generation *uint64) error {
 	b.mu.Lock()
 	if len(b.pending) == 0 {
 		b.mu.Unlock()
-		return
+		return nil
 	}
 	if generation != nil && *generation != b.generation {
 		b.mu.Unlock()
-		return
+		return nil
 	}
 	items := b.pending
 	b.pending = nil
@@ -244,12 +249,17 @@ func (b *appendBatcher) flush(ctx context.Context, generation *uint64) {
 		b.timer = nil
 	}
 	b.mu.Unlock()
-	b.commitAndNotify(ctx, items)
+	return b.commitAndNotify(ctx, items)
 }
 
 // commitAndNotify sorts items into cursor order (state-store/journal-batching#ac:batched-events-preserve-fencing-and-order),
-// commits them as one call to b.commit, and delivers each item's result.
-func (b *appendBatcher) commitAndNotify(ctx context.Context, items []pendingAppend) {
+// commits them as one call to b.commit, and delivers each item's result. It
+// returns the same shared commit-level error it delivers to every item's
+// done channel when the whole transaction fails (nil otherwise) -- flush
+// propagates this up to Close, so a shutdown caller can tell a failed
+// commit apart from a durably-flushed one, exactly like every individual
+// waiter already can via its own done channel.
+func (b *appendBatcher) commitAndNotify(ctx context.Context, items []pendingAppend) error {
 	sort.SliceStable(items, func(i, k int) bool {
 		return compareCursor(items[i].event.Cursor, items[k].event.Cursor) < 0
 	})
@@ -262,17 +272,26 @@ func (b *appendBatcher) commitAndNotify(ctx context.Context, items []pendingAppe
 		for _, item := range items {
 			item.done <- err
 		}
-		return
+		return err
 	}
 	for i, item := range items {
 		item.done <- results[i]
 	}
+	return nil
 }
 
 // Close flushes any pending batch and durably commits it before returning
 // (state-store/journal-batching#ac:close-flushes-pending-batch), then marks
 // the batcher closed: every Append after Close returns ErrJournalClosed
 // without waiting out any window. Safe to call more than once.
+//
+// Close returns its flush's commit-level error, if the pending batch's
+// transaction itself failed: a shutdown caller reading Close()==nil as
+// "everything pending is now durable" would otherwise be deceived by a
+// commit that actually failed. Every blocked Append still gets its own
+// per-event outcome through its own done channel exactly as before --
+// Close's return is the batch-wide signal on top of that, not a
+// replacement for it.
 func (b *appendBatcher) Close(ctx context.Context) error {
 	b.mu.Lock()
 	if b.closed {
@@ -285,6 +304,5 @@ func (b *appendBatcher) Close(ctx context.Context) error {
 		b.timer = nil
 	}
 	b.mu.Unlock()
-	b.flush(ctx, nil)
-	return nil
+	return b.flush(ctx, nil)
 }
