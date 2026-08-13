@@ -11,6 +11,7 @@ These are internal artifacts for developers and AI agents building the product. 
 | [architecture/](architecture/README.md) | Architectural documents and foundational design decisions |
 | [features/](features/README.md) | Feature specifications |
 | [api/](api/README.md) | OpenAPI specifications for the REST API |
+| [research/](research/README.md) | Recorded research artifacts (benchmarks, comparisons) that back an Acceptance Criterion's evidence requirement |
 
 ### architecture
 
