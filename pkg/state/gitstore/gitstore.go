@@ -8,6 +8,7 @@ import (
 	"errors"
 
 	"github.com/synchestra-io/synchestra/pkg/state"
+	"github.com/synchestra-io/synchestra/pkg/state/replication"
 )
 
 var errNotImplemented = errors.New("gitstore: not implemented")
@@ -16,6 +17,16 @@ var errNotImplemented = errors.New("gitstore: not implemented")
 type GitStoreOptions struct {
 	state.StoreOptions        // embeds shared options including SyncConfig
 	RunID              string // agent branch: agent/<run-id>
+
+	// Agent() sub-store wiring (state-store/topology, Task 1 scope). These
+	// configure the replication.Journal that GitStateStore.Agent() builds
+	// over StateRepoPath — see agent.go. ProjectID is required to use
+	// Agent(); the rest have defaults (see agent.go's withDefaults).
+	ProjectID       string
+	AgentEndpointID string           // defaults to "git"
+	AgentRole       replication.Role // defaults to replication.RoleActive
+	AuthorityEpoch  int64            // defaults to 1
+	ReplicaIDs      []string
 }
 
 // GitStateStore is the git-backed implementation of state.Store.
@@ -26,6 +37,7 @@ type GitStateStore struct {
 	specRepoPaths []string
 	sync          state.SyncConfig
 	runID         string
+	agentOptions  GitStoreOptions
 }
 
 // New creates a new GitStateStore with git-backend-specific options.
@@ -42,6 +54,7 @@ func New(_ context.Context, opts GitStoreOptions) (state.Store, error) {
 		specRepoPaths: opts.SpecRepoPaths,
 		sync:          sync,
 		runID:         opts.RunID,
+		agentOptions:  opts,
 	}, nil
 }
 

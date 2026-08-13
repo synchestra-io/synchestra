@@ -264,9 +264,20 @@ append path.
 
 ## Open Questions
 
-1. The current Synchestra `state.Store` is task/chat-centric; Task 1 decides
-   whether effort/run/worktree APIs are a composed `Agent()` store or a sibling
-   top-level coordinator interface. Both preserve backend-neutral domain code.
+1. **Resolved.** The current Synchestra `state.Store` is task/chat-centric;
+   Task 1 decided effort/run/worktree APIs are a composed `Agent()` sub-store
+   on `state.Store`, following the existing `Task()/Chat()/Project()/State()`
+   composition seam, rather than a sibling top-level coordinator interface.
+   `state.AgentStore` (`pkg/state/agent.go`) exposes
+   `Effort()/Run()/Worktree()/Message()/Activity()/Journal()/Cursor()/Lease()/Health()`.
+   The domain logic behind every sub-store is written once, backend-neutrally,
+   in `pkg/state/agentstore` directly on top of `replication.Journal`
+   (`Append`/`After`/`Head`); each backend's `Store.Agent()` method supplies a
+   configured `Journal` and returns that shared implementation rather than
+   reimplementing claim/fence semantics per backend. `pkg/state/gitstore`
+   wires this to a real Git-backed journal via `dalgo2ingitdb`/DALgo; a future
+   `sqlitestore` (Task 4) wires the same implementation to `dalgo2sqlite`
+   without changing `pkg/state/agentstore`.
 2. The initial SQLite server is single-host by design. Cross-host HA and a
    remote SQL backend require a separate consensus/lease-witness decision;
    they are not implicit in the SQLite MVP.

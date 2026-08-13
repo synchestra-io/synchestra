@@ -16,6 +16,7 @@ func (m *mockStore) Task() state.TaskStore       { return nil }
 func (m *mockStore) Chat() state.ChatStore       { return nil }
 func (m *mockStore) Project() state.ProjectStore { return nil }
 func (m *mockStore) State() state.StateSync      { return nil }
+func (m *mockStore) Agent() state.AgentStore     { return nil }
 
 var _ state.Store = (*mockStore)(nil)
 
