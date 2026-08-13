@@ -82,23 +82,26 @@ var terminalLifecycleStatuses = map[state.LifecycleStatus]bool{
 	state.LifecycleStatusSuperseded: true,
 }
 
-// validateLifecycleTransition refuses an illegal (from -> to) move by
-// wrapping state.ErrInvalidTransition, and requires a CompletionDisposition
-// on any move into a terminal status. kind/id/subject only shape the error
-// message (e.g. "effort", "run").
+// validateLifecycleTransition refuses an illegal (from -> to) move, an empty
+// target, or a disposition that doesn't match the target's terminal/non-
+// terminal shape, wrapping every one of those in state.ErrInvalidTransition
+// so a caller (and mapStoreError, pkg/cli/agent/resolve.go) sees ONE typed
+// vocabulary for "this transition is not allowed" rather than three
+// differently-shaped errors depending on which check failed. kind/id/subject
+// only shape the error message (e.g. "effort", "run").
 func validateLifecycleTransition(subject, id string, from, to state.LifecycleStatus, disposition state.CompletionDisposition) error {
 	if to == "" {
-		return fmt.Errorf("agentstore: %s %q transition needs a target status", subject, id)
+		return fmt.Errorf("agentstore: %s %q transition needs a target status: %w", subject, id, state.ErrInvalidTransition)
 	}
 	allowed := lifecycleTransitions[from]
 	if !allowed[to] {
 		return fmt.Errorf("agentstore: %s %q cannot transition from %q to %q: %w", subject, id, from, to, state.ErrInvalidTransition)
 	}
 	if terminalLifecycleStatuses[to] && disposition == "" {
-		return fmt.Errorf("agentstore: %s %q transition to terminal status %q needs a disposition", subject, id, to)
+		return fmt.Errorf("agentstore: %s %q transition to terminal status %q needs a disposition: %w", subject, id, to, state.ErrInvalidTransition)
 	}
 	if !terminalLifecycleStatuses[to] && disposition != "" {
-		return fmt.Errorf("agentstore: %s %q transition to non-terminal status %q must not set a disposition", subject, id, to)
+		return fmt.Errorf("agentstore: %s %q transition to non-terminal status %q must not set a disposition: %w", subject, id, to, state.ErrInvalidTransition)
 	}
 	return nil
 }

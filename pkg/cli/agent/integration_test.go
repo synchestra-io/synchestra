@@ -6,11 +6,14 @@ package agent
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
 	"testing"
+
+	"github.com/synchestra-io/specscore/pkg/exitcode"
 )
 
 // gitInit creates a minimal Synchestra-recognizable state repo: a Git
@@ -213,6 +216,32 @@ func TestAgentMessageCommandsEndToEndThroughRealGit(t *testing.T) {
 	}
 	if thread[0].Kind != "coordination.request" || thread[1].Kind != "coordination.proposal" || thread[2].Kind != "coordination.decision.accepted" {
 		t.Fatalf("unexpected thread kind order: %+v", thread)
+	}
+}
+
+// TestAgentMessageSendCommandUnknownKindExitsInvalidArgs proves an
+// unrecognized --kind, caught by the STORE's validateMessageKind (not by
+// CLI flag parsing -- there is no closed enum of --kind values at the flag
+// layer, see messageSendCommand's Flags().String), still surfaces as
+// exitcode.InvalidArgs (2) through mapStoreError
+// (pkg/cli/agent/resolve.go), not the generic exitcode.Unexpected (10) a
+// bare, unwrapped error would fall through to. This is the CLI-level half
+// of TestMessageKindValidatesUnknownValues
+// (pkg/state/agentstore/message_kind_test.go).
+func TestAgentMessageSendCommandUnknownKindExitsInvalidArgs(t *testing.T) {
+	repo := t.TempDir()
+	gitInit(t, repo)
+
+	_, err := runIn(t, repo, "message", "send", "--thread", "t", "--run", "run-a", "--kind", "coordination.made_up")
+	if err == nil {
+		t.Fatal("message send with an unknown --kind unexpectedly succeeded")
+	}
+	var ee *exitcode.Error
+	if !errors.As(err, &ee) {
+		t.Fatalf("expected *exitcode.Error, got %T (%v)", err, err)
+	}
+	if ee.ExitCode() != exitcode.InvalidArgs {
+		t.Fatalf("exit code = %d, want %d (InvalidArgs), not Unexpected (message %q)", ee.ExitCode(), exitcode.InvalidArgs, ee.Error())
 	}
 }
 

@@ -103,22 +103,41 @@ func (s *Store) loadMessages(ctx context.Context) (map[string]state.Message, err
 
 // validateMessageKind enforces that a MessageKindDecisionAccepted message —
 // the typed negotiation sequence's terminal record — cites at least one
-// EvidenceRef, per agent-coordination/cross-harness-conformance: "The
-// accepted decision references the counterexample/test evidence". Every
-// other Kind (including the zero value, general-purpose default) is
+// EvidenceRef with real content, per agent-coordination/cross-harness-
+// conformance: "The accepted decision references the counterexample/test
+// evidence". An entry whose fields are all blank documents nothing and does
+// not count — this mirrors the CLI's parseEvidenceFlags rule
+// (pkg/cli/agent/evidence.go), which already refuses to construct an
+// EvidenceRef with an empty Kind; a caller that builds params.Evidence
+// directly (bypassing that CLI parsing) gets the same floor enforced here.
+// Every other Kind (including the zero value, general-purpose default) is
 // unconstrained.
 func validateMessageKind(kind state.MessageKind, evidence []state.EvidenceRef) error {
 	switch kind {
 	case "", state.MessageKindRequest, state.MessageKindProposal, state.MessageKindCounterexample, state.MessageKindNote:
 		return nil
 	case state.MessageKindDecisionAccepted:
-		if len(evidence) == 0 {
-			return fmt.Errorf("agentstore: a %s message needs at least one evidence reference", state.MessageKindDecisionAccepted)
+		if !hasContentfulEvidence(evidence) {
+			return fmt.Errorf("agentstore: a %s message needs at least one evidence reference with a non-blank kind: %w", state.MessageKindDecisionAccepted, state.ErrInvalidArgument)
 		}
 		return nil
 	default:
-		return fmt.Errorf("agentstore: unknown message kind %q", kind)
+		return fmt.Errorf("agentstore: unknown message kind %q: %w", kind, state.ErrInvalidArgument)
 	}
+}
+
+// hasContentfulEvidence reports whether at least one EvidenceRef has a
+// non-blank Kind — the same minimum bar parseEvidenceFlags enforces at the
+// CLI layer (kind:description:reference, kind required). Description and
+// Reference may legitimately be blank on a real entry, so only Kind gates
+// "all blank" here.
+func hasContentfulEvidence(evidence []state.EvidenceRef) bool {
+	for _, ref := range evidence {
+		if strings.TrimSpace(ref.Kind) != "" {
+			return true
+		}
+	}
+	return false
 }
 
 func (m messageStore) Send(ctx context.Context, params state.MessageSendParams) (state.Message, error) {

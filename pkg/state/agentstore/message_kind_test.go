@@ -5,6 +5,7 @@ package agentstore
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/synchestra-io/synchestra/pkg/state"
@@ -112,14 +113,60 @@ func TestMessageTypedNegotiationSequenceIsBidirectionalAndAuditable(t *testing.T
 
 // TestMessageKindValidatesUnknownValues proves an unrecognized Kind is
 // refused rather than silently persisted, keeping the typed vocabulary
-// closed.
+// closed, and that the refusal is state.ErrInvalidArgument specifically —
+// the sentinel pkg/cli/agent/resolve.go's mapStoreError maps to
+// exitcode.InvalidArgs (2), not the generic exitcode.Unexpected (10) a bare
+// error would fall through to. See
+// TestAgentMessageSendCommandUnknownKindExitsInvalidArgs
+// (pkg/cli/agent/integration_test.go) for the CLI-level proof of the same
+// thing end to end.
 func TestMessageKindValidatesUnknownValues(t *testing.T) {
 	ctx := context.Background()
 	store := newTestStore(t, newTestJournal(t, 1, "server"), 1, "server")
-	if _, err := store.Message().Send(ctx, state.MessageSendParams{
+	_, err := store.Message().Send(ctx, state.MessageSendParams{
 		ThreadID: "t", SenderRunID: "run-a", Kind: "coordination.made_up",
-	}); err == nil {
+	})
+	if err == nil {
 		t.Fatal("Send with an unknown Kind unexpectedly succeeded")
+	}
+	if !errors.Is(err, state.ErrInvalidArgument) {
+		t.Fatalf("Send with an unknown Kind error = %v, want state.ErrInvalidArgument", err)
+	}
+}
+
+// TestMessageDecisionAcceptedRejectsAllBlankEvidence proves an EvidenceRef
+// whose fields are all blank does not satisfy decision.accepted's "cites at
+// least one evidence reference" requirement — it documents nothing, so it
+// must not count merely because len(evidence) != 0. Mirrors the CLI's
+// parseEvidenceFlags rule (pkg/cli/agent/evidence.go), which already
+// refuses to construct a blank-Kind EvidenceRef from --evidence flags; this
+// is the floor for a caller that builds params.Evidence directly.
+func TestMessageDecisionAcceptedRejectsAllBlankEvidence(t *testing.T) {
+	ctx := context.Background()
+	store := newTestStore(t, newTestJournal(t, 1, "server"), 1, "server")
+
+	_, err := store.Message().Send(ctx, state.MessageSendParams{
+		ThreadID: "t", SenderRunID: "run-a", Kind: state.MessageKindDecisionAccepted,
+		Evidence: []state.EvidenceRef{{}},
+	})
+	if err == nil {
+		t.Fatal("decision.accepted with an all-blank EvidenceRef unexpectedly succeeded")
+	}
+	if !errors.Is(err, state.ErrInvalidArgument) {
+		t.Fatalf("all-blank evidence error = %v, want state.ErrInvalidArgument", err)
+	}
+
+	// A mix of one blank and one real entry is accepted -- only "zero
+	// contentful entries" is refused, not "every entry must be contentful".
+	msg, err := store.Message().Send(ctx, state.MessageSendParams{
+		ThreadID: "t", SenderRunID: "run-a", Kind: state.MessageKindDecisionAccepted,
+		Evidence: []state.EvidenceRef{{}, {Kind: "test", Reference: "TestFoo"}},
+	})
+	if err != nil {
+		t.Fatalf("decision.accepted with one contentful evidence entry: %v", err)
+	}
+	if len(msg.Evidence) != 2 {
+		t.Fatalf("Evidence = %+v, want both entries preserved", msg.Evidence)
 	}
 }
 

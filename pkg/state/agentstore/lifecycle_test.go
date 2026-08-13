@@ -82,19 +82,25 @@ func TestEffortTransitionRefusesIllegalMoves(t *testing.T) {
 		t.Fatalf("illegal transition error = %v, want ErrInvalidTransition", err)
 	}
 
+	// An empty target status is refused, typed the same as every other
+	// illegal move.
+	if _, err := store.Effort().Transition(ctx, effort.ID, state.EffortTransitionParams{}); !errors.Is(err, state.ErrInvalidTransition) {
+		t.Fatalf("Transition with an empty target error = %v, want ErrInvalidTransition", err)
+	}
+
 	// A terminal target without a disposition is refused.
 	if _, err := store.Effort().Transition(ctx, effort.ID, state.EffortTransitionParams{To: state.LifecycleStatusActive}); err != nil {
 		t.Fatalf("Transition to active: %v", err)
 	}
-	if _, err := store.Effort().Transition(ctx, effort.ID, state.EffortTransitionParams{To: state.LifecycleStatusAborted}); err == nil {
-		t.Fatal("Transition to aborted without a disposition unexpectedly succeeded")
+	if _, err := store.Effort().Transition(ctx, effort.ID, state.EffortTransitionParams{To: state.LifecycleStatusAborted}); !errors.Is(err, state.ErrInvalidTransition) {
+		t.Fatalf("Transition to aborted without a disposition error = %v, want ErrInvalidTransition", err)
 	}
 
 	// A non-terminal target with a disposition set is also refused.
 	if _, err := store.Effort().Transition(ctx, effort.ID, state.EffortTransitionParams{
 		To: state.LifecycleStatusAwaitingMerge, Disposition: state.CompletionDispositionLanded,
-	}); err == nil {
-		t.Fatal("Transition to a non-terminal status with a disposition unexpectedly succeeded")
+	}); !errors.Is(err, state.ErrInvalidTransition) {
+		t.Fatalf("Transition to a non-terminal status with a disposition error = %v, want ErrInvalidTransition", err)
 	}
 
 	// archived is absorbing: nothing transitions out of it.

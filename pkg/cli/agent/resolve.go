@@ -105,10 +105,15 @@ func closeStore(ctx context.Context, store state.Store) error {
 	return nil
 }
 
-// mapStoreError converts state-layer errors to CLI exit codes, matching
-// pkg/cli/task/resolve.go's mapStoreError exactly (kept as a separate copy
+// mapStoreError converts state-layer errors to CLI exit codes, mirroring the
+// shape of pkg/cli/task/resolve.go's mapStoreError (kept as a separate copy
 // per-package, the same way pkg/cli/task already does, rather than
-// introducing a shared cross-command-group dependency for four lines).
+// introducing a shared cross-command-group dependency for a handful of
+// lines) plus two cases task's store never returns: ErrLeaseFenced
+// (agent-coordination's fencing vocabulary) and ErrInvalidArgument (a
+// caller-supplied value outside the domain's accepted vocabulary/range,
+// caught by the store rather than CLI flag parsing — e.g. an unrecognized
+// --kind or a negative lease TTL).
 func mapStoreError(err error) *exitcode.Error {
 	switch {
 	case errors.Is(err, state.ErrNotFound):
@@ -119,6 +124,8 @@ func mapStoreError(err error) *exitcode.Error {
 		return exitcode.ConflictError(err.Error())
 	case errors.Is(err, state.ErrInvalidTransition):
 		return exitcode.InvalidStateError(err.Error())
+	case errors.Is(err, state.ErrInvalidArgument):
+		return exitcode.InvalidArgsError(err.Error())
 	default:
 		return exitcode.UnexpectedError(err.Error())
 	}
