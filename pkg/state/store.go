@@ -24,6 +24,11 @@ type Store interface {
 
 	// State returns the sync sub-interface for manual sync controls.
 	State() StateSync
+
+	// Agent returns the agent-coordination sub-interface: effort, run,
+	// worktree claim, message, activity, replication-journal access, cursor,
+	// authority lease, and health. See AgentStore.
+	Agent() AgentStore
 }
 
 // StoreFactory is a constructor function that each backend provides.

@@ -15,4 +15,11 @@ var (
 	// ErrConflict is returned when a concurrent modification prevents the
 	// operation (e.g., two agents claiming the same task).
 	ErrConflict = errors.New("conflict")
+
+	// ErrLeaseFenced is returned when a caller's fence token is no longer
+	// current — e.g. after promotion incremented the authority epoch, or
+	// after an explicit release — preserving the topology fencing guarantee
+	// (state-store/topology#ac:promotion-fences-former-active) at the domain
+	// layer.
+	ErrLeaseFenced = errors.New("lease fenced")
 )
