@@ -22,6 +22,7 @@ import (
 	"github.com/synchestra-io/synchestra/pkg/cli/runner"
 	selfupdatecmd "github.com/synchestra-io/synchestra/pkg/cli/selfupdate"
 	"github.com/synchestra-io/synchestra/pkg/cli/spec"
+	statecmd "github.com/synchestra-io/synchestra/pkg/cli/state"
 	"github.com/synchestra-io/synchestra/pkg/cli/synchinit"
 	taskcmd "github.com/synchestra-io/synchestra/pkg/cli/task"
 	testcmd "github.com/synchestra-io/synchestra/pkg/cli/test"
@@ -87,6 +88,7 @@ func newRootCmd(
 		taskcmd.Command(),
 		agentcmd.Command(),
 		selfupdatecmd.Command(version),
+		statecmd.Command(),
 	)
 
 	return rootCmd

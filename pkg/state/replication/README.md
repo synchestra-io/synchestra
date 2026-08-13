@@ -257,6 +257,118 @@ Typed sentinel errors (`ErrFenceSourceNotActive`, `ErrPromoteTargetNotReplica`,
 someone else already promoted this candidate) from a dangerous failure with
 `errors.Is`, rather than parsing a bare `fmt.Errorf` string.
 
+## Mirror Barriers
+
+`Wait` (`barrier.go`) implements the mirror barrier from
+`state-store/topology`'s Vocabulary: "a request to wait until selected
+replicas acknowledge a specified state change." It polls a replica `Journal`
+until its `Head` cursor reaches or passes a target cursor, then, for a
+replica that implements the `RemoteDurable` interface, additionally requires
+a **live** remote proof before reporting success:
+
+- `*GitPushJournal` implements `RemoteDurable.RemoteReceipt` by re-fetching
+  the configured Git remote and proving the replica's local HEAD commit is an
+  ancestor of (or equal to) the remote's ref — never trusting a cached
+  receipt file. Because every `IngestReplica`/`Append` call on a
+  `GitPushJournal` already blocks until its own push is durably proven
+  (`deliverEvent` -> `pushPendingLocked` -> `remoteContains`), reaching the
+  target cursor locally on a Git mirror normally already implies remote
+  durability by the time the ingest call returned — `RemoteReceipt` does not
+  trust that inference, though, and re-verifies live every call. This is what
+  satisfies `state-store/topology#ac:mirror-barrier-proves-git-durability`
+  and `state-store/backends/sqlite#ac:git-barrier-proves-portable-durability`:
+  the barrier proves *pushed, remote-verified* durability, not merely a local
+  Git commit.
+- A journal that does **not** implement `RemoteDurable` (a bare
+  `*DALJournal`, e.g. a future SQLite mirror) has no separate remote hop to
+  prove: its own local transaction commit already is that backend's
+  durability boundary, so reaching the target cursor locally is sufficient.
+
+`Wait` never reports a false success and never implies the underlying write
+failed: on timeout it returns the `BarrierResult` it actually observed
+(`Satisfied: false`, the replica's real `Observed` cursor) alongside a typed
+`*BarrierTimeoutError` — "the active write already succeeded; the mirror
+just hasn't caught up (or hasn't been remote-proven) yet," never a rollback.
+A context deadline landing mid-probe (e.g. during a live Git fetch, which can
+take longer than one poll interval) is normalized into the same
+`*BarrierTimeoutError` rather than surfaced as that probe's own raw,
+unclassified error; the probe's error is preserved on
+`BarrierTimeoutError.Cause`. The CALLER's own `ctx` ending (cancellation or an
+outer deadline) is propagated verbatim instead, so a caller can always tell
+"my own context ended" from "Wait's configured Timeout elapsed."
+
+The `synchestra state wait` CLI command (`pkg/cli/state/wait.go`) is the
+operator-facing entry point: it opens a Git-backed journal at a local
+directory (the same `dalgo2ingitdb` + `DALJournal` [+ `GitPushJournal` when
+`--remote`/`--branch` are set] construction `pkg/state/gitstore`'s `Agent()`
+wiring uses) purely for reads (`Head`/`After` — it never calls
+`Append`/`IngestReplica`), resolves a target cursor from `--cursor` or a
+second journal's current head (`--source-dir`), and calls `Wait`.
+
+## Checkpoint, Restore, and Verify
+
+`Checkpoint` (`checkpoint.go`) is an unrelated concept from the
+`authority.promoted` **promotion checkpoint event** the Promotion section
+above describes — despite the shared word. A `Checkpoint` here is a durable,
+portable, point-in-time **snapshot of a journal**: the cursor it was taken
+at, the checksum-chain hash the checkpointed cursor's own event already
+carries (never a separately invented hash), and the complete ordered event
+log a fresh endpoint needs to replay to reconstruct the identical domain
+projection at that cursor. It deliberately carries no separately-serialized
+domain projection: Synchestra is event-sourced (REQ: commit-with-journal), so
+any backend's domain state at a cursor is fully determined by replaying
+`Events` in order through the same idempotent `ReplicaIngestor` seam
+`Replicate`/`DrainOutbox` already use.
+
+- `NewCheckpoint(ctx, source, sourceEndpointID, at)` captures `source`'s state
+  at `at` (or its current head, when `at` is the zero `Cursor`).
+- `Checkpoint.Verify()` proves internal consistency by replaying `Events`
+  into a throwaway `RoleReplica` `MemoryJournal` through the same
+  `IngestReplica` seam a real replica uses, rather than re-deriving the
+  chaining rules (contiguous sequence, unbroken `PreviousHash` chain) a
+  second time — a checkpoint a real replica would reject is rejected here
+  too, by construction.
+- `Restore(ctx, checkpoint, target, targetEndpointID)` replays `checkpoint`
+  into `target`, a freshly constructed and currently **empty** replica. It
+  refuses a non-empty target (`ErrRestoreTargetNotEmpty` — ordinary
+  replication, not `Restore`, is the seam for catching up an existing
+  replica) and it writes exclusively through `ReplicaIngestor`, which every
+  `RoleActive` journal in this package refuses with `*RoleFenceError`. This
+  is how `state-store/topology`'s Promotion and Recovery doctrine — "a
+  restored endpoint joins as a replica, never silently as an active" — is
+  structurally enforced rather than merely documented
+  (`state-store/topology#ac:checkpoint-restore-joins-as-replica`): a target
+  mistakenly constructed with `Role: RoleActive` fails closed on the very
+  first event. `Restore` never promotes; pair it with `Promote` (above) once
+  the restored endpoint should become active.
+- `VerifyConvergence(ctx, source, target, at)` is the divergence-detecting
+  `synchestra state verify` primitive from `state-store/topology`'s Health
+  section ("`synchestra state verify` compares deterministic collection
+  checksums at a selected cursor",
+  `state-store/topology#ac:checkpoint-verify-detects-divergence`). It
+  compares checksums at `at` — defaulting to the lower of the two journals'
+  current heads when `at` is the zero `Cursor`, so a source and a
+  still-catching-up replica can be compared at a cursor they both actually
+  have.
+
+**Caveats**, disclosed rather than silently accepted:
+
+- `Restore`'s empty-target check is read-then-write, not one atomic
+  precondition: it refuses a target that was already non-empty at that
+  read, but does not fence `target` against a second writer landing events
+  concurrently with the replay. A race between `Restore` and any other
+  writer on the same target can leave it with an unrecoverable
+  interleaving of the checkpoint's history and the other writer's — the
+  target endpoint must receive no other writes for the duration of a
+  `Restore` call.
+- Every replayed event commits through the ordinary append path, which
+  writes an outbox row for `target`'s own configured downstream replicas on
+  every event, exactly as live replication would. A `Restore` therefore
+  backfills outbox rows for the FULL replayed history to every one of
+  `target`'s configured replica IDs — a naive `DrainOutbox` call right after
+  `Restore` should be expected to re-deliver the ENTIRE restored history to
+  each of those replicas, not just "whatever changes next."
+
 ## Open Questions
 
 None at this time.
