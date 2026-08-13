@@ -266,6 +266,35 @@ func TestWaitCommand_TimesOutAndReportsConflictExitCode(t *testing.T) {
 	}
 }
 
+// TestWaitCommand_SourceDirEmptyJournalReturnsNotFound proves the exit-code
+// table's row for "3" (spec/features/cli/state/wait/README.md): a
+// --source-dir journal that has its schema committed but no events yet has
+// no head cursor to resolve the target from, so runWait (wait.go) returns
+// exitcode.NotFoundErrorf rather than blocking until --timeout or treating
+// a zero head as a valid (0:0) target.
+func TestWaitCommand_SourceDirEmptyJournalReturnsNotFound(t *testing.T) {
+	_, replicaClone := gitTestRepo(t)
+	_, emptySourceClone := gitTestRepo(t) // schema-only: never seeded with events
+
+	cmd := newTestWaitCommand()
+	cmd.SetOut(new(bytes.Buffer))
+	cmd.SetErr(new(bytes.Buffer))
+	cmd.SetContext(context.Background())
+	cmd.SetArgs([]string{
+		"--project", "github.com/fair-split/relay",
+		"--replica", "git-mirror",
+		"--replica-dir", replicaClone,
+		"--source-dir", emptySourceClone,
+		"--remote", "origin", "--branch", "main",
+		"--timeout", "200ms", "--poll-interval", "20ms",
+	})
+	err := cmd.Execute()
+	ec, ok := err.(*exitcode.Error)
+	if !ok || ec.ExitCode() != exitcode.NotFound {
+		t.Fatalf("err = %v, want exit code %d (NotFound) for an empty --source-dir journal", err, exitcode.NotFound)
+	}
+}
+
 func TestWaitCommand_SourceDirResolvesTargetCursor(t *testing.T) {
 	_, clone := gitTestRepo(t)
 	events := seedEvents(t, clone, "github.com/fair-split/relay")

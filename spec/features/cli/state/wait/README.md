@@ -1,3 +1,7 @@
+---
+format: https://specscore.md/feature-specification
+---
+
 # Command: `synchestra state wait`
 
 > [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/state/wait?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/state/wait?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/state/wait?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/cli/state/wait?op=request-change) |
@@ -58,6 +62,7 @@ directly (via `pkg/state/replication`), not the markdown-file task/chat state
 | `0` | Success — the replica durably reached the target cursor (remote-proven, for a Git-backed replica) |
 | `1` | Conflict — the barrier timed out before the replica satisfied the target cursor; the active write itself already succeeded |
 | `2` | Invalid arguments — missing `--project`/`--replica`, neither or both of `--cursor`/`--source-dir` given, malformed `--cursor`, or unsupported `--format` |
+| `3` | Not found — `--source-dir`'s journal has no events yet, so there is no head cursor to resolve the target from |
 | `10` | Unexpected error — journal open failure, Git subprocess failure, etc. |
 
 ## Output
