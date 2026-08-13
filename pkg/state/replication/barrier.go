@@ -98,10 +98,11 @@ type BarrierResult struct {
 // BarrierTimeoutError carries the same diagnostic fields as RoleFenceError's
 // doc comment describes for that type: enough for a caller to explain
 // exactly what was requested versus observed, not just that a barrier timed
-// out. Cause, when non-nil, is the last poll's own probe error (e.g. a Git
-// fetch that was itself mid-flight when the deadline landed) -- see Wait's
-// doc comment for why that is normalized into this typed error rather than
-// surfaced as a raw, unclassified error.
+// out. Cause, when non-nil, is the LAST poll's own probe error -- either one
+// that was still in flight when the deadline landed, or one that Wait
+// retried (see Wait's doc comment: a probe error with timeout budget
+// remaining is treated as transient and retried, never surfaced on its own)
+// and never saw a subsequent successful probe before the deadline expired.
 type BarrierTimeoutError struct {
 	EndpointID string
 	Requested  Cursor
@@ -133,11 +134,23 @@ func (e *BarrierTimeoutError) Unwrap() error { return ErrBarrierTimeout }
 // active before Wait was ever invoked, and Wait's only job is reporting
 // whether replication has since caught up, not re-litigating that write.
 //
+// A probe error (checkBarrier's Head read or RemoteReceipt's live Git fetch
+// returning an error, e.g. a momentary network blip) does NOT abort Wait
+// immediately as long as timeout budget remains: Wait treats every probe
+// error the same way -- transient -- records it, and keeps polling at the
+// configured PollInterval exactly as it would after an ordinary
+// not-yet-satisfied result. The configured Timeout, not a single failed
+// probe, is what decides the barrier is unsatisfied. This deliberately does
+// not attempt to classify probe errors as transient vs. permanent: a
+// genuinely broken probe (e.g. a misconfigured remote) simply keeps failing
+// until Timeout, which remains the one bound on how long it can spin.
+//
 // A context deadline landing mid-probe (e.g. during RemoteReceipt's live Git
-// fetch, which can take longer than a single poll interval) is normalized
-// into the same *BarrierTimeoutError rather than surfaced as that probe's
-// own raw, unclassified error -- the probe's error is preserved on
-// BarrierTimeoutError.Cause for diagnostics.
+// fetch, which can take longer than a single poll interval), or expiring
+// after one or more retried probe errors with no successful probe in
+// between, is normalized into the same *BarrierTimeoutError rather than
+// surfaced as that probe's own raw, unclassified error -- the LAST probe
+// error is preserved on BarrierTimeoutError.Cause for diagnostics.
 func Wait(ctx context.Context, replica Journal, endpointID string, target Cursor, opts WaitOptions) (BarrierResult, error) {
 	if replica == nil {
 		return BarrierResult{EndpointID: endpointID, Requested: target}, fmt.Errorf("replication: mirror barrier needs a replica journal")
@@ -166,7 +179,18 @@ func Wait(ctx context.Context, replica Journal, endpointID string, target Cursor
 				// the deadline first.
 				return classifyDeadline(ctx, endpointID, target, result, err)
 			}
-			return result, err
+			// Budget remains: treat this probe error as transient rather
+			// than fatal. Record it (it resurfaces as
+			// BarrierTimeoutError.Cause only if Timeout is later reached
+			// without an intervening successful probe) and retry at the
+			// next configured poll tick, exactly like an ordinary
+			// not-yet-satisfied result would.
+			select {
+			case <-waitCtx.Done():
+				return classifyDeadline(ctx, endpointID, target, result, err)
+			case <-ticker.C:
+				continue
+			}
 		}
 		if satisfied {
 			return result, nil

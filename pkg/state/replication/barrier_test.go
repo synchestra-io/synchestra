@@ -6,12 +6,118 @@ package replication
 import (
 	"context"
 	"errors"
+	"sync"
 	"testing"
 	"time"
 )
 
 func fastWaitOptions() WaitOptions {
 	return WaitOptions{Timeout: 500 * time.Millisecond, PollInterval: 10 * time.Millisecond}
+}
+
+// probeFailJournal wraps a Journal and injects a controlled sequence of
+// RemoteReceipt failures, so barrier.go's transient-probe-retry behavior can
+// be tested deterministically without relying on a real, slow `git fetch`
+// failure. failFor is the number of leading RemoteReceipt calls that fail;
+// a negative failFor fails every call. It implements RemoteDurable itself
+// (via the embedded Journal's promoted methods plus this type's own
+// RemoteReceipt), regardless of whether the wrapped Journal does.
+type probeFailJournal struct {
+	Journal
+	failFor int
+	failErr error
+
+	mu    sync.Mutex
+	calls int
+}
+
+var _ RemoteDurable = (*probeFailJournal)(nil)
+
+func (p *probeFailJournal) RemoteReceipt(context.Context, Cursor) (string, bool, error) {
+	p.mu.Lock()
+	p.calls++
+	n := p.calls
+	p.mu.Unlock()
+	if p.failFor < 0 || n <= p.failFor {
+		return "", false, p.failErr
+	}
+	return "deadbeef-test-commit", true, nil
+}
+
+func (p *probeFailJournal) callCount() int {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return p.calls
+}
+
+// TestWaitRetriesTransientProbeErrorThenSucceeds proves barrier.go's
+// transient-probe-retry contract: a probe (RemoteReceipt) that fails while
+// timeout budget remains does not abort Wait -- it is recorded and retried
+// at the next configured poll tick, exactly like an ordinary
+// not-yet-satisfied result, so a momentary failure (e.g. a transient `git
+// fetch` error) never turns into a spurious unsatisfied barrier when the
+// replica would otherwise have caught up well within the timeout.
+func TestWaitRetriesTransientProbeErrorThenSucceeds(t *testing.T) {
+	ctx := context.Background()
+	source, replica := newDrainPair(t, "mirror")
+	events := relayEvents(t)
+	appendAll(t, source, events)
+	if _, err := DrainOutbox(ctx, source, replica, "mirror"); err != nil {
+		t.Fatalf("drain: %v", err)
+	}
+	target := events[len(events)-1].Cursor
+
+	flaky := &probeFailJournal{Journal: replica, failFor: 1, failErr: errors.New("transient git fetch failure")}
+	result, err := Wait(ctx, flaky, "mirror", target, fastWaitOptions())
+	if err != nil {
+		t.Fatalf("Wait: %v, want the transient probe error absorbed within the timeout budget", err)
+	}
+	if !result.Satisfied || !result.RemoteProven {
+		t.Fatalf("result = %+v, want satisfied and remote-proven after the transient probe error", result)
+	}
+	if calls := flaky.callCount(); calls < 2 {
+		t.Fatalf("RemoteReceipt calls = %d, want at least 2 (one failure, one success)", calls)
+	}
+}
+
+// TestWaitTimesOutCarryingLastProbeErrorWhenProbeAlwaysFails is the other
+// half of the same contract: when a probe error is NOT transient (it keeps
+// failing for the whole timeout budget), Wait must still eventually report
+// the barrier unsatisfied via the ordinary *BarrierTimeoutError -- never
+// hang past Timeout -- and that error's Cause must carry the last probe
+// error observed, so a caller can distinguish "the replica never caught up"
+// from "the replica caught up locally but the durability probe itself kept
+// failing."
+func TestWaitTimesOutCarryingLastProbeErrorWhenProbeAlwaysFails(t *testing.T) {
+	ctx := context.Background()
+	source, replica := newDrainPair(t, "mirror")
+	events := relayEvents(t)
+	appendAll(t, source, events)
+	if _, err := DrainOutbox(ctx, source, replica, "mirror"); err != nil {
+		t.Fatalf("drain: %v", err)
+	}
+	target := events[len(events)-1].Cursor
+
+	probeErr := errors.New("persistent git fetch failure")
+	flaky := &probeFailJournal{Journal: replica, failFor: -1, failErr: probeErr}
+
+	start := time.Now()
+	_, err := Wait(ctx, flaky, "mirror", target, WaitOptions{Timeout: 100 * time.Millisecond, PollInterval: 10 * time.Millisecond})
+	elapsed := time.Since(start)
+
+	var timeoutErr *BarrierTimeoutError
+	if !errors.As(err, &timeoutErr) {
+		t.Fatalf("err = %v (%T), want *BarrierTimeoutError", err, err)
+	}
+	if timeoutErr.Cause == nil || !errors.Is(timeoutErr.Cause, probeErr) {
+		t.Fatalf("timeoutErr.Cause = %v, want it to wrap the persistent probe error %v", timeoutErr.Cause, probeErr)
+	}
+	if elapsed > time.Second {
+		t.Fatalf("Wait took %s to time out with a 100ms budget; want it bounded by Timeout, not spinning past it", elapsed)
+	}
+	if calls := flaky.callCount(); calls < 2 {
+		t.Fatalf("RemoteReceipt calls = %d, want multiple retries within the timeout budget, not a single abort", calls)
+	}
 }
 
 func TestWaitRejectsNilReplicaAndZeroCursor(t *testing.T) {
