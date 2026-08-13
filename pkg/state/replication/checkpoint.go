@@ -186,7 +186,8 @@ func (c Checkpoint) Verify() error {
 // fail-closed error on the very first event, not a silent bulk-write onto an
 // authority. Restore itself never promotes; pair it with Promote (the same
 // fence-first workflow an ordinary caught-up mirror uses) once the restored
-// endpoint should become active.
+// endpoint should become active
+// (state-store/topology#ac:checkpoint-restore-joins-as-replica).
 func Restore(ctx context.Context, checkpoint Checkpoint, target Journal, targetEndpointID string) (ReplicaHealth, error) {
 	if target == nil {
 		return ReplicaHealth{EndpointID: targetEndpointID}, fmt.Errorf("replication: restore needs a target journal")
@@ -232,10 +233,13 @@ type VerifyResult struct {
 // decides ahead/behind lag on its own (that remains Replicate's/Promote's
 // aheadOrDivergedError/evaluateConvergence's job); it answers exactly one
 // question: at the cursor both sides share, do their checksum chains agree?
-// This is the check both the backend-comparison benchmark
-// (state-store/topology#ac:backend-comparison-is-equivalent) and a restored
-// endpoint's post-restore validation use to confirm real convergence rather
-// than merely "the same number of events."
+// This is the general convergence check
+// (state-store/topology#ac:checkpoint-verify-detects-divergence) a restored
+// endpoint's post-restore validation uses to confirm real convergence rather
+// than merely "the same number of events," and it is also what the
+// backend-comparison benchmark
+// (state-store/topology#ac:backend-comparison-is-equivalent) reuses for its
+// own correctness half.
 func VerifyConvergence(ctx context.Context, source, target Journal, at Cursor) (VerifyResult, error) {
 	if source == nil || target == nil {
 		return VerifyResult{}, fmt.Errorf("replication: verify needs a source and a target journal")

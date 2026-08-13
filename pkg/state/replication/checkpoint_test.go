@@ -5,6 +5,7 @@ package replication
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"testing"
 )
@@ -242,6 +243,63 @@ func TestVerifyConvergenceDetectsDivergence(t *testing.T) {
 	}
 	if verify.AtCursor != events[len(events)-1].Cursor {
 		t.Fatalf("verify.AtCursor = %v, want the shared head %v", verify.AtCursor, events[len(events)-1].Cursor)
+	}
+}
+
+// TestVerifyConvergenceReportsDivergenceWhenChecksumsDiffer is the negative
+// case behind ac:checkpoint-verify-detects-divergence: every other
+// VerifyConvergence test in this file proves the CONVERGENT case (matching
+// checksum chains report Equivalent: true); this one proves the actual
+// divergence-DETECTING half by comparing two independently constructed
+// journals that reach the identical cursor with different content -- e.g.
+// what a backend bug or storage corruption producing a mismatched event at
+// the same sequence number would look like. VerifyConvergence must report
+// Equivalent: false, never infer convergence from matching cursors alone.
+func TestVerifyConvergenceReportsDivergenceWhenChecksumsDiffer(t *testing.T) {
+	ctx := context.Background()
+	source, events := newCheckpointSource(t)
+
+	diverged, err := NewMemoryJournal(MemoryJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: "diverged", Role: RoleReplica, AuthorityEpoch: 1, MaxBatchItems: zeroBatch, MaxBatchDelayMS: zeroBatch})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// The first three events are identical to source's; the fourth is an
+	// independently constructed event landing at the SAME cursor with
+	// DIFFERENT payload content, so its checksum (and therefore the head
+	// hash) diverges from source's even though both journals report the
+	// identical cursor.
+	for _, event := range events[:3] {
+		if err := diverged.IngestReplica(ctx, event); err != nil {
+			t.Fatal(err)
+		}
+	}
+	last := events[3]
+	payload, err := json.Marshal(map[string]any{"thread_id": "fair-split", "body": "decision.accepted", "result": "DIVERGED"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	mismatched, err := NewEvent(Event{
+		ProjectID: last.ProjectID, EventID: "decision-diverged",
+		Cursor: last.Cursor, OccurredAt: last.OccurredAt, ActorID: last.ActorID,
+		CommandID: last.CommandID, IdempotencyKey: "decision-diverged", Kind: last.Kind,
+		CorrelationID: last.CorrelationID, Payload: payload, PreviousHash: events[2].Checksum,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := diverged.IngestReplica(ctx, mismatched); err != nil {
+		t.Fatal(err)
+	}
+
+	verify, err := VerifyConvergence(ctx, source, diverged, Cursor{})
+	if err != nil {
+		t.Fatalf("VerifyConvergence: %v", err)
+	}
+	if verify.AtCursor != last.Cursor {
+		t.Fatalf("verify.AtCursor = %v, want the shared cursor %v", verify.AtCursor, last.Cursor)
+	}
+	if verify.Equivalent || verify.SourceHash == verify.TargetHash {
+		t.Fatalf("verify = %+v, want Equivalent: false for mismatched content at the same cursor", verify)
 	}
 }
 

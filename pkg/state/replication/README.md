@@ -336,17 +336,20 @@ any backend's domain state at a cursor is fully determined by replaying
   `RoleActive` journal in this package refuses with `*RoleFenceError`. This
   is how `state-store/topology`'s Promotion and Recovery doctrine — "a
   restored endpoint joins as a replica, never silently as an active" — is
-  structurally enforced rather than merely documented: a target mistakenly
-  constructed with `Role: RoleActive` fails closed on the very first event.
-  `Restore` never promotes; pair it with `Promote` (above) once the restored
-  endpoint should become active.
+  structurally enforced rather than merely documented
+  (`state-store/topology#ac:checkpoint-restore-joins-as-replica`): a target
+  mistakenly constructed with `Role: RoleActive` fails closed on the very
+  first event. `Restore` never promotes; pair it with `Promote` (above) once
+  the restored endpoint should become active.
 - `VerifyConvergence(ctx, source, target, at)` is the divergence-detecting
   `synchestra state verify` primitive from `state-store/topology`'s Health
   section ("`synchestra state verify` compares deterministic collection
-  checksums at a selected cursor"). It compares checksums at `at` — defaulting
-  to the lower of the two journals' current heads when `at` is the zero
-  `Cursor`, so a source and a still-catching-up replica can be compared at a
-  cursor they both actually have.
+  checksums at a selected cursor",
+  `state-store/topology#ac:checkpoint-verify-detects-divergence`). It
+  compares checksums at `at` — defaulting to the lower of the two journals'
+  current heads when `at` is the zero `Cursor`, so a source and a
+  still-catching-up replica can be compared at a cursor they both actually
+  have.
 
 ## Open Questions
 
