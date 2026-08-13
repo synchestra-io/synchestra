@@ -36,14 +36,27 @@ import (
 // `git init`); construction is fail-closed rather than silently succeeding
 // against a bogus path — every method on the returned AgentStore surfaces
 // the same construction error until a new GitStateStore is constructed.
+//
+// agentCore/agentErr are written and read under s.agentMu (gitstore.go), not
+// just guarded by agentOnce: sync.Once's happens-before guarantee only
+// covers goroutines that themselves call Do, and Close (gitstore.go) reads
+// these fields WITHOUT calling Do (it must not force construction as a side
+// effect of closing) — so the mutex, not the Once alone, is what makes that
+// cross-method read race-free. See GitStateStore's doc comment.
 func (s *GitStateStore) Agent() state.AgentStore {
 	s.agentOnce.Do(func() {
-		s.agentCore, s.agentErr = s.buildAgentCore()
+		core, err := s.buildAgentCore()
+		s.agentMu.Lock()
+		s.agentCore, s.agentErr = core, err
+		s.agentMu.Unlock()
 	})
-	if s.agentErr != nil {
-		return unavailableAgentStore{err: fmt.Errorf("gitstore: Agent() unavailable: %w", s.agentErr)}
+	s.agentMu.Lock()
+	core, err := s.agentCore, s.agentErr
+	s.agentMu.Unlock()
+	if err != nil {
+		return unavailableAgentStore{err: fmt.Errorf("gitstore: Agent() unavailable: %w", err)}
 	}
-	return s.agentCore
+	return core
 }
 
 func (s *GitStateStore) buildAgentCore() (*agentstore.Store, error) {

@@ -51,7 +51,22 @@ type GitStateStore struct {
 	// they share a journal; (2) Close (below) can only flush the batch that
 	// was actually written to if it closes that SAME cached journal, not a
 	// newly-constructed empty one. See gitstore/README.md.
+	//
+	// agentMu guards every read/write of agentCore/agentErr OUTSIDE
+	// agentOnce.Do's own closure: sync.Once only guarantees a happens-before
+	// edge for goroutines that themselves call Do (agent.go's Agent()) — a
+	// caller that reads the fields directly without going through Do (Close,
+	// below) has no such guarantee and races the field write on the first
+	// concurrent Agent() call. Close must still be a no-op when Agent() was
+	// never called (nothing to flush), so it cannot itself call
+	// agentOnce.Do(buildFunc) — that would force construction as a side
+	// effect of Close, which is exactly the behavior its doc comment
+	// promises NOT to have. Routing both sides through agentMu instead
+	// keeps Close a safe read of "whatever has been set so far" (nil until
+	// the first Agent() call's Do closure finishes) without ever triggering
+	// that closure itself, and without a data race for -race to catch.
 	agentOnce sync.Once
+	agentMu   sync.Mutex
 	agentCore *agentstore.Store
 	agentErr  error
 }
@@ -84,12 +99,20 @@ func (s *GitStateStore) State() state.StateSync      { return &gitStateSync{stor
 // (state-store/journal-batching#ac:close-flushes-pending-batch). A
 // GitStateStore whose Agent() was never called (or failed to construct) has
 // nothing to flush and this is a safe no-op. Safe to call more than once —
-// it delegates to agentstore.Store.Close, itself idempotent.
+// it delegates to agentstore.Store.Close, itself idempotent. Reads agentCore
+// under agentMu — the same guard Agent() (agent.go) writes it under — so a
+// long-running server's concurrent Agent()+Close call pair (the scenario
+// this type's doc comment above anticipates) is never a data race, only a
+// benign "Close ran before the first Agent() call finished building, so
+// there was nothing yet to flush" ordering.
 func (s *GitStateStore) Close(ctx context.Context) error {
-	if s.agentCore == nil {
+	s.agentMu.Lock()
+	core := s.agentCore
+	s.agentMu.Unlock()
+	if core == nil {
 		return nil
 	}
-	return s.agentCore.Close(ctx)
+	return core.Close(ctx)
 }
 
 // --- ArtifactStore ---
