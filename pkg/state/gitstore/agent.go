@@ -57,6 +57,21 @@ func (s *GitStateStore) buildAgentCore() (*agentstore.Store, error) {
 		AuthorityEpoch: opts.AuthorityEpoch,
 		ReplicaIDs:     opts.ReplicaIDs,
 		CommitMessage:  "synchestra agent state",
+		// Batching is pinned OFF here -- both knobs explicit zero, not left
+		// nil, which would pick up the documented 100-item/1000ms default.
+		// Three reasons, together: (1) nothing calls Agent() concurrently
+		// today, so there is no burst of Appends for batching to actually
+		// group; (2) Close() is not wired through state.AgentStore/
+		// GitStateStore's lifecycle, so a pending batch here would never be
+		// proactively flushed -- only ever resolved by waiting out the full
+		// 1000ms timer; (3) turning batching on measured an 11x regression
+		// in this package's own test suite (see the commit introducing this
+		// pin for before/after pkg/state/gitstore test timing). Flip this on
+		// in the same change that wires real concurrent callers plus a
+		// Close path -- task-3, see pkg/state/agentstore/README.md's Open
+		// Questions.
+		MaxBatchItems:   zeroBatchKnob(),
+		MaxBatchDelayMS: zeroBatchKnob(),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("gitstore: configure Git journal: %w", err)
@@ -67,6 +82,17 @@ func (s *GitStateStore) buildAgentCore() (*agentstore.Store, error) {
 		ActorID:        "gitstore:" + s.runID,
 		AuthorityEpoch: opts.AuthorityEpoch,
 	})
+}
+
+// zeroBatchKnob returns a fresh pointer to 0 -- replication.DALJournalOptions'
+// MaxBatchItems/MaxBatchDelayMS are *int specifically so a caller can spell
+// "explicitly disabled" (a non-nil pointer to 0) distinctly from "not
+// configured" (nil, which picks up the documented default); see
+// buildAgentCore's comment for why this package's Agent() journal pins both
+// to explicit zero today.
+func zeroBatchKnob() *int {
+	zero := 0
+	return &zero
 }
 
 // withDefaults fills in the Agent()-only fields left zero by a caller that

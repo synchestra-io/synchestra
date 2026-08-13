@@ -76,9 +76,16 @@ contributes no flush trigger). With both explicitly zero, `Append` bypasses
 the batcher entirely — a fresh, non-batching-aware code path — so it is
 byte-identical to the pre-batching journal, not merely "a batch of one."
 Because the defaults are nonzero, a journal built without explicit batching
-configuration batches by default; existing call sites that never mention
-these fields (e.g. `pkg/state/gitstore`'s `Agent()` wiring) pick up
-batching automatically. `BatchSettings()` reports a journal's effective
+configuration batches by default. `pkg/state/gitstore`'s `Agent()` wiring
+pins both knobs to explicit zero rather than relying on that default: no
+caller reaches it concurrently today, `Close` is not wired through
+`state.AgentStore`/`GitStateStore`'s lifecycle so a pending batch would
+never be proactively flushed, and turning batching on there measured an
+11x regression in that package's own test suite (each real-Git agent test
+paying up to the full 1000ms window per append with nothing to flush it
+early). See `pkg/state/agentstore/README.md`'s Open Questions for the
+follow-up that enables batching there once real concurrent callers and a
+`Close` path exist. `BatchSettings()` reports a journal's effective
 (resolved) configuration; `Close(ctx)` flushes and durably commits any
 pending batch before returning, then refuses further `Append` calls with
 `ErrJournalClosed` — a caller that owns a batched journal's lifecycle (a
