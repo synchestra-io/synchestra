@@ -179,6 +179,82 @@ func TestGitPushJournalReplicaIngestResumesThroughRoleSafeSeam(t *testing.T) {
 	}
 }
 
+// TestPromoteFencesGitBackedActiveThroughDurablePush proves finding #6: when
+// the active endpoint Promote fences is Git-backed and passed in as its
+// *GitPushJournal wrapper (not the raw *DALJournal underneath), the fence
+// checkpoint FenceAsReplica commits locally is durably pushed to the remote
+// -- never silently stranded local-only the way calling the raw *DALJournal
+// fencing seam directly (bypassing the push wrapper) used to leave it,
+// permanently jamming the wrapper's ExpectedBase precondition for every
+// future operation on that repo.
+func TestPromoteFencesGitBackedActiveThroughDurablePush(t *testing.T) {
+	ctx := context.Background()
+	fixture := newGitDurabilityFixtureWithRole(t, RoleActive, "git-active", []string{"sqlite-mirror"})
+	_, candidate := newSQLiteJournalWithRole(t, nil, RoleReplica, "sqlite-mirror")
+
+	events := relayEvents(t)
+	for _, event := range events {
+		if _, err := fixture.pushed.AppendAndPush(ctx, event); err != nil {
+			t.Fatalf("seed git-active append: %v", err)
+		}
+	}
+	if _, err := Replicate(ctx, fixture.pushed, candidate, "sqlite-mirror"); err != nil {
+		t.Fatalf("catch up candidate before promotion: %v", err)
+	}
+
+	// Promote is handed the *GitPushJournal wrapper as the active endpoint,
+	// not fixture.journal (the raw *DALJournal) -- the whole point of this
+	// test is that the fence commit goes through the durable-push layer.
+	result, err := Promote(ctx, fixture.pushed, candidate, nil, PromotionRequest{ActorID: "operator", CommandID: "promote-git-active"})
+	if err != nil {
+		t.Fatalf("promote a Git-backed active through its push wrapper: %v", err)
+	}
+	if result.Checkpoint.Kind != PromotionCheckpointKind {
+		t.Fatalf("checkpoint kind = %q", result.Checkpoint.Kind)
+	}
+	if role, _ := candidate.roleEpoch(); role != RoleActive {
+		t.Fatalf("candidate role after promotion = %v, want active", role)
+	}
+
+	// The fence commit must be durably on the remote, not merely the local
+	// working copy: the bare origin's ref must match the local repo's HEAD.
+	localHead := gitCommand(t, fixture.root, "rev-parse", "HEAD")
+	remoteHead := gitCommand(t, fixture.bare, "rev-parse", "refs/heads/main")
+	if localHead != remoteHead {
+		t.Fatalf("fence checkpoint not durably pushed: local HEAD %s, remote %s", localHead, remoteHead)
+	}
+	// A completely fresh clone of the remote (standing in for a different
+	// process/host reconnecting with no shared local state) must already
+	// see the fence checkpoint as the formerly-active endpoint's head.
+	fresh := filepath.Join(t.TempDir(), "fresh-after-fence")
+	if out, err := exec.Command("git", "clone", fixture.bare, fresh).CombinedOutput(); err != nil {
+		t.Fatalf("clone after fence: %v: %s", err, out)
+	}
+	freshDB, err := dalgo2ingitdb.NewDatabase(fresh, validator.NewCollectionsReader())
+	if err != nil {
+		t.Fatal(err)
+	}
+	freshJournal, err := NewDALJournal(freshDB, DALJournalOptions{ProjectID: "github.com/fair-split/relay", EndpointID: "git-active", Role: RoleActive, AuthorityEpoch: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	freshHead, freshHash, err := freshJournal.Head(ctx)
+	if err != nil || freshHead != result.Checkpoint.Cursor || freshHash != result.Checkpoint.Checksum {
+		t.Fatalf("fresh clone head = %+v %q, %v; want the durably-pushed checkpoint %+v %q", freshHead, freshHash, err, result.Checkpoint.Cursor, result.Checkpoint.Checksum)
+	}
+	// And it self-fences the normal way, exactly like a naive restarted
+	// process that has no idea promotion happened.
+	stale := events[0]
+	stale.EventID, stale.IdempotencyKey, stale.Checksum = "post-promotion-stale-git", "post-promotion-stale-git", ""
+	stale, err = NewEvent(stale)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := freshJournal.Append(ctx, stale); !errors.Is(err, ErrEpochFenced) {
+		t.Fatalf("fresh clone append after fence = %v, want %v", err, ErrEpochFenced)
+	}
+}
+
 func TestGitDeliverySerializesConcurrentExpectedBaseAppendAndReceipt(t *testing.T) {
 	fixture := newGitDurabilityFixture(t)
 	entered := make(chan struct{})
