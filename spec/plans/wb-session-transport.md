@@ -5,7 +5,7 @@ status: Approved
 
 # Plan: WB Session Transport implementation plan
 
-**Status:** Approved
+**Status:** Executing
 **Source Feature:** wb-session-transport
 **Date:** 2026-08-25
 **Owner:** codex
@@ -35,7 +35,7 @@ artifact satisfies the MVP without a wire-version break.
 ### Task 1: Define the typed invocation compatibility contract
 
 **Verifies:** wb-session-transport#ac:arbitrary-command-input-is-rejected
-**Status:** planning
+**Status:** complete
 
 Add canonical `HandlerInvocation` construction, parsing, digesting, size
 bounds, reserved project-context encoding, closed WB handler names, synthetic

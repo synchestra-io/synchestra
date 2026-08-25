@@ -25,6 +25,26 @@ The package intentionally contains no scheduler, HTTP routing, Firestore, reposi
 - Success requires a `synchestra/<dispatch-id>` review branch, immutable commit, and validation evidence. Workers never merge or deploy.
 - Cancellation or ownership loss prevents later success publication.
 
+## Typed Handler Compatibility Envelope
+
+`HandlerInvocation` is an additive adapter over dispatch v1; it does not add or
+change fields on the frozen dispatch structures. `EncodeHandlerInvocation`
+stores its canonical JSON in one reserved ad-hoc `project_context` entry, and
+`ParseHandlerInvocation` distinguishes that entry from ordinary dispatch work.
+
+- The only MVP handler names are `wb.session.accept.v1` and
+  `wb.session.message.v1`.
+- Payloads are opaque byte slices, limited to 1 MiB and protected by an exact
+  SHA-256 digest and byte count.
+- The invocation schema has no executable, shell, argv, or environment fields.
+  Unknown envelope fields and unknown handler names are rejected before a
+  caller can route them to a worker.
+- Synthetic scheduler selectors and worker capabilities are created only by
+  the typed helpers in this package. Request payload data never contributes to
+  either value.
+- `WBHandoffIdempotencyKey` derives a bounded deterministic dispatch key while
+  keeping the caller's raw WB handoff ID out of the key.
+
 ## Existing-Field Reconciliation
 
 | Existing field/surface | Dispatch v1 decision |
