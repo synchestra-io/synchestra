@@ -60,7 +60,7 @@ verbs observe the same durable attempt lifecycle.
 ### Task 3: Execute fixed WB accept and message handlers on the VM runner
 
 **Verifies:** wb-session-transport#ac:typed-wb-handoff-reaches-fixed-handler, wb-session-transport#ac:message-handler-preserves-courier-boundary
-**Status:** planning
+**Status:** complete
 
 In a dedicated `synchestra-vm` feature worktree, advertise the two handler
 capabilities, route only registered names, stage validated payloads privately,
