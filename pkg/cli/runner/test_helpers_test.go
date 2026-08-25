@@ -1,6 +1,6 @@
 package runner
 
-// Features implemented: cli/runner/dispatch
+// Features implemented: cli/runner/dispatch, cli/runner/invoke, wb-session-transport
 
 import (
 	"bytes"
@@ -33,6 +33,7 @@ func newTestRepository(t *testing.T, files map[string]string) string {
 	runTestCommand(t, dir, "git", "init", "-b", "main")
 	runTestCommand(t, dir, "git", "config", "user.name", "Dispatch Test")
 	runTestCommand(t, dir, "git", "config", "user.email", "dispatch@example.com")
+	runTestCommand(t, dir, "git", "config", "commit.gpgsign", "false")
 	runTestCommand(t, dir, "git", "remote", "add", "origin", "https://github.com/acme/example.git")
 	for name, content := range files {
 		path := filepath.Join(dir, filepath.FromSlash(name))

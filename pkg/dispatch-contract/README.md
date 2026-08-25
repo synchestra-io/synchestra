@@ -36,6 +36,9 @@ stores its canonical JSON in one reserved ad-hoc `project_context` entry, and
   `wb.session.message.v1`.
 - Payloads are opaque byte slices, limited to 1 MiB and protected by an exact
   SHA-256 digest and byte count.
+- The durable Dispatch `created_at` is the invocation's canonical creation
+  time. The compatibility envelope intentionally carries no caller-generated
+  creation timestamp, keeping equivalent idempotent retries byte-stable.
 - The invocation schema has no executable, shell, argv, or environment fields.
   Unknown envelope fields and unknown handler names are rejected before a
   caller can route them to a worker.

@@ -1,6 +1,6 @@
 package runner
 
-// Features implemented: cli/runner/dispatch
+// Features implemented: cli/runner/dispatch, cli/runner/invoke, wb-session-transport
 
 import (
 	"context"
@@ -170,7 +170,7 @@ func TestClientConfigPrecedenceDoesNotTrustRepositoryEndpoint(t *testing.T) {
 
 func TestCommandRegistersDispatchOperations(t *testing.T) {
 	cmd := Command()
-	if len(cmd.Commands()) != 1 || cmd.Commands()[0].Name() != "dispatch" {
+	if len(cmd.Commands()) != 2 || cmd.Commands()[0].Name() != "dispatch" || cmd.Commands()[1].Name() != "invoke" {
 		t.Fatalf("runner commands = %v", cmd.Commands())
 	}
 	dispatch := cmd.Commands()[0]

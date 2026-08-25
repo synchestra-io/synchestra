@@ -47,7 +47,7 @@ byte-compatible.
 ### Task 2: Add `synchestra runner invoke` and lifecycle observation
 
 **Verifies:** wb-session-transport#ac:lifecycle-controls-apply-to-wb-invocations
-**Status:** planning
+**Status:** complete
 
 Implement required runner, handler, and `@payload-file` flags, bounded JSON
 loading, immutable repository evidence, create/status output, and stable JSON

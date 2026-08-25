@@ -47,7 +47,9 @@ const (
 
 // HandlerInvocation carries opaque bytes to a closed, code-registered handler.
 // It intentionally has no executable, command, shell, argument, or environment
-// fields. Operator configuration owns all process construction.
+// fields. Operator configuration owns all process construction. The enclosing
+// durable Dispatch supplies canonical creation time so equivalent request
+// retries do not manufacture different compatibility-envelope bytes.
 type HandlerInvocation struct {
 	ProtocolVersion string      `json:"protocol_version"`
 	ID              string      `json:"id"`
@@ -55,13 +57,13 @@ type HandlerInvocation struct {
 	Payload         []byte      `json:"payload"`
 	PayloadDigest   string      `json:"payload_digest"`
 	PayloadSize     int64       `json:"payload_size"`
-	CreatedAt       time.Time   `json:"created_at"`
 	Deadline        *time.Time  `json:"deadline,omitempty"`
 }
 
 // NewHandlerInvocation constructs a canonical invocation and copies payload so
-// later caller mutation cannot invalidate its digest or size evidence.
-func NewHandlerInvocation(id string, handler HandlerName, payload []byte, createdAt time.Time, deadline *time.Time) (HandlerInvocation, error) {
+// later caller mutation cannot invalidate its digest or size evidence. Creation
+// time is recorded by the durable Dispatch rather than caller input.
+func NewHandlerInvocation(id string, handler HandlerName, payload []byte, deadline *time.Time) (HandlerInvocation, error) {
 	invocation := HandlerInvocation{
 		ProtocolVersion: HandlerInvocationVersionV1,
 		ID:              id,
@@ -69,7 +71,6 @@ func NewHandlerInvocation(id string, handler HandlerName, payload []byte, create
 		Payload:         append([]byte(nil), payload...),
 		PayloadDigest:   HandlerPayloadDigest(payload),
 		PayloadSize:     int64(len(payload)),
-		CreatedAt:       createdAt.UTC(),
 	}
 	if deadline != nil {
 		canonicalDeadline := deadline.UTC()
@@ -123,12 +124,9 @@ func (i HandlerInvocation) Validate() error {
 	if i.PayloadDigest != HandlerPayloadDigest(i.Payload) {
 		return errors.New("handler invocation payload digest does not match")
 	}
-	if i.CreatedAt.IsZero() || !isUTC(i.CreatedAt) {
-		return errors.New("handler invocation creation time must be canonical UTC")
-	}
 	if i.Deadline != nil {
-		if i.Deadline.IsZero() || !isUTC(*i.Deadline) || !i.Deadline.After(i.CreatedAt) {
-			return errors.New("handler invocation deadline must be canonical UTC and after creation")
+		if i.Deadline.IsZero() || !isUTC(*i.Deadline) {
+			return errors.New("handler invocation deadline must be canonical UTC")
 		}
 	}
 	return nil

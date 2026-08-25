@@ -1,6 +1,6 @@
 package runner
 
-// Features implemented: cli/runner/dispatch
+// Features implemented: cli/runner/dispatch, cli/runner/invoke, wb-session-transport
 
 import (
 	"encoding/json"
@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	dispatchcontract "github.com/synchestra-io/synchestra/pkg/dispatch-contract"
 )
@@ -82,12 +83,208 @@ func TestObservationOperationsUsePublicHubRoutes(t *testing.T) {
 		if object["resolved"] == nil || object["error"] != nil {
 			t.Fatalf("%v output = %#v", args, object)
 		}
+		if args[1] == "logs" && !strings.Contains(output, "working") {
+			t.Fatalf("ordinary dispatch log message was changed: %s", output)
+		}
 	}
 	want := []string{
+		"GET /v1/dispatches/dsp_routes",
 		"GET /v1/dispatches/dsp_routes",
 		"GET /v1/dispatches/dsp_routes/logs?cursor=3",
 		"POST /v1/dispatches/dsp_routes/retry",
 		"POST /v1/dispatches/dsp_routes/cancel",
+	}
+	if strings.Join(seen, "\n") != strings.Join(want, "\n") {
+		t.Fatalf("routes:\n%s\nwant:\n%s", strings.Join(seen, "\n"), strings.Join(want, "\n"))
+	}
+}
+
+func TestInvocationObservationOperationsReuseLifecycleWithoutPayloadExposure(t *testing.T) {
+	payload := []byte(`{"handoff_id":"handoff-observe","secret":"handover-payload"}`)
+	invocation, err := dispatchcontract.NewHandlerInvocation(
+		"handoff-observe",
+		dispatchcontract.HandlerNameWBSessionAcceptV1,
+		payload,
+		nil,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	source, err := dispatchcontract.EncodeHandlerInvocation(invocation)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dispatch := queuedDispatch("dsp_invocation", dispatchcontract.DispatchIntent{
+		Source: source,
+		Repository: dispatchcontract.RepositorySnapshot{
+			CanonicalID:  "github.com/acme/example",
+			CloneURL:     "https://github.com/acme/example.git",
+			BaseRevision: strings.Repeat("1", 40),
+			BaseRef:      "main",
+		},
+		Constraints: dispatchcontract.WorkerConstraints{RunnerID: "personal-vm"},
+	})
+	dispatch.Status = dispatchcontract.DispatchStatusRunning
+	dispatch.ActiveAttemptID = "att_invocation"
+	dispatch.AttemptIDs = []string{"att_failed", "att_invocation"}
+	attempt := dispatchcontract.Attempt{
+		ProtocolVersion: dispatchcontract.ProtocolVersionV1,
+		ID:              "att_invocation",
+		DispatchID:      dispatch.ID,
+		Number:          2,
+		Status:          dispatchcontract.AttemptStatusRunning,
+		Requested: dispatchcontract.RequestedExecution{
+			Profile:       dispatchcontract.ProfileBalanced,
+			Agent:         "synchestra-handler",
+			ModelSelector: string(dispatchcontract.HandlerNameWBSessionAcceptV1),
+		},
+		Worker: &dispatchcontract.WorkerCapabilities{
+			Identity: dispatchcontract.WorkerIdentity{WorkerID: "worker-1", HostID: "host-1", RunnerID: "personal-vm"},
+			Agents:   []dispatchcontract.AgentCapability{{Agent: "synchestra-handler", Models: []string{string(dispatchcontract.HandlerNameWBSessionAcceptV1)}}},
+		},
+		Lease: &dispatchcontract.Lease{
+			Owner:           dispatchcontract.WorkerIdentity{WorkerID: "worker-1", HostID: "host-1", RunnerID: "personal-vm"},
+			Generation:      7,
+			AcquiredAt:      fixedTime,
+			ExpiresAt:       fixedTime.Add(time.Minute),
+			LastHeartbeatAt: fixedTime.Add(10 * time.Second),
+		},
+		CreatedAt: fixedTime,
+		StartedAt: &fixedTime,
+	}
+	failedAt := fixedTime.Add(-time.Minute)
+	failedAttempt := dispatchcontract.Attempt{
+		ProtocolVersion: dispatchcontract.ProtocolVersionV1,
+		ID:              "att_failed",
+		DispatchID:      dispatch.ID,
+		Number:          1,
+		Status:          dispatchcontract.AttemptStatusFailed,
+		Failure: &dispatchcontract.TerminalFailure{
+			Stage:     "handler",
+			Code:      "HANDLER_REJECTED",
+			Message:   "handover-payload",
+			Retryable: true,
+			Logs:      &dispatchcontract.LogReference{SessionID: "ses_failed", StreamID: "log_failed", LastSequence: 3},
+		},
+		CreatedAt:  failedAt,
+		FinishedAt: &failedAt,
+	}
+
+	var seen []string
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		seen = append(seen, formatRequest(request))
+		switch {
+		case request.Method == http.MethodGet && request.URL.Path == "/v1/dispatches/dsp_invocation":
+			writeJSONResponse(t, writer, http.StatusOK, dispatchcontract.GetDispatchResponse{
+				ProtocolVersion: dispatchcontract.ProtocolVersionV1,
+				Dispatch:        dispatch,
+				Attempts:        []dispatchcontract.Attempt{failedAttempt, attempt},
+			})
+		case request.Method == http.MethodGet && request.URL.Path == "/v1/dispatches/dsp_invocation/logs":
+			writeJSONResponse(t, writer, http.StatusOK, dispatchcontract.GetLogsResponse{
+				ProtocolVersion: dispatchcontract.ProtocolVersionV1,
+				Reference:       dispatchcontract.LogReference{SessionID: "ses_1", StreamID: "log_1", LastSequence: 1},
+				Events:          []dispatchcontract.LogEvent{{Sequence: 1, Timestamp: fixedTime, Level: dispatchcontract.LogLevelInfo, Stage: "handler", Message: "handover-payload"}},
+				NextCursor:      1,
+			})
+		case request.Method == http.MethodPost && request.URL.Path == "/v1/dispatches/dsp_invocation/retry":
+			retried := attempt
+			retried.ID = "att_retry"
+			retried.Number = 3
+			retried.Status = dispatchcontract.AttemptStatusQueued
+			retried.Lease = nil
+			retried.Worker = nil
+			writeJSONResponse(t, writer, http.StatusOK, dispatchcontract.RetryDispatchResponse{ProtocolVersion: dispatchcontract.ProtocolVersionV1, Dispatch: dispatch, Attempt: retried})
+		case request.Method == http.MethodPost && request.URL.Path == "/v1/dispatches/dsp_invocation/cancel":
+			cancelled := dispatch
+			cancelled.Cancellation = &dispatchcontract.Cancellation{RequestedAt: fixedTime, RequestedBy: "test-actor", Reason: "handover-payload"}
+			writeJSONResponse(t, writer, http.StatusOK, dispatchcontract.CancelDispatchResponse{ProtocolVersion: dispatchcontract.ProtocolVersionV1, Dispatch: cancelled})
+		default:
+			t.Errorf("unexpected route: %s", formatRequest(request))
+			writeJSONResponse(t, writer, http.StatusNotFound, dispatchcontract.APIError{Code: dispatchcontract.CodeNotFound, Message: "not found"})
+		}
+	}))
+	defer server.Close()
+	deps := testDependencies(t, t.TempDir(), server.URL, server.Client())
+
+	commands := [][]string{
+		{"dispatch", "status", "dsp_invocation", "--format", "json"},
+		{"dispatch", "logs", "dsp_invocation", "--format", "json"},
+		{"dispatch", "retry", "dsp_invocation", "--format", "json"},
+		{"dispatch", "cancel", "dsp_invocation", "--reason", "stop", "--format", "json"},
+	}
+	for _, args := range commands {
+		output, err := executeRunner(t, deps, args...)
+		if err != nil {
+			t.Fatalf("%v: %v", args, err)
+		}
+		object := decodeSingleObject(t, output)
+		if object["resolved"] == nil || object["error"] != nil {
+			t.Fatalf("%v output = %#v", args, object)
+		}
+		for _, forbidden := range []string{"handover-payload", "project_context", "synchestra.internal.handler_invocation", "synchestra-handler"} {
+			if strings.Contains(output, forbidden) {
+				t.Fatalf("%v exposed %q: %s", args, forbidden, output)
+			}
+		}
+		resolved, ok := object["resolved"].(map[string]any)
+		if !ok || resolved["invocation"] == nil {
+			t.Fatalf("%v lacks typed invocation metadata: %#v", args, object)
+		}
+		if args[1] == "status" {
+			attempts, ok := object["attempts"].([]any)
+			if !ok || len(attempts) != 2 {
+				t.Fatalf("status attempts = %#v", object["attempts"])
+			}
+			failure := attempts[0].(map[string]any)["failure"].(map[string]any)
+			if failure["code"] != "HANDLER_REJECTED" || failure["message"] != nil {
+				t.Fatalf("failure projection = %#v", failure)
+			}
+			lease := attempts[1].(map[string]any)["lease"].(map[string]any)
+			if lease["generation"] != float64(7) {
+				t.Fatalf("lease fencing evidence = %#v", lease)
+			}
+		}
+		if args[1] == "logs" {
+			logs := object["logs"].(map[string]any)
+			events := logs["events"].([]any)
+			event := events[0].(map[string]any)
+			if event["message"] != nil || event["stage"] != "handler" {
+				t.Fatalf("invocation log projection = %#v", event)
+			}
+		}
+	}
+	textCommands := [][]string{
+		{"dispatch", "status", "dsp_invocation"},
+		{"dispatch", "logs", "dsp_invocation"},
+		{"dispatch", "retry", "dsp_invocation"},
+		{"dispatch", "cancel", "dsp_invocation", "--reason", "stop"},
+	}
+	for _, args := range textCommands {
+		output, err := executeRunner(t, deps, args...)
+		if err != nil {
+			t.Fatalf("%v: %v", args, err)
+		}
+		if !strings.Contains(output, "handoff-observe") {
+			t.Fatalf("%v lacks typed invocation metadata: %s", args, output)
+		}
+		for _, forbidden := range []string{"handover-payload", "project_context", "synchestra.internal.handler_invocation", "synchestra-handler"} {
+			if strings.Contains(output, forbidden) {
+				t.Fatalf("%v exposed %q: %s", args, forbidden, output)
+			}
+		}
+	}
+	want := []string{
+		"GET /v1/dispatches/dsp_invocation",
+		"GET /v1/dispatches/dsp_invocation",
+		"GET /v1/dispatches/dsp_invocation/logs?cursor=0",
+		"POST /v1/dispatches/dsp_invocation/retry",
+		"POST /v1/dispatches/dsp_invocation/cancel",
+		"GET /v1/dispatches/dsp_invocation",
+		"GET /v1/dispatches/dsp_invocation",
+		"GET /v1/dispatches/dsp_invocation/logs?cursor=0",
+		"POST /v1/dispatches/dsp_invocation/retry",
+		"POST /v1/dispatches/dsp_invocation/cancel",
 	}
 	if strings.Join(seen, "\n") != strings.Join(want, "\n") {
 		t.Fatalf("routes:\n%s\nwant:\n%s", strings.Join(seen, "\n"), strings.Join(want, "\n"))

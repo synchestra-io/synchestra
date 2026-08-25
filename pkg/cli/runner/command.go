@@ -1,6 +1,6 @@
 package runner
 
-// Features implemented: cli/runner, cli/runner/dispatch
+// Features implemented: cli/runner, cli/runner/dispatch, cli/runner/invoke, wb-session-transport
 // Features depended on:  cli/auth, dispatch, repo-config
 
 import (
@@ -53,7 +53,7 @@ func Command(optionalDependencies ...Dependencies) *cobra.Command {
 		SilenceUsage: true,
 		Args:         cobra.NoArgs,
 	}
-	cmd.AddCommand(dispatchCommand(deps))
+	cmd.AddCommand(dispatchCommand(deps), invokeCommand(deps))
 	return cmd
 }
 
@@ -211,6 +211,19 @@ func statusCommand(deps Dependencies) *cobra.Command {
 			if err != nil {
 				return outputFailure(cmd, format, resolved, err)
 			}
+			invocation, invocationResponse, err := responseInvocation(response.Dispatch)
+			if err != nil {
+				return outputFailure(cmd, format, resolved, err)
+			}
+			if invocationResponse {
+				resolved = applyInvocationResolution(resolved, response.Dispatch, invocation)
+				publicDispatch := newInvocationDispatchOutput(response.Dispatch)
+				publicAttempts := newInvocationAttemptOutputs(response.Attempts)
+				if format == "json" {
+					return writeJSON(cmd.OutOrStdout(), invocationStatusOutput{Resolved: resolved, Dispatch: &publicDispatch, Attempts: publicAttempts})
+				}
+				return writeInvocationStatusText(cmd.OutOrStdout(), resolved, publicDispatch, publicAttempts)
+			}
 			if format == "json" {
 				return writeJSON(cmd.OutOrStdout(), statusOutput{Resolved: resolved, Dispatch: &response.Dispatch, Attempts: response.Attempts})
 			}
@@ -242,9 +255,24 @@ func logsCommand(deps Dependencies) *cobra.Command {
 			if err != nil {
 				return outputFailure(cmd, format, resolved, err)
 			}
+			status, err := client.Status(cmd.Context(), dispatchID)
+			if err != nil {
+				return outputFailure(cmd, format, resolved, err)
+			}
+			invocation, invocationResponse, err := responseInvocation(status.Dispatch)
+			if err != nil {
+				return outputFailure(cmd, format, resolved, err)
+			}
 			response, err := client.Logs(cmd.Context(), dispatchID, cursor)
 			if err != nil {
 				return outputFailure(cmd, format, resolved, err)
+			}
+			if invocationResponse {
+				resolved = applyInvocationResolution(resolved, status.Dispatch, invocation)
+				if format == "json" {
+					return writeJSON(cmd.OutOrStdout(), invocationLogsOutput{Resolved: resolved, Logs: newInvocationLogsPayload(response)})
+				}
+				return writeInvocationLogsText(cmd.OutOrStdout(), resolved, response)
 			}
 			if format == "json" {
 				payload := &logsPayload{Reference: response.Reference, Events: response.Events, NextCursor: response.NextCursor}
@@ -289,6 +317,19 @@ func retryCommand(deps Dependencies) *cobra.Command {
 			if err != nil {
 				return outputFailure(cmd, format, resolved, err)
 			}
+			invocation, invocationResponse, err := responseInvocation(response.Dispatch)
+			if err != nil {
+				return outputFailure(cmd, format, resolved, err)
+			}
+			if invocationResponse {
+				resolved = applyInvocationResolution(resolved, response.Dispatch, invocation)
+				publicDispatch := newInvocationDispatchOutput(response.Dispatch)
+				publicAttempt := newInvocationAttemptOutput(response.Attempt)
+				if format == "json" {
+					return writeJSON(cmd.OutOrStdout(), invocationRetryOutput{Resolved: resolved, Dispatch: &publicDispatch, Attempt: &publicAttempt})
+				}
+				return writeInvocationRetryText(cmd.OutOrStdout(), resolved, publicDispatch, publicAttempt)
+			}
 			if format == "json" {
 				return writeJSON(cmd.OutOrStdout(), retryOutput{Resolved: resolved, Dispatch: &response.Dispatch, Attempt: &response.Attempt})
 			}
@@ -331,6 +372,18 @@ func cancelCommand(deps Dependencies) *cobra.Command {
 			if err != nil {
 				return outputFailure(cmd, format, resolved, err)
 			}
+			invocation, invocationResponse, err := responseInvocation(response.Dispatch)
+			if err != nil {
+				return outputFailure(cmd, format, resolved, err)
+			}
+			if invocationResponse {
+				resolved = applyInvocationResolution(resolved, response.Dispatch, invocation)
+				publicDispatch := newInvocationDispatchOutput(response.Dispatch)
+				if format == "json" {
+					return writeJSON(cmd.OutOrStdout(), invocationMutationOutput{Resolved: resolved, Dispatch: &publicDispatch})
+				}
+				return writeInvocationMutationText(cmd.OutOrStdout(), resolved, publicDispatch)
+			}
 			if format == "json" {
 				return writeJSON(cmd.OutOrStdout(), createOutput{Resolved: resolved, Dispatch: &response.Dispatch})
 			}
@@ -372,7 +425,7 @@ func outputFailure(cmd *cobra.Command, format string, resolved resolvedOutput, e
 		if outputErr := writeErrorJSON(cmd.OutOrStdout(), resolved, commandErr); outputErr != nil {
 			return outputErr
 		}
-	} else if resolved.Operation == "create" && resolved.Source != nil {
+	} else if (resolved.Operation == "create" && resolved.Source != nil) || (resolved.Operation == "invoke" && resolved.Invocation != nil) {
 		if outputErr := writeCreateErrorText(cmd.OutOrStdout(), resolved, commandErr); outputErr != nil {
 			return outputErr
 		}

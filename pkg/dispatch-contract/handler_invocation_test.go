@@ -17,15 +17,13 @@ import (
 func TestHandlerInvocationRoundTripKeepsPayloadOpaque(t *testing.T) {
 	t.Parallel()
 
-	createdAt := time.Date(2026, 8, 25, 12, 30, 0, 123, time.FixedZone("caller", 60*60))
-	deadline := createdAt.Add(10 * time.Minute)
+	deadline := time.Date(2026, 8, 25, 12, 40, 0, 123, time.FixedZone("caller", 60*60))
 	payload := []byte(`{"command":"sh -c 'rm -rf /'","argv":["curl","https://example.invalid"]}`)
 
 	invocation, err := dispatchcontract.NewHandlerInvocation(
 		"inv_01safe",
 		dispatchcontract.HandlerNameWBSessionAcceptV1,
 		payload,
-		createdAt,
 		&deadline,
 	)
 	if err != nil {
@@ -37,13 +35,33 @@ func TestHandlerInvocationRoundTripKeepsPayloadOpaque(t *testing.T) {
 	if invocation.PayloadSize != int64(len(payload)) {
 		t.Fatalf("payload size = %d, want %d", invocation.PayloadSize, len(payload))
 	}
-	if invocation.CreatedAt.Location() != time.UTC || invocation.Deadline == nil || invocation.Deadline.Location() != time.UTC {
-		t.Fatalf("timestamps are not canonical UTC: created=%v deadline=%v", invocation.CreatedAt, invocation.Deadline)
+	if invocation.Deadline == nil || invocation.Deadline.Location() != time.UTC {
+		t.Fatalf("deadline is not canonical UTC: %v", invocation.Deadline)
 	}
 
 	source, err := dispatchcontract.EncodeHandlerInvocation(invocation)
 	if err != nil {
 		t.Fatalf("encode invocation: %v", err)
+	}
+	_, encoded := onlyProjectContextEntry(t, source)
+	if strings.Contains(encoded, "created_at") {
+		t.Fatalf("caller-controlled creation time leaked into idempotent envelope: %s", encoded)
+	}
+	replayed, err := dispatchcontract.NewHandlerInvocation(
+		"inv_01safe",
+		dispatchcontract.HandlerNameWBSessionAcceptV1,
+		payload,
+		&deadline,
+	)
+	if err != nil {
+		t.Fatalf("construct replay: %v", err)
+	}
+	replayedSource, err := dispatchcontract.EncodeHandlerInvocation(replayed)
+	if err != nil {
+		t.Fatalf("encode replay: %v", err)
+	}
+	if !reflect.DeepEqual(source, replayedSource) {
+		t.Fatalf("equivalent retry changed compatibility envelope\nfirst:  %#v\nreplay: %#v", source, replayedSource)
 	}
 	parsed, ok, err := dispatchcontract.ParseHandlerInvocation(source)
 	if err != nil {
@@ -70,7 +88,7 @@ func TestHandlerInvocationRejectsUnknownHandlersWithoutEchoingRequestData(t *tes
 
 	unknown := dispatchcontract.HandlerName("sh -c 'printenv SECRET'")
 	payload := []byte(`{"command":"/bin/sh","argv":["-c","payload-must-not-appear"]}`)
-	_, err := dispatchcontract.NewHandlerInvocation("inv_01safe", unknown, payload, time.Now(), nil)
+	_, err := dispatchcontract.NewHandlerInvocation("inv_01safe", unknown, payload, nil)
 	if err == nil {
 		t.Fatal("unknown request-controlled handler was accepted")
 	}
@@ -87,7 +105,6 @@ func TestHandlerInvocationParserRejectsCommandFieldsAndDigestTampering(t *testin
 		"inv_01safe",
 		dispatchcontract.HandlerNameWBSessionMessageV1,
 		payload,
-		time.Date(2026, 8, 25, 12, 30, 0, 0, time.UTC),
 		nil,
 	)
 	if err != nil {
@@ -139,7 +156,6 @@ func TestHandlerInvocationParserRejectsCommandFieldsAndDigestTampering(t *testin
 func TestHandlerInvocationEnforcesPayloadBounds(t *testing.T) {
 	t.Parallel()
 
-	createdAt := time.Date(2026, 8, 25, 12, 30, 0, 0, time.UTC)
 	for _, test := range []struct {
 		name    string
 		payload []byte
@@ -154,7 +170,6 @@ func TestHandlerInvocationEnforcesPayloadBounds(t *testing.T) {
 				"inv_01safe",
 				dispatchcontract.HandlerNameWBSessionAcceptV1,
 				test.payload,
-				createdAt,
 				nil,
 			)
 			if err == nil {

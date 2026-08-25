@@ -52,10 +52,17 @@ Runner management verbs (`add`, `remove`, `list`, `status`) interact with the Hu
 | Directory | Description |
 |---|---|
 | [dispatch/](dispatch/README.md) | Dispatch a plan or task to a runner, creating a session |
+| [invoke/](invoke/README.md) | Deliver an opaque JSON payload to a fixed registered handler through the durable dispatch lifecycle |
 
 ### dispatch
 
 Accepts a plan file, plan name, task ID, or task name; resolves it against the active state repository; and asks the named runner to execute it. Returns a session ID so the caller can observe progress via [CLI Session](../session/README.md).
+
+### invoke
+
+Accepts a bounded JSON file plus a closed handler name, records immutable
+repository and payload evidence, and routes the typed invocation through the
+same durable dispatch attempts used by ordinary runner work.
 
 ### Planned subfeatures
 
