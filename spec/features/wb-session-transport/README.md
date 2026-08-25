@@ -1,14 +1,15 @@
 ---
 format: https://specscore.md/feature-specification
-status: Under Review
+status: Approved
 ---
 
 # Feature: WB Session Transport
 
 > [SpecScore.**Studio**](https://specscore.studio): | [Explore](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/wb-session-transport?op=explore) | [Edit](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/wb-session-transport?op=edit) | [Ask question](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/wb-session-transport?op=ask) | [Request change](https://specscore.studio/app/github.com/synchestra-io/synchestra/spec/features/wb-session-transport?op=request-change) |
-**Status:** Under Review
+**Status:** Approved
 **Source Ideas:** —
 **Supersedes:** —
+**Grade:** B
 
 ## Summary
 
