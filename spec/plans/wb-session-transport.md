@@ -1,11 +1,11 @@
 ---
 format: https://specscore.md/plan-specification
-status: In Review
+status: Approved
 ---
 
 # Plan: WB Session Transport implementation plan
 
-**Status:** In Review
+**Status:** Approved
 **Source Feature:** wb-session-transport
 **Date:** 2026-08-25
 **Owner:** codex

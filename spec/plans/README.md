@@ -19,7 +19,7 @@ Implementation plans for `synchestra`.
 | [hero-scene](hero-scene/) | draft | - | landing | - | - | @alex | - |
 | [superpowers-integration](superpowers-integration/) | draft | - | embedded-state, cli/init, agent-skills | - | - | @alex | - |
 | [state-store-physical-mvp](state-store-physical-mvp/) | draft | - | state-store, agent-coordination | - | - | - | - |
-| [wb-session-transport](wb-session-transport.md) | In Review | - | wb-session-transport | M | high | codex | - |
+| [wb-session-transport](wb-session-transport.md) | Approved | - | wb-session-transport | M | high | codex | 2026-08-25 |
 
 ## Recently Closed
 
