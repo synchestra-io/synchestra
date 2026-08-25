@@ -5,7 +5,7 @@ status: Approved
 
 # Plan: WB Session Transport implementation plan
 
-**Status:** Executing
+**Status:** Implemented
 **Source Feature:** wb-session-transport
 **Date:** 2026-08-25
 **Owner:** codex
@@ -71,7 +71,7 @@ lease loss, cancellation, cleanup, and log-redaction behavior.
 ### Task 4: Prove idempotent receipt delivery end to end
 
 **Verifies:** wb-session-transport#ac:retry-returns-one-wb-receipt
-**Status:** planning
+**Status:** complete
 
 Add a fake-WB vertical test spanning CLI intent, durable dispatch attempt, VM
 handler, receipt branch/artifact, and result observation. Assert a lost-response
