@@ -7,13 +7,17 @@ The `synchestra` CLI is how agents and humans interact with the Synchestra serve
 ## Setup
 
 ```bash
-# Set server URL (default: http://localhost:8080)
+# Hosted runner and WB transport requests use https://api.synchestra.io by default.
+# Override it only for a self-hosted or local API.
 export SYNCHESTRA_URL=http://localhost:8080
 
 # Set auth token
-export SYNCHESTRA_TOKEN=tok_your_token_here
+export SYNCHESTRA_TOKEN=YOUR_FIREBASE_USER_ID_TOKEN
 
-# Or configure via file: ~/.synchestra/config.yaml
+# Or configure via ~/.synchestra.yaml or ~/.synchestra/config.yaml:
+# hub:
+#   endpoint: https://api.synchestra.io
+#   token: YOUR_FIREBASE_USER_ID_TOKEN
 ```
 
 ---
@@ -66,7 +70,7 @@ These flags apply to all commands:
 
 | Flag | Env var | Default | Description |
 |---|---|---|---|
-| `--url` | `SYNCHESTRA_URL` | `http://localhost:8080` | Synchestra server URL |
+| `--url` | `SYNCHESTRA_URL` | `https://api.synchestra.io` | Synchestra machine-facing API URL |
 | `--token` | `SYNCHESTRA_TOKEN` | — | API auth token |
 | `--output` | — | `text` | Output format: `text`, `json`, `yaml` |
 | `--quiet` | — | false | Suppress all output except errors |

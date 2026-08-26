@@ -108,7 +108,7 @@ state:
 
 hub:
   id: acme/service
-  endpoint: https://hub.synchestra.io/
+  endpoint: https://api.synchestra.io/
 ```
 
 A minimal `synchestra.yaml` for an embedded-state project:

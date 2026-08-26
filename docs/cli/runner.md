@@ -17,7 +17,20 @@ synchestra runner dispatch retry dsp_01HXYZ --reason "transient failure"
 synchestra runner dispatch cancel dsp_01HXYZ --reason "superseded"
 ```
 
-Set `SYNCHESTRA_TOKEN` for Bearer authentication and optionally `SYNCHESTRA_URL` for a non-default Hub. `SYNCHESTRA_ACTOR` changes client provenance only; Hub authorization always derives from the Bearer identity.
+The hosted machine-facing API defaults to `https://api.synchestra.io`. Set
+`SYNCHESTRA_TOKEN` for Bearer authentication and optionally `SYNCHESTRA_URL`
+for a self-hosted or local API. The same values can be stored in the global
+user configuration:
+
+```yaml
+hub:
+  endpoint: https://api.synchestra.io
+  token: YOUR_FIREBASE_USER_ID_TOKEN
+```
+
+`SYNCHESTRA_ACTOR` changes client provenance only; API authorization always
+derives from the Bearer identity. Browser interactions remain on
+`https://hub.synchestra.io`.
 
 Creation resolves the credential-free origin, full immutable `HEAD` revision, branch audit ref, project ID, and subdirectory without changing the checkout. SCP-style SSH origins such as `git@host:org/repo.git` remain SSH clone URLs so remote workers can use their authorized Git transport, while canonical repository IDs omit the transport user. No SSH command fallback runs in the CLI. Dirty/staged/untracked files remain untouched and are not included in the immutable remote snapshot. Ad-hoc prompts do not create Tasks.
 

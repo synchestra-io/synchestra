@@ -14,7 +14,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-const defaultHubURL = "https://hub.synchestra.io"
+const defaultAPIURL = "https://api.synchestra.io"
 
 type hubFileConfig struct {
 	ID       string `yaml:"id"`
@@ -51,7 +51,7 @@ func loadClientConfig(deps Dependencies, _ string) (clientConfig, error) {
 		lookupEnv(deps, "SYNCHESTRA_URL"),
 		hubEndpoint(globalConfig),
 		globalConfig.URL,
-		defaultHubURL,
+		defaultAPIURL,
 	)
 	token := firstNonEmpty(
 		lookupEnv(deps, "SYNCHESTRA_TOKEN"),

@@ -6,6 +6,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	dispatchcontract "github.com/synchestra-io/synchestra/pkg/dispatch-contract"
@@ -168,8 +169,32 @@ func TestClientConfigPrecedenceDoesNotTrustRepositoryEndpoint(t *testing.T) {
 	}
 }
 
+func TestClientConfigDefaultsToDeployedAPI(t *testing.T) {
+	home := t.TempDir()
+	deps := normalizeDependencies(Dependencies{
+		UserHomeDir: func() (string, error) { return home, nil },
+		LookupEnv: func(key string) (string, bool) {
+			if key == "SYNCHESTRA_TOKEN" {
+				return "user-token", true
+			}
+			return "", false
+		},
+	})
+
+	config, err := loadClientConfig(deps, t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if config.BaseURL != "https://api.synchestra.io" {
+		t.Fatalf("default API base = %q, want %q", config.BaseURL, "https://api.synchestra.io")
+	}
+}
+
 func TestCommandRegistersDispatchOperations(t *testing.T) {
 	cmd := Command()
+	if !strings.Contains(cmd.Long, "https://api.synchestra.io") {
+		t.Fatalf("runner help does not identify the deployed default API base: %q", cmd.Long)
+	}
 	if len(cmd.Commands()) != 2 || cmd.Commands()[0].Name() != "dispatch" || cmd.Commands()[1].Name() != "invoke" {
 		t.Fatalf("runner commands = %v", cmd.Commands())
 	}

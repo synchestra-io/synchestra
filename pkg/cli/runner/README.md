@@ -14,6 +14,11 @@ Ordinary dispatch output remains unchanged.
 
 The HTTP client is intentionally limited to caller endpoints. Scheduler claim, lease, heartbeat, and attempt-owner mutations are not part of this package.
 
+Runner dispatch and typed WB invocation use `https://api.synchestra.io` as the
+default machine-facing API base. `SYNCHESTRA_URL` or the user-level
+`hub.endpoint` setting can select a self-hosted or local API instead;
+repository-owned configuration cannot redirect the caller credential.
+
 ## Open Questions
 
 None at this time.

@@ -50,6 +50,7 @@ func Command(optionalDependencies ...Dependencies) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "runner",
 		Short:        "Dispatch work to remote runners",
+		Long:         "Dispatch work to remote runners through the Synchestra API.\n\nThe default API base is " + defaultAPIURL + "; override it with SYNCHESTRA_URL or global configuration.",
 		SilenceUsage: true,
 		Args:         cobra.NoArgs,
 	}
