@@ -36,7 +36,7 @@ permissions:
 
 jobs:
   release:
-    uses: strongo/cicd/.github/workflows/release.yml@v1.10.5
+    uses: strongo/cicd/.github/workflows/release.yml@v1.12.1
     permissions:
       contents: write
     with:

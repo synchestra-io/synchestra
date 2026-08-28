@@ -11,9 +11,4 @@ ai-plugin.zip
 ## AI agents
 .claude/settings.local.json
 .claude/worktrees/
-# The shared release workflow runs orhun/git-cliff-action, which unpacks the
-# git-cliff binary into ./git-cliff/ in the workspace. GoReleaser then refuses
-# to build ("git is in a dirty state"), so a release cut from main fails
-# before it can tag anything.
-git-cliff/
 specscore.local.yaml
