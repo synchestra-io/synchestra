@@ -14,6 +14,7 @@ require (
 	github.com/ingitdb/ingitdb-cli v0.65.4
 	github.com/ingitdb/ingitdb-go/ingitdb v0.5.2
 	github.com/spf13/cobra v1.10.2
+	github.com/strongo/buildinfo v0.1.1
 	github.com/strongo/selfupdate v0.4.0
 	github.com/synchestra-io/rehearse v0.2.0
 	github.com/synchestra-io/specscore v0.3.7

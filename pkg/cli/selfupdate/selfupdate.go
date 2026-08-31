@@ -23,18 +23,20 @@ import (
 	"github.com/synchestra-io/specscore/pkg/exitcode"
 )
 
-// undeterminedVersions lists every value pkg/cli's `version` var can hold
-// that does not identify a real release. synchestra has exactly one: "dev",
-// that var's own zero-configuration default (pkg/cli/main.go), overwritten
-// only by .goreleaser.yml's link-time
-// "-X github.com/synchestra-io/synchestra/pkg/cli.version={{.Version}}"
-// ldflag at release build time. This module never calls
-// runtime/debug.ReadBuildInfo anywhere (confirmed by grep across the whole
-// repository), so the Go toolchain's own "(devel)" source-tree placeholder
-// is not a value `version` can ever take — it is deliberately NOT declared
-// here. An undeclared placeholder that can actually occur would compare as a
-// real version and report an update available FROM a version that does not
-// exist; declaring one that cannot occur would just be noise.
+// undeterminedVersions lists every value buildinfo.Info.Version (resolved by
+// github.com/strongo/buildinfo.Get, wired in pkg/cli/main.go) can hold that
+// does not identify a real release. synchestra has exactly one: "dev",
+// buildinfo.Get's own final fallback when neither its link-time -X stamps
+// (set by .goreleaser.yml's
+// "-X github.com/strongo/buildinfo.version={{.Version}}" ldflag at release
+// build time) nor runtime/debug.ReadBuildInfo()'s vcs.* fallback resolve a
+// real version. That vcs.* fallback path could in principle surface
+// something other than "dev" in a source-tree build with no -X stamps and
+// no usable VCS metadata, but every real synchestra release build has the
+// -X stamps set, so that path is not exercised in practice — nothing else
+// is declared here. An undeclared placeholder that can actually occur would
+// compare as a real version and report an update available FROM a version
+// that does not exist; declaring one that cannot occur would just be noise.
 var undeterminedVersions = []string{"dev"}
 
 // newConfig returns synchestra's own selfupdate.Config: its release
@@ -94,19 +96,17 @@ func newConfig(currentVersion string) selfupdate.Config {
 			{GOOS: "linux", GOARCH: "arm64"},
 			{GOOS: "windows", GOARCH: "amd64"},
 		},
-		// `synchestra version` (github.com/ingitdb/ingitdb-cli's
-		// commands.Version, wired in pkg/cli/main.go) prints
-		// "ingitdb <version> (<commit>) @ <date>\n" — the "ingitdb" prefix
-		// is baked into that shared command, not "synchestra", but the
-		// bare version string this probe needs (see the library's own
-		// post-swap verifyBinaryVersion, which only checks the output
-		// CONTAINS the target version) is present in that line regardless.
-		// This overrides the library's own default ("--version"): this
-		// CLI's root command has no bare --version flag of its own that
-		// reliably prints just the version (fang.WithVersion formats it
-		// alongside other framework chrome), so the explicit "version"
-		// subcommand is the one output guaranteed to contain the raw
-		// version string.
+		// `synchestra version` (github.com/strongo/buildinfo/cobracmd's
+		// VersionCommand, wired via cobracmd.Wire in pkg/cli/main.go) prints
+		// "synchestra <version> (<commit>) <date>\n" (buildinfo.Info.Long's
+		// documented shape) — the bare version string this probe needs (see
+		// the library's own post-swap verifyBinaryVersion, which only
+		// checks the output CONTAINS the target version) is present in that
+		// line. `--version` also works now (cobracmd.Wire feeds fang
+		// exactly buildinfo.Info.Short(), the bare semver with no
+		// decoration), but the "version" subcommand is kept here since it's
+		// the one surface guaranteed present regardless of how root's
+		// version flag is templated.
 		VersionProbeArgs: []string{"version"},
 		// AssetName, ChecksumsName, ReleasesAPIURL, DownloadURL, and
 		// HTTPClient are all left at the library's GoReleaser-shaped
@@ -122,9 +122,10 @@ func newConfig(currentVersion string) selfupdate.Config {
 // only job is to describe synchestra to that library and to translate its
 // outcomes onto synchestra's own exit-code contract via errorMapper.
 //
-// currentVersion is pkg/cli's own `version` var, threaded through explicitly
-// (rather than read as a package-level import) so this package stays
-// testable without depending on pkg/cli's link-time state.
+// currentVersion is pkg/cli's own buildinfo.Info.Version (resolved by
+// buildinfo.Get in pkg/cli/main.go), threaded through explicitly (rather
+// than read as a package-level import) so this package stays testable
+// without depending on pkg/cli's link-time state.
 func Command(currentVersion string) *cobra.Command {
 	return cobracmd.New(newConfig(currentVersion), cobracmd.CommandOptions{
 		Short:      "Update the installed synchestra binary to the latest release",
