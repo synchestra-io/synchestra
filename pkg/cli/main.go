@@ -16,7 +16,7 @@ import (
 	"github.com/ingitdb/ingitdb-go/ingitdb/validator"
 	"github.com/spf13/cobra"
 	"github.com/strongo/buildinfo"
-	"github.com/strongo/buildinfo/cobracmd"
+	"github.com/strongo/buildinfo/fangcmd"
 	agentcmd "github.com/synchestra-io/synchestra/pkg/cli/agent"
 	"github.com/synchestra-io/synchestra/pkg/cli/code"
 	"github.com/synchestra-io/synchestra/pkg/cli/feature"
@@ -102,7 +102,7 @@ func Run(
 	rootCmd := newRootCmd(osUserHomeDir, osGetwd)
 
 	info := buildinfo.Get("synchestra")
-	fangOpts := cobracmd.Wire(rootCmd, info)
+	fangOpts := fangcmd.Wire(rootCmd, info)
 
 	rootCmd.SetArgs(args[1:])
 	if err := fang.Execute(context.Background(), rootCmd, fangOpts...); err != nil {
