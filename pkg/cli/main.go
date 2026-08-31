@@ -15,6 +15,8 @@ import (
 	"github.com/ingitdb/ingitdb-go/ingitdb/materializer"
 	"github.com/ingitdb/ingitdb-go/ingitdb/validator"
 	"github.com/spf13/cobra"
+	"github.com/strongo/buildinfo"
+	"github.com/strongo/buildinfo/fangcmd"
 	agentcmd "github.com/synchestra-io/synchestra/pkg/cli/agent"
 	"github.com/synchestra-io/synchestra/pkg/cli/code"
 	"github.com/synchestra-io/synchestra/pkg/cli/feature"
@@ -26,12 +28,6 @@ import (
 	"github.com/synchestra-io/synchestra/pkg/cli/synchinit"
 	taskcmd "github.com/synchestra-io/synchestra/pkg/cli/task"
 	testcmd "github.com/synchestra-io/synchestra/pkg/cli/test"
-)
-
-var (
-	version = "dev"
-	commit  = "none"
-	date    = "unknown"
 )
 
 // newRootCmd builds the synchestra root command and its full subcommand
@@ -73,8 +69,9 @@ func newRootCmd(
 	rootCmd.Flags().String("path", "", "path to the database directory (default: current directory)")
 	rootCmd.SetErr(os.Stderr)
 
+	info := buildinfo.Get("synchestra")
+
 	rootCmd.AddCommand(
-		commands.Version(version, commit, date),
 		commands.Pull(osUserHomeDir, osGetwd, validator.ReadDefinition, viewBuilder, logf, isTerminal, runConflictsTUI),
 		commands.Setup(),
 		commands.Resolve(osUserHomeDir, osGetwd, validator.ReadDefinition, logf, isTerminal, runConflictsTUI),
@@ -87,7 +84,7 @@ func newRootCmd(
 		runner.Command(runner.Dependencies{Getwd: osGetwd, UserHomeDir: osUserHomeDir}),
 		taskcmd.Command(),
 		agentcmd.Command(),
-		selfupdatecmd.Command(version),
+		selfupdatecmd.Command(info.Version),
 		statecmd.Command(),
 	)
 
@@ -104,8 +101,11 @@ func Run(
 	_ = logf
 	rootCmd := newRootCmd(osUserHomeDir, osGetwd)
 
+	info := buildinfo.Get("synchestra")
+	fangOpts := fangcmd.Wire(rootCmd, info)
+
 	rootCmd.SetArgs(args[1:])
-	if err := fang.Execute(context.Background(), rootCmd, fang.WithVersion(version), fang.WithCommit(commit)); err != nil {
+	if err := fang.Execute(context.Background(), rootCmd, fangOpts...); err != nil {
 		fatal(err)
 	}
 }

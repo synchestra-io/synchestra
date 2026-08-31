@@ -33,12 +33,15 @@ func TestNewConfigIdentity(t *testing.T) {
 }
 
 // TestNewConfigUndeterminedVersions pins REQ: version-identity. synchestra's
-// `version` var (pkg/cli/main.go) has exactly one non-release value, "dev",
-// its own zero-configuration default. Unlike wb, this module never calls
-// runtime/debug.ReadBuildInfo, so the Go toolchain's "(devel)" placeholder is
-// not a value `version` can ever take, and must NOT be declared here — an
-// undeclared placeholder that can occur compares as a real version, but a
-// declared one that cannot occur is simply wrong.
+// buildinfo.Info.Version (resolved by github.com/strongo/buildinfo.Get,
+// wired in pkg/cli/main.go) has exactly one non-release value in practice,
+// "dev", buildinfo.Get's own final fallback. A real release build always has
+// its -X stamps set, so the intermediate runtime/debug.ReadBuildInfo() vcs.*
+// fallback (which could in principle surface the Go toolchain's own
+// "(devel)" source-tree placeholder) is never exercised there, and
+// "(devel)" must NOT be declared here — an undeclared placeholder that can
+// occur compares as a real version, but a declared one that cannot occur in
+// a real release build is simply wrong.
 func TestNewConfigUndeterminedVersions(t *testing.T) {
 	cfg := newConfig("dev")
 
@@ -46,7 +49,7 @@ func TestNewConfigUndeterminedVersions(t *testing.T) {
 		t.Errorf("UndeterminedVersions = %v, missing %q", cfg.UndeterminedVersions, "dev")
 	}
 	if slices.Contains(cfg.UndeterminedVersions, "(devel)") {
-		t.Error(`UndeterminedVersions must not contain "(devel)": pkg/cli.version is never stamped by runtime/debug.ReadBuildInfo`)
+		t.Error(`UndeterminedVersions must not contain "(devel)": a real synchestra release build always has buildinfo's -X stamps set`)
 	}
 	// A Go pseudo-version is a KNOWN version that sorts below its eventual
 	// release, so it must not be swept into the undetermined set.
