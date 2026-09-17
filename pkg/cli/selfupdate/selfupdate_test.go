@@ -6,7 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/strongo/selfupdate"
+	"github.com/strongo/cli-helpers/cliinstall"
+	"github.com/strongo/cli-helpers/selfupdate"
 	"github.com/synchestra-io/specscore/pkg/exitcode"
 )
 
@@ -14,8 +15,16 @@ import (
 // repository is the PUBLIC mirror (not this source repo, which publishes no
 // GitHub Release of its own), gated by the "cli-" tag prefix that separates
 // this CLI's releases from the other Synchestra products the same mirror
-// carries.
+// carries. It also pins that this identity comes from the catalog id
+// "synchestra" (cli-install#req:host-identity-from-catalog): an id absent
+// from cli-helpers/cliinstall's compiled-in catalog would panic in
+// newConfig rather than surface as a runtime state, so this test is what
+// actually catches that.
 func TestNewConfigIdentity(t *testing.T) {
+	if _, ok := cliinstall.ByID(catalogID); !ok {
+		t.Fatalf("cliinstall has no catalog entry for id %q", catalogID)
+	}
+
 	cfg := newConfig("0.15.1")
 
 	if cfg.BinaryName != "synchestra" {
@@ -32,29 +41,37 @@ func TestNewConfigIdentity(t *testing.T) {
 	}
 }
 
+// TestNewConfig_ExportedWrapperMatchesUnexported proves the exported
+// NewConfig (pkg/cli/upgrade's own seam onto this package's identity) is
+// exactly newConfig, unchanged — the two commands' HostConfig values can
+// never drift apart (cli-install#req:self-update-equals-upgrade-self).
+func TestNewConfig_ExportedWrapperMatchesUnexported(t *testing.T) {
+	got := NewConfig("0.15.1")
+	want := newConfig("0.15.1")
+	if got.Repository != want.Repository || got.TagPrefix != want.TagPrefix || got.CurrentVersion != want.CurrentVersion || got.BinaryName != want.BinaryName {
+		t.Errorf("NewConfig(...) = %+v, want %+v (identical to newConfig)", got, want)
+	}
+}
+
 // TestNewConfigUndeterminedVersions pins REQ: version-identity. synchestra's
 // buildinfo.Info.Version (resolved by github.com/strongo/buildinfo.Get,
 // wired in pkg/cli/main.go) has exactly one non-release value in practice,
-// "dev", buildinfo.Get's own final fallback. A real release build always has
-// its -X stamps set, so the intermediate runtime/debug.ReadBuildInfo() vcs.*
-// fallback (which could in principle surface the Go toolchain's own
-// "(devel)" source-tree placeholder) is never exercised there, and
-// "(devel)" must NOT be declared here — an undeclared placeholder that can
-// occur compares as a real version, but a declared one that cannot occur in
-// a real release build is simply wrong.
+// "dev", buildinfo.Get's own final fallback. That is also exactly
+// selfupdate.Config's own documented default when UndeterminedVersions is
+// left empty (see Config.UndeterminedVersions's doc comment), so the
+// cliinstall.Entry this package reads (cli-helpers/cliinstall/
+// catalog_synchestra.go) correctly declares no override at all — this test
+// pins that the catalog entry stays that way rather than starting to name
+// an explicit set that could drift from the shared default, including the
+// Go toolchain's own "(devel)" source-tree placeholder (never produced by a
+// real release build, whose -X stamps are always set) or a Go pseudo-version
+// (a KNOWN version that must sort below its eventual release, not be swept
+// into the undetermined set).
 func TestNewConfigUndeterminedVersions(t *testing.T) {
 	cfg := newConfig("dev")
 
-	if !slices.Contains(cfg.UndeterminedVersions, "dev") {
-		t.Errorf("UndeterminedVersions = %v, missing %q", cfg.UndeterminedVersions, "dev")
-	}
-	if slices.Contains(cfg.UndeterminedVersions, "(devel)") {
-		t.Error(`UndeterminedVersions must not contain "(devel)": a real synchestra release build always has buildinfo's -X stamps set`)
-	}
-	// A Go pseudo-version is a KNOWN version that sorts below its eventual
-	// release, so it must not be swept into the undetermined set.
-	if slices.Contains(cfg.UndeterminedVersions, "v0.15.2-0.20260809071100-889b6d621f76") {
-		t.Error("a Go pseudo-version must not be treated as undetermined")
+	if len(cfg.UndeterminedVersions) != 0 {
+		t.Errorf("UndeterminedVersions = %v, want empty (catalog entry defers to selfupdate.Config's own {\"dev\"} default)", cfg.UndeterminedVersions)
 	}
 }
 
@@ -227,6 +244,37 @@ func TestErrorMapperFailureUnexpected(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			mapped := errorMapper{}.Failure(tc.err)
 			assertExitCode(t, mapped, exitcode.Unexpected)
+		})
+	}
+}
+
+// TestErrorMapperFailureNewKinds pins REQ: host-owned-exit-codes's explicit
+// mapping requirement for the three FailureKinds the Install Command
+// Library (cli-install, package cliinstall) appended after
+// KindManagedCommand: KindUnknownTarget (a named install target is not a
+// catalog id — fixed by passing a valid one, the same "missing or invalid
+// command arguments" shape as KindDowngrade/KindNonInteractive) maps to
+// InvalidArgs (2); KindNoInstallDir and KindDestinationExists (no usable
+// destination directory, or one already occupied — the same blocked-
+// transition-given-current-state shape as KindAmbiguous) both map to
+// InvalidState (4). None of the three may fall into the Unexpected
+// catch-all, even though this package's own `install` command does not
+// exist yet — see errorMapper.Failure's doc comment.
+func TestErrorMapperFailureNewKinds(t *testing.T) {
+	cases := []struct {
+		name string
+		kind selfupdate.FailureKind
+		want int
+	}{
+		{"unknown target", selfupdate.KindUnknownTarget, exitcode.InvalidArgs},
+		{"no install dir", selfupdate.KindNoInstallDir, exitcode.InvalidState},
+		{"destination exists", selfupdate.KindDestinationExists, exitcode.InvalidState},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := &selfupdate.Failure{Kind: tc.kind, Err: errors.New("boom")}
+			mapped := errorMapper{}.Failure(err)
+			assertExitCode(t, mapped, tc.want)
 		})
 	}
 }

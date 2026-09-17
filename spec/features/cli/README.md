@@ -17,6 +17,7 @@ The Synchestra CLI (`synchestra`) is the primary interface for agents and humans
 | [config](config/README.md) | TODO: Add description. |
 | [feature](feature/README.md) | TODO: Add description. |
 | [init](init/README.md) | TODO: Add description. |
+| [install](install/README.md) | List and install fleet CLIs relevant to synchestra (`ingitdb`, `specscore`, `datatug`, `ovdb`, `chatwright`); also covers `upgrade`, the fleet-wide counterpart to `self-update`. |
 | [mcp](mcp/README.md) | TODO: Add description. |
 | [project](project/README.md) | TODO: Add description. |
 | [runner](runner/README.md) | TODO: Add description. |
@@ -28,6 +29,7 @@ The Synchestra CLI (`synchestra`) is the primary interface for agents and humans
 | [state](state/README.md) | TODO: Add description. |
 | [task](task/README.md) | TODO: Add description. |
 | [test](test/README.md) | TODO: Add description. |
+| [upgrade](install/README.md#upgrading) | Upgrade installed fleet CLIs, including synchestra itself (`synchestra self-update` is `synchestra upgrade synchestra`); specified in the [install](install/README.md) Feature's own "Upgrading" section, not a separate child directory. |
 
 ## Design Principles
 
@@ -181,14 +183,16 @@ Arguments used by several (but not all) subcommands still go at the group level 
 
 All CLI command READMEs and skill READMEs link to the canonical `_args` document when mentioning an argument. This ensures a single source of truth per argument.
 
-## Top-Level Commands (Bootstrap and Self-Update Exceptions)
+## Top-Level Commands (Bootstrap, Self-Update, Install and Upgrade Exceptions)
 
-The CLI carries two deliberate exceptions to the noun-verb rule. The bootstrap entry-point lives at the top level, matching the muscle-memory established by `git init`, `npm init`, and `cargo init`. The updater is likewise a top-level bare verb-phrase, not a `<resource> <verb>` pair — there is no "resource" self-update acts on other than the CLI itself, matching how `gh` and most self-updating CLIs surface this command.
+The CLI carries four deliberate exceptions to the noun-verb rule. The bootstrap entry-point lives at the top level, matching the muscle-memory established by `git init`, `npm init`, and `cargo init`. The updater is likewise a top-level bare verb-phrase, not a `<resource> <verb>` pair — there is no "resource" self-update acts on other than the CLI itself, matching how `gh` and most self-updating CLIs surface this command. `install` and `upgrade` are the same shape for the same reason: both are fleet-scoped (they name OTHER CLIs, or the whole fleet including synchestra), not `<resource> <verb>` pairs naming a resource this CLI itself owns.
 
 | Entry | Description |
 |---|---|
 | [init](init/README.md) | Bootstrap a Synchestra-managed project — creates `synchestra.yaml` at the repo root and sets up state per the chosen mode (embedded by default). Top-level placement is intentional. |
-| [self-update](self-update/README.md) | Update the installed `synchestra` binary in place (alias `update`). Binds the shared `github.com/strongo/selfupdate` module; this repo's Feature covers only synchestra's own release identity, command surface, and exit-code mapping. |
+| [self-update](self-update/README.md) | Update the installed `synchestra` binary in place (alias `update`). Binds the shared `github.com/strongo/cli-helpers/selfupdate` module, configured from synchestra's own compiled-in `cliinstall` catalog entry; this repo's Feature covers only synchestra's own release identity, command surface, and exit-code mapping. |
+| [install](install/README.md) | List and install fleet CLIs relevant to synchestra. Binds the shared `github.com/strongo/cli-helpers/cliinstall` module; fleet-scoped, not a resource this CLI owns. |
+| [upgrade](install/README.md#upgrading) | Upgrade installed fleet CLIs, including synchestra itself — the fleet-wide counterpart to `self-update`, specified in [install](install/README.md)'s own "Upgrading" section. |
 
 ## Command Groups
 

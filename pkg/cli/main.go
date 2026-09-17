@@ -20,6 +20,7 @@ import (
 	agentcmd "github.com/synchestra-io/synchestra/pkg/cli/agent"
 	"github.com/synchestra-io/synchestra/pkg/cli/code"
 	"github.com/synchestra-io/synchestra/pkg/cli/feature"
+	installcmd "github.com/synchestra-io/synchestra/pkg/cli/install"
 	"github.com/synchestra-io/synchestra/pkg/cli/project"
 	"github.com/synchestra-io/synchestra/pkg/cli/runner"
 	selfupdatecmd "github.com/synchestra-io/synchestra/pkg/cli/selfupdate"
@@ -28,6 +29,7 @@ import (
 	"github.com/synchestra-io/synchestra/pkg/cli/synchinit"
 	taskcmd "github.com/synchestra-io/synchestra/pkg/cli/task"
 	testcmd "github.com/synchestra-io/synchestra/pkg/cli/test"
+	upgradecmd "github.com/synchestra-io/synchestra/pkg/cli/upgrade"
 )
 
 // newRootCmd builds the synchestra root command and its full subcommand
@@ -85,6 +87,8 @@ func newRootCmd(
 		taskcmd.Command(),
 		agentcmd.Command(),
 		selfupdatecmd.Command(info.Version),
+		installcmd.Command(),
+		upgradecmd.Command(info.Version),
 		statecmd.Command(),
 	)
 

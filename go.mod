@@ -9,13 +9,13 @@ require (
 	github.com/dal-go/dalgo2sql v0.10.0
 	github.com/dal-go/dalgo2sqlite v0.1.0
 	github.com/dal-go/record v0.1.2
-	github.com/gofrs/flock v0.13.0
+	github.com/gofrs/flock v0.13.1
 	github.com/ingitdb/dalgo2ingitdb v0.3.1
 	github.com/ingitdb/ingitdb-cli v0.65.4
 	github.com/ingitdb/ingitdb-go/ingitdb v0.5.2
 	github.com/spf13/cobra v1.10.2
-	github.com/strongo/buildinfo v0.2.0
-	github.com/strongo/selfupdate v0.4.0
+	github.com/strongo/buildinfo v0.3.0
+	github.com/strongo/cli-helpers v0.21.0
 	github.com/synchestra-io/rehearse v0.2.0
 	github.com/synchestra-io/specscore v0.3.7
 	gopkg.in/yaml.v3 v3.0.1
