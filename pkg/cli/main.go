@@ -29,6 +29,7 @@ import (
 	"github.com/synchestra-io/synchestra/pkg/cli/synchinit"
 	taskcmd "github.com/synchestra-io/synchestra/pkg/cli/task"
 	testcmd "github.com/synchestra-io/synchestra/pkg/cli/test"
+	upgradecmd "github.com/synchestra-io/synchestra/pkg/cli/upgrade"
 )
 
 // newRootCmd builds the synchestra root command and its full subcommand
@@ -87,6 +88,7 @@ func newRootCmd(
 		agentcmd.Command(),
 		selfupdatecmd.Command(info.Version),
 		installcmd.Command(),
+		upgradecmd.Command(info.Version),
 		statecmd.Command(),
 	)
 

@@ -41,6 +41,18 @@ func TestNewConfigIdentity(t *testing.T) {
 	}
 }
 
+// TestNewConfig_ExportedWrapperMatchesUnexported proves the exported
+// NewConfig (pkg/cli/upgrade's own seam onto this package's identity) is
+// exactly newConfig, unchanged — the two commands' HostConfig values can
+// never drift apart (cli-install#req:self-update-equals-upgrade-self).
+func TestNewConfig_ExportedWrapperMatchesUnexported(t *testing.T) {
+	got := NewConfig("0.15.1")
+	want := newConfig("0.15.1")
+	if got.Repository != want.Repository || got.TagPrefix != want.TagPrefix || got.CurrentVersion != want.CurrentVersion || got.BinaryName != want.BinaryName {
+		t.Errorf("NewConfig(...) = %+v, want %+v (identical to newConfig)", got, want)
+	}
+}
+
 // TestNewConfigUndeterminedVersions pins REQ: version-identity. synchestra's
 // buildinfo.Info.Version (resolved by github.com/strongo/buildinfo.Get,
 // wired in pkg/cli/main.go) has exactly one non-release value in practice,

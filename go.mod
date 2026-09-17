@@ -15,7 +15,7 @@ require (
 	github.com/ingitdb/ingitdb-go/ingitdb v0.5.2
 	github.com/spf13/cobra v1.10.2
 	github.com/strongo/buildinfo v0.3.0
-	github.com/strongo/cli-helpers v0.19.0
+	github.com/strongo/cli-helpers v0.21.0
 	github.com/synchestra-io/rehearse v0.2.0
 	github.com/synchestra-io/specscore v0.3.7
 	gopkg.in/yaml.v3 v3.0.1

@@ -451,6 +451,25 @@ synchestra self-update --dry-run   # report the exact asset URL that would be fe
 
 Self-update is built on the shared [`github.com/strongo/selfupdate`](https://github.com/strongo/selfupdate) module, which owns install-method detection, release resolution, checksum verification, and atomic replacement. It resolves releases from the public [`synchestra-io/synchestra-releases`](https://github.com/synchestra-io/synchestra-releases) mirror under the `cli-v*` tag prefix — the same mirror `synchestra-releases` publishes for every Synchestra product, disambiguated by tag prefix. See [spec/features/cli/self-update/README.md](spec/features/cli/self-update/README.md) for this CLI's own configuration and exit-code mapping.
 
+### Installing and upgrading fleet CLIs
+
+`synchestra install` lists and installs the other fleet CLIs relevant to
+synchestra (`ingitdb`, `specscore`, `datatug`, `ovdb`, `chatwright`);
+`synchestra upgrade` is the fleet-wide counterpart to `self-update`:
+
+```bash
+synchestra upgrade                # report current/latest/verdict for every installed catalog CLI plus synchestra itself
+synchestra upgrade --all          # upgrade all of them, after one confirmation
+synchestra upgrade synchestra --check   # identical outcome to `synchestra self-update --check`
+```
+
+`upgrade --all` means every *installed* catalog CLI, not the relevance
+matrix `install` lists. `synchestra self-update` is exactly `synchestra
+upgrade synchestra`, built from the same catalog configuration, so the two
+never disagree — no `update` alias on `upgrade` (that alias stays reserved
+for `self-update` alone). See
+[spec/features/cli/install/README.md](spec/features/cli/install/README.md).
+
 ## Getting Started
 
 **Start with specs and CLI (open source):**

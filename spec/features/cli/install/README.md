@@ -102,6 +102,42 @@ requires every host to map explicitly:
 write, name the unknown target, and exit `2`
 (cli-install#req:unknown-target-refused).
 
+### Upgrading
+
+#### REQ: upgrade-command
+
+The CLI MUST also expose `synchestra upgrade [name...] [--all] [--check]
+[--yes] [--dry-run] [--format text|json]`, built from
+`cliinstall/cobracmd.NewUpgrade` against the same `HostID: "synchestra"` and
+the exact same `HostConfig` `self-update` builds
+(`cliselfupdate.NewConfig`, the exported form of
+[self-update](../self-update/README.md)'s own `newConfig`); synchestra's
+self-update has no after-update hook, so `upgrade` passes none either.
+`synchestra self-update` MUST therefore be `synchestra upgrade synchestra`
+by construction
+([cli-install#req:self-update-equals-upgrade-self](https://github.com/strongo/cli-helpers/blob/main/spec/features/cli-install/README.md#req-self-update-equals-upgrade-self)).
+`upgrade --all` means every *installed* catalog id plus synchestra itself,
+not the relevance matrix `install` lists. `upgrade` MUST NOT gain an
+`update` alias either: that alias stays reserved for `self-update` alone
+([REQ: command-name](#req-command-name)).
+
+`synchestra upgrade` MUST map every outcome onto synchestra's own exit-code
+contract kind-for-kind identically to `install`'s own table above (an
+"`upgrade: `" message prefix instead of "`install: `"), and MUST map an
+available or undetermined upgrade found by `--check`/the bare report onto
+`1` Conflict, exactly mirroring
+[self-update's own `UpdateAvailable` mapping](../self-update/README.md#req-exit-code-mapping)
+(cli-install#req:upgrade-check: "a host maps it as its self-update maps
+UpdateAvailable").
+
+| Library outcome | Exit code | Why |
+|---|---|---|
+| Every kind `install` maps (see the table above) | same code | Kind-for-kind identical to `install`'s own mapping. |
+| `--check`/the bare report: an upgrade available, or an undetermined running version, for at least one looked-up target | `1` Conflict | Mirrors `self-update --check`'s own "found something to report" code exactly. |
+
+`upgrade nosuchcli` MUST fail before any release lookup, name the unknown
+target, and exit `2` — the same as `install nosuchcli`.
+
 ## Architecture
 
 The command lives at `pkg/cli/install/install.go` (a top-level command
@@ -116,11 +152,15 @@ checksum-verified download, the confirmation gate — lives in
 lives in that module's sibling `cliinstall/catalog_synchestra.go`, the same
 file [self-update](../self-update/README.md) reads.
 
+`upgrade` lives at `pkg/cli/upgrade/upgrade.go`, a sibling package that
+imports `pkg/cli/selfupdate`'s exported `NewConfig` for its `HostConfig`,
+registered alongside `install` and `self-update` in `pkg/cli/main.go`.
+
 ## Interaction with Other Features
 
 | Feature | Interaction |
 |---|---|
-| [self-update](../self-update/README.md) | Both commands build from the same `cliinstall.ByID("synchestra")` catalog entry, so `install`'s view of synchestra (shown by other CLIs) and `self-update`'s own release identity never disagree; their exit-code mappings share every kind both can produce. |
+| [self-update](../self-update/README.md) | Both commands build from the same `cliinstall.ByID("synchestra")` catalog entry, so `install`'s view of synchestra (shown by other CLIs) and `self-update`'s own release identity never disagree; their exit-code mappings share every kind both can produce. `upgrade` builds its `HostConfig` from `self-update`'s own exported `NewConfig`, so `self-update` and `upgrade synchestra` reach the same library call. |
 
 ## Acceptance Criteria
 
@@ -143,9 +183,23 @@ file [self-update](../self-update/README.md) reads.
 **Then** the command fails before any confirmation, network request or
 write, names `nosuchcli` in its error, and exits `2` (InvalidArgs).
 
+### AC: upgrade-exit-code-contract
+
+**Requirements:** cli/install#req:upgrade-command
+
+**Given** an installed `synchestra` binary
+**When** the user runs `synchestra upgrade nosuchcli`
+**Then** the command exits `2` before any release lookup, the same way
+`synchestra install nosuchcli` does; and when the user runs `synchestra
+self-update --check` and `synchestra upgrade synchestra --check` against
+the same release, both exit `1` (Conflict) for an available or undetermined
+upgrade and `0` for up to date, because both reach the exact same
+`selfupdate.Config.Check` call.
+
 The remaining behavior — the relevance matrix, listing and status probing,
 destination policy, Homebrew-cask installs, checksum-verified direct
-installs, the confirmation gate, `--dry-run`, and `--format json` — is
+installs, the confirmation gate, `--dry-run`, `--format json`, and
+upgrade's own target selection, release lookups and per-target policy — is
 specified and tested once in the
 [CLI Install Command Library](https://github.com/strongo/cli-helpers/blob/main/spec/features/cli-install/README.md)'s
 own Acceptance Criteria, which this command inherits by construction rather

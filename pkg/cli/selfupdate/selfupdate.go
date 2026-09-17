@@ -66,6 +66,13 @@ func newConfig(currentVersion string) selfupdate.Config {
 	return entry.Config(currentVersion)
 }
 
+// NewConfig is newConfig, exported so pkg/cli/upgrade can build its
+// HostConfig from the exact same catalog identity Command does, making
+// `synchestra self-update` and `synchestra upgrade synchestra` reach the
+// same library call by construction
+// (cli-install#req:self-update-equals-upgrade-self).
+func NewConfig(currentVersion string) selfupdate.Config { return newConfig(currentVersion) }
+
 // Command returns the "self-update" command (aliased "update"). Every
 // decision it makes — install-method detection, checksum-verified atomic
 // replacement, the downgrade guard, the confirmation gate — comes from

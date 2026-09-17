@@ -53,19 +53,6 @@ func TestCommandRegistrationPanicsWhenCatalogEntryMissing(t *testing.T) {
 	cobracmd.New(cobracmd.CommandOptions{HostID: "nosuchcli"})
 }
 
-// TestErrorMapperFailureNilIsSuccess pins the documented, reachable nil
-// path: cliinstall/cobracmd v0.19.0 calls opts.Errors.Failure(nil)
-// unconditionally on every successful `install` and `install --dry-run`
-// run (see errorMapper.Failure's doc comment) — a known library bug fixed
-// in the next release. Failure(nil) MUST return nil, not a wrapped
-// "install: <nil>" error, so a fully successful batch never fails the
-// command.
-func TestErrorMapperFailureNilIsSuccess(t *testing.T) {
-	if err := (errorMapper{}).Failure(nil); err != nil {
-		t.Errorf("Failure(nil) = %v, want nil", err)
-	}
-}
-
 // TestErrorMapperFailureUsageError pins that a *cobracmd.UsageError (an
 // invalid --format, or --all combined with names) maps to InvalidArgs (2),
 // the same code KindUnknownTarget maps to below — both are flag/argument
