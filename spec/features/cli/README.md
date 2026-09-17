@@ -17,6 +17,7 @@ The Synchestra CLI (`synchestra`) is the primary interface for agents and humans
 | [config](config/README.md) | TODO: Add description. |
 | [feature](feature/README.md) | TODO: Add description. |
 | [init](init/README.md) | TODO: Add description. |
+| [install](install/README.md) | TODO: Add description. |
 | [mcp](mcp/README.md) | TODO: Add description. |
 | [project](project/README.md) | TODO: Add description. |
 | [runner](runner/README.md) | TODO: Add description. |

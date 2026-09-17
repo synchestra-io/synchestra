@@ -20,6 +20,7 @@ import (
 	agentcmd "github.com/synchestra-io/synchestra/pkg/cli/agent"
 	"github.com/synchestra-io/synchestra/pkg/cli/code"
 	"github.com/synchestra-io/synchestra/pkg/cli/feature"
+	installcmd "github.com/synchestra-io/synchestra/pkg/cli/install"
 	"github.com/synchestra-io/synchestra/pkg/cli/project"
 	"github.com/synchestra-io/synchestra/pkg/cli/runner"
 	selfupdatecmd "github.com/synchestra-io/synchestra/pkg/cli/selfupdate"
@@ -85,6 +86,7 @@ func newRootCmd(
 		taskcmd.Command(),
 		agentcmd.Command(),
 		selfupdatecmd.Command(info.Version),
+		installcmd.Command(),
 		statecmd.Command(),
 	)
 
