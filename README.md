@@ -449,7 +449,7 @@ synchestra self-update --version 0.15.1   # install a specific release instead o
 synchestra self-update --dry-run   # report the exact asset URL that would be fetched, without downloading anything
 ```
 
-Self-update is built on the shared [`github.com/strongo/selfupdate`](https://github.com/strongo/selfupdate) module, which owns install-method detection, release resolution, checksum verification, and atomic replacement. It resolves releases from the public [`synchestra-io/synchestra-releases`](https://github.com/synchestra-io/synchestra-releases) mirror under the `cli-v*` tag prefix — the same mirror `synchestra-releases` publishes for every Synchestra product, disambiguated by tag prefix. See [spec/features/cli/self-update/README.md](spec/features/cli/self-update/README.md) for this CLI's own configuration and exit-code mapping.
+Self-update is built on the shared [`github.com/strongo/cli-helpers/selfupdate`](https://github.com/strongo/cli-helpers) module, configured from synchestra's own compiled-in `cliinstall` catalog entry, which owns install-method detection, release resolution, checksum verification, and atomic replacement. It resolves releases from the public [`synchestra-io/synchestra-releases`](https://github.com/synchestra-io/synchestra-releases) mirror under the `cli-v*` tag prefix — the same mirror `synchestra-releases` publishes for every Synchestra product, disambiguated by tag prefix. See [spec/features/cli/self-update/README.md](spec/features/cli/self-update/README.md) for this CLI's own configuration and exit-code mapping.
 
 ### Installing and upgrading fleet CLIs
 
