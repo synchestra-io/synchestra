@@ -1,15 +1,19 @@
 // Package selfupdate wires the "synchestra self-update" command (aliased
-// "update") onto the shared github.com/strongo/selfupdate module. It
-// implements none of the update logic itself: install-method detection,
-// release resolution, checksum verification, atomic replacement, and every
-// failure rule belong to that library. This package supplies only what is
-// genuinely synchestra's own — its release identity (the public
-// synchestra-io/synchestra-releases mirror, keyed by the "cli-" tag prefix),
-// the platforms .goreleaser.yml actually publishes, and the mapping from the
-// library's outcomes onto synchestra's own exit-code contract (documented in
-// spec/features/cli/README.md's "Exit code contract" table). See
-// spec/features/cli/self-update/README.md for the Feature spec that draws
-// this boundary.
+// "update") onto the shared github.com/strongo/cli-helpers/selfupdate
+// module. It implements none of the update logic itself: install-method
+// detection, release resolution, checksum verification, atomic replacement,
+// and every failure rule belong to that library. This package supplies only
+// what is genuinely synchestra's own — reading its release identity (the
+// public synchestra-io/synchestra-releases mirror, keyed by the "cli-" tag
+// prefix, and the platforms .goreleaser.yml actually publishes) from the
+// Install Command Library's compiled-in catalog
+// (github.com/strongo/cli-helpers/cliinstall), so this identity is the same
+// single source every other fleet CLI's `install synchestra` resolves
+// releases from (cli-install#req:catalog-identity-single-source), and the
+// mapping from the library's outcomes onto synchestra's own exit-code
+// contract (documented in spec/features/cli/README.md's "Exit code
+// contract" table). See spec/features/cli/self-update/README.md for the
+// Feature spec that draws this boundary.
 package selfupdate
 
 // Features implemented: cli/self-update
@@ -18,102 +22,56 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"github.com/strongo/selfupdate"
-	"github.com/strongo/selfupdate/cobracmd"
+	"github.com/strongo/cli-helpers/cliinstall"
+	"github.com/strongo/cli-helpers/selfupdate"
+	"github.com/strongo/cli-helpers/selfupdate/cobracmd"
 	"github.com/synchestra-io/specscore/pkg/exitcode"
 )
 
-// undeterminedVersions lists every value pkg/cli's `version` var can hold
-// that does not identify a real release. synchestra has exactly one: "dev",
-// that var's own zero-configuration default (pkg/cli/main.go), overwritten
-// only by .goreleaser.yml's link-time
-// "-X github.com/synchestra-io/synchestra/pkg/cli.version={{.Version}}"
-// ldflag at release build time. This module never calls
-// runtime/debug.ReadBuildInfo anywhere (confirmed by grep across the whole
-// repository), so the Go toolchain's own "(devel)" source-tree placeholder
-// is not a value `version` can ever take — it is deliberately NOT declared
-// here. An undeclared placeholder that can actually occur would compare as a
-// real version and report an update available FROM a version that does not
-// exist; declaring one that cannot occur would just be noise.
-var undeterminedVersions = []string{"dev"}
+// catalogID is synchestra's own id in the Install Command Library's
+// compiled-in catalog (cli-install#req:host-identity-from-catalog). An id
+// absent from the catalog is a programming error caught by
+// TestNewConfigIdentity, never a runtime state a user sees.
+const catalogID = "synchestra"
 
-// newConfig returns synchestra's own selfupdate.Config: its release
-// identity and the platforms .goreleaser.yml's build matrix publishes.
-// Every other field is left at the library's GoReleaser-shaped defaults
-// because this CLI's own release naming already matches them exactly — see
-// the field comments below for how that was verified. newConfig is a plain
-// function, not inlined into Command, purely so selfupdate_test.go can
-// assert its fields directly without constructing a command or touching any
-// I/O.
+// newConfig returns synchestra's own selfupdate.Config, built from its
+// cliinstall.Entry (cli-helpers/cliinstall/catalog_synchestra.go): the
+// public mirror repository, the "cli-" tag prefix, the darwin/linux/windows
+// x amd64/arm64 platforms .goreleaser.yml publishes (minus windows/arm64,
+// which it explicitly ignores), the "version" probe subcommand, and no
+// package managers (.goreleaser.yml publishes no homebrew_casks/scoops/
+// winget block; scripts/install.sh's curl-based installer is the only
+// documented install path). Every field the catalog entry carries is
+// reproduced exactly by Entry.Config — see cliinstall.Entry.Config's own
+// doc comment — so this function adds nothing beyond currentVersion.
+// AssetName, ChecksumsName, ReleasesAPIURL, DownloadURL, and HTTPClient are
+// all left at the library's GoReleaser-shaped defaults, which the catalog
+// entry also leaves unset because synchestra's own release naming already
+// matches them exactly (confirmed against a real published release: `gh
+// release view cli-v0.15.1 --repo synchestra-io/synchestra-releases` lists
+// "synchestra_0.15.1_<os>_<arch>.tar.gz" assets and a
+// "synchestra_0.15.1_checksums.txt").
+//
+// newConfig is a plain function, not inlined into Command, purely so
+// selfupdate_test.go can assert its fields directly without constructing a
+// command or touching any I/O.
 func newConfig(currentVersion string) selfupdate.Config {
-	return selfupdate.Config{
-		BinaryName: "synchestra",
-		// Repository is the PUBLIC mirror, not this source repository:
-		// `gh release list --repo synchestra-io/synchestra` is empty — this
-		// repo's own .goreleaser.yml sets release.disable: true and
-		// publishes no GitHub Release here at all. Every synchestra CLI
-		// release actually lands in synchestra-io/synchestra-releases,
-		// confirmed by .github/workflows/release.yml's publish-releases
-		// job, which uploads dist/*.tar.gz, dist/*.zip, and
-		// dist/synchestra_*_checksums.txt to that repository unchanged
-		// (no renaming step).
-		Repository: "synchestra-io/synchestra-releases",
-		// TagPrefix distinguishes this CLI's own releases ("cli-v0.15.1")
-		// from the other Synchestra products the same mirror repository
-		// carries (e.g. "servers-v...", "vm-..."). release.yml computes
-		// RELEASE_TAG="cli-${TAG}" for exactly this reason. Without a
-		// prefix, "latest release" resolution has no way to tell the
-		// products apart. Confirmed against a real published release:
-		// `gh release view cli-v0.15.1 --repo synchestra-io/synchestra-releases`
-		// lists "synchestra_0.15.1_<os>_<arch>.tar.gz" assets and a
-		// "synchestra_0.15.1_checksums.txt" — exactly the library's own
-		// GoReleaser-shaped defaults for AssetName/ChecksumsName (see
-		// selfupdate.Config's own doc comments), so neither is overridden
-		// below.
-		TagPrefix:            "cli-",
-		CurrentVersion:       currentVersion,
-		UndeterminedVersions: undeterminedVersions,
-		// .goreleaser.yml configures no homebrew_casks/scoops/winget
-		// publisher block anywhere in this repository —
-		// scripts/install.sh's curl-based installer is the only documented
-		// install path (README.md's Installation section). A nil Managers
-		// is correct: every install classifies as Manual or Ambiguous,
-		// never Redirected.
-		Managers: nil,
-		// Matches .goreleaser.yml's builds.goos x builds.goarch exactly,
-		// including its one explicit exclusion: windows/arm64 is `ignore`d
-		// there (scripts/install.sh independently refuses that combination
-		// too — "windows/arm64 is not released; please build from
-		// source"). A host outside this set is refused by the library's
-		// own unsupported-platform rule rather than attempting a swap
-		// synchestra publishes no asset for.
-		SupportedPlatforms: []selfupdate.Platform{
-			{GOOS: "darwin", GOARCH: "amd64"},
-			{GOOS: "darwin", GOARCH: "arm64"},
-			{GOOS: "linux", GOARCH: "amd64"},
-			{GOOS: "linux", GOARCH: "arm64"},
-			{GOOS: "windows", GOARCH: "amd64"},
-		},
-		// `synchestra version` (github.com/ingitdb/ingitdb-cli's
-		// commands.Version, wired in pkg/cli/main.go) prints
-		// "ingitdb <version> (<commit>) @ <date>\n" — the "ingitdb" prefix
-		// is baked into that shared command, not "synchestra", but the
-		// bare version string this probe needs (see the library's own
-		// post-swap verifyBinaryVersion, which only checks the output
-		// CONTAINS the target version) is present in that line regardless.
-		// This overrides the library's own default ("--version"): this
-		// CLI's root command has no bare --version flag of its own that
-		// reliably prints just the version (fang.WithVersion formats it
-		// alongside other framework chrome), so the explicit "version"
-		// subcommand is the one output guaranteed to contain the raw
-		// version string.
-		VersionProbeArgs: []string{"version"},
-		// AssetName, ChecksumsName, ReleasesAPIURL, DownloadURL, and
-		// HTTPClient are all left at the library's GoReleaser-shaped
-		// defaults — see the TagPrefix comment above for how those were
-		// verified against a real published release.
+	entry, ok := cliinstall.ByID(catalogID)
+	if !ok {
+		// Caught by TestNewConfigIdentity at compile-review time; never a
+		// runtime state a user can trigger (cli-install#req:host-identity-
+		// from-catalog).
+		panic("selfupdate: catalog has no entry for " + catalogID)
 	}
+	return entry.Config(currentVersion)
 }
+
+// NewConfig is newConfig, exported so pkg/cli/upgrade can build its
+// HostConfig from the exact same catalog identity Command does, making
+// `synchestra self-update` and `synchestra upgrade synchestra` reach the
+// same library call by construction
+// (cli-install#req:self-update-equals-upgrade-self).
+func NewConfig(currentVersion string) selfupdate.Config { return newConfig(currentVersion) }
 
 // Command returns the "self-update" command (aliased "update"). Every
 // decision it makes — install-method detection, checksum-verified atomic
@@ -122,9 +80,10 @@ func newConfig(currentVersion string) selfupdate.Config {
 // only job is to describe synchestra to that library and to translate its
 // outcomes onto synchestra's own exit-code contract via errorMapper.
 //
-// currentVersion is pkg/cli's own `version` var, threaded through explicitly
-// (rather than read as a package-level import) so this package stays
-// testable without depending on pkg/cli's link-time state.
+// currentVersion is pkg/cli's own buildinfo.Info.Version (resolved by
+// buildinfo.Get in pkg/cli/main.go), threaded through explicitly (rather
+// than read as a package-level import) so this package stays testable
+// without depending on pkg/cli's link-time state.
 func Command(currentVersion string) *cobra.Command {
 	return cobracmd.New(newConfig(currentVersion), cobracmd.CommandOptions{
 		Short:      "Update the installed synchestra binary to the latest release",
@@ -134,7 +93,7 @@ func Command(currentVersion string) *cobra.Command {
 	})
 }
 
-// errorMapper maps github.com/strongo/selfupdate's outcomes onto
+// errorMapper maps github.com/strongo/cli-helpers/selfupdate's outcomes onto
 // synchestra's own exit-code contract, documented in
 // spec/features/cli/README.md's "Exit code contract" table:
 //
@@ -180,6 +139,23 @@ type errorMapper struct{}
 //     integrity, filesystem) that no different flag fixes and that name no
 //     missing resource or blocked state transition of their own. All map
 //     to the Unexpected catch-all.
+//   - KindUnknownTarget, KindNoInstallDir, and KindDestinationExists belong
+//     to the Install Command Library (cli-install, package cliinstall)
+//     built on this same self-update library, not to self-update itself —
+//     Config.Update and Config.Check never produce them. They are mapped
+//     explicitly here anyway, ahead of this package's own `install` command
+//     (a later change), so the mapping in
+//     cli-install#req:host-owned-exit-codes ("Every host MUST map the three
+//     new kinds explicitly … MUST NOT let them fall into a self-update
+//     default branch") is pinned by TestErrorMapperFailure* from the day
+//     the library started producing them, not only once `install` exists.
+//     KindUnknownTarget is fixed by passing a valid target name — the same
+//     "missing or invalid command arguments" shape as KindDowngrade and
+//     KindNonInteractive above — so it maps to InvalidArgs. KindNoInstallDir
+//     and KindDestinationExists both mean a destination cannot be used as
+//     asked (no directory on PATH, or a file already occupies it) — the
+//     same blocked-transition-given-current-state shape as KindAmbiguous —
+//     so both map to InvalidState.
 func (errorMapper) Failure(err error) error {
 	msg := fmt.Sprintf("self-update: %v", err)
 	switch selfupdate.KindOf(err) {
@@ -188,6 +164,10 @@ func (errorMapper) Failure(err error) error {
 	case selfupdate.KindUnknownTag, selfupdate.KindUnsupportedPlatform:
 		return exitcode.NotFoundError(msg)
 	case selfupdate.KindAmbiguous:
+		return exitcode.InvalidStateError(msg)
+	case selfupdate.KindUnknownTarget:
+		return exitcode.InvalidArgsError(msg)
+	case selfupdate.KindNoInstallDir, selfupdate.KindDestinationExists:
 		return exitcode.InvalidStateError(msg)
 	default: // KindReleaseLookup, KindDownload, KindChecksum, KindPermission, KindUnexpected
 		return exitcode.UnexpectedError(msg)
